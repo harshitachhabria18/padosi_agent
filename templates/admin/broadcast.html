@@ -1,0 +1,239 @@
+{% extends 'admin/layout.html' %}
+{% load static %}
+
+{% block title %}Broadcast Message — PadosiAgent Admin{% endblock %}
+{% block breadcrumb %}Communications &rsaquo; Broadcast{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h5 class="fw-bold mb-1">Broadcast Message Center</h5>
+        <span class="text-muted" style="font-size: 13px;">Send announcements or notifications to agents</span>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm mb-4" style="background: var(--card-bg, #fff); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-header bg-white py-3" style="border-bottom: 1px solid var(--border-color);">
+                <h6 class="m-0 fw-bold"><i class="fa-solid fa-paper-plane me-2 text-primary"></i>Compose Broadcast</h6>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{% url 'admin_panel:broadcast_send' %}" id="broadcastForm">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold" style="font-size: 13px;">Target Audience</label>
+                        <div class="d-flex flex-wrap gap-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="target" id="target_all" value="all" checked>
+                                <label class="form-check-label" for="target_all" style="font-size: 13px;">
+                                    All Active Agents <span class="badge bg-primary ms-1">{{ agentCounts.all }}</span>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="target" id="target_professional" value="professional">
+                                <label class="form-check-label" for="target_professional" style="font-size: 13px;">
+                                    Professional Plan <span class="badge bg-secondary ms-1">{{ agentCounts.professional }}</span>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="target" id="target_starter" value="starter">
+                                <label class="form-check-label" for="target_starter" style="font-size: 13px;">
+                                    Starter Plan <span class="badge bg-secondary ms-1">{{ agentCounts.starter }}</span>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="target" id="target_expiring" value="expiring">
+                                <label class="form-check-label" for="target_expiring" style="font-size: 13px;">
+                                    Expiring in 30 Days <span class="badge bg-warning text-dark ms-1">{{ agentCounts.expiring }}</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" style="font-size: 13px;">Subject / Title</label>
+                        <input type="text" name="subject" id="broadcast_subject" class="form-control" placeholder="e.g. Important Platform Update" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" style="font-size: 13px;">Message Body</label>
+                        <textarea name="message" id="broadcast_message" class="form-control" rows="8" placeholder="Write your message here..." required style="resize: vertical; font-size: 14px; line-height: 1.7;"></textarea>
+                        <div class="d-flex justify-content-between mt-1">
+                            <small class="text-muted">Supports plain text. Agent name will be auto-personalized.</small>
+                            <small id="charCount" class="text-muted">0 chars</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold" style="font-size: 13px;">Delivery Channel</label>
+                        <small class="d-block text-muted mb-3" style="font-size: 12px;">Choose one or both — emails are sent to all agents; push is delivered only to agents with PWA installed.</small>
+                        <div class="d-flex flex-wrap gap-3">
+                            <label class="d-flex align-items-start gap-3 p-3" style="border: 1.5px solid var(--border-color); border-radius: 12px; cursor: pointer; min-width: 180px; background: var(--bg-card);" id="ch_email_wrap">
+                                <input class="form-check-input mt-1" type="checkbox" name="channels" value="email" id="ch_email" checked style="flex-shrink: 0;">
+                                <div>
+                                    <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">
+                                        <i class="fa-solid fa-envelope me-2 text-primary"></i>Email
+                                    </div>
+                                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Sent to all matching agents' email addresses</div>
+                                </div>
+                            </label>
+                            <label class="d-flex align-items-start gap-3 p-3" style="border: 1.5px solid var(--border-color); border-radius: 12px; cursor: pointer; min-width: 180px; background: var(--bg-card);" id="ch_notif_wrap">
+                                <input class="form-check-input mt-1" type="checkbox" name="channels" value="notification" id="ch_notif" style="flex-shrink: 0;">
+                                <div>
+                                    <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">
+                                        <i class="fa-solid fa-bell me-2 text-warning"></i>Push Notification
+                                    </div>
+                                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Instant FCM push to all agents with PWA installed</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-primary px-4" id="sendBtn">
+                            <i class="fa-solid fa-paper-plane me-2"></i>Send Broadcast
+                        </button>
+                        <button type="button" class="btn btn-light border" onclick="previewMessage()">
+                            <i class="fa-solid fa-eye me-2"></i>Preview
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <!-- Recent Broadcasts -->
+        <div class="card border-0 shadow-sm mb-4" style="background: var(--card-bg, #fff); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-header bg-white py-3" style="border-bottom: 1px solid var(--border-color);">
+                <h6 class="m-0 fw-bold"><i class="fa-solid fa-clock-rotate-left me-2 text-muted"></i>Recent Broadcasts</h6>
+            </div>
+            <div class="card-body p-0">
+                {% for bc in recentBroadcasts %}
+                <div class="border-bottom p-3" style="font-size: 13px;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="fw-bold mb-1">{{ bc.subject }}</div>
+                        <small class="text-muted">{{ bc.created_at|timesince }} ago</small>
+                    </div>
+                    <div class="text-muted mb-1" style="font-size: 12px;">{{ bc.message|truncatechars:80 }}</div>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-light text-dark border" style="font-size: 10px;">
+                            <i class="fa-solid fa-users me-1"></i>{{ bc.target_label }}
+                        </span>
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size: 10px;">
+                            Sent ({{ bc.sent_count }})
+                        </span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="p-4 text-center text-muted" style="font-size: 13px;">
+                    <i class="fa-solid fa-inbox fa-2x mb-2 opacity-25"></i>
+                    <p class="mb-0">No broadcasts sent yet.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="card border-0 shadow-sm" style="background: var(--card-bg, #fff); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="card-header bg-white py-3" style="border-bottom: 1px solid var(--border-color);">
+                <h6 class="m-0 fw-bold"><i class="fa-solid fa-chart-simple me-2 text-muted"></i>Audience Stats</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                    <span style="font-size: 13px;"><i class="fa-solid fa-users me-2 text-primary"></i>Total Active</span>
+                    <span class="fw-bold">{{ agentCounts.all }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                    <span style="font-size: 13px;"><i class="fa-solid fa-star me-2 text-warning"></i>Professional Plan</span>
+                    <span class="fw-bold">{{ agentCounts.professional }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                    <span style="font-size: 13px;"><i class="fa-solid fa-seedling me-2 text-success"></i>Starter Plan</span>
+                    <span class="fw-bold">{{ agentCounts.starter }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-2">
+                    <span style="font-size: 13px;"><i class="fa-solid fa-triangle-exclamation me-2 text-danger"></i>Expiring soon</span>
+                    <span class="fw-bold text-danger">{{ agentCounts.expiring }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="modal-title fw-bold">Email Preview</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                    <div style="background: var(--primary, #273C8E); padding: 20px 24px;">
+                        <div style="color: white; font-size: 16px; font-weight: 700;">PadosiAgent</div>
+                    </div>
+                    <div style="padding: 24px; background: white;">
+                        <div id="previewSubject" style="font-size: 18px; font-weight: 700; margin-bottom: 12px; color: #1e293b;"></div>
+                        <div id="previewBody" style="font-size: 14px; color: #475569; line-height: 1.8; white-space: pre-wrap;"></div>
+                    </div>
+                    <div style="background: #f8fafc; padding: 16px 24px; text-align: center; font-size: 11px; color: #94a3b8;">
+                        PadosiAgent Platform | You're receiving this because you're a registered agent.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('broadcast_message').addEventListener('input', function() {
+    document.getElementById('charCount').textContent = this.value.length + ' chars';
+});
+
+function previewMessage() {
+    const subject = document.getElementById('broadcast_subject').value || '(No subject)';
+    const message = document.getElementById('broadcast_message').value || '(No message)';
+    document.getElementById('previewSubject').textContent = subject;
+    document.getElementById('previewBody').textContent = 'Dear [Agent Name],\n\n' + message + '\n\nBest regards,\nPadosiAgent Team';
+    const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+    modal.show();
+}
+
+document.getElementById('broadcastForm').addEventListener('submit', function(e) {
+    const subject = document.getElementById('broadcast_subject').value.trim();
+    const message = document.getElementById('broadcast_message').value.trim();
+    
+    // Ensure at least one delivery channel is selected
+    const emailChecked = document.getElementById('ch_email').checked;
+    const notifChecked = document.getElementById('ch_notif').checked;
+    
+    if (!subject || !message) { 
+        e.preventDefault(); 
+        return; 
+    }
+    
+    if (!emailChecked && !notifChecked) {
+        e.preventDefault();
+        Swal.fire({
+            title: 'No Channel Selected',
+            text: 'Please select at least one delivery channel (Email or Push Notification).',
+            icon: 'warning',
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
+    
+    if (!confirm('Are you sure you want to send this broadcast to the selected agents?')) {
+        e.preventDefault();
+    } else {
+        document.getElementById('sendBtn').innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Sending...';
+        document.getElementById('sendBtn').disabled = true;
+    }
+});
+</script>
+{% endblock %}

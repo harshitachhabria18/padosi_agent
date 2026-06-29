@@ -1,0 +1,228 @@
+{% extends 'admin/layout.html' %}
+{% load static %}
+
+{% block title %}Subscription Manager — PadosiAgent Admin{% endblock %}
+{% block breadcrumb %}Subscriptions &rsaquo; Renewal Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h5 class="fw-bold mb-1">Subscription Renewal Tracker</h5>
+        <span class="text-muted" style="font-size: 13px;">Monitor agent subscription status and upcoming renewals</span>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'admin_panel:subscriptions' %}?filter=expiring_soon" class="btn btn-sm {% if filter == 'expiring_soon' %}btn-warning text-dark{% else %}btn-outline-warning{% endif %}">
+            <i class="fa-solid fa-triangle-exclamation me-1"></i> Expiring Soon
+        </a>
+        <a href="{% url 'admin_panel:subscriptions' %}?filter=expired" class="btn btn-sm {% if filter == 'expired' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+            <i class="fa-solid fa-clock me-1"></i> Already Expired
+        </a>
+        <a href="{% url 'admin_panel:subscriptions' %}" class="btn btn-sm {% if filter == 'all' or not filter %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+            <i class="fa-solid fa-rotate me-1"></i> All
+        </a>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-bottom: 28px;">
+    <div class="stat-card" style="border-left: 4px solid #ef4444; background: var(--card-bg, #fff); padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <div class="stat-label" style="font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase;">Expired</div>
+                <div class="stat-value text-danger" style="font-size: 24px; font-weight: 700; margin-top: 4px;">{{ stats.expired }}</div>
+            </div>
+            <i class="fa-solid fa-ban" style="font-size: 24px; color: #ef4444; opacity: 0.4;"></i>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #f59e0b; background: var(--card-bg, #fff); padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <div class="stat-label" style="font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase;">Expiring in 30 Days</div>
+                <div class="stat-value text-warning" style="font-size: 24px; font-weight: 700; margin-top: 4px;">{{ stats.expiring_30 }}</div>
+            </div>
+            <i class="fa-solid fa-hourglass-half" style="font-size: 24px; color: #f59e0b; opacity: 0.4;"></i>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #3b82f6; background: var(--card-bg, #fff); padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <div class="stat-label" style="font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase;">Expiring in 60 Days</div>
+                <div class="stat-value text-primary" style="font-size: 24px; font-weight: 700; margin-top: 4px;">{{ stats.expiring_60 }}</div>
+            </div>
+            <i class="fa-solid fa-calendar-days" style="font-size: 24px; color: #3b82f6; opacity: 0.4;"></i>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #10b981; background: var(--card-bg, #fff); padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <div class="stat-label" style="font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase;">Active (&gt;60 days)</div>
+                <div class="stat-value text-success" style="font-size: 24px; font-weight: 700; margin-top: 4px;">{{ stats.active_healthy }}</div>
+            </div>
+            <i class="fa-solid fa-circle-check" style="font-size: 24px; color: #10b981; opacity: 0.4;"></i>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #8b5cf6; background: var(--card-bg, #fff); padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <div class="stat-label" style="font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase;">Est. Monthly Revenue</div>
+                <div class="stat-value" style="color: #8b5cf6; font-size: 20px; font-weight: 700; margin-top: 4px;">₹{{ stats.est_revenue }}</div>
+            </div>
+            <i class="fa-solid fa-indian-rupee-sign" style="font-size: 24px; color: #8b5cf6; opacity: 0.4;"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Tabs -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <h6 class="m-0 fw-bold">
+                <i class="fa-solid fa-shield-halved me-2 text-primary"></i>
+                Subscription Registry
+                <span class="text-muted fw-normal" style="font-size: 13px;">
+                    {% if filter == 'expired' %}
+                         — Expired
+                    {% elif filter == 'expiring_soon' %}
+                         — Expiring in 30 Days
+                    {% else %}
+                         — All
+                    {% endif %}
+                </span>
+            </h6>
+            <span class="badge bg-light text-dark border">{{ subscriptions|length }} records</span>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Agent</th>
+                        <th>Plan</th>
+                        <th>Started</th>
+                        <th>Expires</th>
+                        <th>Days Left</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sub in subscriptions %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width: 34px; height: 34px; border-radius: 8px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #475569; font-size: 13px;">
+                                    {{ sub.display_fullname|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold" style="font-size: 13px;">{{ sub.display_name }}</div>
+                                    <div class="text-muted" style="font-size: 11px;">{{ sub.display_email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge {% if sub.is_professional %}bg-primary{% else %}bg-secondary{% endif %}" style="font-size: 10px;">
+                                {% if sub.is_professional %}Professional's Plan{% else %}{{ sub.selected_plan }}{% endif %}
+                            </span>
+                        </td>
+                        <td style="font-size: 13px; color: #64748b;">
+                            {{ sub.created_at|date:"d M Y"|default:"—" }}
+                        </td>
+                        <td style="font-size: 13px; {% if sub.is_expired %}color: #ef4444; font-weight: 600;{% elif sub.is_expiring_soon %}color: #d97706; font-weight: 600;{% endif %}">
+                            {{ sub.expires_at|date:"d M Y"|default:"No expiry" }}
+                        </td>
+                        <td>
+                            {% if sub.days_left is None %}
+                                <span class="text-muted" style="font-size: 12px;">—</span>
+                            {% elif sub.is_expired %}
+                                <span style="color: #ef4444; font-size: 12px; font-weight: 600;">{{ sub.days_left_abs }}d ago</span>
+                            {% else %}
+                                <span style="color: {% if sub.is_expiring_soon %}#d97706{% else %}#10b981{% endif %}; font-size: 12px; font-weight: 600;">{{ sub.days_left_abs }}d left</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge {{ sub.badge_class }}" style="font-size: 10px;">{{ sub.badge_text }}</span>
+                        </td>
+                        <td class="text-end">
+                            <a href="/admin/agents/manage/{{ sub.agent_id }}/" class="btn btn-sm btn-light border" style="font-size: 11px;">
+                                <i class="fa-solid fa-pen-to-square me-1"></i> Manage
+                            </a>
+                            <button type="button" class="btn btn-danger btn-sm delete-btn" data-id="{{ sub.id }}" title="Delete" style="padding: 4px 8px;"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-calendar-check fa-3x mb-3 opacity-25"></i>
+                            <p class="mb-0">No subscriptions found for this filter.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).on('click', '.delete-btn', function(e) {
+    e.preventDefault();
+    
+    const button = $(this);
+    const id = button.data('id');
+    const row = button.closest('tr');
+    
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "This action cannot be undone!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+            
+            $.ajax({
+                url: '{% url "admin_panel:subscriptions_delete" %}',
+                type: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                data: {
+                    id: id
+                },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            title: 'Deleted!',
+                            text: response.message,
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                        
+                        row.fadeOut(300, function() {
+                            $(this).remove();
+                            // Reload to update stats cards cleanly
+                            setTimeout(() => {
+                                location.reload();
+                            }, 500);
+                        });
+                    } else {
+                        Swal.fire('Error', response.message || 'Failed to delete record', 'error');
+                        button.prop('disabled', false).html('<i class="fas fa-trash"></i>');
+                    }
+                },
+                error: function(xhr) {
+                    Swal.fire('Error', 'Failed to delete record: ' + (xhr.responseJSON?.message || 'Server error'), 'error');
+                    button.prop('disabled', false).html('<i class="fas fa-trash"></i>');
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

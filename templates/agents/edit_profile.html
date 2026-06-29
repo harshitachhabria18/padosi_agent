@@ -1,0 +1,2962 @@
+{% extends base_template %}
+{% load static %}
+
+{% block title %}
+    {% if isAdminView %}
+        Edit Full Profile: {{ agent.fullname }}
+    {% else %}
+        Edit Profile — PadosiAgent
+    {% endif %}
+{% endblock %}
+
+{% block breadcrumb %}
+    {% if isAdminView %}
+        Admin › Edit Profile ({{ agent.fullname }})
+    {% else %}
+        Overview
+    {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<!-- Agent Dashboard Styles -->
+<link rel="stylesheet" href="{% static 'css/agent-dashboard.css' %}">
+<!-- Cropper.js for Profile Photo Adjustment -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+
+<style>
+    /* Fix Select2 search input alignment and styling */
+    .select2-container {
+        direction: ltr !important;
+    }
+
+    .select2-container--default .select2-search--dropdown .select2-search__field {
+        text-align: left !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        direction: ltr !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 8px !important;
+        height: 38px !important;
+        margin-top: 5px !important;
+    }
+    
+    /* Fix mobile view of achievement photos */
+    @media (max-width: 768px) {
+        .photos-preview-grid {
+            gap: 0.5rem !important;
+            justify-content: center !important;
+        }
+        .photo-preview-item {
+            width: 70px !important;
+            height: 70px !important;
+        }
+        .photo-preview-item .remove-photo {
+            width: 20px !important;
+            height: 20px !important;
+            font-size: 10px !important;
+        }
+    }
+    
+    /* Inline search (inside the selection box) */
+    .select2-container--default .select2-selection--multiple .select2-search--inline {
+        float: left !important;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-search--inline .select2-search__field {
+        text-align: left !important;
+        margin-left: 5px !important;
+        padding-left: 5px !important;
+        direction: ltr !important;
+    }
+
+    .select2-container--default .select2-search--dropdown {
+        padding: 8px 12px !important;
+        background-color: #f8fafc;
+    }
+
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #0d9488 !important;
+    }
+
+    .select2-container--default .select2-selection--multiple {
+        border: 1px solid #ced4da !important;
+        border-radius: 10px !important;
+        padding: 5px !important;
+        min-height: 45px !important;
+        display: flex !important;
+        align-items: center !important;
+        flex-wrap: wrap !important;
+    }
+
+    .select2-container--default.select2-container--focus .select2-selection--multiple {
+        border-color: #0d9488 !important;
+        box-shadow: 0 0 0 0.2rem rgba(13, 148, 136, 0.15) !important;
+    }
+
+    /* Spacing and responsiveness of Steps Header */
+    .steps-header {
+        justify-content: space-around !important;
+    }
+    .steps-header .step-item {
+        flex: 1 !important;
+        min-width: 80px !important;
+    }
+    
+    /* Modal Footer Buttons styling for mobile responsiveness to prevent overlapping */
+    @media (max-width: 576px) {
+        .steps-header {
+            padding: 12px 6px !important;
+            gap: 4px !important;
+        }
+        .steps-header .step-item {
+            min-width: 60px !important;
+        }
+        .steps-header .step-number {
+            width: 32px !important;
+            height: 32px !important;
+            font-size: 14px !important;
+            margin-bottom: 4px !important;
+            line-height: 32px !important;
+        }
+        .steps-header .step-label {
+            font-size: 10px !important;
+            line-height: 1.2 !important;
+        }
+        
+        /* Stacking modal footer buttons vertically on mobile to prevent overlapping */
+        .modal-footer {
+            flex-direction: column-reverse !important;
+            gap: 12px !important;
+            padding: 16px !important;
+        }
+        .modal-footer button, 
+        .modal-footer a,
+        .modal-footer .btn {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 12px 20px !important;
+            border-radius: 30px !important;
+            text-align: center !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<script>
+    window.$ = window.jQuery; // Ensure $ is defined
+    const IS_ADMIN_VIEW = {% if isAdminView %}true{% else %}false{% endif %};
+    const ADMIN_AGENT_ID = '{{ agent.id|default:0 }}';
+    const SUBMIT_PROFILE_URL = "{% url 'agents:agent_update_profile' %}";
+</script>
+
+{% if isAdminView %}
+    <div style="padding: 20px 0; max-width: 1200px; margin: 0 auto;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:14px;color:#64748b;padding:0 20px;">
+            <a href="/admin/agents/" style="color:#1d7d5d;text-decoration:none;font-weight:600;">Agents</a>
+            <span style="color:#cbd5e1;">/</span>
+            <a href="/admin/agents/manage/{{ agent.id }}/" style="color:#1d7d5d;text-decoration:none;font-weight:600;">{{ agent.fullname }}</a>
+            <span style="color:#cbd5e1;">/</span>
+            <span style="font-weight:600;color:#1e293b;">Full Profile Editor</span>
+        </div>
+    </div>
+{% endif %}
+
+<div class="edit-profile-wrapper">
+    <div class="container py-4">
+        <!-- Progress Steps Header -->
+        <div class="steps-header mb-4">
+            <div class="step-item active" data-step="1">
+                <div class="step-number">1</div>
+                <div class="step-label">Basic Details</div>
+            </div>
+            <div class="step-item" data-step="2">
+                <div class="step-number">2</div>
+                <div class="step-label">Professional</div>
+            </div>
+            <div class="step-item" data-step="3">
+                <div class="step-number">3</div>
+                <div class="step-label">Product Portfolio</div>
+            </div>
+            <div class="step-item" data-step="4">
+                <div class="step-number">4</div>
+                <div class="step-label">Additional</div>
+            </div>
+        </div>
+
+        <!-- Form Card -->
+        <div class="card edit-profile-card">
+            <div class="card-body p-4 p-md-5">
+                <form id="edit-profile-form">
+                    {% csrf_token %}
+
+                    <!-- Step 1: Basic Details -->
+                    <div class="form-step active" id="step-1">
+                        <div class="step-header mb-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h4 class="step-title mb-1"><i class="fas fa-user mr-2"></i>Basic Details</h4>
+                                    <p class="step-subtitle text-muted mb-0">Your basic contact and identity information</p>
+                                </div>
+                                <span class="badge badge-primary" style="background-color: #0d9488;">Mandatory</span>
+                            </div>
+                        </div>
+
+                        <!-- Profile Photo Upload -->
+                        <div class="text-center mb-5">
+                            <div class="profile-photo-upload">
+                                <label for="profile-photo" class="photo-circle mb-0 {% if profile.profile_photo_path %}has-image{% endif %}" style="{% if profile.profile_photo_path %}border-style: solid; background-color: white;{% endif %}">
+                                    {% if profile.profile_photo_path %}
+                                        <img src="{{ profile.profile_photo_url }}" alt="Profile Photo" onerror="this.onerror=null;this.src='{% static 'img/avatar-icon.jpg' %}';">
+                                    {% else %}
+                                        <i class="fas fa-camera fa-2x"></i>
+                                    {% endif %}
+                                    <input type="file" id="profile-photo" name="profile_photo" accept="image/*" hidden>
+                                </label>
+                                <label for="profile-photo" class="upload-btn mt-3 d-block">
+                                    <i class="fas fa-upload mr-2"></i>Upload professional photo
+                                </label>
+                                <small class="text-muted d-block mt-1">Max 5MB, all image formats</small>
+                                <small class="text-muted d-block mt-1">Tip: drag photo to reframe, scroll to zoom, double-click to reset</small>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label">Your Full Name <span class="text-danger">*</span> <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Enter your legal name as it appears on your identity documents" style="font-size: 12px; cursor: help;"></i></label>
+                                <input type="text" class="form-control" name="full_name" value="{{ agent.fullname }}" placeholder="Enter your full name" maxlength="70" oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '');">
+                                <small class="text-muted">As per PAN</small>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label">Display Name (Public Profile) <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Provide the name you'd like customers to see on your public profile" style="font-size: 12px; cursor: help;"></i></label>
+                                <input type="text" class="form-control" name="display_name" value="{{ profile.display_name|default:'' }}" placeholder="Name shown to customers" maxlength="35" oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '');">
+                                <small class="text-muted">This name will be shown to customers</small>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label">Mobile Number (Calling) <span class="text-danger">*</span> <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Your primary contact number for customer calls" style="font-size: 12px; cursor: help;"></i></label>
+                                <input type="tel" class="form-control" name="mobile" value="{{ agent.mobile }}" placeholder="9876543210" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(this.value.length > 10) this.value = this.value.slice(0, 10);">
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label">WhatsApp Number <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Your WhatsApp contact for chat inquiries" style="font-size: 12px; cursor: help;"></i></label>
+                                <input type="tel" class="form-control" name="whatsapp" value="{{ profile.whatsapp|default:'' }}" placeholder="9876543210" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(this.value.length > 10) this.value = this.value.slice(0, 10);">
+                                <div class="mt-3 d-flex align-items-center" style="gap: 8px;">
+                                    <input type="checkbox" id="same-as-mobile" style="width: 16px; height: 16px; cursor: pointer;">
+                                    <label for="same-as-mobile" class="mb-0 small text-muted" style="cursor: pointer; user-select: none;">Same as mobile number</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12 mb-4">
+                                <label class="form-label">Email ID <span class="text-danger">*</span> <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Your official email for account notifications and inquiries" style="font-size: 12px; cursor: help;"></i></label>
+                                <input type="email" class="form-control" name="email" value="{{ agent.email }}" placeholder="demo.agent@padosiagent.com">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12 mb-4">
+                                <label class="form-label">Languages You Speak <span class="text-danger">*</span> <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Select the languages you can fluently communicate in with customers" style="font-size: 12px; cursor: help;"></i></label>
+                                
+                                <!-- Selected Language Tags (Hidden when empty) -->
+                                <div class="language-tags-display mb-0" id="selected-languages" style="display: none;">
+                                    <!-- Tags will appear here when languages are selected -->
+                                </div>
+
+                                <!-- Custom Dropdown -->
+                                <div class="custom-language-dropdown">
+                                    <div class="dropdown-toggle-custom" id="language-dropdown-toggle">
+                                        <span id="selected-count">0 selected</span>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                    <div class="dropdown-menu-custom" id="language-dropdown-menu">
+                                        {% for lang in months %} {# Reusing months check is not standard, let's hardcode languages #}
+                                        {% endfor %}
+                                        <div class="language-option">
+                                            <input type="checkbox" id="lang-english" value="english">
+                                            <label for="lang-english">
+                                                <i class="far fa-circle"></i>
+                                                <span>English</span>
+                                            </label>
+                                        </div>
+                                        <div class="language-option">
+                                            <input type="checkbox" id="lang-hindi" value="hindi">
+                                            <label for="lang-hindi">
+                                                <i class="far fa-circle"></i>
+                                                <span>Hindi</span>
+                                            </label>
+                                        </div>
+                                        <div class="language-option">
+                                            <input type="checkbox" id="lang-gujarati" value="gujarati">
+                                            <label for="lang-gujarati">
+                                                <i class="far fa-circle"></i>
+                                                <span>Gujarati</span>
+                                            </label>
+                                        </div>
+                                        <div class="language-option">
+                                            <input type="checkbox" id="lang-marathi" value="marathi">
+                                            <label for="lang-marathi">
+                                                <i class="far fa-circle"></i>
+                                                <span>Marathi</span>
+                                            </label>
+                                        </div>
+                                        <div class="language-option">
+                                            <input type="checkbox" id="lang-tamil" value="tamil">
+                                            <label for="lang-tamil">
+                                                <i class="far fa-circle"></i>
+                                                <span>Tamil</span>
+                                            </label>
+                                        </div>
+                                        <div class="language-option">
+                                            <input type="checkbox" id="lang-telugu" value="telugu">
+                                            <label for="lang-telugu">
+                                                <i class="far fa-circle"></i>
+                                                <span>Telugu</span>
+                                            </label>
+                                        </div>
+                                        <div class="language-option">
+                                            <input type="checkbox" id="lang-kannada" value="kannada">
+                                            <label for="lang-kannada">
+                                                <i class="far fa-circle"></i>
+                                                <span>Kannada</span>
+                                            </label>
+                                        </div>
+                                        <div class="language-option">
+                                            <input type="checkbox" id="lang-bengali" value="bengali">
+                                            <label for="lang-bengali">
+                                                <i class="far fa-circle"></i>
+                                                <span>Bengali</span>
+                                            </label>
+                                        </div>
+                                        <div class="language-option">
+                                            <input type="checkbox" id="lang-punjabi" value="punjabi">
+                                            <label for="lang-punjabi">
+                                                <i class="far fa-circle"></i>
+                                                <span>Punjabi</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Hidden input to store selected languages for form submission -->
+                                <input type="hidden" name="languages" id="languages-input" value="{{ profile.languages|default:'' }}">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12 mb-4">
+                                <label class="form-label">Residence Address <span class="text-danger">*</span> <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Your current home/residential address" style="font-size: 12px; cursor: help;"></i></label>
+                                <textarea class="form-control" name="address" rows="3" placeholder="Society/Building Name, Area, City, Pincode">{{ profile.address|default:'' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Professional Details -->
+                    <div class="form-step" id="step-2">
+                        <div class="step-header mb-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h4 class="step-title mb-1"><i class="fas fa-briefcase mr-2"></i>Professional</h4>
+                                    <p class="step-subtitle text-muted mb-0">Your professional credentials and expertise</p>
+                                </div>
+                                <span class="badge badge-primary" style="background-color: #0d9488;">Mandatory</span>
+                            </div>
+                        </div>
+
+                        <!-- Info Alert -->
+                        <div class="alert alert-info mb-4" style="background-color: #e0f2fe; border: 1px solid #bae6fd; border-radius: 10px;">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            <small>Provide PAN Number for Licensed Badge on your Profile</small>
+                        </div>
+
+                        <!-- PAN and License -->
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label">PAN Number <span class="text-danger">*</span> <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="For IRDAI Agency License verification purpose only." style="font-size: 12px; cursor: help;"></i></label>
+                                <input type="text" class="form-control" name="pan" id="pan_number" value="{{ profile.pan_number|default:'' }}" placeholder="ABCDE1234F" maxlength="10" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');" required>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label">IRDAI License Number <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Backoffice will update this after PAN verification." style="font-size: 12px; cursor: help;"></i></label>
+                                {% if isAdminView %}
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" name="license_number" id="license_number" value="{{ profile.license_number|default:'' }}" placeholder="Enter IRDAI License Number">
+                                        <div class="input-group-append">
+                                            <a href="https://agencyportal.irdai.gov.in/PublicAccess/LookUpPAN.aspx" target="_blank" class="btn btn-primary d-flex align-items-center" onclick="copyPanToClipboard()">
+                                                <i class="fas fa-external-link-alt mr-2"></i> IRDAI
+                                            </a>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    {% if profile.license_number %}
+                                        <div class="form-control bg-light text-dark font-weight-bold" style="border: 1px solid #c2e0c6; cursor: not-allowed; opacity: 1;">
+                                            {{ profile.license_number }}
+                                        </div>
+                                        <small class="text-success mt-1 d-block"><i class="fas fa-check-circle me-1"></i> Verified by Admin</small>
+                                    {% else %}
+                                        <input type="text" class="form-control" id="license_number" value="" placeholder="Will be Updated by Admin" disabled>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Agency Name -->
+                        <div class="row">
+                            <div class="col-md-12 mb-4">
+                                <label class="form-label">Agency Name (If Any) <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="The name of your registered insurance agency or partnership" style="font-size: 12px; cursor: help;"></i></label>
+                                <input type="text" class="form-control" name="agency_name" value="{{ profile.agency_name|default:'' }}" placeholder="Your agency/company name">
+                            </div>
+                        </div>
+
+                        <!-- Office Address -->
+                        <div class="row">
+                            <div class="col-md-12 mb-4">
+                                <label class="form-label">Office Address (If Available) <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Complete address of your physical office location" style="font-size: 12px; cursor: help;"></i></label>
+                                <textarea class="form-control" name="office_address" rows="2" placeholder="Office address">{{ profile.office_address|default:'' }}</textarea>
+                            </div>
+                        </div>
+
+                        <!-- Service Pincode -->
+                        <div class="row">
+                            <div class="col-md-12 mb-4">
+                                <label class="form-label">Service Pincode <span class="text-danger">*</span> <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Pincode where service is available" style="font-size: 12px; cursor: help;"></i></label>
+                                <input type="text" class="form-control" name="service_pincode" value="{{ profile.service_pincode }}" placeholder="e.g., 380001" maxlength="6" pattern="\d{6}">
+                                <small class="text-muted">Enter the 6-digit pincode where you provide services.</small>
+                            </div>
+                        </div>
+
+                        <!-- Serviceable Cities -->
+                        <div class="row">
+                            <div class="col-md-12 mb-4">
+                                <label class="form-label">Serviceable Cities <span class="text-danger">*</span> <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Cities where you can provide in-person or localized insurance services" style="font-size: 12px; cursor: help;"></i></label>
+                                <select class="form-control" name="serviceable_cities[]" id="serviceable-cities" multiple="multiple">
+                                    {% for city in main_cities %}
+                                        <option value="{{ city }}" {% if city in agent_cities %}selected{% endif %}>{{ city }}</option>
+                                    {% endfor %}
+                                    {% for city in extra_cities %}
+                                        <option value="{{ city }}" selected>{{ city }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Type to search your city. You can also type and add a location if not listed.</small>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label">Years of Experience <span class="text-danger">*</span> <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Total number of years you have been active in the insurance industry" style="font-size: 12px; cursor: help;"></i></label>
+                                <input type="number" class="form-control experience-trigger" name="experience_years" id="experience-input" value="{{ agent.experience_range|default:'' }}" placeholder="15" min="0" max="60"
+                                        onkeydown="return event.keyCode !== 187 && event.keyCode !== 107 && event.keyCode !== 189 && event.keyCode !== 109 && event.keyCode !== 69" 
+                                        oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(this.value.length > 2) this.value = this.value.slice(0, 2);">
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label">Approx Active Client Base <span class="text-danger">*</span> <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Estimated number of active customers you are currently serving" style="font-size: 12px; cursor: help;"></i></label>
+                                <input type="number" class="form-control" name="client_base" value="{{ agent.client_base|default:'' }}" placeholder="500" min="0" onkeydown="return event.keyCode !== 187 && event.keyCode !== 107 && event.keyCode !== 189 && event.keyCode !== 109 && event.keyCode !== 69" 
+                                        oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(this.value.length > 5) this.value = this.value.slice(0, 5);">
+                            </div>
+                        </div>
+
+                        <!-- Family / Additional Licenses Section -->
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <label class="form-label mb-0">
+                                    <i class="fas fa-users mr-2"></i>Family / Additional Licenses 
+                                    <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Add family members who also hold insurance licenses to highlight your collective expertise" style="font-size: 12px; cursor: help;"></i>
+                                </label>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="add-family-member">
+                                    <i class="fas fa-plus mr-1"></i> Add Member
+                                </button>
+                            </div>
+
+                            <!-- Column Headers -->
+                            <div class="family-member-headers mb-2" style="display: none;">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <label class="form-label font-weight-bold small mb-0">Full Name</label>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label font-weight-bold small mb-0">Relationship</label>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label font-weight-bold small mb-0">PAN / IRDAI License #</label>
+                                    </div>
+                                    <div class="col-md-1"></div>
+                                </div>
+                            </div>
+
+                            <!-- Family Members Container -->
+                            <div id="family-members-container">
+                                <!-- Family member rows will be added here dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- POS License Selection -->
+                        <div class="mb-4">
+                            <label class="form-label d-block mb-2">Do you have POS License with any Broker? <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Whether you are registered as a Point of Sales Person (POSP) with any insurance broker" style="font-size: 12px; cursor: help;"></i></label>
+                            <div class="d-flex align-items-center">
+                                <div class="custom-control custom-radio custom-control-inline mr-4">
+                                    <input type="radio" id="pos-yes" name="has_pos_license" class="custom-control-input" value="1" {% if profile.has_pos_license %}checked{% endif %}>
+                                    <label class="custom-control-label" for="pos-yes" style="cursor: pointer; margin-left: 5px;">Yes</label>
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline">
+                                    <input type="radio" id="pos-no" name="has_pos_license" class="custom-control-input" value="0" {% if not profile.has_pos_license %}checked{% endif %}>
+                                    <label class="custom-control-label" for="pos-no" style="cursor: pointer; margin-left: 5px;">No</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Performance Statistics Section -->
+                        <div class="performance-stats-section">
+                            <h5 class="mb-3">
+                                <i class="fas fa-chart-line mr-2"></i>Performance Statistics 
+                                <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Your track record and success metrics to build trust with customers" style="font-size: 12px; cursor: help;"></i>
+                            </h5>
+                            <p class="text-muted small mb-4">Share your track record to help customers understand your experience and expertise.</p>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label">Claims Processed <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Total number of claims you have assisted customers with" style="font-size: 12px; cursor: help;"></i></label>
+                                    <input type="number" class="form-control" name="claims_processed" id="claims_processed" value="{{ agent.performanceStats.claims_processed|default:'' }}" placeholder="e.g., 150" min="0">
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label">Claims Settled <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Number of claims successfully settled for your clients" style="font-size: 12px; cursor: help;"></i></label>
+                                    <input type="number" class="form-control" name="claims_settled" id="claims_settled" value="{{ agent.performanceStats.claims_settled|default:'' }}" placeholder="e.g., 145" min="0">
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label">Total Claims Amount Settled <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="The total monetary value of claims settled through your assistance" style="font-size: 12px; cursor: help;"></i></label>
+                                    <input type="text" class="form-control" name="claims_amount" id="claims_amount" value="{{ agent.performanceStats.claims_amount|floatformat:0|default:'' }}" placeholder="e.g., 25000000" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(this.value.length > 10) this.value = this.value.slice(0, 10); updateClaimsAmountWords(this.value);">
+                                    <div id="claims_amount_words" class="text-success small font-weight-bold mt-2" style="min-height: 18px;"></div>
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label">Claim Success Rate <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Percentage of claims successfully settled" style="font-size: 12px; cursor: help;"></i></label>
+                                    <input type="text" class="form-control bg-light" name="success_rate" id="success_rate" value="{{ agent.performanceStats.success_rate|default:'' }}" placeholder="Auto-calculated" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if isAdminView %}
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                <div class="p-3 border rounded bg-light" style="border-style: dashed !important; border-color: #0d9488 !important; background-color: #f0fdfa !important;">
+                                    <h6 class="mb-3 text-primary"><i class="fas fa-certificate mr-2"></i>Professional Recognition Badge (Admin Only)</h6>
+                                    <div class="form-group mb-0">
+                                        <label class="form-label">Assign Recognition Badges</label>
+                                        <div class="d-flex flex-wrap gap-3 p-3 border rounded shadow-sm bg-light">
+                                            <div class="form-check mr-4">
+                                                <input class="form-check-input" type="checkbox" name="badge[]" value="verified" id="badge-verified" {% if 'verified' in agent.badge_list %}checked{% endif %} style="transform: scale(1.2); cursor: pointer;">
+                                                <label class="form-check-label ml-2" for="badge-verified" style="cursor: pointer; font-weight: 500;">Verified Badge</label>
+                                            </div>
+                                            <div class="form-check mr-4">
+                                                <input class="form-check-input" type="checkbox" name="badge[]" value="irdai" id="badge-irdai" {% if 'irdai' in agent.badge_list %}checked{% endif %} style="transform: scale(1.2); cursor: pointer;">
+                                                <label class="form-check-label ml-2" for="badge-irdai" style="cursor: pointer; font-weight: 500;">Licensed Badge</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="badge[]" value="trusted" id="badge-trusted" {% if 'trusted' in agent.badge_list %}checked{% endif %} style="transform: scale(1.2); cursor: pointer;">
+                                                <label class="form-check-label ml-2" for="badge-trusted" style="cursor: pointer; font-weight: 500;">Trusted Badge</label>
+                                            </div>
+                                        </div>
+                                        <small class="text-muted mt-2 d-block">This badge will be prominently displayed on the agent's profile and discovery card.</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Step 3: Product Portfolio -->
+                    <div class="form-step" id="step-3">
+                        <div class="step-header mb-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h4 class="step-title mb-1">
+                                        <i class="fas fa-box-open mr-2"></i>Product Portfolio
+                                    </h4>
+                                    <p class="step-subtitle text-muted mb-0">Your company partnerships for each segment</p>
+                                </div>
+                                <span class="badge badge-primary" style="background-color: #0d9488;">Mandatory</span>
+                            </div>
+                        </div>
+
+                        <!-- Segment Selector (Always Visible) -->
+                        <div class="mb-4 p-3 border rounded" style="border-radius: 12px !important; background-color: #f8fafc; border-color: #e2e8f0;">
+                            <p class="font-weight-bold mb-3 text-dark text-center" style="font-size: 14px; color: #1e293b;">Select your Insurance Segments:</p>
+                            <div class="row mx-n2">
+                                <div class="col-3 px-2 mb-2">
+                                    <div class="segment-db-checkbox">
+                                        <input type="checkbox" class="segment-db-toggle d-none" id="db_segment_health" name="segments[]" value="health">
+                                        <label for="db_segment_health" class="d-flex flex-column align-items-center justify-content-center p-2 border rounded text-center mb-0" style="cursor: pointer; min-height: 80px; border-radius: 12px !important; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); background-color: #ffffff; border-color: #e2e8f0; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03); width: 100%;">
+                                            <i class="fas fa-heartbeat mb-2 text-muted" style="font-size: 20px;"></i>
+                                            <span class="font-weight-bold text-dark" style="font-size: 11.5px;">Health</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-3 px-2 mb-2">
+                                    <div class="segment-db-checkbox">
+                                        <input type="checkbox" class="segment-db-toggle d-none" id="db_segment_life" name="segments[]" value="life">
+                                        <label for="db_segment_life" class="d-flex flex-column align-items-center justify-content-center p-2 border rounded text-center mb-0" style="cursor: pointer; min-height: 80px; border-radius: 12px !important; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); background-color: #ffffff; border-color: #e2e8f0; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03); width: 100%;">
+                                            <i class="fas fa-user-shield mb-2 text-muted" style="font-size: 20px;"></i>
+                                            <span class="font-weight-bold text-dark" style="font-size: 11.5px;">Life</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-3 px-2 mb-2">
+                                    <div class="segment-db-checkbox">
+                                        <input type="checkbox" class="segment-db-toggle d-none" id="db_segment_motor" name="segments[]" value="motor">
+                                        <label for="db_segment_motor" class="d-flex flex-column align-items-center justify-content-center p-2 border rounded text-center mb-0" style="cursor: pointer; min-height: 80px; border-radius: 12px !important; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); background-color: #ffffff; border-color: #e2e8f0; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03); width: 100%;">
+                                            <i class="fas fa-car mb-2 text-muted" style="font-size: 20px;"></i>
+                                            <span class="font-weight-bold text-dark" style="font-size: 11.5px;">Motor</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-3 px-2 mb-2">
+                                    <div class="segment-db-checkbox">
+                                        <input type="checkbox" class="segment-db-toggle d-none" id="db_segment_sme" name="segments[]" value="sme">
+                                        <label for="db_segment_sme" class="d-flex flex-column align-items-center justify-content-center p-2 border rounded text-center mb-0" style="cursor: pointer; min-height: 80px; border-radius: 12px !important; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); background-color: #ffffff; border-color: #e2e8f0; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03); width: 100%;">
+                                            <i class="fas fa-briefcase mb-2 text-muted" style="font-size: 20px;"></i>
+                                            <span class="font-weight-bold text-dark" style="font-size: 11.5px;">SME</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div class="portfolio-empty-state text-center" id="portfolio-empty-state" style="padding: 30px 20px; display: none;">
+                            <div class="empty-icon mb-2">
+                                <i class="fas fa-exclamation-circle text-warning" style="font-size: 36px;"></i>
+                            </div>
+                            <h5 class="mb-0">Please select at least one insurance segment above first.</h5>
+                        </div>
+
+                        <!-- Portfolio Content (Hidden by default) -->
+                        <div id="portfolio-content" style="display: none;">
+                            <div class="mb-4">
+                                <h4 class="segment-title mb-2">
+                                    <i class="fas fa-briefcase"></i>
+                                    Product Portfolio (Segment-wise)
+                                    <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Specify your primary and secondary company tie-ups for each selected segment" style="font-size: 14px; cursor: help;"></i>
+                                </h4>
+                                <p class="text-muted small">For each segment, specify your primary and secondary company partnerships</p>
+                            </div>
+
+                            <!-- Dynamic Segment Containers -->
+                            <div id="segment-portfolios">
+                                <!-- Health, Life, etc. cards will be injected here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Additional Information -->
+                    <div class="form-step" id="step-4">
+                        <div class="step-header mb-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h4 class="step-title mb-1"><i class="fas fa-plus mr-2"></i>Additional</h4>
+                                    <p class="step-subtitle text-muted mb-0">Profile branding and digital presence</p>
+                                </div>
+                            </div>
+                        </div>
+
+
+
+                        <!-- Achievement Photos Section -->
+                        <div class="achievement-photos-section mb-5">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div class="d-flex align-items-center">
+                                    <h5 class="mb-0 mr-3"><i class="far fa-images mr-2"></i>Achievement Photos</h5>
+                                    <span class="badge badge-pill badge-primary-soft text-primary px-3 py-2" id="photo-count-badge" style="background-color: #e0f2fe; border: 1px solid #bae6fd;">0 uploaded</span>
+                                    <i class="fas fa-info-circle text-muted ml-2" data-toggle="tooltip" title="Upload achievement photos, awards, recognitions, etc. (Max 20MB each). Current plan limit: 5 (Starter) or 10 (Professional)." style="font-size: 14px; cursor: help;"></i>
+                                </div>
+                                <button type="button" class="btn btn-outline-primary btn-upload-achievements" id="trigger-achievement-upload">
+                                    <i class="fas fa-upload mr-2"></i>Upload
+                                </button>
+                                <input type="file" id="achievement-photos-input" name="achievement_photos[]" multiple accept="image/*" data-max-limit="{% if agent.activeSubscription and 'professional' in agent.activeSubscription.selected_plan|lower %}10{% else %}5{% endif %}" style="display: none;">
+                            </div>
+                            
+                            <!-- Photos Preview Area -->
+                            <div class="photos-preview-grid d-flex gap-3 flex-wrap" id="achievement-photos-preview">
+                                <!-- Placeholders if needed, or dynamically added -->
+                            </div>
+                        </div>
+
+                        <!-- Digital Presence Section -->
+                        <div class="digital-presence-section mb-5">
+                            <h5 class="mb-4"><i class="fas fa-globe mr-2"></i>Digital Presence (Optional) <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Links to your professional profiles to help customers find you online" style="font-size: 14px; cursor: help;"></i></h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label">Website</label>
+                                    <input type="text" class="form-control" name="website" value="{{ profile.website_url|default:'' }}" placeholder="www.yourwebsite.com">
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label">Google Business Profile</label>
+                                    <input type="url" class="form-control" name="google_business" value="{{ profile.social_links.google_business|default:'' }}" placeholder="Google Maps URL">
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label">LinkedIn</label>
+                                    <input type="url" class="form-control" name="linkedin_url" value="{{ profile.social_links.linkedin|default:'' }}" placeholder="LinkedIn profile URL">
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label">Instagram</label>
+                                    <input type="url" class="form-control" name="instagram_url" value="{{ profile.social_links.instagram|default:'' }}" placeholder="Instagram profile URL">
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label">Facebook</label>
+                                    <input type="url" class="form-control" name="facebook_url" value="{{ profile.social_links.facebook|default:'' }}" placeholder="Facebook page URL">
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label">YouTube</label>
+                                    <input type="url" class="form-control" name="youtube_url" value="{{ profile.social_links.youtube|default:'' }}" placeholder="YouTube channel URL">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Career Timeline Section -->
+                        <div class="career-timeline-section mb-5">
+                            <h5 class="mb-3"><i class="fas fa-history mr-2"></i>Career Timeline <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Add key milestones in your career" style="font-size: 14px; cursor: help;"></i></h5>
+                            
+                            <!-- Quick Start -->
+                            <div class="card bg-light border-0 mb-4">
+                                <div class="card-body">
+                                    <h6 class="text-success mb-2" style="color: #0d9488 !important;"><i class="fas fa-magic mr-2"></i>Quick Start</h6>
+                                    <p class="text-muted small mb-3">We recommend starting with when you began your insurance career:</p>
+                                    <div class="d-flex flex-wrap">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill mr-2 mb-2 quick-start-btn" data-type="Career Event" data-text="Started Insurance Career">Started Insurance Career</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill mr-2 mb-2 quick-start-btn" data-type="Certification" data-text="Obtained IRDAI License">Obtained IRDAI License</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill mb-2 quick-start-btn" data-type="Achievement" data-text="Top Performer Award">Top Performer Award</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Add Entry Form -->
+                            <div class="card border-0 shadow-sm mb-4">
+                                <div class="card-body p-3">
+                                    <div class="row align-items-end">
+                                        <div class="col-md-2 mb-3 mb-md-0">
+                                            <label class="form-label small text-muted">Month</label>
+                                            <select class="form-control" id="timeline-month" style="width: 100%;">
+                                                {% for m in months %}
+                                                    <option value="{{ m }}">{{ m }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2 mb-3 mb-md-0">
+                                            <label class="form-label small text-muted">Year</label>
+                                            <select class="form-control" id="timeline-year" style="width: 100%;">
+                                                {% for y in years_range %}
+                                                    <option value="{{ y }}">{{ y }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3 mb-3 mb-md-0">
+                                            <label class="form-label small text-muted">Type</label>
+                                            <select class="form-control" id="timeline-type" style="width: 100%;">
+                                                <option value="Career Event">Career Event</option>
+                                                <option value="Achievement">Achievement</option>
+                                                <option value="Certification">Certification</option>
+                                                <option value="Milestone">Milestone</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3 mb-3 mb-md-0">
+                                            <label class="form-label small text-muted">Event / Achievement</label>
+                                            <input type="text" class="form-control" id="timeline-text" placeholder="e.g., Started Insurance Career">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <button type="button" class="btn btn-success btn-block" id="add-timeline-btn" style="background-color: #0d9488; border-color: #0d9488;">
+                                                <i class="fas fa-plus mr-1"></i> Add
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Timeline List -->
+                            <div class="timeline-container px-2" id="timeline-list">
+                                {% if agent.careerTimelines.all %}
+                                    {% for timeline in agent.careerTimelines.all %}
+                                        <div class="timeline-item-row mb-3 p-3 bg-white border rounded shadow-sm position-relative" id="timeline-row-{{ forloop.counter0 }}">
+                                            <button type="button" class="btn btn-sm text-danger position-absolute top-0 right-0 mt-2 mr-2" onclick="removeTimelineItem({{ forloop.counter0 }})" style="right: 10px; top: 10px; z-index: 10; background: transparent; border: none;">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                            <div class="d-flex align-items-center">
+                                                <div class="timeline-date mr-4 text-center" style="min-width: 80px;">
+                                                    <span class="d-block font-weight-bold text-dark">{{ timeline.year }}</span>
+                                                    <small class="text-muted">{{ timeline.month }}</small>
+                                                </div>
+                                                <div class="timeline-content border-left pl-4 border-primary" style="border-left-color: #0d9488 !important;">
+                                                    <span class="badge badge-pill badge-light mb-1 border">{{ timeline.event_type }}</span>
+                                                    <h6 class="mb-0 text-dark">{{ timeline.event_text }}</h6>
+                                                </div>
+                                            </div>
+                                            <input type="hidden" name="career_timelines[{{ forloop.counter0 }}][month]" value="{{ timeline.month }}">
+                                            <input type="hidden" name="career_timelines[{{ forloop.counter0 }}][year]" value="{{ timeline.year }}">
+                                            <input type="hidden" name="career_timelines[{{ forloop.counter0 }}][type]" value="{{ timeline.event_type }}">
+                                            <input type="hidden" name="career_timelines[{{ forloop.counter0 }}][event_text]" value="{{ timeline.event_text }}">
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="text-center py-5 text-muted empty-state">
+                                        <i class="far fa-calendar-alt fa-3x mb-3 text-light-gray" style="opacity: 0.3;"></i>
+                                        <p class="mb-1">No timeline entries yet</p>
+                                        <small>Start by adding when you began your insurance career</small>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Professional Bio Section -->
+                        <div class="career-highlights-section mb-4">
+                            <h5 class="mb-3"><i class="fas fa-ribbon mr-2"></i>Professional Bio <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Share notable achievements, awards (like MDRT/COT/TOT), and milestones" style="font-size: 14px; cursor: help;"></i></h5>
+                            <textarea class="form-control" name="career_highlights" rows="5" maxlength="500" placeholder="Share your achievements, recognitions, and career milestones..." oninput="document.getElementById('bio-counter').innerText = this.value.length + '/500 characters'">{{ profile.career_highlights|default:'' }}</textarea>
+                            <small class="text-muted d-block text-right mt-1" id="bio-counter">0/500 characters</small>
+                        </div>
+                    </div>
+
+                    <!-- Lead Preferences Modal -->
+                    <div class="modal fade" id="leadPreferencesModal" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="leadPreferencesModalLabel" style="z-index: 1050;">
+                        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+                            <div class="modal-content" style="border-radius: 1.5rem; overflow: hidden; border: none; box-shadow: 0 20px 50px rgba(0,0,0,0.15);">
+                                <div class="modal-header border-0 bg-light px-4 py-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary-light p-2 rounded-circle mr-3" style="background: rgba(13, 148, 136, 0.1); color: #0d9488; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-pen" style="font-size: 16px;"></i>
+                                        </div>
+                                        <h5 class="modal-title font-weight-bold mb-0" id="leadPreferencesModalLabel">Lead Preferences</h5>
+                                    </div>
+                                    <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close" style="font-size: 2rem; line-height: 1; background: transparent; border: none;">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body px-4 py-3 bg-white" style="max-height: 70vh; overflow-y: auto;">
+                                    <div class="mb-2">
+                                        <h4 class="step-title mb-1" style="font-size: 18px;">
+                                            <i class="fas fa-chart-line text-success mr-2"></i>Configure Lead Preferences
+                                            <i class="fas fa-info-circle text-muted" data-toggle="tooltip" title="Choose the customer leads you want to receive. Higher tier leads require verified experience." style="font-size: 14px; cursor: help;"></i>
+                                        </h4>
+                                        <p class="text-muted small mb-0">Configure the types of leads you want to receive (some require minimum experience).</p>
+                                    </div>
+
+                                    <div class="lead-preferences-container">
+                                        <!-- New Business Leads (All Agents) -->
+                                        <div class="lead-preference-card" id="lead-new-business">
+                                            <div class="lead-card-header">
+                                                <div class="lead-info">
+                                                    <div class="lead-icon">
+                                                        <i class="fas fa-users"></i>
+                                                    </div>
+                                                    <div class="lead-content">
+                                                        <h6>
+                                                            New Business Leads 
+                                                            <span class="lead-badge badge-all ml-2">All Agents</span>
+                                                            <i class="fas fa-info-circle text-muted ml-1" data-toggle="tooltip" title="Inquiries from new customers looking for insurance policies" style="font-size: 13px; cursor: help;"></i>
+                                                        </h6>
+                                                    </div>
+                                                </div>
+                                                <div class="lead-switch">
+                                                    <label class="lead-toggle">
+                                                        <input type="checkbox" name="lead_types[]" value="new_business" {% if agent.leadPreferences.leads_new_business|default:True %}checked{% endif %}>
+                                                        <span class="toggle-slider"></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="lead-card-body">
+                                                <p class="lead-desc mb-0">Receive leads from customers looking for new insurance policies</p>
+                                            </div>
+                                        </div>
+
+                                        <!-- Portfolio Analysis Leads (5+ Years) -->
+                                        <div class="lead-preference-card locked" id="lead-portfolio">
+                                            <div class="lead-card-header">
+                                                <div class="lead-info">
+                                                    <div class="lead-icon">
+                                                        <i class="fas fa-chart-line"></i>
+                                                    </div>
+                                                    <div class="lead-content">
+                                                        <h6>
+                                                            Portfolio Analysis Leads 
+                                                            <span class="lead-badge badge-experience-locked ml-2">5+ Years Experience</span>
+                                                            <i class="fas fa-lock text-muted mx-1" style="font-size: 13px;"></i>
+                                                            <i class="fas fa-info-circle text-muted ml-1" data-toggle="tooltip" title="Requests for comprehensive insurance portfolio reviews and gap analysis" style="font-size: 13px; cursor: help;"></i>
+                                                        </h6>
+                                                    </div>
+                                                </div>
+                                                <div class="lead-switch">
+                                                    <label class="lead-toggle">
+                                                        <input type="checkbox" name="lead_types[]" value="portfolio_analysis" class="lead-type-toggle" {% if agent.leadPreferences.leads_portfolio_analysis %}checked{% endif %}>
+                                                        <span class="toggle-slider"></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="lead-card-body">
+                                                <p class="lead-desc mb-0">Receive leads from customers seeking portfolio review services</p>
+                                                <div class="lock-requirement experience-needed-text">
+                                                    <i class="fas fa-lock"></i> Requires <span class="years-left">5</span> more year(s) of experience to unlock
+                                                </div>
+
+                                                <!-- Portfolio Charging Preference -->
+                                                <div class="lead-charging-details" id="portfolio-charging" style="display: none;">
+                                                    <p class="charging-title">Charging Preference</p>
+                                                    <div class="charging-options">
+                                                        <label class="charging-option mb-0">
+                                                            <input type="radio" name="portfolio_charging" value="free" {% if agent.leadPreferences.portfolio_charging|default:'free' == 'free' %}checked{% endif %}>
+                                                            <span>Free consultation</span>
+                                                        </label>
+                                                        <div>
+                                                            <label class="charging-option mb-0">
+                                                                <input type="radio" name="portfolio_charging" value="conditional" {% if agent.leadPreferences.portfolio_charging == 'conditional' %}checked{% endif %}>
+                                                                <span>Free if policy purchased (Otherwise Consultation Fee)</span>
+                                                            </label>
+                                                            <div class="inline-input-group mt-2 portfolio-fee-input" style="display: none;">
+                                                                <span>Consultation Fee: ₹</span>
+                                                                <input type="number" class="charging-input" name="portfolio_fee_conditional" value="{% if agent.leadPreferences.portfolio_charging == 'conditional' %}{{ agent.leadPreferences.portfolio_fee|floatformat:0 }}{% endif %}" placeholder="Enter amount" min="0" oninput="if(this.value < 0) this.value = 0;">
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <label class="charging-option mb-0">
+                                                                <input type="radio" name="portfolio_charging" value="paid" {% if agent.leadPreferences.portfolio_charging == 'paid' %}checked{% endif %}>
+                                                                <span>Paid consultation</span>
+                                                            </label>
+                                                            <div class="inline-input-group mt-2 portfolio-fee-input" style="display: none;">
+                                                                <span>Consultation Fee: ₹</span>
+                                                                <input type="number" class="charging-input" name="portfolio_fee_paid" value="{% if agent.leadPreferences.portfolio_charging == 'paid' %}{{ agent.leadPreferences.portfolio_fee|floatformat:0 }}{% endif %}" placeholder="Enter amount" min="0" oninput="if(this.value < 0) this.value = 0;">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Claims Support Leads (10+ Years) -->
+                                        <div class="lead-preference-card locked" id="lead-claims">
+                                            <div class="lead-card-header">
+                                                <div class="lead-info">
+                                                    <div class="lead-icon">
+                                                        <i class="fas fa-shield-alt"></i>
+                                                    </div>
+                                                    <div class="lead-content">
+                                                        <h6>
+                                                            Claims Support Leads 
+                                                            <span class="lead-badge badge-experience-locked ml-2">10+ Years Experience</span>
+                                                            <i class="fas fa-lock text-muted mx-1" style="font-size: 13px;"></i>
+                                                            <i class="fas fa-info-circle text-muted ml-1" data-toggle="tooltip" title="High-priority leads for customers needing help with insurance claim settlements" style="font-size: 13px; cursor: help;"></i>
+                                                        </h6>
+                                                    </div>
+                                                </div>
+                                                <div class="lead-switch">
+                                                    <label class="lead-toggle">
+                                                        <input type="checkbox" name="lead_types[]" value="claims_support" class="lead-type-toggle" {% if agent.leadPreferences.leads_claims_support %}checked{% endif %}>
+                                                        <span class="toggle-slider"></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="lead-card-body">
+                                                <p class="lead-desc mb-0">Receive leads from customers needing claims assistance</p>
+                                                <div class="lock-requirement experience-needed-text">
+                                                    <i class="fas fa-lock"></i> Requires <span class="years-left">10</span> more year(s) of experience to unlock
+                                                </div>
+
+                                                <!-- Claims Charging Preference -->
+                                                <div class="lead-charging-details" id="claims-charging" style="display: none;">
+                                                    <p class="charging-title">Charging Preference</p>
+                                                    <div class="charging-options">
+                                                        <label class="charging-option mb-0">
+                                                            <input type="radio" name="claims_charging" value="free" {% if agent.leadPreferences.claims_charging|default:'free' == 'free' %}checked{% endif %}>
+                                                            <span>Free consultation</span>
+                                                        </label>
+                                                        <div>
+                                                            <label class="charging-option mb-0">
+                                                                <input type="radio" name="claims_charging" value="fee" {% if agent.leadPreferences.claims_charging == 'fee' %}checked{% endif %}>
+                                                                <span>Consultation Fee</span>
+                                                            </label>
+                                                            <div class="inline-input-group mt-2" id="claims-fee-input" style="display: none;">
+                                                                <span>Consultation Fee: ₹</span>
+                                                                <input type="number" class="charging-input" name="claims_fee_amount" value="{% if agent.leadPreferences.claims_charging == 'fee' %}{{ agent.leadPreferences.claims_fee_amount|floatformat:0 }}{% endif %}" placeholder="Enter amount" min="0" oninput="if(this.value < 0) this.value = 0;">
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <label class="charging-option mb-0">
+                                                                <input type="radio" name="claims_charging" value="percentage" {% if agent.leadPreferences.claims_charging == 'percentage' %}checked{% endif %}>
+                                                                <span>% of Claim Amount</span>
+                                                            </label>
+                                                            <div class="inline-input-group mt-2" id="claims-percentage-input" style="display: none;">
+                                                                <input type="number" class="charging-input" name="claims_percent" value="{% if agent.leadPreferences.claims_charging == 'percentage' %}{{ agent.leadPreferences.claims_percent|floatformat:0 }}{% endif %}" placeholder="Enter %" min="0" max="10" oninput="if(this.value < 0) this.value = 0; if(this.value > 10) this.value = 10;">
+                                                                <span>% (max 10%)</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer border-0 px-4 py-3 bg-light">
+                                    <button type="button" class="btn btn-link text-muted font-weight-bold" id="btn-modal-cancel" style="background: transparent; border: none; outline: none; text-decoration: none;">Cancel / Go Back</button>
+                                    <button type="button" class="btn btn-primary rounded-pill px-5 py-2 shadow-sm" id="btn-modal-save" style="background: #0d9488; border: none; font-weight: 700;">Save & Continue</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Declarations Modal -->
+                    <div class="modal fade" id="declarationsModal" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="declarationsModalLabel" style="z-index: 1050;">
+                        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+                            <div class="modal-content" style="border-radius: 1.5rem; overflow: hidden; border: none; box-shadow: 0 20px 50px rgba(0,0,0,0.15);">
+                                <div class="modal-header border-0 bg-light px-4 py-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary-light p-2 rounded-circle mr-3" style="background: rgba(13, 148, 136, 0.1); color: #0d9488;">
+                                            <i class="far fa-check-circle"></i>
+                                        </div>
+                                        <h5 class="modal-title font-weight-bold mb-0" id="declarationsModalLabel">Declarations & Consent</h5>
+                                    </div>
+                                    <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close" style="font-size: 2rem; line-height: 1; background: transparent; border: none;">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body px-4 py-3 bg-white" style="max-height: 70vh; overflow-y: auto;">
+                                    
+                                    <div class="declaration-warning mb-3" style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 15px; color: #92400e; font-size: 13px; display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-exclamation-triangle" style="flex-shrink: 0;"></i>
+                                        <span>By proceeding, you acknowledge that you have read and understood all the terms below.</span>
+                                    </div>
+
+                                    <ul class="mb-4 pl-4 text-muted" style="font-size: 13.5px; line-height: 1.6; list-style-type: disc;">
+                                        <li class="mb-1">All information provided is self-declared and accurate to the best of my knowledge</li>
+                                        <li class="mb-1">Leads are not guaranteed and depend on customer preferences and search criteria</li>
+                                        <li class="mb-1">PadosiAgent is a facilitation platform only and does not guarantee any business</li>
+                                        <li class="mb-1">PadosiAgent does not charge any commission on policies sold or claims processed</li>
+                                        <li class="mb-1">Any disputes shall be subject to the jurisdiction of courts in Ahmedabad, Gujarat</li>
+                                    </ul>
+
+                                    <label class="agree-checkbox-wrapper mb-0" for="final-agree" style="display: flex; align-items: center; cursor: pointer; gap: 12px; margin-top: 10px; padding: 0;">
+                                        <input type="checkbox" id="final-agree" name="final_declaration" style="display: none;" {% if agent.status == 'pending' or agent.status == 'active' %}checked{% endif %}>
+                                        <div class="custom-checkbox {% if agent.status == 'pending' or agent.status == 'active' %}checked{% endif %}"></div>
+                                        <span class="agree-text font-weight-bold text-dark" style="font-size: 14px;">
+                                            I have read, understood, and agree to all the above declarations and the 
+                                            <a href="#" style="color: #0d9488;">Terms of Service</a> and <a href="#" style="color: #0d9488;">Privacy Policy</a>
+                                        </span>
+                                    </label>
+                                    <div id="declaration-error" class="text-danger small mt-2" style="display: none; padding-left: 36px; font-weight: 500;">
+                                        <i class="fas fa-exclamation-circle mr-1"></i> Please check the agreement to continue.
+                                    </div>
+
+                                    <div class="mt-3 p-2.5 rounded-lg" style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 12px; border-radius: 8px;">
+                                        <p class="text-success small mb-0 d-flex align-items-center" style="font-size: 12px; color: #15803d;">
+                                            <i class="fas fa-info-circle mr-2"></i>
+                                            Your profile will be reviewed by our team within 24-48 hours.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="modal-footer border-0 px-4 py-3 bg-light">
+                                    <button type="button" class="btn btn-link text-muted font-weight-bold" id="btn-declarations-cancel" style="background: transparent; border: none; outline: none; text-decoration: none;">Cancel / Go Back</button>
+                                    <button type="button" class="btn btn-success btn-submit rounded-pill px-5 py-2 shadow-sm" id="btn-declarations-submit" style="background: #0d9488; border: none; font-weight: 700;">
+                                        <i class="fas fa-check mr-2"></i>Submit Profile
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <div class="form-navigation mt-5 d-flex justify-content-between">
+                        <button type="button" class="btn btn-outline-secondary btn-prev" id="prev-btn" style="display: none;">
+                            <i class="fas fa-arrow-left mr-2"></i>Previous
+                        </button>
+                        <div class="ml-auto d-flex gap-2">
+                            <button type="button" class="btn btn-primary btn-next" id="next-btn" style="background-color: #0d9488; border-color: #0d9488;">
+                                Next<i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                            <button type="button" class="btn btn-success btn-submit" id="submit-btn" style="display: none; background-color: #0d9488; border-color: #0d9488;">
+                                <i class="fas fa-check mr-2"></i>Submit Profile
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Profile Photo Crop Modal -->
+<div class="modal fade" id="cropModal" tabindex="-1" role="dialog" style="z-index: 1051;">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" style="border-radius: 1.5rem; overflow: hidden; border: none; box-shadow: 0 20px 50px rgba(0,0,0,0.15);">
+            <div class="modal-header border-0 bg-light p-4">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary-light p-2 rounded-circle mr-3" style="background: rgba(13, 148, 136, 0.1); color: #0d9488;">
+                        <i class="fas fa-crop-alt"></i>
+                    </div>
+                    <h5 class="modal-title font-weight-bold mb-0">Adjust Your Photo</h5>
+                </div>
+                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close" style="font-size: 2rem; line-height: 1; background: transparent; border: none;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="img-container" style="background: #111; text-align: center; max-height: 400px;">
+                    <img id="image-to-crop" style="max-width: 100%;">
+                </div>
+                <div class="p-4 bg-white">
+                    <p class="text-center text-muted mb-0 small">
+                        <i class="fas fa-arrows-alt mr-1"></i> Drag to center & zoom to fit the circle perfectly
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer border-0 p-4 bg-light">
+                <button type="button" class="btn btn-link text-muted font-weight-bold" data-dismiss="modal" data-bs-dismiss="modal" style="background: transparent; border: none; text-decoration: none;">Cancel</button>
+                <button type="button" class="btn btn-primary rounded-pill px-5 py-2 shadow-sm" id="cropBtn" style="background: #0d9488; border: none; font-weight: 700;">Save & Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!-- Cropper JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+
+<script>
+jQuery(document).ready(function($) {
+    let currentStep = 1;
+    const totalSteps = 4;
+
+    const selectedSegmentsFromDb = [{% for segment in agent.insuranceSegments.all %}"{{ segment.segment_type|lower|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}];
+    
+    const prevBtn = $('#prev-btn');
+    const nextBtn = $('#next-btn');
+    const submitBtn = $('#submit-btn');
+    const previewBtn = $('#preview-btn');
+
+    // --- Optimized Profile Photo Management (Antigravity v3) ---
+    var pg_cropper = null;
+    var pg_croppedBlob = null;
+    var pg_cropModal = $('#cropModal');
+    var pg_imageToCrop = document.getElementById('image-to-crop');
+    var pg_cropBtn = document.getElementById('cropBtn');
+    var pg_photoCircle = $('.photo-circle');
+    var pg_photoInput = $('#profile-photo');
+
+    function pg_renderPhoto(url) {
+        pg_photoCircle.find('i').hide();
+        pg_photoCircle.find('img').remove();
+        pg_photoCircle.append(`<img src="${url}" alt="Profile Photo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`);
+        pg_photoCircle.addClass('has-image');
+        pg_photoCircle.css({'border-style': 'solid', 'background-color': 'white'});
+    }
+
+    pg_photoInput.on('change', function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            alert('Please select an image file.');
+            return;
+        }
+        
+        var reader = new FileReader();
+        reader.onload = function(event) {
+            pg_imageToCrop.src = event.target.result;
+            pg_cropModal.modal('show');
+        };
+        reader.readAsDataURL(file);
+    });
+
+    pg_cropModal.on('shown.bs.modal', function() {
+        if (pg_cropper) pg_cropper.destroy();
+        pg_cropper = new Cropper(pg_imageToCrop, {
+            aspectRatio: 1,
+            viewMode: 1,
+            dragMode: 'move',
+            autoCropArea: 1,
+            restore: false,
+            guides: true,
+            center: true,
+            highlight: false,
+            cropBoxMovable: false,
+            cropBoxResizable: false,
+            toggleDragModeOnDblclick: false,
+        });
+    });
+
+    pg_cropModal.on('hidden.bs.modal', function() {
+        if (pg_cropper) { pg_cropper.destroy(); pg_cropper = null; }
+        pg_photoInput.val(''); // Allow re-selecting same file
+    });
+
+    pg_cropBtn.addEventListener('click', function() {
+        if (!pg_cropper) return;
+        var canvas = pg_cropper.getCroppedCanvas({ width: 500, height: 500 });
+        canvas.toBlob(function(blob) {
+            pg_croppedBlob = blob;
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                pg_renderPhoto(e.target.result);
+                pg_cropModal.modal('hide');
+                if (typeof Swal !== 'undefined') {
+                    Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 }).fire({ icon: 'success', title: 'Photo adjusted' });
+                }
+            };
+            reader.readAsDataURL(blob);
+        });
+    });
+
+    // Lead Preferences Unlock Logic
+    function updateLeadLocks() {
+        const experience = parseInt($('#experience-input').val()) || 0;
+        
+        // Portfolio Analysis (5+ Years)
+        const portfolioCard = $('#lead-portfolio');
+        const portfolioSwitch = portfolioCard.find('input');
+        const portfolioYearsLeft = portfolioCard.find('.years-left');
+        
+        if (experience >= 5) {
+            portfolioCard.removeClass('locked');
+            portfolioSwitch.prop('disabled', false);
+            portfolioCard.find('.lock-requirement').html('<i class="fas fa-unlock text-success"></i> Unlocked');
+            portfolioCard.find('.fa-lock').removeClass('fa-lock').addClass('fa-unlock').addClass('text-success');
+        } else {
+            portfolioCard.addClass('locked');
+            portfolioSwitch.prop('disabled', true).prop('checked', false);
+            const needed = 5 - experience;
+            portfolioCard.find('.lock-requirement').html('<i class="fas fa-lock"></i> Requires ' + needed + ' more year(s) of experience to unlock');
+            portfolioCard.find('.fa-unlock').removeClass('fa-unlock').addClass('fa-lock').removeClass('text-success');
+        }
+
+        // Claims Support (10+ Years)
+        const claimsCard = $('#lead-claims');
+        const claimsSwitch = claimsCard.find('input');
+        
+        if (experience >= 10) {
+            claimsCard.removeClass('locked');
+            claimsSwitch.prop('disabled', false);
+            claimsCard.find('.lock-requirement').html('<i class="fas fa-unlock text-success"></i> Unlocked');
+            claimsCard.find('.fa-lock').removeClass('fa-lock').addClass('fa-unlock').addClass('text-success');
+        } else {
+            claimsCard.addClass('locked');
+            claimsSwitch.prop('disabled', true).prop('checked', false);
+            const needed = 10 - experience;
+            claimsCard.find('.lock-requirement').html('<i class="fas fa-lock"></i> Requires ' + needed + ' more year(s) of experience to unlock');
+            claimsCard.find('.fa-unlock').removeClass('fa-unlock').addClass('fa-lock').removeClass('text-success');
+        }
+    }
+
+    $('#experience-input').on('input change', updateLeadLocks);
+    
+    // Initial check
+    updateLeadLocks();
+
+    // Copy PAN to Clipboard for IRDAI Button
+    window.copyPanToClipboard = function() {
+        const panInput = document.getElementById('pan_number');
+        if (panInput && panInput.value) {
+            const pan = panInput.value.trim();
+            if (pan) {
+                navigator.clipboard.writeText(pan).then(() => {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.mixin({
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 2000,
+                            timerProgressBar: true
+                        }).fire({
+                            icon: 'success',
+                            title: 'PAN Number copied: ' + pan
+                        });
+                    }
+                }).catch(err => {
+                    console.error('Failed to copy PAN: ', err);
+                });
+            }
+        }
+    };
+
+    // Smooth Scroll Helper inside the Modal Body
+    function smoothScrollToTarget($target) {
+        const $modalBody = $('#leadPreferencesModal .modal-body');
+        if ($modalBody.length === 0 || $target.length === 0) return;
+        
+        const containerScrollTop = $modalBody.scrollTop();
+        const $card = $target.closest('.lead-preference-card');
+        const scrollDest = $card.position().top + containerScrollTop - 10;
+        
+        $modalBody.stop().animate({ scrollTop: scrollDest }, 350);
+    }
+
+    // Lead Charging Details Toggle
+    $('.lead-type-toggle').on('change', function() {
+        const type = $(this).val();
+        const chargingDiv = type === 'portfolio_analysis' ? $('#portfolio-charging') : $('#claims-charging');
+        
+        if ($(this).is(':checked')) {
+            chargingDiv.slideDown(300, function() {
+                smoothScrollToTarget(chargingDiv);
+            });
+        } else {
+            chargingDiv.slideUp(250);
+        }
+    });
+
+    // Portfolio Charging Option Toggle
+    $('input[name="portfolio_charging"]').on('change', function() {
+        const val = $(this).val();
+        const $feeInputs = $('.portfolio-fee-input');
+        const $selectedInput = $(this).closest('div').find('.portfolio-fee-input');
+        
+        if (val === 'conditional' || val === 'paid') {
+            $feeInputs.not($selectedInput).slideUp(200);
+            $selectedInput.slideDown(300, function() {
+                smoothScrollToTarget($selectedInput);
+            });
+        } else {
+            $feeInputs.slideUp(200);
+        }
+    });
+
+    // Claims Charging Option Toggle
+    $('input[name="claims_charging"]').on('change', function() {
+        const val = $(this).val();
+        const $feeInput = $('#claims-fee-input');
+        const $percentInput = $('#claims-percentage-input');
+        
+        if (val === 'fee') {
+            $percentInput.slideUp(200);
+            $feeInput.slideDown(300, function() {
+                smoothScrollToTarget($feeInput);
+            });
+        } else if (val === 'percentage') {
+            $feeInput.slideUp(200);
+            $percentInput.slideDown(300, function() {
+                smoothScrollToTarget($percentInput);
+            });
+        } else {
+            $feeInput.slideUp(200);
+            $percentInput.slideUp(200);
+        }
+    });
+
+    // Initial check for charging details
+    $('.lead-type-toggle').each(function() {
+        const type = $(this).val();
+        const chargingDiv = type === 'portfolio_analysis' ? $('#portfolio-charging') : $('#claims-charging');
+        if ($(this).is(':checked') && !$(this).is(':disabled')) {
+            chargingDiv.show();
+        } else {
+            chargingDiv.hide();
+        }
+    });
+
+    // Initial check for charging options without scroll animation
+    const activePortfolioCharging = $('input[name="portfolio_charging"]:checked').val();
+    if (activePortfolioCharging === 'conditional' || activePortfolioCharging === 'paid') {
+        $('input[name="portfolio_charging"]:checked').closest('div').find('.portfolio-fee-input').show();
+    }
+    const activeClaimsCharging = $('input[name="claims_charging"]:checked').val();
+    if (activeClaimsCharging === 'fee') {
+        $('#claims-fee-input').show();
+    } else if (activeClaimsCharging === 'percentage') {
+        $('#claims-percentage-input').show();
+    }
+
+    function showStep(step) {
+        // Hide all steps
+        $('.form-step').removeClass('active');
+        
+        // Show current step
+        $(`#step-${step}`).addClass('active');
+        
+        // Update step indicators
+        $('.step-item').removeClass('active');
+        $(`#step-${step}`).addClass('active');
+        
+        // Refresh checkmarks based on actual data
+        $('.step-item').removeClass('completed');
+        checkStepCompletion();
+        
+        // Ensure current step is active and NOT marked completed even if it has data
+        const currentStepIndicator = $(`.step-item[data-step="${step}"]`);
+        currentStepIndicator.addClass('active').removeClass('completed');
+        
+        // Update buttons
+        if (prevBtn.length) prevBtn.toggle(step !== 1);
+        if (nextBtn.length) nextBtn.toggle(true);
+        if (submitBtn.length) submitBtn.hide();
+        
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Fix Select2 layout if entering Step 2
+        if (parseInt(step) === 2) {
+            if ($.fn.select2) {
+                $('#serviceable-cities').select2({
+                    placeholder: "Search or add cities...",
+                    tags: true,
+                    width: '100%'
+                });
+            }
+        }
+
+        // Fix Select2 layout if entering Step 4
+        if (parseInt(step) === 4) {
+            if ($.fn.select2) {
+                $('#timeline-month, #timeline-year, #timeline-type').select2({
+                    minimumResultsForSearch: Infinity,
+                    width: '100%'
+                });
+            }
+        }
+    }
+
+    function validateStep(step) {
+        let isValid = true;
+        const currentStepEl = step === 6 ? $('#leadPreferencesModal') : $(`#step-${step}`);
+        
+        // Clear previous errors
+        currentStepEl.find('.is-invalid').removeClass('is-invalid');
+        currentStepEl.find('.invalid-feedback').remove();
+
+        const addError = (field, message) => {
+            const input = currentStepEl.find(`[name="${field}"]`);
+            input.addClass('is-invalid');
+            input.after(`<div class="invalid-feedback">${message}</div>`);
+            isValid = false;
+        };
+
+        if (step === 1) {
+            if (!$('[name="full_name"]').val()) addError('full_name', 'Full Name is required');
+            if (!$('[name="mobile"]').val()) addError('mobile', 'Mobile Number is required');
+            if (!$('[name="email"]').val()) addError('email', 'Email is required');
+            if (!$('[name="languages"]').val()) {
+                $('#language-dropdown-toggle').addClass('is-invalid');
+                $('#language-dropdown-toggle').after('<div class="invalid-feedback">At least one language is required</div>');
+                isValid = false;
+            }
+            if (!$('[name="address"]').val()) addError('address', 'Residence Address is required');
+        } else if (step === 2) {
+            if (!$('[name="service_pincode"]').val()) addError('service_pincode', 'Service Pincode is required');
+            if (!$('[name="serviceable_cities[]"]').val() || $('[name="serviceable_cities[]"]').val().length === 0) {
+                const select2 = $('#serviceable-cities').next('.select2-container');
+                select2.addClass('is-invalid-select2');
+                if (select2.next('.invalid-feedback').length === 0) {
+                    select2.after('<div class="invalid-feedback d-block">At least one city is required</div>');
+                }
+                isValid = false;
+            }
+            if (!$('[name="experience_years"]').val()) addError('experience_years', 'Years of Experience is required');
+            if (!$('[name="client_base"]').val()) addError('client_base', 'Client Base is required');
+
+            // PAN Validation
+            const pan = $('[name="pan"]').val().trim();
+
+            if (!pan) {
+                isValid = false;
+                $('[name="pan"]').addClass('is-invalid');
+                if ($('#step-2 .pan-license-error').length === 0) {
+                    $('[name="pan"]').after('<div class="invalid-feedback d-block pan-license-error">PAN Number is required for IRDAI verification</div>');
+                }
+            } else {
+                // Validate PAN Format
+                const panRegex = /[A-Z]{5}[0-9]{4}[A-Z]{1}/;
+                if (!panRegex.test(pan)) {
+                    addError('pan', 'Please enter a valid PAN Number format (e.g., ABCDE1234F)');
+                    isValid = false;
+                }
+            }
+            
+            // Validate Claim Stats
+            const processed = parseInt($('#claims_processed').val()) || 0;
+            const settled = parseInt($('#claims_settled').val()) || 0;
+            if (settled > processed && processed > 0) {
+                addError('claims_settled', 'Settled claims cannot exceed processed claims');
+                $('#success_rate').addClass('is-invalid');
+            } else if (settled > 0 && processed === 0) {
+                addError('claims_processed', 'Processed claims are required if claims were settled');
+                $('#success_rate').addClass('is-invalid');
+            }
+
+            // Final check on the calculated rate itself
+            if ($('#success_rate').val() === 'Error') {
+                isValid = false;
+                $('#success_rate').addClass('is-invalid');
+                if ($('#success_rate').next('.invalid-feedback').length === 0) {
+                    $('#success_rate').after('<div class="invalid-feedback">Cannot proceed with invalid claim statistics.</div>');
+                }
+            }
+        } else if (step === 3) {
+            // Validate that each selected segment has a primary company
+            selectedSegmentsFromDb.forEach(function(segment) {
+                const primaryCompanyField = $(`[name="portfolio[${segment}][primary_company]"]`);
+                const primaryCompany = primaryCompanyField.val();
+                if (!primaryCompany) {
+                    primaryCompanyField.addClass('is-invalid');
+                    isValid = false;
+                }
+            });
+            if (!isValid) {
+                if ($('#step-3 .invalid-feedback-main').length === 0) {
+                    $('#portfolio-content').prepend('<div class="alert alert-danger invalid-feedback-main">Please select a primary company for each segment</div>');
+                }
+            } else {
+                $('.invalid-feedback-main').remove();
+            }
+        } else if (step === 6) {
+            if ($('input[name="lead_types[]"]:checked').length === 0) {
+                $('.lead-preferences-container').parent().find('.invalid-feedback').remove();
+                $('.lead-preferences-container').after('<div class="invalid-feedback d-block">Please select at least one lead preference</div>');
+                isValid = false;
+            }
+        }
+
+        if (!isValid) {
+            const firstError = currentStepEl.find('.is-invalid, .is-invalid-select2').first();
+            if (firstError.length) {
+                $('html, body').animate({
+                    scrollTop: firstError.offset().top - 100
+                }, 500);
+            }
+        }
+
+        return isValid;
+    }
+
+    function saveStepData(step, customBtn) {
+        return new Promise((resolve) => {
+            const btn = customBtn || $('#next-btn');
+            const originalText = btn.html();
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+
+            const formData = new FormData($('#edit-profile-form')[0]);
+            
+            // Map visual steps to backend steps
+            let backendStep = step;
+            if (step === 3) backendStep = 4;
+            else if (step === 4) backendStep = 5;
+            else if (step === 5) backendStep = 7;
+            
+            formData.append('current_step', backendStep);
+            
+            // Add cropped profile photo if exists
+            if (typeof pg_croppedBlob !== 'undefined' && pg_croppedBlob) {
+                formData.append('profile_photo', pg_croppedBlob, 'profile_photo.jpg');
+            }
+
+            // Add achievement photos if we have any pending in memory
+            if (selectedAchievementPhotos.length > 0) {
+                 selectedAchievementPhotos.forEach((file, index) => {
+                    formData.append(`achievement_photos`, file);
+                });
+            }
+
+            if (IS_ADMIN_VIEW) {
+                formData.append('agent_id', ADMIN_AGENT_ID);
+            }
+
+            $.ajax({
+                url: SUBMIT_PROFILE_URL,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+                },
+                success: function(response) {
+                    btn.prop('disabled', false).html(originalText);
+
+                    if (step === 1 && response.profile_photo_url) {
+                        var pUrl = `${response.profile_photo_url}?v=${Date.now()}`;
+                        if (typeof pg_renderPhoto === 'function') pg_renderPhoto(pUrl);
+                    }
+
+                    if (step === 5) {
+                        // Clear the temporary array after successful save to prevent duplicates
+                        selectedAchievementPhotos = [];
+                        if (typeof renderAchievementPhotos === 'function') {
+                            renderAchievementPhotos();
+                        }
+                    }
+
+                    resolve(true);
+                },
+                error: function(xhr) {
+                    btn.prop('disabled', false).html(originalText);
+                    
+                    if (xhr.status === 422) {
+                        const errors = xhr.responseJSON.errors;
+                        let errorMsg = 'Please fix the validation errors.';
+                        
+                        // If we have specific error messages, use the first one
+                        const firstError = Object.values(errors)[0];
+                        if (firstError) {
+                            errorMsg = Array.isArray(firstError) ? firstError[0] : firstError;
+                        }
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Validation Failed',
+                            text: errorMsg,
+                            confirmButtonColor: '#0d9488'
+                        });
+                        
+                        // Highlight fields
+                        Object.keys(errors).forEach(field => {
+                            $(`[name="${field}"]`).addClass('is-invalid');
+                        });
+                        
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Failed to save progress.',
+                            confirmButtonColor: '#0d9488'
+                        });
+                    }
+                    resolve(false);
+                }
+            });
+        });
+    }
+
+    nextBtn.on('click', function() {
+        if (validateStep(currentStep)) {
+            // Save data before moving to next step
+            saveStepData(currentStep).then(function(success) {
+                if (success) {
+                    // Mark current step as completed in header
+                    $(`.step-item[data-step="${currentStep}"]`).addClass('completed');
+                    
+                    if (currentStep === 2) {
+                        // Show Lead Preferences popup modal
+                        $('#leadPreferencesModal').modal('show');
+                    } else if (currentStep === 4) {
+                        // Show Declarations popup modal
+                        $('#declarationsModal').modal('show');
+                    } else if (currentStep < totalSteps) {
+                        currentStep++;
+                        showStep(currentStep);
+                    }
+                }
+            });
+        }
+    });
+
+    prevBtn.on('click', function() {
+        if (currentStep > 1) {
+            currentStep--;
+            showStep(currentStep);
+        }
+    });
+
+    // Lead Preferences Modal Actions
+    $('#btn-modal-cancel').on('click', function() {
+        $('#leadPreferencesModal').modal('hide');
+    });
+
+    $('#btn-modal-save').on('click', function() {
+        if (validateStep(6)) {
+            saveStepData(6, $('#btn-modal-save')).then(function(success) {
+                if (success) {
+                    $('#leadPreferencesModal').modal('hide');
+                    // Move to Step 3
+                    currentStep = 3;
+                    showStep(currentStep);
+                }
+            });
+        }
+    });
+
+    // Step item click navigation with restriction
+    $('.step-item').on('click', function() {
+        const targetStep = parseInt($(this).attr('data-step'));
+        
+        // Allow going back or staying on same step
+        if (targetStep <= currentStep) {
+            currentStep = targetStep;
+            showStep(currentStep);
+            return;
+        }
+
+        // Check if all MANDATORY steps between current and target are completed
+        const mandatorySteps = [1, 2, 3];
+        let blockedStep = null;
+
+        for (let s = 1; s < targetStep; s++) {
+            if (mandatorySteps.includes(s) && !$(`.step-item[data-step="${s}"]`).hasClass('completed')) {
+                blockedStep = s;
+                break;
+            }
+        }
+
+        if (blockedStep === null) {
+            if (targetStep === currentStep + 1) {
+                nextBtn.trigger('click');
+            } else {
+                currentStep = targetStep;
+                showStep(currentStep);
+            }
+        }
+    });
+
+    // WhatsApp "Same as Mobile" Logic
+    $('#same-as-mobile').on('change', function() {
+        const mobileInput = $('input[name="mobile"]');
+        const whatsappInput = $('input[name="whatsapp"]');
+        
+        if($(this).is(':checked')) {
+            whatsappInput.val(mobileInput.val());
+            whatsappInput.prop('readonly', true);
+        } else {
+            whatsappInput.prop('readonly', false);
+        }
+    });
+
+    // Update WhatsApp if mobile changes while checkbox is checked
+    $('input[name="mobile"]').on('input', function() {
+        if($('#same-as-mobile').is(':checked')) {
+            $('input[name="whatsapp"]').val($(this).val());
+        }
+    });
+
+    // Declarations Modal Actions
+    $('#btn-declarations-cancel').on('click', function() {
+        $('#declarationsModal').modal('hide');
+    });
+
+    $('#btn-declarations-submit').on('click', function(e) {
+        e.preventDefault();
+        
+        // Final Declaration Check
+        if (!$('#final-agree').is(':checked')) {
+            if (typeof Swal !== 'undefined') {
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true,
+                    width: 'auto'
+                });
+                Toast.fire({
+                    icon: 'error',
+                    title: 'Please agree to the declarations'
+                });
+            } else {
+                alert('Please check the agreement to continue.');
+            }
+            
+            // Show inline error
+            $('#declaration-error').fadeIn();
+            
+            // Highlight and shake the checkbox
+            const wrapper = $('.agree-checkbox-wrapper');
+            wrapper.addClass('shake-element');
+            setTimeout(() => wrapper.removeClass('shake-element'), 500);
+            
+            return false;
+        }
+
+        // Performance Stats Validation Check
+        if ($('#claims_processed').hasClass('is-invalid') || $('#claims_settled').hasClass('is-invalid')) {
+             if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Statistics',
+                    text: 'Please correct the Claims Processed and Settled values before submitting.'
+                });
+            } else {
+                alert('Please correct the Claims Processed and Settled values before submitting.');
+            }
+            return false;
+        }
+
+        $('#declaration-error').hide();
+
+        // Show Loading State
+        const btn = $(this);
+        const originalText = btn.html();
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...');
+
+        // Prepare Form Data
+        const formData = new FormData($('#edit-profile-form')[0]);
+        formData.append('current_step', 7);
+
+        // Add cropped profile photo if exists
+        if (typeof pg_croppedBlob !== 'undefined' && pg_croppedBlob) {
+            formData.append('profile_photo', pg_croppedBlob, 'profile_photo.jpg');
+        }
+
+        // Add achievement photos
+        if (typeof selectedAchievementPhotos !== 'undefined') {
+            selectedAchievementPhotos.forEach((file, index) => {
+                formData.append(`achievement_photos`, file);
+            });
+        }
+
+        if (IS_ADMIN_VIEW) {
+            formData.append('agent_id', ADMIN_AGENT_ID);
+        }
+
+        // AJAX Submission
+        $.ajax({
+            url: SUBMIT_PROFILE_URL,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(response) {
+                if (response.status === 'success') {
+                    if (response.profile_photo_url) {
+                        var pUrl = `${response.profile_photo_url}?v=${Date.now()}`;
+                        if (typeof pg_renderPhoto === 'function') pg_renderPhoto(pUrl);
+                    }
+
+                    // Mark visual step 4 as completed
+                    $(`.step-item[data-step="4"]`).addClass('completed');
+                    
+                    $('#declarationsModal').modal('hide');
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Profile Under Review!',
+                        text: response.message,
+                        confirmButtonColor: '#0d9488'
+                    }).then(() => {
+                        window.location.href = response.redirect || "{% url 'agents:agent_dashboard' %}";
+                    });
+                }
+            },
+            error: function(xhr) {
+                btn.prop('disabled', false).html(originalText);
+                let message = 'Something went wrong. Please try again.';
+                
+                if (xhr.status === 422) {
+                    const errors = xhr.responseJSON.errors;
+                    message = 'Please fix the validation errors.';
+                    const firstError = errors ? Object.values(errors)[0] : null;
+                    if (firstError) {
+                        message = Array.isArray(firstError) ? firstError[0] : firstError;
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Validation Failed',
+                        text: message,
+                        confirmButtonColor: '#0d9488'
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: xhr.responseJSON ? xhr.responseJSON.message : message,
+                        confirmButtonColor: '#0d9488'
+                    });
+                }
+            }
+        });
+    });
+
+    // Hide error when user checks the box
+    $('#final-agree').on('change', function() {
+        const customCheck = $(this).siblings('.custom-checkbox');
+        if ($(this).is(':checked')) {
+            $('#declaration-error').fadeOut();
+            customCheck.addClass('checked');
+        } else {
+            customCheck.removeClass('checked');
+        }
+    });
+
+    // Accessibility: Fix Chrome aria-hidden console error on active modal descendants
+    $('#declarationsModal, #leadPreferencesModal, #cropModal').on('show.bs.modal', function () {
+        $(this).removeAttr('aria-hidden');
+    });
+    $('#declarationsModal, #leadPreferencesModal, #cropModal').on('hidden.bs.modal', function () {
+        $(this).attr('aria-hidden', 'true');
+    });
+
+    // Initialize tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+
+    // Initialize
+    showStep(currentStep);
+
+    // Global navigation function for empty state button
+    window.goToStep = function(step) {
+        currentStep = step;
+        showStep(currentStep);
+    };
+
+    // Segment Change Logic for Step 4
+    const segmentPortfoliosContainer = $('#segment-portfolios');
+    const portfolioEmptyState = $('#portfolio-empty-state');
+    const portfolioContent = $('#portfolio-content');
+
+    const segmentLabels = {
+        'health': 'Health Insurance',
+        'life': 'Life Insurance',
+        'motor': 'Motor Insurance',
+        'sme': 'SME Insurance'
+    };
+
+    const companiesHealth = [
+        'Aditya Birla Health Insurance Co. Limited',
+        'Care Health Insurance Ltd. (formerly Religare Health Insurance)',
+        'Galaxy Health and Allied Insurance Company Limited',
+        'ManipalCigna Health Insurance Company Limited',
+        'Niva Bupa Health Insurance Company Limited (formerly Max Bupa)',
+        'Reliance Health Insurance Ltd.',
+        'Star Health & Allied Insurance Co. Ltd. (India\'s first standalone health insurer)',
+        'Narayana Health Insurance Company Limited',
+        'Acko General Insurance Limited',
+        'Agriculture Insurance Company of India Limited',
+        'Bajaj General Insurance Limited',
+        'Cholamandalam MS General Insurance Company Limited',
+        'ECGC Limited',
+        'Generali Central Insurance Company Limited',
+        'Go Digit General Insurance Limited',
+        'HDFC ERGO General Insurance Company Limited',
+        'ICICI LOMBARD General Insurance Company Limited',
+        'IFFCO TOKIO General Insurance Company Limited',
+        'Zurich Kotak General Insurance Company Limited',
+        'Kshema General Insurance Limited',
+        'Liberty General Insurance Limited',
+        'Magma General Insurance Limited',
+        'National Insurance Company Limited',
+        'Navi General Insurance Limited',
+        'Raheja QBE General Insurance Co. Ltd.',
+        'Reliance General Insurance Company Limited',
+        'Royal Sundaram General Insurance Company Limited',
+        'SBI General Insurance Company Limited',
+        'Shriram General Insurance Company Limited',
+        'Tata AIG General Insurance Company Limited',
+        'The New India Assurance Company Limited',
+        'The Oriental Insurance Company Limited',
+        'United India Insurance Company Limited',
+        'Universal Sompo General Insurance Company Limited',
+        'Zuna General Insurance Ltd.'
+    ];
+
+    const companiesLife = [
+        'Life Insurance Corporation of India',
+        'Axis Max Life Insurance Limited',
+        'HDFC Life Insurance Company Limited',
+        'ICICI Prudential Life Insurance Company Limited',
+        'Kotak Mahindra Life Insurance Company Limited',
+        'Aditya Birla SunLife Insurance Company Limited',
+        'TATA AIA Life Insurance Company Limited',
+        'SBI Life Insurance Company Limited',
+        'Bajaj Life Insurance Limited',
+        'PNB MetLife India Insurance Company Limited',
+        'Reliance Nippon Life Insurance Company Limited',
+        'Aviva Life Insurance Company India Limited',
+        'Sahara India Life Insurance Company Limited',
+        'Shriram Life Insurance Company Limited',
+        'Bharti AXA Life Insurance Company Limited',
+        'Generali Central Life Insurance Company Limited',
+        'Ageas Federal Life Insurance Company Limited',
+        'Canara HSBC Life Insurance Company Limited',
+        'Bandhan Life Insurance Limited',
+        'Pramerica Life Insurance Company Limited',
+        'Star Union Dai-Ichi Life Insurance Company Limited',
+        'IndiaFirst Life Insurance Company Limited',
+        'Edelweiss Life Insurance Company Limited',
+        'CreditAccess Life Insurance Limited',
+        'Acko Life Insurance Limited',
+        'Go Digit Life Insurance Limited'
+    ];
+
+    const companiesGeneral = [
+        'Acko General Insurance Limited',
+        'Agriculture Insurance Company of India Limited',
+        'Bajaj General Insurance Limited',
+        'Cholamandalam MS General Insurance Company Limited',
+        'ECGC Limited',
+        'Generali Central Insurance Company Limited',
+        'Go Digit General Insurance Limited',
+        'HDFC ERGO General Insurance Company Limited',
+        'ICICI LOMBARD General Insurance Company Limited',
+        'IFFCO TOKIO General Insurance Company Limited',
+        'Zurich Kotak General Insurance Company Limited',
+        'Kshema General Insurance Limited',
+        'Liberty General Insurance Limited',
+        'Magma General Insurance Limited',
+        'National Insurance Company Limited',
+        'Navi General Insurance Limited',
+        'Raheja QBE General Insurance Co. Ltd.',
+        'Reliance General Insurance Company Limited',
+        'Royal Sundaram General Insurance Company Limited',
+        'SBI General Insurance Company Limited',
+        'Shriram General Insurance Company Limited',
+        'Tata AIG General Insurance Company Limited',
+        'The New India Assurance Company Limited',
+        'The Oriental Insurance Company Limited',
+        'United India Insurance Company Limited',
+        'Universal Sompo General Insurance Company Limited',
+        'Zuna General Insurance Ltd.'
+    ];
+
+    const segmentCompanies = {
+        health: companiesHealth,
+        life: companiesLife,
+        motor: companiesGeneral,
+        sme: companiesGeneral
+    };
+
+    function updatePortfolioStep() {
+        const selectedSegments = typeof selectedSegmentsFromDb !== 'undefined' ? selectedSegmentsFromDb : [];
+        
+        // Pre-check segment toggles based on selectedSegments
+        $('.segment-db-toggle').prop('checked', false);
+        selectedSegments.forEach(function(segmentValue) {
+            $(`#db_segment_${segmentValue}`).prop('checked', true);
+        });
+        
+        // Manually trigger styling for checkbox states
+        $('.segment-db-toggle').each(function() {
+            const isChecked = $(this).is(':checked');
+            const label = $(this).siblings('label');
+            const icon = label.find('i');
+            const span = label.find('span');
+            if (isChecked) {
+                label.css({
+                    'background-color': '#f0fdfa',
+                    'border-color': '#0d9488',
+                    'border-width': '1px',
+                    'box-shadow': '0 4px 12px rgba(13, 148, 136, 0.08), 0 0 0 3px rgba(13, 148, 136, 0.15)'
+                });
+                icon.removeClass('text-muted').css('color', '#0d9488');
+                span.css('color', '#0d9488');
+            } else {
+                label.css({
+                    'background-color': '#ffffff',
+                    'border-color': '#e2e8f0',
+                    'border-width': '1px',
+                    'box-shadow': '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03)'
+                });
+                icon.addClass('text-muted').css('color', '');
+                span.css('color', '#475569');
+            }
+        });
+
+        if (selectedSegments.length === 0) {
+            portfolioEmptyState.show();
+            portfolioContent.hide();
+        } else {
+            portfolioEmptyState.hide();
+            portfolioContent.show();
+            
+            // For each selected segment, ensure a card exists
+            selectedSegments.forEach(function(segmentValue) {
+                if ($(`#portfolio-card-${segmentValue}`).length === 0) {
+                    addPortfolioCard(segmentValue);
+                }
+            });
+            
+            // Remove cards for unselected segments
+            $('.portfolio-card').each(function() {
+                const cardId = $(this).attr('id');
+                const segmentValue = cardId.replace('portfolio-card-', '');
+                if (!selectedSegments.includes(segmentValue)) {
+                    $(this).remove();
+                }
+            });
+        }
+    }
+
+    // Segment Selector Interaction (Always Visible)
+    $(document).on('change', '.segment-db-toggle', function() {
+        const isChecked = $(this).is(':checked');
+        const segment = $(this).val();
+        const label = $(this).siblings('label');
+        const icon = label.find('i');
+        const span = label.find('span');
+        
+        if (isChecked) {
+            label.css({
+                'background-color': '#f0fdfa',
+                'border-color': '#0d9488',
+                'border-width': '1px',
+                'box-shadow': '0 4px 12px rgba(13, 148, 136, 0.08), 0 0 0 3px rgba(13, 148, 136, 0.15)'
+            });
+            icon.removeClass('text-muted').css('color', '#0d9488');
+            span.css('color', '#0d9488');
+            
+            // Add card if not present
+            if ($(`#portfolio-card-${segment}`).length === 0) {
+                addPortfolioCard(segment);
+            }
+            // Update selectedSegmentsFromDb to keep sync
+            if (!selectedSegmentsFromDb.includes(segment)) {
+                selectedSegmentsFromDb.push(segment);
+            }
+            // Show portfolio content wrapper
+            portfolioContent.show();
+            portfolioEmptyState.hide();
+        } else {
+            label.css({
+                'background-color': '#ffffff',
+                'border-color': '#e2e8f0',
+                'border-width': '1px',
+                'box-shadow': '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03)'
+            });
+            icon.addClass('text-muted').css('color', '');
+            span.css('color', '#475569');
+            
+            // Remove card
+            $(`#portfolio-card-${segment}`).remove();
+            // Update selectedSegmentsFromDb to keep sync
+            const idx = selectedSegmentsFromDb.indexOf(segment);
+            if (idx > -1) {
+                selectedSegmentsFromDb.splice(idx, 1);
+            }
+            
+            // If no segments are left checked, hide content and show empty state info
+            const checkedCount = $('.segment-db-toggle:checked').length;
+            if (checkedCount === 0) {
+                portfolioContent.hide();
+                portfolioEmptyState.show();
+            }
+        }
+    });
+
+    function addPortfolioCard(segment) {
+        segment = segment.toLowerCase();
+        const label = segmentLabels[segment] || segment.toUpperCase();
+        const companies = segmentCompanies[segment] || [];
+        const options = companies.map(c => `<option value="${c}">${c}</option>`).join('');
+        const cardHtml = `
+            <div class="portfolio-card mb-4 p-4 border rounded bg-white shadow-sm" id="portfolio-card-${segment}" style="border-radius: 14px !important;">
+                <h5 class="font-weight-bold text-dark mb-4 border-bottom pb-2" style="color: #0d9488 !important;"><i class="fas fa-folder-open mr-2"></i>${label}</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label font-weight-600">Primary Company Name *</label>
+                        <select class="form-control" name="portfolio[${segment}][primary_company]" required>
+                            <option value="">Select company...</option>
+                            ${options}
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label font-weight-600">Approx % of Business</label>
+                        <input type="number" class="form-control" name="portfolio[${segment}][primary_percent]" placeholder="e.g., 60" min="0" max="100">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label font-weight-600">Secondary Company Name</label>
+                        <select class="form-control" name="portfolio[${segment}][secondary_company]">
+                            <option value="">Select company...</option>
+                            ${options}
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label font-weight-600">Approx % of Business</label>
+                        <input type="number" class="form-control" name="portfolio[${segment}][secondary_percent]" placeholder="e.g., 25" min="0" max="100">
+                    </div>
+                </div>
+                <div class="company-rows" data-segment="${segment}"></div>
+                <div class="text-center mt-3">
+                    <button type="button" class="btn add-company-btn" data-segment="${segment}" style="background-color: #0d9488; border-color: #0d9488; color: #ffffff; font-size: 14px; font-weight: 600; padding: 8px 20px; border-radius: 8px;">
+                        <i class="fas fa-plus mr-1"></i>Add Company
+                    </button>
+                </div>
+            </div>
+        `;
+        segmentPortfoliosContainer.append(cardHtml);
+    }
+
+    function createCompanyRow(segment, rowIndex, companyName = '', companyPercent = '') {
+        const companies = segmentCompanies[segment] || [];
+        const options = companies.map(c => `<option value="${c}">${c}</option>`).join('');
+
+        return `
+            <div class="row company-row align-items-end" data-row-index="${rowIndex}">
+                <div class="col-md-5 mb-3">
+                    <label class="form-label font-weight-600">Additional Company Name</label>
+                    <select class="form-control company-name-input" name="portfolio[${segment}][companies_extra][${rowIndex}][name]">
+                        <option value="">Select company...</option>
+                        ${options}
+                    </select>
+                </div>
+                <div class="col-md-5 mb-3">
+                    <label class="form-label font-weight-600">Approx % of Business</label>
+                    <input type="number" class="form-control" name="portfolio[${segment}][companies_extra][${rowIndex}][percent]" placeholder="e.g., 10" min="0" max="100" value="${companyPercent || ''}">
+                </div>
+                <div class="col-md-2 mb-3 text-md-right text-center">
+                    <button type="button" class="btn btn-outline-danger btn-sm delete-company-btn" title="Delete company" style="height: 38px; width: 38px; border-radius: 8px;"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            </div>
+        `;
+    }
+
+    function addCompanyRow(segment, companyName = '', companyPercent = '') {
+        const card = $(`#portfolio-card-${segment}`);
+        const rowsContainer = card.find('.company-rows');
+        const rowIndex = rowsContainer.find('.company-row').length;
+        rowsContainer.append(createCompanyRow(segment, rowIndex, companyName, companyPercent));
+
+        const addedRow = rowsContainer.find('.company-row').last();
+        const companySelect = addedRow.find('.company-name-input');
+
+        if (companyName) {
+            const hasOption = companySelect.find('option').filter(function() {
+                return $(this).val() === companyName;
+            }).length > 0;
+
+            if (!hasOption) {
+                companySelect.append(`<option value="${companyName}">${companyName}</option>`);
+            }
+            companySelect.val(companyName);
+        }
+    }
+
+    function reindexCompanyRows(segment) {
+        const card = $(`#portfolio-card-${segment}`);
+        card.find('.company-row').each(function(index) {
+            $(this).attr('data-row-index', index);
+
+            const nameField = $(this).find('.company-name-input');
+            const percentField = $(this).find('input[name*="[percent]"]');
+
+            nameField.attr('name', `portfolio[${segment}][companies_extra][${index}][name]`);
+            percentField.attr('name', `portfolio[${segment}][companies_extra][${index}][percent]`);
+        });
+    }
+
+    $(document).on('click', '.add-company-btn', function() {
+        const segment = $(this).data('segment');
+        addCompanyRow(segment);
+    });
+
+    $(document).on('click', '.delete-company-btn', function() {
+        const card = $(this).closest('.portfolio-card');
+        const segment = card.attr('id').replace('portfolio-card-', '');
+        $(this).closest('.company-row').remove();
+        reindexCompanyRows(segment);
+    });
+
+    $(document).on('change', 'input[name="segments[]"]', function() {
+        updatePortfolioStep();
+    });
+
+    // Language Dropdown Functionality
+    const languageDropdownToggle = $('#language-dropdown-toggle');
+    const languageDropdownMenu = $('#language-dropdown-menu');
+
+    // Toggle dropdown
+    languageDropdownToggle.on('click', function(e) {
+        e.stopPropagation();
+        languageDropdownMenu.toggleClass('show');
+        $(this).toggleClass('active');
+    });
+
+    // Close dropdown when clicking outside
+    $(document).on('click', function(e) {
+        if (languageDropdownToggle.length && !languageDropdownToggle.is(e.target) && languageDropdownToggle.has(e.target).length === 0 && 
+            languageDropdownMenu.length && !languageDropdownMenu.is(e.target) && languageDropdownMenu.has(e.target).length === 0) {
+            languageDropdownMenu.removeClass('show');
+            languageDropdownToggle.removeClass('active');
+        }
+    });
+
+    // Add event listeners to all language checkboxes
+    $(document).on('change', '.language-option input[type="checkbox"]', function() {
+        toggleLanguage(this);
+    });
+
+    // Family Member Add/Remove Functionality
+    let familyMemberCount = 0;
+
+    $(document).on('click', '#add-family-member', function(e) {
+        e.preventDefault();
+        familyMemberCount++;
+        
+        const container = $('#family-members-container');
+        const headers = $('.family-member-headers');
+        
+        // Show headers when first member is added
+        if (container.children().length === 0) {
+            headers.fadeIn();
+        }
+        
+        const memberRow = createFamilyMemberRow(familyMemberCount);
+        const $row = $(memberRow).hide();
+        
+        if (container.length) {
+            container.append($row);
+            $row.fadeIn(400);
+            
+            if (container.children().length > 1) {
+                $('html, body').animate({
+                    scrollTop: $row.offset().top - 150
+                }, 500);
+            }
+        }
+    });
+
+    function createFamilyMemberRow(index) {
+        return `
+            <div class="family-member-row mb-3" data-index="${index}" style="background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; padding: 15px; transition: all 0.3s ease;">
+                <div class="row align-items-center">
+                    <div class="col-md-4 mb-3 mb-md-0">
+                        <label class="form-label d-md-none small font-weight-bold">Full Name</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-white border-right-0" style="border-top-right-radius: 0; border-bottom-right-radius: 0;"><i class="fas fa-user text-muted"></i></span>
+                            </div>
+                            <input type="text" class="form-control border-left-0" name="family_members[${index}][name]" placeholder="Name as per license">
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3 mb-md-0">
+                        <label class="form-label d-md-none small font-weight-bold">Relationship</label>
+                        <select class="form-control" name="family_members[${index}][relationship]">
+                            <option value="">Select...</option>
+                            <option value="father">Father</option>
+                            <option value="mother">Mother</option>
+                            <option value="spouse">Spouse</option>
+                            <option value="son">Son</option>
+                            <option value="daughter">Daughter</option>
+                            <option value="brother">Brother</option>
+                            <option value="sister">Sister</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3 mb-md-0">
+                        <label class="form-label d-md-none small font-weight-bold">PAN / License #</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-white border-right-0" style="border-top-right-radius: 0; border-bottom-right-radius: 0;"><i class="fas fa-id-card text-muted"></i></span>
+                            </div>
+                            <input type="text" class="form-control border-left-0" name="family_members[${index}][license]" placeholder="License number or PAN">
+                        </div>
+                    </div>
+                    <div class="col-md-1 text-right text-md-center">
+                        <button type="button" class="btn btn-sm btn-light text-danger shadow-sm remove-family-member" onclick="removeFamilyMember(${index})" style="width: 38px; height: 38px; border-radius: 10px;">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Achievement Photos Functionality
+    const achievementPhotosInput = $('#achievement-photos-input');
+    const triggerAchievementUpload = $('#trigger-achievement-upload');
+    const photosPreviewGrid = $('#achievement-photos-preview');
+    const photoCountBadge = $('#photo-count-badge');
+    const achievementPhotoMaxLimit = parseInt(achievementPhotosInput.data('max-limit'), 10) || 5;
+    let selectedAchievementPhotos = [];
+
+    if (triggerAchievementUpload.length) {
+        triggerAchievementUpload.on('click', function() {
+            achievementPhotosInput.click();
+        });
+    }
+
+    if (achievementPhotosInput.length) {
+        achievementPhotosInput.on('change', function(e) {
+            const files = Array.from(e.target.files);
+            let currentCount = photosPreviewGrid.find('.photo-preview-item').length;
+            const availableSlots = achievementPhotoMaxLimit - currentCount;
+
+            if (files.length > availableSlots) {
+                alert(`You can only upload ${availableSlots} more achievement photos. Extra photos will be skipped.`);
+            }
+
+            const filesToProcess = files.slice(0, availableSlots);
+
+            filesToProcess.forEach(file => {
+                if (!file.type.startsWith('image/')) return;
+                
+                if (file.size > 20 * 1024 * 1024) {
+                    alert(`File "${file.name}" exceeds 20MB limit and will be skipped.`);
+                    return;
+                }
+                
+                selectedAchievementPhotos.push(file);
+                currentCount++;
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const previewItem = `
+                        <div class="photo-preview-item" data-name="${file.name}">
+                            <img src="${event.target.result}" alt="Achievement Photo">
+                            <button type="button" class="remove-photo" onclick="removeAchievementPhoto('${file.name}')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    `;
+                    photosPreviewGrid.append(previewItem);
+                    updatePhotoCount();
+                };
+                reader.readAsDataURL(file);
+            });
+            achievementPhotosInput.val('');
+        });
+    }
+
+    window.removeAchievementPhoto = function(fileName) {
+        selectedAchievementPhotos = selectedAchievementPhotos.filter(f => f.name !== fileName);
+        $(`.photo-preview-item[data-name="${fileName}"]`).remove();
+        updatePhotoCount();
+    };
+
+    function updatePhotoCount() {
+        if (photoCountBadge.length) {
+            const count = photosPreviewGrid.find('.photo-preview-item').length;
+            photoCountBadge.text(`${count}/${achievementPhotoMaxLimit} uploaded`);
+
+            if (count >= achievementPhotoMaxLimit) {
+                photoCountBadge.removeClass('text-primary').addClass('text-danger');
+                photoCountBadge.css({ 'background-color': '#fee2e2', 'border-color': '#fecaca' });
+            } else {
+                photoCountBadge.removeClass('text-danger').addClass('text-primary');
+                photoCountBadge.css({ 'background-color': '#e0f2fe', 'border-color': '#bae6fd' });
+            }
+        }
+    }
+
+    // Safety: ensure loader mask is hidden
+    if (typeof $ !== 'undefined') {
+        $('.loader-mask').fadeOut();
+    }
+
+    if ($.fn.select2) {
+        $('#serviceable-cities').select2({
+            placeholder: "Search or add cities...",
+            tags: true, 
+            tokenSeparators: [',', ' '],
+            width: '100%'
+        });
+    }
+
+    // Initialize complex fields with existing data
+    if ($('#languages-input').val()) {
+        const selectedLangs = $('#languages-input').val().split(',');
+        selectedLangs.forEach(lang => {
+            const normalizedLang = String(lang || '').trim().toLowerCase();
+            const checkbox = $(`#lang-${normalizedLang}`);
+            if (checkbox.length) {
+                checkbox.prop('checked', true);
+                toggleLanguage(checkbox[0], { suppressToast: true });
+            }
+        });
+    }
+
+    // Populate Family Members
+    {% if agent.familyLicenses.all %}
+        {% for member in agent.familyLicenses.all %}
+            familyMemberCount++;
+            (function(index, name, rel, lic) {
+                if (index === 1) $('.family-member-headers').show();
+                const row = createFamilyMemberRow(index);
+                const $row = $(row);
+                $row.find('[name^="family_members"][name$="[name]"]').val(name);
+                $row.find('[name^="family_members"][name$="[relationship]"]').val(rel);
+                $row.find('[name^="family_members"][name$="[license]"]').val(lic);
+                $('#family-members-container').append($row);
+            })({{ forloop.counter }}, "{{ member.full_name|escapejs }}", "{{ member.relationship|escapejs }}", "{{ member.license_number|escapejs }}");
+        {% endfor %}
+    {% endif %}
+
+    // Populate Achievement Photos
+    {% if agent.achievementPhotos.all %}
+        {% for photo in agent.achievementPhotos.all %}
+            (function(url, id) {
+                const previewItem = `
+                    <div class="photo-preview-item" data-id="${id}">
+                        <img src="${url}" alt="Achievement Photo" onerror="this.onerror=null;this.src='{% static 'img/avatar-icon.jpg' %}';">
+                        <button type="button" class="remove-photo" onclick="removeExistingPhoto(${id}, this)">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                photosPreviewGrid.append(previewItem);
+            })("{{ photo.photo_url|escapejs }}", {{ photo.id }});
+        {% endfor %}
+        updatePhotoCount();
+    {% endif %}
+
+    window.removeExistingPhoto = function(id, btn) {
+        if (confirm('Are you sure you want to remove this photo?')) {
+            $(btn).closest('.photo-preview-item').remove();
+            $('#edit-profile-form').append(`<input type="hidden" name="remove_photos[]" value="${id}">`);
+            updatePhotoCount();
+        }
+    };
+
+    // Populate Portfolios
+    {% if agent.portfolios.all %}
+        {% for portfolio in agent.portfolios.all %}
+            (function(segment, primaryCompanies, secondaryCompanies) {
+                segment = segment.toLowerCase();
+                if ($(`#portfolio-card-${segment}`).length === 0) {
+                    addPortfolioCard(segment);
+                }
+
+                const card = $(`#portfolio-card-${segment}`);
+                card.find(`[name="portfolio[${segment}][primary_company]"]`).val((primaryCompanies && primaryCompanies.name) ? primaryCompanies.name : '');
+                card.find(`[name="portfolio[${segment}][primary_percent]"]`).val((primaryCompanies && primaryCompanies.percentage) ? primaryCompanies.percentage : '');
+                card.find(`[name="portfolio[${segment}][secondary_company]"]`).val((secondaryCompanies && secondaryCompanies.name) ? secondaryCompanies.name : '');
+                card.find(`[name="portfolio[${segment}][secondary_percent]"]`).val((secondaryCompanies && secondaryCompanies.percentage) ? secondaryCompanies.percentage : '');
+                card.find(`[name="portfolio[${segment}][other_companies]"]`).val((secondaryCompanies && secondaryCompanies.others) ? secondaryCompanies.others : '');
+
+                const rowsContainer = card.find('.company-rows');
+                rowsContainer.empty();
+
+                if (secondaryCompanies && Array.isArray(secondaryCompanies.companies) && secondaryCompanies.companies.length) {
+                    secondaryCompanies.companies.forEach(function(company, index) {
+                        if (index >= 2) {
+                            addCompanyRow(segment, company.name || '', company.percent || '');
+                        }
+                    });
+                }
+            })("{{ portfolio.segment_type|escapejs }}", {{ portfolio.primary_companies|default:"{}"|safe }}, {{ portfolio.secondary_companies|default:"{}"|safe }});
+        {% endfor %}
+    {% endif %}
+
+    // Check for completed steps on load
+    function checkStepCompletion() {
+        // Step 1: Basic Info
+        if ($('[name="full_name"]').val() && $('[name="mobile"]').val() && $('[name="email"]').val() && 
+            $('[name="languages"]').val() && $('[name="address"]').val()) {
+            markStepComplete(1);
+        }
+
+        // Step 2: Professional
+        if ($('[name="service_pincode"]').val() && 
+            ($('[name="serviceable_cities[]"]').val() && $('[name="serviceable_cities[]"]').val().length > 0) && 
+            $('[name="experience_years"]').val() && $('[name="client_base"]').val()) {
+            markStepComplete(2);
+        }
+
+        // Step 3: Portfolio
+        let step3Complete = false;
+        const portfolioCards = $('.portfolio-card');
+        if (portfolioCards.length > 0) {
+             let allFilled = true;
+             portfolioCards.each(function() {
+                  if (!$(this).find('[name$="[primary_company]"]').val()) {
+                      allFilled = false;
+                  }
+             });
+             if (allFilled) step3Complete = true;
+        } 
+        if (step3Complete) markStepComplete(3);
+
+        // Step 4: Additional
+        const hasTimelines = $('#timeline-list .timeline-item-row').length > 0;
+        const hasHighlights = $('[name="career_highlights"]').val() && $('[name="career_highlights"]').val().trim().length > 0;
+        const hasPhotos = $('.photo-preview-item').length > 0;
+        const hasSocial = $('[name="website"]').val() || $('[name="google_business"]').val() || 
+                           $('[name="linkedin_url"]').val() || $('[name="instagram_url"]').val();
+        
+        if (hasTimelines || hasHighlights || hasPhotos || hasSocial) {
+            markStepComplete(4);
+        }
+    }
+
+    function markStepComplete(step) {
+        $(`.step-item[data-step="${step}"]`).addClass('completed');
+    }
+
+    // Run completion check
+    checkStepCompletion();
+});
+</script>
+
+<script>
+// Language selection functions
+function normalizeLanguageValue(value) {
+    return String(value || '').trim().toLowerCase();
+}
+
+function showLanguageAlreadySelectedToast() {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: 'info',
+            title: 'Already selected',
+            text: 'This language is already added.',
+            timer: 1200,
+            showConfirmButton: false,
+            position: 'top-end',
+            toast: true
+        });
+    }
+}
+
+function toggleLanguage(checkbox, options) {
+    options = options || {};
+    const suppressToast = !!options.suppressToast;
+    const lang = normalizeLanguageValue(checkbox.value);
+    const label = checkbox.nextElementSibling;
+    const langName = label.querySelector('span').textContent;
+    const selectedLanguagesContainer = document.getElementById('selected-languages');
+    const icon = label.querySelector('i');
+    const existingTag = selectedLanguagesContainer.querySelector(`[data-lang="${lang}"]`);
+
+    if (checkbox.checked) {
+        if (!existingTag) {
+            const tag = document.createElement('span');
+            tag.className = 'language-tag';
+            tag.setAttribute('data-lang', lang);
+            tag.style = "background-color: #f0fdfa; border: 1px solid #bbf7d0; color: #0d9488; padding: 4px 10px; border-radius: 20px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; margin-right: 6px; margin-bottom: 6px;";
+            tag.innerHTML = `${langName} <i class="fas fa-times" onclick="removeLanguage('${lang}')" style="cursor:pointer; font-size: 11px;"></i>`;
+            selectedLanguagesContainer.appendChild(tag);
+        } else if (!suppressToast) {
+            showLanguageAlreadySelectedToast();
+        }
+        icon.className = 'fas fa-check-circle';
+    } else {
+        const tags = selectedLanguagesContainer.querySelectorAll(`[data-lang="${lang}"]`);
+        tags.forEach(function(tag) {
+            tag.remove();
+        });
+        if (!selectedLanguagesContainer.querySelector(`[data-lang="${lang}"]`)) {
+            icon.className = 'far fa-circle';
+        }
+    }
+    updateLanguageCount();
+}
+
+function removeLanguage(lang) {
+    const normalizedLang = normalizeLanguageValue(lang);
+    const checkbox = document.getElementById(`lang-${normalizedLang}`);
+    if (!checkbox) return;
+    
+    const label = checkbox.nextElementSibling;
+    const tag = document.querySelector(`[data-lang="${normalizedLang}"]`);
+    const icon = label.querySelector('i');
+    
+    checkbox.checked = false;
+    icon.className = 'far fa-circle';
+    
+    if (tag) {
+        tag.remove();
+    }
+    updateLanguageCount();
+}
+
+function updateLanguageCount() {
+    const selectedLanguagesContainer = document.getElementById('selected-languages');
+    const selectedCountSpan = document.getElementById('selected-count');
+    const languagesInput = document.getElementById('languages-input');
+    
+    const tags = Array.from(selectedLanguagesContainer.querySelectorAll('.language-tag'));
+    const uniqueLanguages = [];
+
+    tags.forEach(function(tag) {
+        const normalized = normalizeLanguageValue(tag.getAttribute('data-lang'));
+        if (!normalized) {
+            tag.remove();
+            return;
+        }
+        if (uniqueLanguages.includes(normalized)) {
+            tag.remove();
+            return;
+        }
+        uniqueLanguages.push(normalized);
+        tag.setAttribute('data-lang', normalized);
+    });
+
+    const count = uniqueLanguages.length;
+    selectedCountSpan.textContent = `${count} selected`;
+    
+    if (count > 0) {
+        selectedLanguagesContainer.style.display = 'flex';
+        selectedLanguagesContainer.classList.add('mb-2');
+    } else {
+        selectedLanguagesContainer.style.display = 'none';
+        selectedLanguagesContainer.classList.remove('mb-2');
+    }
+    languagesInput.value = uniqueLanguages.join(',');
+}
+
+function removeFamilyMember(index) {
+    const $memberRow = $(`.family-member-row[data-index="${index}"]`);
+    if ($memberRow.length) {
+        $memberRow.fadeOut(300, function() {
+            $(this).remove();
+            const $remainingMembers = $('.family-member-row');
+            const $familyMemberHeaders = $('.family-member-headers');
+            if ($remainingMembers.length === 0 && $familyMemberHeaders.length) {
+                $familyMemberHeaders.fadeOut();
+            }
+        });
+    }
+}
+
+// Career Timeline Logic
+let timelineIndex = {{ agent.careerTimelines.all.count|default:0 }};
+
+jQuery(document).ready(function($) {
+    $('.quick-start-btn').on('click', function() {
+        const type = $(this).data('type');
+        const text = $(this).data('text');
+        
+        $('#timeline-type').val(type).trigger('change');
+        $('#timeline-text').val(text);
+        $('#timeline-text').focus().select();
+    });
+
+    function updateTimelineMonthState() {
+        const selectedYear = parseInt($('#timeline-year').val());
+        const currentYear = new Date().getFullYear();
+        const currentMonth = new Date().getMonth(); // 0-indexed
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        
+        const $monthSelect = $('#timeline-month');
+        const selectedMonth = $monthSelect.val();
+        let firstAvailableMonth = null;
+
+        $monthSelect.find('option').each(function(index) {
+            if (selectedYear === currentYear && index > currentMonth) {
+                $(this).prop('disabled', true);
+            } else {
+                $(this).prop('disabled', false);
+                if (firstAvailableMonth === null) firstAvailableMonth = $(this).val();
+            }
+        });
+
+        if (selectedYear === currentYear && months.indexOf(selectedMonth) > currentMonth) {
+            $monthSelect.val(firstAvailableMonth).trigger('change');
+        }
+        
+        if ($.fn.select2 && $monthSelect.data('select2')) {
+            $monthSelect.select2({
+                minimumResultsForSearch: Infinity,
+                width: '100%'
+            });
+        }
+    }
+
+    $(document).on('change', '#timeline-year', function() {
+        updateTimelineMonthState();
+    });
+
+    setTimeout(updateTimelineMonthState, 500);
+
+    // Add Timeline Event
+    $('#add-timeline-btn').on('click', function() {
+        const month = $('#timeline-month').val();
+        const year = $('#timeline-year').val();
+        const type = $('#timeline-type').val();
+        const text = $('#timeline-text').val().trim();
+
+        if (!text) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Required',
+                text: 'Please enter an event or achievement description.',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000
+            });
+            return;
+        }
+
+        const currentYear = new Date().getFullYear();
+        const currentMonth = new Date().getMonth();
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const selectedMonthIndex = months.indexOf(month);
+        
+        if (parseInt(year) > currentYear || (parseInt(year) === currentYear && selectedMonthIndex > currentMonth)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid Date',
+                text: 'You cannot select a future date for your career timeline.',
+                confirmButtonColor: '#0d9488'
+            });
+            return;
+        }
+
+        let isDuplicate = false;
+        $('#timeline-list .timeline-item-row').each(function() {
+            const existingText  = $(this).find('input[name*="[event_text]"]').val()?.trim().toLowerCase();
+            const existingType  = $(this).find('input[name*="[type]"]').val()?.toLowerCase();
+            const existingYear  = $(this).find('input[name*="[year]"]').val();
+            const existingMonth = $(this).find('input[name*="[month]"]').val();
+
+            if (
+                existingText  === text.toLowerCase() &&
+                existingType  === type.toLowerCase() &&
+                existingYear  === year &&
+                existingMonth === month
+            ) {
+                isDuplicate = true;
+                return false;
+            }
+        });
+
+        if (isDuplicate) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Duplicate Entry',
+                text: 'This career event already exists for the selected month and year.',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3500
+            });
+            return;
+        }
+
+        $('#timeline-list .empty-state').hide();
+
+        const index = timelineIndex++;
+        
+        const newItem = `
+            <div class="timeline-item-row mb-3 p-3 bg-white border rounded shadow-sm position-relative" id="timeline-row-${index}" style="display:none;">
+                <button type="button" class="btn btn-sm text-danger position-absolute top-0 right-0 mt-2 mr-2" onclick="removeTimelineItem(${index})" style="right: 10px; top: 10px; z-index: 10; background: transparent; border: none;">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="d-flex align-items-center">
+                    <div class="timeline-date mr-4 text-center" style="min-width: 80px;">
+                        <span class="d-block font-weight-bold text-dark">{{ year }}</span>
+                        <small class="text-muted">${month}</small>
+                    </div>
+                    <div class="timeline-content border-left pl-4 border-primary" style="border-left-color: #0d9488 !important;">
+                        <span class="badge badge-pill badge-light mb-1 border">${type}</span>
+                        <h6 class="mb-0 text-dark">${text}</h6>
+                    </div>
+                </div>
+                <input type="hidden" name="career_timelines[${index}][month]" value="${month}">
+                <input type="hidden" name="career_timelines[${index}][year]" value="${year}">
+                <input type="hidden" name="career_timelines[${index}][type]" value="${type}">
+                <input type="hidden" name="career_timelines[${index}][event_text]" value="${text}">
+            </div>
+        `;
+
+        const $newItem = $(newItem);
+        $('#timeline-list').prepend($newItem);
+        $newItem.slideDown();
+        $('#timeline-text').val('');
+        updateTimelineButtonState();
+    });
+
+    // Number to Words (Indian System)
+    window.numToWordsIndian = function(number) {
+        if (number === "" || number === null) return "";
+        number = parseInt(number);
+        if (isNaN(number) || number === 0) return "";
+        if (number > 99999999999) return "Amount too large to display";
+        
+        const units = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+        const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+        
+        function convert_less_than_thousand(n) {
+            let res = "";
+            if (n >= 100) {
+                res += units[Math.floor(n / 100)] + " Hundred ";
+                n %= 100;
+            }
+            if (n >= 20) {
+                res += tens[Math.floor(n / 10)] + (n % 10 !== 0 ? " " + units[n % 10] : "");
+            } else if (n > 0) {
+                res += units[n];
+            }
+            return res.trim();
+        }
+
+        let res = "";
+        const crore = Math.floor(number / 10000000);
+        number %= 10000000;
+        
+        if (crore > 0) {
+            res += convert_less_than_thousand(crore) + " Crore ";
+        }
+
+        const lakh = Math.floor(number / 100000);
+        number %= 100000;
+        if (lakh > 0) res += convert_less_than_thousand(lakh) + " Lakh ";
+
+        const thousand = Math.floor(number / 1000);
+        number %= 1000;
+        if (thousand > 0) res += convert_less_than_thousand(thousand) + " Thousand ";
+
+        const remaining = number;
+        if (remaining > 0) {
+            if (res !== "") res += "and ";
+            res += convert_less_than_thousand(remaining);
+        }
+        
+        return res.trim() + " Rupees Only";
+    };
+
+    window.updateClaimsAmountWords = function(value) {
+        const display = document.getElementById('claims_amount_words');
+        if (!display) return;
+        if (!value) {
+            display.innerText = '';
+            return;
+        }
+        display.innerText = window.numToWordsIndian(value);
+    };
+
+    // Auto-calculate Claim Success Rate
+    $('#claims_processed, #claims_settled').on('input', function() {
+        const processed = parseInt($('#claims_processed').val()) || 0;
+        const settled = parseInt($('#claims_settled').val()) || 0;
+        const successRateField = $('#success_rate');
+
+        if (settled > processed && processed > 0) {
+            $(this).addClass('is-invalid');
+            successRateField.val('Error').addClass('is-invalid');
+        } else {
+            $('#claims_processed, #claims_settled, #success_rate').removeClass('is-invalid');
+            $('#claims_processed, #claims_settled, #success_rate').next('.invalid-feedback').remove();
+            
+            if (processed > 0) {
+                const rate = ((settled / processed) * 100).toFixed(2);
+                successRateField.val(rate + '%');
+            } else {
+                if (settled > 0) {
+                    successRateField.val('Error').addClass('is-invalid');
+                    $('#claims_settled').addClass('is-invalid');
+                } else {
+                    successRateField.val('0%');
+                }
+            }
+        }
+    });
+
+    if ($('#claims_processed').val() || $('#claims_settled').val()) {
+        $('#claims_processed').trigger('input');
+    }
+
+    if ($('#claims_amount').val()) {
+        updateClaimsAmountWords($('#claims_amount').val());
+    }
+});
+
+function removeTimelineItem(index) {
+    $(`#timeline-row-${index}`).slideUp(300, function() {
+        $(this).remove();
+        if ($('#timeline-list .timeline-item-row').length === 0) {
+            $('#timeline-list .empty-state').fadeIn();
+        }
+        updateTimelineButtonState();
+    });
+}
+
+function updateTimelineButtonState() {
+    const btn = $('#add-timeline-btn');
+    btn.prop('disabled', false);
+    btn.html('<i class="fas fa-plus mr-1"></i> Add');
+}
+</script>
+{% endblock %}

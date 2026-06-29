@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Security Alert: Suspicious Activity Detected</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; color: #334155; margin: 0; background-color: #f1f5f9; }
+        .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .header { background-color: #dc2626; padding: 30px; text-align: center; color: #ffffff; }
+        .header h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.5px; }
+        .content { padding: 40px; }
+        .welcome-text { font-size: 18px; font-weight: 600; color: #1e293b; margin-bottom: 20px; }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 9999px;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+        }
+        .status-badge.blocked {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        .status-badge.logged {
+            background-color: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fcd34d;
+        }
+
+        .details-container { background-color: #f8fafc; border-radius: 12px; padding: 25px; margin: 20px 0; border: 1px solid #e2e8f0; }
+        .detail-item { margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0; }
+        .detail-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+        .detail-label { font-weight: 600; color: #64748b; display: block; margin-bottom: 5px; font-size: 12px; text-transform: uppercase; }
+        .detail-value { color: #1e293b; font-weight: 500; font-size: 14px; word-break: break-all; }
+        .detail-value code { font-family: monospace; background-color: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #dc2626; font-size: 13px; }
+        
+        .payload-box {
+            background-color: #0f172a;
+            color: #38bdf8;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-top: 5px;
+            max-height: 200px;
+        }
+
+        .footer { padding: 30px; background-color: #f8fafc; text-align: center; font-size: 14px; color: #64748b; border-top: 1px solid #e2e8f0; }
+        .signature { margin-top: 20px; color: #475569; }
+    </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f1f5f9;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f1f5f9;">
+        <tr>
+            <td align="center" style="padding: 20px;">
+                <div class="container">
+                    <div class="header">
+                        <h1>⚠️ SECURITY ALERT</h1>
+                        <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Malicious Activity Detected on PadosiAgent</p>
+                    </div>
+                    <div class="content">
+                        <p class="welcome-text">Hello Admin,</p>
+                        
+                        <p>The Threat Monitor has intercepted a suspicious request matching security exploit signatures.</p>
+
+                        {% if threat.is_blocked %}
+                        <div class="status-badge blocked">🛡️ IP Auto-Blocked</div>
+                        {% else %}
+                        <div class="status-badge logged">⚠️ Threat Logged (Action Required)</div>
+                        {% endif %}
+
+                        <div class="details-container">
+                            <div class="detail-item">
+                                <span class="detail-label">IP Address</span>
+                                <span class="detail-value"><strong>{{ threat.ip_address }}</strong></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Event Type (Exploit Detection)</span>
+                                <span class="detail-value"><code>{{ threat.event_type }}</code></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Timestamp</span>
+                                <span class="detail-value">{{ threat.timestamp }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Attempted URL</span>
+                                <span class="detail-value"><code>{{ threat.url }}</code></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Hacker Profile</span>
+                                <span class="detail-value">{{ threat.hacker_name }} (Email: {{ threat.hacker_email|default:"N/A" }})</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Location / Geo-IP</span>
+                                <span class="detail-value">{{ threat.location }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">ISP Network</span>
+                                <span class="detail-value">{{ threat.isp }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">User Agent</span>
+                                <span class="detail-value">{{ threat.user_agent }}</span>
+                            </div>
+                            {% if threat.payload %}
+                            <div class="detail-item">
+                                <span class="detail-label">Request Payload</span>
+                                <div class="payload-box">{{ threat.payload }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="http://127.0.0.1:1233/admin/security/blocked-ips/" style="display: inline-block; background-color: #dc2626; color: #ffffff !important; padding: 15px 40px; border-radius: 8px; text-decoration: none; font-weight: 700;">Manage Blocked IPs</a>
+                        </div>
+                        
+                        <div class="signature">
+                            <p>Best regards,<br><strong>Security Grid | PadosiAgent</strong></p>
+                        </div>
+                    </div>
+                    <div class="footer">
+                        <p style="margin: 0;">&copy; 2026 PadosiAgent ServTech Private Limited. All rights reserved.</p>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

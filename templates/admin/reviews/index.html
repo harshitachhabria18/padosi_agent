@@ -1,0 +1,308 @@
+{% extends 'admin/layout.html' %}
+{% load static %}
+
+{% block title %}Review Moderation — PadosiAgent Admin{% endblock %}
+{% block breadcrumb %}Reviews & Ratings &rsaquo; Moderation{% endblock %}
+
+{% block content %}
+<!-- Stats Row -->
+<div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; margin-bottom: 32px;">
+    <div class="stat-card">
+        <div class="d-flex align-items-center gap-3">
+            <div style="width: 44px; height: 44px; background: #ecfdf5; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-star" style="color: #059669; font-size: 18px;"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ stats.total }}</div>
+                <div class="stat-label">Total Reviews</div>
+            </div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="d-flex align-items-center gap-3">
+            <div style="width: 44px; height: 44px; background: #fef3c7; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-clock" style="color: #d97706; font-size: 18px;"></i>
+            </div>
+            <div>
+                <div class="stat-value" style="color: #d97706;">{{ stats.pending }}</div>
+                <div class="stat-label">Pending Approval</div>
+            </div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="d-flex align-items-center gap-3">
+            <div style="width: 44px; height: 44px; background: #dcfce7; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-circle-check" style="color: #16a34a; font-size: 18px;"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ stats.approved }}</div>
+                <div class="stat-label">Approved</div>
+            </div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="d-flex align-items-center gap-3">
+            <div style="width: 44px; height: 44px; background: #fef9c3; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-star-half-stroke" style="color: #ca8a04; font-size: 18px;"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ stats.avg_rating }}<span style="font-size: 14px; color: #94a3b8;">/5</span></div>
+                <div class="stat-label">Avg Rating</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters & Bulk Actions -->
+<div class="card mb-4">
+    <div class="card-body py-3">
+        <form method="GET" action="{% url 'admin_panel:reviews_index' %}" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label text-muted" style="font-size: 12px;">Search</label>
+                <input type="text" class="form-control form-control-sm" name="search" value="{{ search }}" placeholder="Agent name, reviewer, review text...">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label text-muted" style="font-size: 12px;">Status</label>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="all" {% if statusFilter == 'all' %}selected{% endif %}>All</option>
+                    <option value="pending" {% if statusFilter == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="approved" {% if statusFilter == 'approved' %}selected{% endif %}>Approved</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label text-muted" style="font-size: 12px;">Rating</label>
+                <select name="rating" class="form-select form-select-sm">
+                    <option value="all" {% if ratingFilter == 'all' %}selected{% endif %}>All Stars</option>
+                    {% for i in stars_range %}
+                        <option value="{{ i }}" {% if ratingFilter == i|stringformat:"s" %}selected{% endif %}>{{ i }} Star{% if i > 1 %}s{% endif %}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary btn-sm w-100"><i class="fa-solid fa-filter me-1"></i>Filter</button>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-success btn-sm w-100" id="bulk-approve-btn" style="display: none;">
+                    <i class="fa-solid fa-check-double me-1"></i>Approve (<span id="selected-count">0</span>)
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Reviews Table -->
+<div class="card">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 fw-bold">Reviews ({{ reviews.paginator.count }})</h6>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="select-all">
+            <label class="form-check-label text-muted" style="font-size: 12px;">Select All</label>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th style="width: 30px;"></th>
+                    <th>Reviewer</th>
+                    <th>Agent</th>
+                    <th>Rating</th>
+                    <th>Review</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for review in reviews %}
+                <tr class="{% if not review.is_approved %}table-warning{% endif %}" style="{% if not review.is_approved %}background: #fffbeb;{% endif %}">
+                    <td>
+                        <input type="checkbox" class="form-check-input review-checkbox" value="{{ review.id }}">
+                    </td>
+                    <td>
+                        <div style="font-weight: 600; font-size: 13px;">{{ review.display_reviewer_name }}</div>
+                        {% if review.reviewer_email %}
+                            <div style="font-size: 11px; color: #64748b;">{{ review.reviewer_email }}</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if review.agent_id %}
+                            <a href="/admin/agents/manage/{{ review.agent_id }}/" style="font-weight: 600; font-size: 13px; color: var(--primary);">
+                                {{ review.display_agent_name }}
+                            </a>
+                        {% else %}
+                            <span class="text-muted" style="font-size: 13px;">{{ review.display_agent_name }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-1">
+                            <i class="fa-{% if review.rating >= 1 %}solid{% else %}regular{% endif %} fa-star" style="color: {% if review.rating >= 1 %}#f59e0b{% else %}#e2e8f0{% endif %}; font-size: 12px;"></i>
+                            <i class="fa-{% if review.rating >= 2 %}solid{% else %}regular{% endif %} fa-star" style="color: {% if review.rating >= 2 %}#f59e0b{% else %}#e2e8f0{% endif %}; font-size: 12px;"></i>
+                            <i class="fa-{% if review.rating >= 3 %}solid{% else %}regular{% endif %} fa-star" style="color: {% if review.rating >= 3 %}#f59e0b{% else %}#e2e8f0{% endif %}; font-size: 12px;"></i>
+                            <i class="fa-{% if review.rating >= 4 %}solid{% else %}regular{% endif %} fa-star" style="color: {% if review.rating >= 4 %}#f59e0b{% else %}#e2e8f0{% endif %}; font-size: 12px;"></i>
+                            <i class="fa-{% if review.rating >= 5 %}solid{% else %}regular{% endif %} fa-star" style="color: {% if review.rating >= 5 %}#f59e0b{% else %}#e2e8f0{% endif %}; font-size: 12px;"></i>
+                            <span style="font-size: 12px; font-weight: 700; margin-left: 4px;">{{ review.rating }}</span>
+                        </div>
+                    </td>
+                    <td style="font-size: 13px; max-width: 300px; color: #475569;">
+                        {{ review.review|truncatechars:120 }}
+                    </td>
+                    <td>
+                        {% if review.is_approved %}
+                            <span class="badge" style="background: #dcfce7; color: #16a34a; font-size: 11px;"><i class="fa-solid fa-check me-1"></i>Approved</span>
+                        {% else %}
+                            <span class="badge" style="background: #fef3c7; color: #92400e; font-size: 11px;"><i class="fa-solid fa-clock me-1"></i>Pending</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 12px; color: #64748b; white-space: nowrap;">
+                        {{ review.created_at|date:"d M Y" }}
+                    </td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            {% if not review.is_approved %}
+                                <button class="btn btn-sm btn-success toggle-review-btn" data-id="{{ review.id }}" data-status="1" title="Approve">
+                                    <i class="fa-solid fa-check"></i>
+                                </button>
+                            {% else %}
+                                <button class="btn btn-sm btn-warning toggle-review-btn" data-id="{{ review.id }}" data-status="0" title="Revoke">
+                                    <i class="fa-solid fa-ban"></i>
+                                </button>
+                            {% endif %}
+                            <button class="btn btn-sm btn-outline-danger delete-review-btn" data-id="{{ review.id }}" title="Delete">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-star fa-2x mb-2 d-block"></i> No reviews found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if reviews.has_other_pages %}
+    <div class="card-footer bg-white d-flex justify-content-center">
+        <nav>
+            <ul class="pagination mb-0">
+                {% if reviews.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ reviews.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if statusFilter %}&status={{ statusFilter }}{% endif %}{% if ratingFilter %}&rating={{ ratingFilter }}{% endif %}">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link"><i class="fa-solid fa-chevron-left"></i></span></li>
+                {% endif %}
+
+                {% for num in reviews.paginator.page_range %}
+                    {% if reviews.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if statusFilter %}&status={{ statusFilter }}{% endif %}{% if ratingFilter %}&rating={{ ratingFilter }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if reviews.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ reviews.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if statusFilter %}&status={{ statusFilter }}{% endif %}{% if ratingFilter %}&rating={{ ratingFilter }}{% endif %}">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link"><i class="fa-solid fa-chevron-right"></i></span></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Toggle approval
+$(document).on('click', '.toggle-review-btn', function() {
+    var $btn = $(this);
+    $.ajax({
+        url: '{% url "admin_panel:reviews_toggle_approval" %}',
+        method: 'POST',
+        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+        data: { id: $btn.data('id'), is_approved: $btn.data('status') },
+        success: function(res) {
+            if (res.success) {
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Review updated', showConfirmButton: false, timer: 1500 });
+                setTimeout(() => location.reload(), 800);
+            }
+        }
+    });
+});
+
+// Delete review
+$(document).on('click', '.delete-review-btn', function() {
+    var $btn = $(this);
+    Swal.fire({
+        title: 'Delete this review?',
+        text: 'This action cannot be undone.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        confirmButtonText: 'Delete'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '{% url "admin_panel:reviews_delete" %}',
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                data: { id: $btn.data('id') },
+                success: function(res) {
+                    if (res.success) {
+                        $btn.closest('tr').fadeOut();
+                        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Review deleted', showConfirmButton: false, timer: 1500 });
+                    }
+                }
+            });
+        }
+    });
+});
+
+// Select All
+$('#select-all').on('change', function() {
+    $('.review-checkbox').prop('checked', $(this).is(':checked'));
+    updateBulkBtn();
+});
+
+$(document).on('change', '.review-checkbox', updateBulkBtn);
+
+function updateBulkBtn() {
+    var count = $('.review-checkbox:checked').length;
+    $('#selected-count').text(count);
+    $('#bulk-approve-btn').toggle(count > 0);
+}
+
+// Bulk Approve
+$('#bulk-approve-btn').on('click', function() {
+    var ids = [];
+    $('.review-checkbox:checked').each(function() { ids.push($(this).val()); });
+    if (ids.length === 0) return;
+
+    $.ajax({
+        url: '{% url "admin_panel:reviews_bulk_approve" %}',
+        method: 'POST',
+        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+        data: { ids: ids },
+        success: function(res) {
+            if (res.success) {
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: res.count + ' reviews approved', showConfirmButton: false, timer: 1500 });
+                setTimeout(() => location.reload(), 800);
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

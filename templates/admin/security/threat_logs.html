@@ -1,0 +1,277 @@
+{% extends 'admin/layout.html' %}
+{% load static %}
+
+{% block title %}Security Threat Intelligence — PadosiAgent Admin{% endblock %}
+{% block breadcrumb %}Security &rsaquo; Threat Logs{% endblock %}
+
+{% block extra_css %}
+<style>
+    .avatar-sm { width: 32px; height: 32px; }
+    .badge { font-weight: 500; font-size: 11px; }
+    .small { font-size: 13px; }
+    code { color: #d63384; font-size: 11px; }
+    .btn-sm { padding: .25rem .5rem; }
+    .table thead th {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        padding: 12px 16px;
+        background: var(--bg-table-header);
+        border-bottom: 1px solid var(--border-color);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="m-0"><i class="fa-solid fa-bug-slash text-danger me-2"></i> Security Threat Intelligence</h4>
+                <p class="text-muted small mb-0">Real-time monitoring of malicious payloads and hacker profiles.</p>
+            </div>
+            <a href="{% url 'admin_panel:security_blocked_ips' %}" class="btn btn-outline-danger">
+                <i class="fa-solid fa-shield-halved me-1"></i> Manage Blocked IPs
+            </a>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold">Recent Threat Detections</h6>
+                <span class="badge bg-danger">{{ threatLogs.paginator.count|default:0 }} Total Events</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Detected At</th>
+                                <th>IP Address</th>
+                                <th>Threat Type</th>
+                                <th>Hacker Profile</th>
+                                <th>Location & ISP</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for threat in threatLogs %}
+                            <tr>
+                                <td class="ps-4 text-muted small">
+                                    {{ threat.created_at|date:"d M Y" }}<br>
+                                    {{ threat.created_at|date:"h:i A" }}
+                                    <div style="font-size: 10px; color: var(--text-label); margin-top: 2px;">{{ threat.created_at|timesince }} ago</div>
+                                </td>
+                                <td>
+                                    <span class="fw-bold">{{ threat.ip_address }}</span>
+                                </td>
+                                <td>
+                                    {% if threat.event_type == 'SQL Injection' %}
+                                    <span class="badge bg-danger text-white px-2 py-1 shadow-sm">
+                                        <i class="fa-solid fa-database me-1"></i> SQLi
+                                    </span>
+                                    {% elif threat.event_type == 'Cross Site Scripting (XSS)' %}
+                                    <span class="badge bg-warning text-dark px-2 py-1 shadow-sm">
+                                        <i class="fa-solid fa-code me-1"></i> XSS
+                                    </span>
+                                    {% elif threat.event_type == 'Path Traversal' %}
+                                    <span class="badge bg-primary text-white px-2 py-1 shadow-sm">
+                                        <i class="fa-solid fa-folder-tree me-1"></i> Path Traversal
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-secondary text-white px-2 py-1 shadow-sm">
+                                        <i class="fa-solid fa-folder-open me-1"></i> {{ threat.event_type }}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm me-2 bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border: 1px solid #dee2e6;">
+                                            <i class="fa-solid fa-user-secret text-secondary"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-semibold text-dark small">{{ threat.hacker_name|default:'Anonymous Guest' }}</div>
+                                            <div class="text-muted" style="font-size: 11px;">{{ threat.hacker_email|default:'No email data' }}</div>
+                                            {% if threat.hacker_mobile and threat.hacker_mobile != 'N/A' %}
+                                            <div class="text-muted" style="font-size: 11px;"><i class="fa-solid fa-phone me-1"></i> {{ threat.hacker_mobile }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="small text-dark">{{ threat.location|default:'Detecting...' }}</div>
+                                    <div class="text-muted" style="font-size: 11px;">{{ threat.isp|default:'Unknown ISP' }}</div>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <button class="btn btn-sm btn-light border" type="button" data-bs-toggle="collapse" data-bs-target="#log-{{ threat.id }}" aria-expanded="false">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                    <form action="{% url 'admin_panel:security_block_ip' %}" method="POST" class="d-inline ms-1">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="ip_address" value="{{ threat.ip_address }}">
+                                        <input type="hidden" name="reason" value="Recurring threats: {{ threat.event_type }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger shadow-none" title="Instant Ban">
+                                            <i class="fa-solid fa-ban"></i>
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn btn-danger btn-sm delete-btn" data-id="{{ threat.id }}" title="Delete" style="padding: 4px 8px;"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                            <tr class="collapse bg-light bg-opacity-50" id="log-{{ threat.id }}">
+                                <td colspan="6" class="p-4">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3 mb-md-0">
+                                            <h6 class="text-uppercase fw-bold text-muted small mb-2">Targeted URL</h6>
+                                            <div class="p-2 border rounded bg-white text-break small">
+                                                <code>{{ threat.url }}</code>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="text-uppercase fw-bold text-muted small mb-2">Malicious Payload Captured</h6>
+                                            <div class="p-2 border rounded bg-white text-break small text-danger font-monospace" style="max-height: 150px; overflow-y: auto;">
+                                                {{ threat.payload }}
+                                            </div>
+                                        </div>
+                                        <div class="col-12 mt-3">
+                                             <h6 class="text-uppercase fw-bold text-muted small mb-1">User Agent Fingerprint</h6>
+                                             <div class="text-muted" style="font-size: 11px;">{{ threat.user_agent }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted small">
+                                    <i class="fa-solid fa-shield-circle-check text-success fa-3x mb-3"></i><br>
+                                    No security threats detected.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {% if threatLogs.has_other_pages %}
+            <div class="card-footer bg-white border-top py-3 d-flex justify-content-center">
+                <nav>
+                    <ul class="pagination mb-0">
+                        {% if threatLogs.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ threatLogs.previous_page_number }}">&laquo;</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                        {% endif %}
+
+                        {% for num in threatLogs.paginator.page_range %}
+                            {% if threatLogs.number == num %}
+                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                            {% elif num > threatLogs.number|add:'-3' and num < threatLogs.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if threatLogs.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ threatLogs.next_page_number }}">&raquo;</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.pagination { margin-bottom: 0; flex-wrap: wrap; justify-content: center; gap: 5px; }
+.pagination .page-item .page-link { border-radius: 8px; padding: 8px 16px; color: var(--primary); border: 1px solid var(--border-color); font-weight: 500; transition: all 0.2s; }
+.pagination .page-item.active .page-link { background-color: var(--primary); border-color: var(--primary); color: white; }
+.pagination .page-item.disabled .page-link { color: var(--text-muted); background-color: var(--bg-body); }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).on('click', '.delete-btn', function(e) {
+    e.preventDefault();
+    
+    const button = $(this);
+    const id = button.data('id');
+    const row = button.closest('tr');
+    
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "This action cannot be undone!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+            
+            $.ajax({
+                url: '{% url "admin_panel:security_threat_logs_delete" %}',
+                type: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                data: {
+                    id: id
+                },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            title: 'Deleted!',
+                            text: response.message,
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                        
+                        row.fadeOut(300, function() {
+                            $(this).remove();
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: response.message,
+                            icon: 'error'
+                        });
+                        button.prop('disabled', false).html('<i class="fas fa-trash"></i>');
+                    }
+                },
+                error: function() {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'An error occurred while deleting the log.',
+                        icon: 'error'
+                    });
+                    button.prop('disabled', false).html('<i class="fas fa-trash"></i>');
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

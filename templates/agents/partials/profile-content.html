@@ -1,0 +1,1085 @@
+{% load static %}
+
+    <style>
+        #reviews-section {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        #reviews-section .reviews-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 16px;
+        }
+
+        #reviews-section .reviews-header .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        #reviews-section .total-reviews {
+            font-size: 13px;
+            color: #94a3b8;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        #reviews-section .reviews-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            align-items: start;
+            margin-top: 20px;
+        }
+
+        #reviews-section .write-review-box {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            background: #f8fafc;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            height: fit-content;
+        }
+
+        #reviews-section .write-review-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 16px;
+        }
+
+        #reviews-section .review-rating-label {
+            font-size: 12px;
+            color: #475569;
+            font-weight: 600;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        #reviews-section .review-stars-input {
+            font-size: 18px;
+            cursor: pointer;
+            display: inline-flex;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+
+        #reviews-section .review-stars-input i {
+            color: #cbd5e1;
+            transition: color 0.2s ease;
+        }
+
+        #reviews-section .review-stars-input i.fas {
+            color: #fbbf24;
+        }
+
+        #reviews-section .review-stars-input i:hover {
+            color: #fbbf24;
+        }
+
+        #reviews-section #review-text-input {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            resize: vertical;
+            min-height: 85px;
+            transition: border-color 0.2s ease;
+            max-width: 100%;
+        }
+
+        #reviews-section #review-text-input:focus {
+            border-color: #0d9488;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+        }
+
+        #reviews-section .char-counter {
+            text-align: right;
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 6px;
+            margin-bottom: 12px;
+        }
+
+        #reviews-section #submit-review-btn {
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            width: 100%;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        #reviews-section #submit-review-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+        }
+
+        #reviews-section .reviews-list {
+            min-height: auto;
+            display: grid;
+            gap: 16px;
+            align-content: start;
+        }
+
+        #reviews-section .review-item {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            background: #f8fafc;
+            transition: box-shadow 0.2s ease;
+        }
+
+        #reviews-section .review-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        #reviews-section .review-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        #reviews-section .reviewer-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #reviews-section .reviewer-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #0d9488;
+            color: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        #reviews-section .reviewer-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        #reviews-section .review-item .stars {
+            display: flex;
+            gap: 4px;
+            font-size: 14px;
+        }
+
+        #reviews-section .review-item .stars i {
+            color: #fbbf24;
+        }
+
+        #reviews-section .review-text {
+            font-size: 14px;
+            color: #475569;
+            line-height: 1.5;
+            margin: 12px 0;
+        }
+
+        #reviews-section .review-date {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        #reviews-section .review-empty {
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 32px 20px;
+            background: #f8fafc;
+            text-align: center;
+            color: #64748b;
+            font-weight: 500;
+            font-size: 15px;
+        }
+
+        @media (max-width: 991.98px) {
+            #reviews-section .reviews-body {
+                grid-template-columns: 1fr;
+            }
+
+            #reviews-section .write-review-box {
+                order: 2;
+            }
+
+            #reviews-section .reviews-list {
+                order: 1;
+            }
+        }
+
+        /* Lightbox Styles */
+        .padosi-lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.9);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .padosi-lightbox.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .lightbox-container {
+            position: relative;
+            width: 90%;
+            height: 90%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            max-width: 1200px;
+        }
+
+        .lightbox-image-wrapper {
+            max-width: 100%;
+            max-height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes zoomIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .lightbox-image {
+            max-width: 100%;
+            max-height: 85vh;
+            border-radius: 12px;
+            box-shadow: 0 0 100px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.4);
+            border: 4px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .lightbox-btn {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 10;
+            font-size: 20px;
+        }
+
+        .lightbox-btn:hover {
+            background: white;
+            color: #0f172a;
+            transform: scale(1.1);
+        }
+
+        .lightbox-close { top: 20px; right: 20px; }
+        .lightbox-prev { left: 20px; }
+        .lightbox-next { right: 20px; }
+
+        .lightbox-counter {
+            position: absolute;
+            bottom: 40px;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            background: rgba(0,0,0,0.5);
+            padding: 4px 12px;
+            border-radius: 100px;
+        }
+
+        @media (max-width: 768px) {
+            .lightbox-prev { left: 10px; width: 44px; height: 44px; }
+            .lightbox-next { right: 10px; width: 44px; height: 44px; }
+            .lightbox-close { top: 10px; right: 10px; }
+            .lightbox-image { max-height: 70vh; }
+        }
+    </style>
+
+<div class="profile-main-card mb-4">
+    <div class="profile-header-flex">
+        <div class="profile-left-col">
+            <div class="profile-img-container">
+                <div class="profile-img-wrapper">
+                    {% if profile and profile.profile_photo_url %}
+                        <img src="{{ profile.profile_photo_url }}" alt="{{ agentDisplayName }}" onerror="this.onerror=null;this.src='{% static 'img/avatar-icon.jpg' %}';">
+                    {% else %}
+                        <div class="d-flex align-items-center justify-content-center h-100 bg-secondary text-white" style="font-size: 48px;">
+                            {{ agentInitial }}
+                        </div>
+                    {% endif %}
+                </div>
+                {% if 'verified' in agent.badge %}
+                <div class="verified-tick" title="Verified by Admin">
+                    <i class="fas fa-check"></i>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="social-links">
+                {% if socialLinks.linkedin %}
+                    <a href="javascript:void(0)" target="_blank" class="social-icon" 
+                       onclick="return handleAgentContactClick(event, this, 'linkedin')" 
+                       data-agent-id="{{ agent.id }}"
+                       data-interaction-type="linkedin"><i class="fab fa-linkedin-in"></i></a>
+                {% endif %}
+                {% if socialLinks.facebook %}
+                    <a href="javascript:void(0)" target="_blank" class="social-icon" 
+                       onclick="return handleAgentContactClick(event, this, 'facebook')" 
+                       data-agent-id="{{ agent.id }}"
+                       data-interaction-type="facebook"><i class="fab fa-facebook-f"></i></a>
+                {% endif %}
+                {% if socialLinks.instagram %}
+                    <a href="javascript:void(0)" target="_blank" class="social-icon" 
+                       onclick="return handleAgentContactClick(event, this, 'instagram')" 
+                       data-agent-id="{{ agent.id }}"
+                       data-interaction-type="instagram"><i class="fab fa-instagram"></i></a>
+                {% endif %}
+                {% if socialLinks.youtube %}
+                    <a href="javascript:void(0)" target="_blank" class="social-icon" 
+                       onclick="return handleAgentContactClick(event, this, 'youtube')" 
+                       data-agent-id="{{ agent.id }}"
+                       data-interaction-type="youtube"><i class="fab fa-youtube"></i></a>
+                {% endif %}
+                {% if socialLinks.google_business %}
+                    <a href="javascript:void(0)" target="_blank" class="social-icon" 
+                       onclick="return handleAgentContactClick(event, this, 'google_business')" 
+                       data-agent-id="{{ agent.id }}"
+                       data-interaction-type="google_business"><i class="fab fa-google"></i></a>
+                {% endif %}
+            </div>
+
+            <div class="action-btns">
+                <a href="javascript:void(0)" target="_blank" 
+                   class="btn btn-whatsapp" 
+                   onclick="return handleAgentContactClick(event, this, 'whatsapp')"
+                   data-agent-id="{{ agent.id }}"
+                   data-interaction-type="whatsapp">
+                    <i class="fab fa-whatsapp"></i> WhatsApp
+                </a>
+                <a href="javascript:void(0)" 
+                   class="btn btn-call" 
+                   onclick="return handleAgentContactClick(event, this, 'call')"
+                   data-agent-id="{{ agent.id }}"
+                   data-interaction-type="call">
+                    <i class="fa-solid fa-phone"></i> Call Now
+                </a>
+            </div>
+        </div>
+
+        <div class="profile-right-col">
+            <h1 class="agent-name">{{ agentDisplayName }}</h1>
+
+            {% if agent.badge_list %}
+                <div class="d-flex align-items-center flex-nowrap mb-2" style="gap: 6px; overflow: hidden;">
+                    {% for bConfig in agent.badge_list %}
+                        <span class="agent-recognition-badge {{ bConfig.class }} flex-shrink-0" style="padding: 4px 12px; font-size: 12px; white-space: nowrap;">
+                            <i class="fas {{ bConfig.icon }}"></i> {{ bConfig.label }}
+                        </span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <p class="agent-bio">
+                {{ profile.career_highlights|default:"Experienced insurance professional with a proven track record of helping clients find the right coverage." }}
+            </p>
+
+            <div class="quick-stats-row">
+                <div class="quick-stat-pill">
+                    <i class="fas fa-briefcase"></i> {{ agent.experience_range|default:"0" }} years
+                </div>
+                <div class="quick-stat-pill">
+                    <i class="fas fa-users"></i> {{ agent.client_base|default:"0+" }} clients
+                </div>
+                <div class="quick-stat-pill">
+                    <i class="fas fa-language"></i> {{ profile.formatted_languages }}
+                </div>
+            </div>
+
+            <div class="insurance-types">
+                {% for type in agent.ordered_insurance_segments %}
+                    <div class="insurance-pill">
+                        {% if 'life' in type %}
+                            <i class="fas fa-user-shield"></i> Life
+                        {% elif 'health' in type %}
+                            <i class="fas fa-heartbeat"></i> Health
+                        {% elif 'motor' in type %}
+                            <i class="fas fa-car"></i> Motor
+                        {% elif 'sme' in type %}
+                            <i class="fas fa-store"></i> SME
+                        {% else %}
+                            <i class="fas fa-shield-alt"></i> {{ type|capfirst }}
+                        {% endif %}
+                    </div>
+                {% empty %}
+                    <div class="text-muted small">No segments listed</div>
+                {% endfor %}
+            </div>
+
+            <div class="reviews-summary" style="cursor: pointer;" onclick="document.getElementById('reviews-section').scrollIntoView({behavior: 'smooth'})">
+                <div class="stars">
+                    {% for i in "12345" %}
+                        {% if agent.average_rating >= forloop.counter %}
+                            <i class="fas fa-star text-warning"></i>
+                        {% else %}
+                            <i class="far fa-star text-warning"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {{ agent.average_rating|floatformat:1 }} ({{ agent.review_count }} reviews) <i class="fas fa-arrow-up-right-from-square ml-2" style="font-size: 10px;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="profile-content-grid">
+    <div class="left-section">
+        <!-- Career Timeline -->
+        <div class="section-card">
+            <h2 class="section-title"><i class="far fa-calendar-alt"></i> Career Timeline</h2>
+            <div class="timeline">
+                {% for timeline in agent.sorted_career_timelines %}
+                    <div class="timeline-item">
+                        <i class="{% if timeline.event_type == 'Award' %}fas fa-trophy{% elif timeline.event_type == 'Achievement' %}fas fa-medal{% elif timeline.event_type == 'Certification' %}fas fa-award{% elif timeline.event_type == 'Career Event' %}fas fa-calendar-check{% elif timeline.event_type == 'Experience' %}fas fa-briefcase{% else %}fas fa-circle{% endif %} timeline-custom-icon"></i>
+                        <div class="timeline-year">{{ timeline.month }} {{ timeline.year }}</div>
+                        <div class="timeline-text">{{ timeline.event_text }}</div>
+                    </div>
+                {% empty %}
+                    <div class="text-muted small">No timeline events recorded.</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Certifications -->
+        <div class="section-card">
+            <h2 class="section-title"><i class="fas fa-award"></i> Certifications</h2>
+            {% if profile.license_number %}
+                <div class="icon-list-item">
+                    <i class="fas fa-certificate item-icon"></i>
+                    <div class="item-text">IRDAI Certified Agent (License: {{ profile.license_number }})</div>
+                </div>
+            {% endif %}
+
+            {% for certification in agent.certification_entries %}
+                <div class="icon-list-item">
+                    <i class="fas fa-certificate item-icon"></i>
+                    <div class="item-text">
+                        {{ certification.event_text }}
+                        {% if certification.month or certification.year %}
+                            <span class="text-muted small">({{ certification.month|default:"" }} {{ certification.year|default:"" }})</span>
+                        {% endif %}
+                    </div>
+                </div>
+            {% empty %}
+                {% if not profile.license_number %}
+                    <div class="text-muted small">No certifications recorded.</div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Achievements -->
+        <div class="section-card">
+            <h2 class="section-title"><i class="fas fa-trophy"></i> Achievements</h2>
+            {% if agent.achievement_entries %}
+                <div class="achievements-row">
+                    {% for achievement in agent.achievement_entries %}
+                        <div class="achievement-badge">
+                            <i class="fas fa-medal"></i> {{ achievement.event_text }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% elif profile.career_highlights %}
+                <div class="text-muted small" style="white-space: pre-line;">{{ profile.career_highlights }}</div>
+            {% else %}
+                <div class="text-muted small">No achievements recorded.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="right-section">
+        <!-- Performance Stats -->
+        <div class="section-card">
+            <h2 class="section-title"><i class="fas fa-chart-line"></i> Performance Stats</h2>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-value">{{ agent.client_base|default:"0" }}</div>
+                    <div class="stat-label">Clients Served</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">{{ performanceStats.formatted_claims_processed|default:"0" }}</div>
+                    <div class="stat-label">Claims Processed</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">{{ performanceStats.success_rate|default:"98" }}%</div>
+                    <div class="stat-label">Success Rate</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">
+                        {% if performanceStats and performanceStats.claims_amount > 0 %}
+                            ₹{{ performanceStats.formatted_claims_amount }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </div>
+                    <div class="stat-label">Claims Settled</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">&lt; {{ performanceStats.response_time|default:"2" }} hours</div>
+                    <div class="stat-label">Response Time</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">{{ agent.average_rating|floatformat:1 }}</div>
+                    <div class="stat-label">Rating</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Service Fees -->
+        <div class="section-card">
+            <h2 class="section-title"><i class="fas fa-hand-holding-usd"></i> Service Fees</h2>
+            <div class="fees-grid">
+                <div class="fee-box">
+                    <div class="fee-value">Free</div>
+                    <div class="fee-label">New Policy</div>
+                </div>
+                
+                {% if leadPreferences and leadPreferences.leads_claims_support %}
+                <div class="fee-box">
+                    <div class="fee-value">
+                        {% if leadPreferences.claims_charging == 'fee' %}
+                            ₹{{ leadPreferences.claims_fee_amount }}
+                        {% elif leadPreferences.claims_charging == 'percentage' %}
+                            {{ leadPreferences.claims_percent }}%
+                        {% else %}
+                            Free
+                        {% endif %}
+                    </div>
+                    <div class="fee-label">Claim Help</div>
+                </div>
+                {% endif %}
+
+                {% if leadPreferences and leadPreferences.leads_portfolio_analysis %}
+                <div class="fee-box">
+                    <div class="fee-value">
+                        {% if leadPreferences.portfolio_charging != 'free' %}
+                            ₹{{ leadPreferences.portfolio_fee }}
+                        {% else %}
+                            Free
+                        {% endif %}
+                    </div>
+                    <div class="fee-label">Review</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Media Gallery -->
+        <div class="section-card">
+            <div class="media-header">
+                <h2 class="section-title mb-0"><i class="fas fa-images"></i> Media</h2>
+            </div>
+            <div class="media-grid">
+                {% for photo in agent.achievementPhotos.all %}
+                    <div class="media-item lightbox-trigger" data-index="{{ forloop.counter0 }}" data-src="{{ photo.photo_url }}">
+                           <img src="{{ photo.photo_url }}" alt="Achievement" loading="lazy" onerror="this.onerror=null;this.src='{% static 'img/avatar-icon.jpg' %}'; this.style.opacity='0.5';">
+                           <div class="media-overlay">
+                               <i class="fas fa-search-plus text-white fa-2x"></i>
+                           </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12 text-center py-4 bg-light rounded text-muted">
+                        No achievement photos uploaded.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Reviews -->
+        <div class="section-card" id="reviews-section">
+            <div class="reviews-header">
+                <h2 class="section-title mb-0"><i class="far fa-star"></i> Reviews</h2>
+                <span class="total-reviews">{{ agent.review_count }} total</span>
+            </div>
+
+            <div class="reviews-body">
+                <div class="reviews-list">
+                    {% for review in reviews %}
+                        {% with reviewerName=review.reviewer_name|default:review.user.username|default:"User" %}
+                        <div class="review-item">
+                            <div class="review-top">
+                                <div class="reviewer-info">
+                                    <div class="reviewer-avatar">
+                                        {{ reviewerName|slice:":1"|upper }}
+                                    </div>
+                                    <div class="reviewer-name">{{ reviewerName }}</div>
+                                </div>
+                                <div class="stars">
+                                    {% for i in "12345" %}
+                                        {% if review.rating >= forloop.counter %}
+                                            <i class="fas fa-star"></i>
+                                        {% else %}
+                                            <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <p class="review-text">{{ review.review|striptags }}</p>
+                            <div class="review-date">{{ review.created_at|date:"M d, Y"|default:"N/A" }}</div>
+                        </div>
+                        {% endwith %}
+                    {% empty %}
+                        <div class="review-empty">No reviews yet. Be the first to review!</div>
+                    {% endfor %}
+                </div>
+
+                {% if not isOwnerView %}
+                <div class="write-review-box">
+                    <h3 class="write-review-title">Write a Review</h3>
+                    <form id="submit-review-form" data-is-guest="{% if request.user.is_authenticated %}false{% else %}true{% endif %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="rating" id="review-rating-input" value="{% if existingReview %}{{ existingReview.rating }}{% else %}0{% endif %}">
+                        
+                        <label class="review-rating-label">Your Rating:</label>
+                        <div class="review-stars-input">
+                            {% for i in "12345" %}
+                                <i class="{% if existingReview and existingReview.rating >= forloop.counter %}fas{% else %}far{% endif %} fa-star" data-rating="{{ forloop.counter }}"></i>
+                            {% endfor %}
+                        </div>
+                        
+                        <textarea id="review-text-input" name="review" class="form-control" rows="4" placeholder="Share your experience with this agent (minimum 10 characters)..." required minlength="10" maxlength="500">{% if existingReview %}{{ existingReview.review }}{% endif %}</textarea>
+                        
+                        <div class="char-counter">
+                            <span id="review-char-count">{% if existingReview %}{{ existingReview.review|length }}{% else %}0{% endif %}</span> / 500 characters
+                        </div>
+                        
+                        <button type="submit" class="btn btn-whatsapp" id="submit-review-btn">
+                            {% if request.user.is_authenticated and existingReview %}Update Review{% else %}Submit Review{% endif %}
+                        </button>
+                        {% if not request.user.is_authenticated %}
+                            <p class="text-muted small mt-2">
+                                Note: You will be asked to share your name, email, and mobile number to submit this review.
+                            </p>
+                        {% endif %}
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    var currentGuestData = null;
+
+    // bfcache guard
+    window.addEventListener('pageshow', function(e) {
+        if (e.persisted) {
+            if (typeof Swal !== 'undefined') {
+                Swal.close();
+            }
+        }
+    });
+
+    var initReviewForm = function() {
+        var form = document.getElementById('submit-review-form');
+        if (!form) return;
+
+        if (form.dataset.initialized) return;
+        form.dataset.initialized = 'true';
+
+        var isGuest = form.dataset.isGuest === 'true';
+        var stars = form.querySelectorAll('.review-stars-input i');
+        var ratingInput = document.getElementById('review-rating-input');
+        var reviewTextInput = document.getElementById('review-text-input');
+        var reviewCharCount = document.getElementById('review-char-count');
+        var starsContainer = form.querySelector('.review-stars-input');
+        var submitBtn = form.querySelector('#submit-review-btn');
+
+        if (reviewTextInput && reviewCharCount) {
+            reviewTextInput.addEventListener('input', function() {
+                reviewCharCount.textContent = this.value.length;
+            });
+        }
+
+        var updateStars = function(rating) {
+            stars.forEach(function(s) {
+                var sRating = parseInt(s.getAttribute('data-rating'));
+                if (sRating <= rating) {
+                    s.classList.remove('far');
+                    s.classList.add('fas');
+                } else {
+                    s.classList.remove('fas');
+                    s.classList.add('far');
+                }
+            });
+        };
+
+        stars.forEach(function(star) {
+            star.addEventListener('mouseover', function() {
+                updateStars(parseInt(this.getAttribute('data-rating')));
+            });
+
+            star.addEventListener('click', function() {
+                var rating = parseInt(this.getAttribute('data-rating'));
+                ratingInput.value = rating;
+                updateStars(rating);
+            });
+        });
+
+        if (starsContainer) {
+            starsContainer.addEventListener('mouseout', function() {
+                updateStars(parseInt(ratingInput.value || 0));
+            });
+        }
+
+        if (ratingInput.value !== '0') {
+            updateStars(parseInt(ratingInput.value));
+        }
+
+        var performSubmit = function(guestData) {
+            var originalBtnHtml = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...';
+
+            var payload = {
+                rating: ratingInput.value,
+                review: reviewTextInput.value
+            };
+
+            var reviewGuestData = guestData || currentGuestData;
+            if (reviewGuestData) {
+                payload.fullname = reviewGuestData.fullname;
+                payload.email = reviewGuestData.email;
+                payload.mobile = reviewGuestData.mobile;
+            }
+            
+            $.ajax({
+                url: '{% url "agents:agent_store_review" slug=reviewSlug %}',
+                type: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                data: payload,
+                success: function(data) {
+                    if (data.status === 'success') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Review Submitted!',
+                            text: data.message,
+                            confirmButtonColor: '#06A441',
+                            allowOutsideClick: false
+                        }).then(function() {
+                            history.replaceState(null, '', window.location.href);
+                            window.location.replace(window.location.href);
+                        });
+                    } else {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalBtnHtml;
+                        var errorMsg = data.message || 'Validation error';
+                        if (data.errors) {
+                            errorMsg = Object.values(data.errors).flat().join('\n');
+                        }
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: errorMsg,
+                            confirmButtonColor: '#273c8e'
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnHtml;
+                    
+                    var errorMsg = 'An error occurred. Please try again later.';
+                    if (xhr.status === 419) {
+                        errorMsg = 'Session expired. Please refresh the page.';
+                    } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
+                    
+                    if (xhr.responseJSON && xhr.responseJSON.errors) {
+                        errorMsg = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                    }
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: errorMsg,
+                        confirmButtonColor: '#273c8e'
+                    });
+                }
+            });
+        };
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (ratingInput.value === '0') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Rating Required',
+                    text: 'Please select a star rating before submitting your review.',
+                    confirmButtonColor: '#273c8e'
+                });
+                return;
+            }
+
+            if (isGuest) {
+                showGuestRegistrationPopup('Submit Review', function(guestData) {
+                    performSubmit(guestData);
+                });
+            } else {
+                performSubmit();
+            }
+        });
+    };
+
+    // showGuestRegistrationPopup
+    window.showGuestRegistrationPopup = function(title, onRegistered) {
+        var isMobile = window.matchMedia('(max-width: 576px)').matches;
+        Swal.fire({
+            width: isMobile ? 'calc(100vw - 36px)' : '480px',
+            padding: isMobile ? '0' : '10px',
+            customClass: {
+                popup: 'padosi-guest-popup'
+            },
+            html: `
+                <div class="padosi-popup-form" style="font-family: 'Outfit', sans-serif;">
+                    <div class="padosi-popup-brand" style="margin-bottom: 8px;">
+                        <img src="{% static 'img/logo.png' %}" alt="PadosiAgent" style="width: 90px;">
+                    </div>
+                    
+                    <h2 class="padosi-popup-title">${title}</h2>
+                    <p class="padosi-popup-subtext" style="font-size: 14px; margin-bottom: 20px;">Quickly share your details to proceed.</p>
+
+                    <div id="swal-error-container" class="alert alert-danger d-none" style="font-size: 12px; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: none; background-color: #fef2f2; color: #991b1b; text-align: left;">
+                        <i class="fas fa-exclamation-circle mr-2"></i> <span id="swal-error-message"></span>
+                    </div>
+
+                    <div style="display: grid; gap: 8px;">
+                        <div class="padosi-popup-group">
+                            <label class="padosi-popup-label">Full Name *</label>
+                            <input type="text" id="swal-fullname" class="padosi-popup-input" placeholder="Enter your name">
+                        </div>
+                        
+                        <div class="padosi-popup-group">
+                            <label class="padosi-popup-label">Email Address *</label>
+                            <input type="email" id="swal-email" class="padosi-popup-input" placeholder="name@example.com">
+                        </div>
+                        
+                        <div class="padosi-popup-group" style="margin-bottom: 2px;">
+                            <label class="padosi-popup-label">Mobile Number *</label>
+                            <div style="display: flex; gap: 0;">
+                                <div style="background: #f1f5f9; border: 1.5px solid #e2e8f0; border-right: none; border-radius: 12px 0 0 12px; padding: 0 12px; display: flex; align-items: center; color: #64748b; font-weight: 700; font-size: 14px;">+91</div>
+                                <input type="tel" id="swal-mobile" class="padosi-popup-input" placeholder="10-digit number" maxlength="10" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" 
+                                    style="border-radius: 0 12px 12px 0 !important; flex: 1;">
+                            </div>
+                            <span style="font-size: 10px; color: #94a3b8; display: block; margin-top: 4px; padding-left: 2px;">Verification may be required.</span>
+                        </div>
+                    </div>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Continue',
+            confirmButtonColor: '#0d9488',
+            cancelButtonText: 'Cancel',
+            padding: isMobile ? '0.75rem' : '1.5rem',
+            width: isMobile ? 'calc(100vw - 36px)' : '450px',
+            customClass: {
+                popup: 'padosi-guest-popup'
+            },
+            preConfirm: function() {
+                var fullname = $('#swal-fullname').val().trim();
+                var email = $('#swal-email').val().trim();
+                var mobile = $('#swal-mobile').val().trim();
+
+                var showError = function(msg) {
+                    $('#swal-error-message').text(msg);
+                    $('#swal-error-container').removeClass('d-none').hide().fadeIn();
+                    setTimeout(function() {
+                        $('#swal-error-container').fadeOut();
+                    }, 3000);
+                };
+
+                $('#swal-error-container').addClass('d-none');
+
+                if (!fullname) { showError('Full Name is required'); return false; }
+                if (!email) { showError('Email Address is required'); return false; }
+                if (!/^\S+@\S+\.\S+$/.test(email)) { showError('Please enter a valid email address'); return false; }
+                if (!mobile) { showError('Mobile Number is required'); return false; }
+                if (mobile.length < 10) { showError('Please enter a valid mobile number'); return false; }
+
+                return { fullname: fullname, email: email, mobile: mobile };
+            },
+            allowOutsideClick: true,
+            allowEscapeKey: true,
+            backdrop: 'rgba(0,0,0,0.6)'
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                currentGuestData = {
+                    fullname: result.value.fullname,
+                    email: result.value.email,
+                    mobile: result.value.mobile
+                };
+
+                onRegistered(currentGuestData);
+            }
+        });
+    };
+
+    // handleAgentContactClick
+    window.handleAgentContactClick = function(event, element, interactionType) {
+        if (!element) return true;
+        event.preventDefault();
+        
+        var target = element.getAttribute('target');
+        var url = '#';
+        if (interactionType === 'whatsapp') {
+            var whatsapp = '{{ profile.whatsapp_digits|default:agent.mobile }}';
+            var cleanWhatsapp = whatsapp.replace(/[^0-9]/g, '');
+            if (cleanWhatsapp.length === 10) {
+                cleanWhatsapp = '91' + cleanWhatsapp;
+            }
+            url = cleanWhatsapp !== '' ? ('https://wa.me/' + cleanWhatsapp) : '#';
+        } else if (interactionType === 'call') {
+            url = 'tel:{{ agent.mobile }}';
+        } else {
+            // Social links
+            if (interactionType === 'linkedin') url = '{{ socialLinks.linkedin|default:"#" }}';
+            else if (interactionType === 'facebook') url = '{{ socialLinks.facebook|default:"#" }}';
+            else if (interactionType === 'instagram') url = '{{ socialLinks.instagram|default:"#" }}';
+            else if (interactionType === 'youtube') url = '{{ socialLinks.youtube|default:"#" }}';
+            else if (interactionType === 'google_business') url = '{{ socialLinks.google_business|default:"#" }}';
+        }
+        
+        if (url && url !== '#') {
+            if (target === '_blank') {
+                window.open(url, '_blank', 'noopener');
+            } else {
+                window.location.href = url;
+            }
+        } else {
+            Swal.fire('Notice', 'This agent has not provided contact details for this format.', 'info');
+        }
+        return false;
+    };
+
+    // --- Lightbox Logic ---
+    const initLightbox = function() {
+        const triggers = document.querySelectorAll('.lightbox-trigger');
+        if (triggers.length === 0) return;
+
+        document.querySelectorAll('.padosi-lightbox').forEach(el => el.remove());
+
+        const lightbox = document.createElement('div');
+        lightbox.className = 'padosi-lightbox';
+        lightbox.innerHTML = `
+            <div class="lightbox-container">
+                <div class="lightbox-btn lightbox-close" title="Close"><i class="fas fa-times"></i></div>
+                <div class="lightbox-btn lightbox-prev" title="Previous"><i class="fas fa-chevron-left"></i></div>
+                <div class="lightbox-btn lightbox-next" title="Next"><i class="fas fa-chevron-right"></i></div>
+                <div class="lightbox-image-wrapper">
+                    <img src="" class="lightbox-image" alt="Full Image">
+                </div>
+                <div class="lightbox-counter">1 / 1</div>
+            </div>
+        `;
+        document.body.appendChild(lightbox);
+
+        const imgElement = lightbox.querySelector('.lightbox-image');
+        const counterElement = lightbox.querySelector('.lightbox-counter');
+        const closeBtn = lightbox.querySelector('.lightbox-close');
+        const prevBtn = lightbox.querySelector('.lightbox-prev');
+        const nextBtn = lightbox.querySelector('.lightbox-next');
+
+        let currentIndex = 0;
+        const total = triggers.length;
+
+        const updateLightbox = (index) => {
+            currentIndex = index;
+            const src = triggers[index].getAttribute('data-src');
+            imgElement.src = src;
+            counterElement.innerText = `${index + 1} / ${total}`;
+            
+            if (total <= 1) {
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'none';
+            } else {
+                prevBtn.style.display = 'flex';
+                nextBtn.style.display = 'flex';
+            }
+        };
+
+        triggers.forEach((trigger, index) => {
+            trigger.addEventListener('click', () => {
+                updateLightbox(index);
+                lightbox.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            });
+        });
+
+        const closeLightbox = () => {
+            lightbox.classList.remove('active');
+            document.body.style.overflow = '';
+        };
+
+        closeBtn.addEventListener('click', closeLightbox);
+        lightbox.addEventListener('click', (e) => {
+            if (e.target === lightbox || e.target === lightbox.querySelector('.lightbox-container')) {
+                closeLightbox();
+            }
+        });
+
+        prevBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            let newIndex = currentIndex - 1;
+            if (newIndex < 0) newIndex = total - 1;
+            updateLightbox(newIndex);
+        });
+
+        nextBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            let newIndex = currentIndex + 1;
+            if (newIndex >= total) newIndex = 0;
+            updateLightbox(newIndex);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (!lightbox.classList.contains('active')) return;
+            if (e.key === 'Escape') closeLightbox();
+            if (e.key === 'ArrowLeft') prevBtn.click();
+            if (e.key === 'ArrowRight') nextBtn.click();
+        });
+    };
+
+    initReviewForm();
+    initLightbox();
+})();
+</script>

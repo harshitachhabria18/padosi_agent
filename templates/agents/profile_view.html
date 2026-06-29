@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ agent.fullname }} | PadosiAgent{% endblock %}
+
+{% block extra_css %}
+    <meta property="og:title" content="{{ agent.fullname|default:"Agent Profile" }}">
+    <meta property="og:description" content="{{ agent.profile.career_highlights|striptags|truncatechars:150|default:"View my professional insurance agent profile on PadosiAgent." }}">
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}/og-image/{{ agent.id }}/preview.jpg">
+    <meta property="og:image:secure_url" content="{{ request.scheme }}://{{ request.get_host }}/og-image/{{ agent.id }}/preview.jpg">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="800">
+    <meta property="og:image:height" content="800">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <!-- CSS styles loaded in layouts.app page specifically -->
+    <link rel="stylesheet" href="{% static 'css/owl.carousel.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/owl.theme.default.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/magnific-popup.css' %}">
+    <link rel="stylesheet" href="{% static 'css/aos.css' %}">
+    <link rel="stylesheet" href="{% static 'css/agent-profile-view.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="profile_view_outer profile-view-wrapper" id="profile-container">
+    <div class="profile-banner">
+        {% if isOwnerView %}
+            <a href="{% url 'agents:agent_dashboard' %}" class="back-btn" onclick="window.location.href='{% url 'agents:agent_dashboard' %}'; return false;">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+            <div class="banner-right-actions">
+                <a href="{% url 'agents:agent_edit_profile' %}" class="edit-profile-banner-btn">
+                    <i class="fas fa-edit"></i> Edit Profile
+                </a>
+                <button type="button" class="edit-profile-banner-btn" onclick="shareProfile()">
+                    <i class="fas fa-share-alt"></i> Share Profile
+                </button>
+            </div>
+        {% else %}
+            <a href="javascript:void(0)" onclick="goBack()" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+            <div class="banner-right-actions">
+                <button type="button" class="edit-profile-banner-btn" onclick="shareProfile()">
+                    <i class="fas fa-share-alt"></i> Share Profile
+                </button>
+            </div>
+            <script>
+                (function() {
+                    var REFERRER_KEY = 'profile_back_url_{{ agent.id }}';
+                    var thisOrigin = window.location.origin;
+
+                    var referrer = document.referrer;
+                    var isSameProfilePage = referrer === window.location.href
+                        || (referrer && referrer.startsWith(thisOrigin + window.location.pathname));
+
+                    if (referrer && !isSameProfilePage && referrer.startsWith(thisOrigin)) {
+                        sessionStorage.setItem(REFERRER_KEY, referrer);
+                    }
+
+                    window.goBack = function() {
+                        var backUrl = sessionStorage.getItem(REFERRER_KEY);
+                        sessionStorage.removeItem(REFERRER_KEY);
+
+                        if (backUrl && backUrl.startsWith(thisOrigin)) {
+                            window.location.href = backUrl;
+                        } else if (window.history.length > 1) {
+                            window.history.back();
+                        } else {
+                            window.location.href = "{% url 'home:home' %}";
+                        }
+                    };
+                })();
+            </script>
+        {% endif %}
+    </div>
+
+    <div class="container pb-5">
+        {% include 'agents/partials/profile-content.html' %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/owl.carousel.js' %}"></script>
+    <script src="{% static 'js/carousel.js' %}"></script>
+    
+    <script>
+        function shareProfile() {
+            var url = window.location.href;
+            var title = '{{ agent.fullname|escapejs }}';
+            var text = 'View my professional profile on PadosiAgent.';
+
+            if (navigator.share) {
+                navigator.share({ title: title, text: text, url: url }).catch(function() {});
+                return;
+            }
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(function() {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Link copied',
+                            text: 'Profile link copied to clipboard.',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        alert('Profile link copied to clipboard.');
+                    }
+                }).catch(function() {
+                    prompt('Copy this profile link:', url);
+                });
+            } else {
+                prompt('Copy this profile link:', url);
+            }
+        }
+    </script>
+{% endblock %}

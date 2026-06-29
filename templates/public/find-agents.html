@@ -1,0 +1,3262 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Find Verified Insurance Experts near me - PadosiAgent{% endblock %}
+{% block meta_description %}Find and compare local, verified insurance agents in your neighborhood. Zero platform fees, no spam calls, only trusted licensed agents.{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Premium Dark Filter Sidebar Styles */
+    .premium-dark-filter {
+        background: #ffffff !important; 
+        border: 2px solid #047857 !important; 
+        border-radius: 24px !important;
+        padding: 24px !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important;
+    }
+
+    .find-agents-filter-wrapper {
+        background: #ffffff !important;
+        border: 2px solid #047857 !important;
+        border-radius: 24px;
+        padding: 24px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05) !important;
+        position: sticky;
+        top: 100px;
+        transition: all 0.3s ease;
+    }
+    
+    .find-agents-filter-wrapper:hover {
+        box-shadow: 0 15px 40px rgba(0,0,0,0.1) !important;
+        border-color: #047857 !important;
+    }
+
+    .filter-section-title {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: #64748b;
+        text-transform: uppercase;
+        margin-bottom: 16px;
+    }
+
+    .pills-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+        margin-top: 10px !important;
+    }
+
+    @media (max-width: 576px) {
+        .filter-pill {
+            padding: 8px 10px !important;
+            font-size: 11.5px !important;
+        }
+    }
+
+    .filter-pill {
+        background: #f8fafc;
+        color: #1e293b;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 10px 14px;
+        font-size: 13px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        outline: none !important;
+        text-align: center;
+    }
+
+    .filter-pill i {
+        font-size: 14px;
+        margin-right: 6px;
+    }
+
+    .filter-pill:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+        border-color: #cbd5e1;
+        transform: translateY(-1px);
+    }
+
+    .filter-pill.active {
+        background: #f0f9ff;
+        color: #0369a1;
+        border: 2px solid #0284c7;
+        box-shadow: 0 4px 12px rgba(3, 105, 161, 0.15);
+    }
+
+    .filter-pill.active i {
+        color: #0369a1;
+    }
+
+    .product-category-section {
+        padding-top: 16px;
+        border-top: 1px solid #e2e8f0;
+        margin-top: 16px;
+    }
+
+    .category-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 14px;
+    }
+
+    .category-icon {
+        font-size: 13px;
+        color: #14b8a6;
+    }
+
+    .category-title {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: #64748b;
+        text-transform: uppercase;
+    }
+
+    .circle-tiles-grid {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        gap: 12px !important;
+        margin-top: 10px !important;
+        padding-bottom: 8px !important;
+        overflow-x: auto !important;
+        scrollbar-width: none !important; /* Firefox */
+        -ms-overflow-style: none !important; /* IE and Edge */
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    .circle-tiles-grid::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .circle-tile {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: #f8fafc !important; 
+        border: 1px solid #e2e8f0 !important; 
+        border-radius: 16px !important; 
+        cursor: pointer !important;
+        padding: 12px 8px !important;
+        outline: none !important;
+        transition: all 0.2s ease-in-out !important;
+        box-shadow: none !important;
+        
+        /* Force same size */
+        width: 92px !important;
+        min-width: 92px !important;
+        height: 104px !important;
+        flex: 0 0 92px !important;
+    }
+
+    .tile-icon-wrapper {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #f1f5f9; 
+        border: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+        margin-bottom: 8px;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .tile-icon-wrapper i {
+        font-size: 15px;
+    }
+
+    .tile-label {
+        font-size: 10px;
+        font-weight: 700;
+        color: #334155;
+        letter-spacing: 0px;
+        text-align: center;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: normal;
+        line-height: 1.2;
+        height: 2.4em;
+        width: 100%;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .circle-tile:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+        transform: translateY(-2px);
+    }
+
+    .circle-tile:hover .tile-icon-wrapper {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+
+    .circle-tile:hover .tile-label {
+        color: #0f172a;
+    }
+
+    .circle-tile.active {
+        background: #f0f9ff;
+        border-color: #0284c7; 
+        box-shadow: 0 4px 12px rgba(3, 105, 161, 0.15);
+    }
+
+    .circle-tile.active .tile-icon-wrapper {
+        background: #3b82f6; /* Solid blue icon wrapper */
+        color: #ffffff;
+        border-color: transparent;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+    }
+
+    .circle-tile.active .tile-label {
+        color: #0369a1; /* Dark blue text for active status */
+        font-weight: 700;
+    }
+
+    .circle-tile.active:hover {
+        background: #e0f2fe;
+        border-color: #0284c7;
+    }
+
+    .disclaimer-banner {
+        background: rgba(180, 83, 9, 0.15) !important;
+        border: 1px solid rgba(255, 193, 7, 0.25) !important;
+        border-radius: 8px;
+        padding: 10px 12px;
+        color: #f59e0b;
+        font-size: 11px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .disclaimer-banner i {
+        font-size: 14px;
+    }
+
+    .filter-actions-container {
+        display: flex;
+        gap: 10px;
+        margin-top: 24px;
+        position: sticky;
+        bottom: 0;
+        background: #ffffff;
+        padding-top: 16px;
+        padding-bottom: 4px;
+        z-index: 10;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .btn-clear {
+        flex: 1;
+        background: #f1f5f9;
+        color: #334155;
+        border: 1px solid #cbd5e1;
+        border-radius: 12px;
+        padding: 12px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        outline: none !important;
+    }
+
+    .btn-clear:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+        border-color: #94a3b8;
+    }
+
+    .btn-apply {
+        flex: 2;
+        background: linear-gradient(135deg, #2563eb, #0d9488);
+        color: #ffffff;
+        border: none;
+        border-radius: 12px;
+        padding: 12px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        outline: none !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-apply:hover {
+        filter: brightness(1.1);
+        box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+        transform: translateY(-1px);
+    }
+
+    .btn-apply:active {
+        transform: scale(0.98);
+    }
+
+    .nearby-link {
+        font-size: 12px;
+        color: #3b82f6 !important;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .nearby-link:hover {
+        text-decoration: underline;
+        filter: brightness(1.2);
+    }
+
+    #life-insurance-section {
+        max-height: 500px;
+        opacity: 1;
+        overflow: hidden;
+        transition: max-height 0.4s ease-out, opacity 0.4s ease-out, padding 0.4s ease-out, border-top 0.4s ease-out, margin-top 0.4s ease-out;
+    }
+
+    #life-insurance-section.collapsed {
+        max-height: 0 !important;
+        opacity: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        border-top: none !important;
+        pointer-events: none;
+    }
+
+    /* Prevents Filter Overflow & Layout issues */
+    .find-agents-con {
+        min-height: 800px;
+    }
+    
+    .find-agents-content {
+        align-items: flex-start;
+    }
+
+    @media (min-width: 992px) {
+        .find-agents-grid {
+            align-items: flex-start;
+        }
+    }
+
+    @media (min-width: 1181px) {
+        .find-agents-filter-wrapper {
+            background: #ffffff !important;
+            border: 2px solid #047857 !important;
+            border-radius: 24px;
+            padding: 16px 12px !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05) !important;
+            position: sticky;
+            top: 100px;
+            transition: all 0.3s ease;
+        }
+        .filter-pill {
+            padding: 8px 10px !important;
+            font-size: 11.5px !important;
+        }
+    }
+
+    .insurance-multi-select {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-height: 280px;
+        overflow-y: auto;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 15px 12px;
+        background: #fff;
+    }
+
+    /* Scrollbar Optimization */
+    .multiselect-dropdown::-webkit-scrollbar {
+        width: 6px;
+    }
+    .multiselect-dropdown::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 10px;
+    }
+    .multiselect-dropdown::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+
+    /* HTMX Indicator Styles for Button */
+    .htmx-indicator {
+        display: none;
+    }
+    .htmx-request .htmx-indicator {
+        display: inline-block;
+    }
+    .htmx-request.htmx-indicator {
+        display: inline-block;
+    }
+
+    /* Comparison Bar */
+    .compare-bar {
+        position: fixed;
+        bottom: -120px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 95%;
+        max-width: 700px;
+        background: #ffffff;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        border: 1px solid #e2e8f0;
+        border-radius: 16px 16px 0 0;
+        z-index: 1030;
+        padding: 12px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .compare-bar.show {
+        bottom: 0;
+    }
+    .compare-info {
+        font-weight: 700;
+        color: #1e293b;
+        font-size: 15px;
+    }
+    .compare-selected-agents {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 15px;
+    }
+    .selected-agent-thumb {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 2px solid #0d9488;
+        position: relative;
+        box-shadow: 0 4px 10px rgba(13, 148, 136, 0.2);
+    }
+    .selected-agent-thumb img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    .remove-compare {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        background: #ef4444;
+        color: #fff;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .compare-actions button#compare-now-btn {
+        background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+        color: #fff;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+    }
+    .compare-actions button#compare-now-btn:not(:disabled):hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(13, 148, 136, 0.4);
+    }
+    .compare-actions button#compare-now-btn:disabled {
+        background: #e2e8f0;
+        color: #94a3b8;
+        box-shadow: none;
+        cursor: not-allowed;
+    }
+    .compare-bar-control-btn {
+        background: #ffffff;
+        color: #475569; /* Slate 600 */
+        border: 1.5px solid #f1f5f9;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 14px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    }
+    .compare-bar-control-btn:hover {
+        background: #ffffff;
+        border-color: #0d9488;
+        color: #0d9488;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+    .compare-bar-control-btn:active {
+        transform: scale(0.92);
+    }
+    .compare-bar-control-btn.text-danger:hover {
+        background: #fff1f2;
+        border-color: #fca5a5;
+        color: #ef4444;
+    }
+    .compare-info {
+        font-weight: 700;
+        color: #1e293b;
+        font-size: 15px;
+        letter-spacing: -0.01em;
+    }
+
+    @media (max-width: 576px) {
+        .compare-bar {
+            width: 100%;
+            border-radius: 20px 20px 0 0;
+            padding: 15px 20px calc(15px + env(safe-area-inset-bottom, 5px));
+            flex-direction: column;
+            gap: 15px;
+            left: 0;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            bottom: 0;
+            max-width: none;
+        }
+        .compare-bar.show {
+            transform: translateY(0);
+        }
+        .compare-bar-control-btn {
+            width: 30px;
+            height: 30px;
+            font-size: 13px;
+        }
+        .compare-info {
+            font-size: 15px;
+            font-weight: 700;
+        }
+        .compare-selected-agents {
+            gap: 12px;
+            padding: 0;
+            margin: 5px 0;
+            width: 100%;
+            justify-content: center;
+            order: 2;
+        }
+        .selected-agent-thumb {
+            width: 54px;
+            height: 54px;
+        }
+        .compare-actions {
+            order: 3;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+        .compare-actions button#compare-now-btn {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            border-radius: 12px;
+        }
+
+        .swal2-container .swal2-popup.guest-gate-popup {
+            width: min(360px, 90vw) !important;
+            padding: 20px 16px 16px !important;
+            border-radius: 16px;
+        }
+
+        .guest-gate-brand img {
+            width: 90px;
+        }
+
+        .guest-gate-heading {
+            font-size: 22px;
+            margin-bottom: 4px;
+        }
+
+        .guest-gate-subtext {
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .guest-gate-group {
+            margin-bottom: 10px;
+        }
+
+        .guest-gate-input,
+        .guest-gate-mobile,
+        .guest-gate-prefix {
+            min-height: 40px;
+            font-size: 13px;
+        }
+
+        .swal2-container .swal2-popup.guest-gate-popup .swal2-confirm {
+            font-size: 15px !important;
+            height: 44px;
+            border-radius: 10px !important;
+        }
+    }
+
+    /* Comparison Table in Modal */
+    .comparison-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        min-width: 700px; /* Ensure horizontal scroll on mobile */
+    }
+    .comparison-table th, .comparison-table td {
+        padding: 15px;
+        text-align: center;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .comparison-table th {
+        background: #f8fafc;
+        font-weight: 600;
+        text-align: left;
+    }
+    .compare-agent-header {
+        text-align: center;
+    }
+    .compare-agent-header img {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        margin-bottom: 10px;
+        object-fit: cover;
+    }
+    .compare-agent-name {
+        font-weight: 700;
+        color: #1e293b;
+        font-size: 16px;
+    }
+    .compare-row-title {
+        color: #64748b;
+        font-size: 14px;
+        width: 150px;
+    }
+    .compare-value {
+        font-weight: 600;
+        color: #1e293b;
+    }
+    .compare-btn.is-selected {
+        background-color: #0d9488 !important;
+        color: white !important;
+    }
+
+    /* Filter highlight animation when arriving from homepage Find Agent button */
+    @keyframes filterPulse {
+        0%   { box-shadow: 0 0 0 0 rgba(30, 112, 77, 0.4); }
+        40%  { box-shadow: 0 0 0 12px rgba(30, 112, 77, 0.15); }
+        70%  { box-shadow: 0 0 0 20px rgba(30, 112, 77, 0.05); }
+        100% { box-shadow: 0 0 0 0 rgba(30, 112, 77, 0); }
+    }
+    .find-agents-filter-wrapper.filter-highlight .find-agents-filter {
+        animation: filterPulse 1.8s ease-out;
+        border-radius: 12px;
+        outline: 2px solid rgba(30, 112, 77, 0.35);
+        outline-offset: 2px;
+        transition: outline 0.3s ease;
+    }
+    /* Mandatory field shake animation for validation */
+    @keyframes fieldShake {
+        0%, 100% { transform: translateX(0); }
+        20%       { transform: translateX(-6px); }
+        40%       { transform: translateX(6px); }
+        60%       { transform: translateX(-4px); }
+        80%       { transform: translateX(4px); }
+    }
+    .field-shake {
+        animation: fieldShake 0.5s ease-in-out;
+    }
+    .field-shake select,
+    .field-shake .multiselect-trigger {
+        border-color: #ffc107 !important;
+        box-shadow: 0 0 0 3px rgba(255,193,7,0.25) !important;
+    }
+
+    /* Transition for load-dimming */
+    .find-agents-list {
+        transition: opacity 0.3s ease;
+    }
+
+    /* ── Skeleton shimmer base ── */
+    @keyframes skeletonShimmer {
+        0%   { background-position: -700px 0; }
+        100% { background-position: 700px 0; }
+    }
+    .sk { background-size: 700px 100%; animation: skeletonShimmer 1.5s infinite linear; }
+    .sk.no-animate { animation: none !important; }
+    .sk-white  { background: linear-gradient(90deg, rgba(255,255,255,.18) 25%, rgba(255,255,255,.4) 50%, rgba(255,255,255,.18) 75%); border-radius:50%; }
+    .sk-light  { background: linear-gradient(90deg, #e4e8ee 25%, #f0f3f7 50%, #e4e8ee 75%); border-radius:6px; }
+    .sk-amber  { background: linear-gradient(90deg, #f8dfa0 25%, #fff3dd 50%, #f8dfa0 75%); border-radius:5px; }
+    .sk-muted  { background: linear-gradient(90deg, #d8dce1 25%, #e8ebed 50%, #d8dce1 75%); border-radius:5px; }
+    .sk-green  { background: linear-gradient(90deg, #a8d8c4 25%, #c8ead8 50%, #a8d8c4 75%); border-radius:6px; }
+    .sk-wa     { background: linear-gradient(90deg, #1aaf4e 25%, #25D366 50%, #1aaf4e 75%); border-radius:50px; }
+    .sk-call   { background: linear-gradient(90deg, #b8cff5 25%, #d5e4ff 50%, #b8cff5 75%); border-radius:50px; }
+    .sk-pill   { border-radius:50px; }
+    .sk-round  { border-radius:50%; }
+
+    .skeleton-agent-card .sac-pic {
+        width: 250px; min-width: 250px;
+        background: linear-gradient(180deg, #3B31A1 0%, #6057C0 100%);
+        display: flex; flex-direction: column;
+        align-items: stretch; padding: 0;
+        border-right: 1px solid #e1e1e1;
+        position: relative;
+    }
+    .sac-match {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        padding: 6px 14px; display: flex; align-items: center; justify-content: center;
+    }
+    .sac-avatar-area {
+        flex: 1; display: flex; align-items: center; justify-content: center; padding: 16px 0;
+    }
+    .sac-like-bar {
+        background: rgba(0,0,0,0.08);
+        border-top: 1px solid rgba(255,255,255,0.12);
+        padding: 8px 0; display: flex; justify-content: center; gap: 10px;
+    }
+    .sac-like-btn { width:32px; height:32px; border-radius:50%; background:#fff; }
+
+    .skeleton-agent-card {
+        display: flex; background: #fff;
+        border: 1px solid #e1e1e1; border-radius: 10px;
+        box-shadow: 0 0 10px #e1e1e1; overflow: hidden;
+        margin-bottom: 20px;
+    }
+    .skeleton-agent-card .sac-body {
+        flex: 1; padding: 20px 20px 20px 28px;
+        display: flex; flex-direction: column; gap: 9px;
+    }
+    .sac-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .sac-divider { width:100%; height:1px; background:#e5e5e5; margin: 4px 0; }
+
+    .skeleton-agent-card:nth-child(2) .sk { animation-delay: 0.3s; }
+    .skeleton-agent-card:nth-child(3) .sk { animation-delay: 0.6s; }
+
+    @media (max-width: 767px) {
+        .skeleton-agent-card { flex-direction: column; }
+        .skeleton-agent-card .sac-pic { width: 100%; min-width: unset; }
+    }
+    /* --- Sticky Filter FAB --- */
+    .filter-fab-container {
+        position: fixed;
+        bottom: 25px;
+        left: 50%;
+        transform: translateX(-50%) translateY(0);
+        z-index: 1500;
+        transition: all 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        pointer-events: none;
+    }
+    /* Hide FAB when registration popup (SweetAlert) is open */
+    body.swal2-shown .filter-fab-container {
+        display: none !important;
+    }
+    .filter-fab-container.pushed-up {
+        bottom: 180px; /* Elevated to completely clear the compare bar on all devices */
+    }
+    .btn-filter-fab {
+        background: linear-gradient(90deg, #1e40af 0%, #0f766e 100%);
+        color: #fff;
+        border: none;
+        border-radius: 50px;
+        width: auto;
+        height: auto;
+        padding: 14px 28px;
+        font-weight: 700;
+        font-size: 16px;
+        box-shadow: 0 12px 35px rgba(15, 118, 110, 0.35);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        white-space: nowrap;
+        pointer-events: auto;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .btn-filter-fab:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 15px 45px rgba(15, 118, 110, 0.45);
+        filter: brightness(1.1);
+    }
+    .btn-filter-fab:active {
+        transform: scale(0.92);
+    }
+    .filter-badge-dot {
+        width: 8px;
+        height: 8px;
+        background: #818cf8;
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(129, 140, 248, 0.8);
+    }
+    @media (max-width: 991px) {
+        .btn-filter-fab {
+            padding: 14px 28px; /* Restore pill Shape */
+        }
+    }
+    @media (min-width: 1181px) {
+        .filter-fab-container { display: flex; } 
+    }
+
+    /* --- Mobile Filter Floating Card (Redesigned Dark Premium) --- */
+    @media (max-width: 1180px) {
+        #sidebar-filters {
+            display: block !important;
+        }
+        .find-agents-filter-wrapper {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            min-width: 100% !important;
+            height: auto !important;
+            max-height: 92vh !important;
+            background: #ffffff !important; 
+            z-index: 10001 !important;
+            border-radius: 28px 28px 0 0 !important;
+            border: 2px solid #047857 !important;
+            border-bottom: none !important;
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6) !important;
+            transform: translateY(115%);
+            transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+            overflow: hidden !important;
+            display: flex !important;
+            flex-direction: column !important;
+            margin: 0 !important;
+            pointer-events: auto !important;
+        }
+
+        .find-agents-filter-wrapper.show-filter {
+            transform: translateY(0);
+        }
+
+        .find-agents-filter {
+            padding: 10px 24px 30px;
+            border: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+            backdrop-filter: none !important;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            flex: 1;
+        }
+
+        .filter-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 3000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .filter-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .close-mobile-filter {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            background: #f8fafc; 
+            color: #334155;
+            border-radius: 50%;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            border: 1px solid #e2e8f0;
+        }
+
+        .close-mobile-filter:hover {
+            background: #e2e8f0;
+            transform: scale(1.05);
+        }
+        
+        .mobile-filter-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px 16px;
+            background: #ffffff;
+            z-index: 100;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .mobile-filter-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #047857;
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 0.05em;
+        }
+
+        .mobile-filter-title {
+            color: #047857 !important;
+            font-size: 16px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.05em !important;
+        }
+
+        .find-agents-filter label {
+            text-transform: uppercase;
+            font-size: 11px;
+            font-weight: 800;
+            color: #a1a1aa;
+            margin-bottom: 12px;
+            display: block;
+            letter-spacing: 0.05em;
+        }
+
+        .find-agents-filter .filter-actions-container {
+            position: sticky;
+            bottom: -30px;
+            background: #ffffff;
+            padding: 16px 0 24px;
+            margin: 20px 0 -30px !important;
+            border-top: 1px solid #e2e8f0;
+            z-index: 20;
+            display: flex !important;
+            width: 100% !important;
+            gap: 10px;
+        }
+    }
+
+    /* Custom Premium Compact Filter Bar Styling */
+    .compact-filter-bar {
+        width: 100% !important;
+        background: #ffffff !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+        margin-bottom: 24px !important;
+        border-radius: 0 !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-top: none !important;
+        padding: 10px 0 !important;
+    }
+    
+    .compact-filter-bar .container {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        gap: 10px !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+        width: 100% !important;
+        padding: 0 15px !important;
+    }
+    
+    .compact-filter-bar .container::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    @media (min-width: 768px) {
+        .compact-filter-bar .container {
+            justify-content: center !important;
+            gap: 12px !important;
+        }
+    }
+    
+    .compact-filter-btn {
+        width: 44px !important;
+        height: 44px !important;
+        border-radius: 50% !important;
+        border: 1px solid #cbd5e1 !important;
+        background: #ffffff !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        color: #475569 !important;
+        font-size: 16px !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        flex-shrink: 0 !important;
+        box-shadow: none !important;
+        text-decoration: none !important;
+    }
+    .compact-filter-btn:hover {
+        background: #f8fafc !important;
+        transform: scale(1.02) !important;
+        text-decoration: none !important;
+        color: #1e293b !important;
+        border-color: #94a3b8 !important;
+    }
+    
+    .compact-filter-btn.active {
+        background: #eff6ff !important;
+        border-color: #3b82f6 !important;
+        color: #2563eb !important;
+    }
+
+    .filter-badge-dot {
+        width: 8px !important;
+        height: 8px !important;
+        background: #6366f1 !important; /* Vibrant Indigo */
+        border-radius: 50% !important;
+        box-shadow: 0 0 0 2px #ffffff, 0 0 10px rgba(99, 102, 241, 0.8) !important;
+        animation: badgePulse 2s infinite !important;
+    }
+
+    @keyframes badgePulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7), 0 0 0 2px #ffffff;
+        }
+        70% {
+            box-shadow: 0 0 0 6px rgba(99, 102, 241, 0), 0 0 0 2px #ffffff;
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(99, 102, 241, 0), 0 0 0 2px #ffffff;
+        }
+    }
+
+    /* Custom Pill Dropdowns */
+    .custom-pill-dropdown-container {
+        position: relative !important;
+        display: inline-block !important;
+        flex-shrink: 0 !important;
+    }
+    
+    .custom-pill-dropdown-btn {
+        background: #f8fafc !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 50px !important;
+        padding: 0 20px !important;
+        font-family: 'Outfit', sans-serif !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        color: #0f172a !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        cursor: pointer !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        height: 44px !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+        box-shadow: none !important;
+    }
+    
+    .custom-pill-dropdown-btn:hover {
+        background: #f1f5f9 !important;
+        border-color: #cbd5e1 !important;
+    }
+    
+    .custom-pill-dropdown-container.active .custom-pill-dropdown-btn,
+    .custom-pill-dropdown-container.filled .custom-pill-dropdown-btn {
+        background: #eff6ff !important;
+        border-color: #3b82f6 !important;
+        color: #2563eb !important;
+        border-width: 1.5px !important;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08) !important;
+    }
+    
+    .custom-pill-dropdown-menu {
+        position: absolute;
+        top: 110%;
+        left: 0;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+        min-width: 220px;
+        z-index: 1000;
+        display: none;
+        padding: 8px 0;
+        margin-top: 4px;
+        animation: dropdownFadeIn 0.2s ease-out;
+    }
+    
+    .custom-pill-dropdown-menu.show {
+        display: block;
+    }
+    
+    .custom-pill-dropdown-menu .dropdown-item {
+        font-family: 'Outfit', sans-serif !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding: 10px 18px !important;
+        color: #334155 !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        text-decoration: none !important;
+        transition: all 0.15s ease !important;
+        border-radius: 8px !important;
+        margin: 2px 4px !important;
+    }
+    
+    .custom-pill-dropdown-menu .dropdown-item:hover {
+        background: #f8fafc !important;
+        color: #0f172a !important;
+    }
+    
+    .custom-pill-dropdown-menu .dropdown-item.active {
+        background: #ecfdf5 !important;
+        color: #047857 !important;
+        font-weight: 700 !important;
+    }
+    
+    .custom-pill-dropdown-menu .dropdown-item.active::after {
+        content: '\f00c' !important;
+        font-family: 'Font Awesome 5 Free' !important;
+        font-weight: 900 !important;
+        font-size: 12px !important;
+        color: #047857 !important;
+    }
+    
+    @keyframes dropdownFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 991px) {
+        body.dropdown-open {
+            overflow: hidden !important;
+        }
+
+        .dropdown-backdrop {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: rgba(15, 23, 42, 0.4) !important;
+            backdrop-filter: blur(4px) !important;
+            -webkit-backdrop-filter: blur(4px) !important;
+            z-index: 9999 !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .custom-pill-dropdown-menu {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            top: auto !important;
+            width: 100% !important;
+            border-radius: 24px 24px 0 0 !important;
+            max-height: 75vh !important;
+            padding: 16px 20px 40px !important;
+            box-shadow: 0 -10px 40px rgba(15, 23, 42, 0.15) !important;
+            transform: translateY(100%) !important;
+            border: 1px solid #e2e8f0 !important;
+            background: #ffffff !important;
+            z-index: 10000 !important;
+            display: block !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            transition: all 0.35s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+        }
+        
+        .custom-pill-dropdown-menu.show {
+            visibility: visible !important;
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+        }
+        
+        .dropdown-mobile-header {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            padding: 4px 0 16px !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            margin-bottom: 12px !important;
+        }
+        
+        .mobile-handle {
+            width: 48px !important;
+            height: 5px !important;
+            background: #cbd5e1 !important;
+            border-radius: 10px !important;
+            margin-bottom: 12px !important;
+        }
+        
+        .dropdown-mobile-header span {
+            font-family: 'Outfit', sans-serif !important;
+            font-size: 17px !important;
+            font-weight: 700 !important;
+            color: #0f172a !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.05em !important;
+        }
+        
+        .custom-pill-dropdown-menu .dropdown-item {
+            font-family: 'Outfit', sans-serif !important;
+            padding: 12px 18px !important;
+            font-size: 15px !important;
+            font-weight: 500 !important;
+            color: #334155 !important;
+            border-radius: 12px !important;
+            margin: 4px 0 !important;
+            border-bottom: none !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            transition: all 0.2s ease !important;
+            text-decoration: none !important;
+        }
+        
+        .custom-pill-dropdown-menu .dropdown-item:hover {
+            background: #f8fafc !important;
+            color: #0f172a !important;
+        }
+        
+        .custom-pill-dropdown-menu .dropdown-item.active {
+            background: #ecfdf5 !important;
+            color: #047857 !important;
+            font-weight: 700 !important;
+        }
+        
+        .custom-pill-dropdown-menu .dropdown-item.active::after {
+            content: '\f00c' !important;
+            font-family: 'Font Awesome 5 Free' !important;
+            font-weight: 900 !important;
+            font-size: 14px !important;
+            color: #047857 !important;
+        }
+    }
+
+    /* Mobile-specific compact agent adjustments */
+    @media (max-width: 576px) {
+        .benefit-con.find-agents-con {
+            padding: 10px 0 30px !important;
+        }
+        .find-agents-grid {
+            margin-top: 0 !important;
+        }
+        
+        .compact-filter-bar {
+            margin-bottom: 12px !important;
+            padding: 8px 0 !important;
+        }
+
+        .compact-filter-bar .container {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            justify-content: flex-start !important;
+            align-items: center !important;
+            overflow-x: auto !important;
+            white-space: nowrap !important;
+            -webkit-overflow-scrolling: touch !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 0 12px !important;
+            gap: 6px !important;
+        }
+        
+        .compact-filter-bar .container::-webkit-scrollbar {
+            display: none !important;
+        }
+        
+        .compact-filter-bar .container > * {
+            flex-shrink: 0 !important;
+            margin: 0 !important;
+        }
+        
+        .compact-filter-btn {
+            width: 38px !important;
+            height: 38px !important;
+            font-size: 13px !important;
+        }
+
+        .compact-filter-btn .filter-badge-dot {
+            top: 5px !important;
+            right: 5px !important;
+        }
+
+        .custom-pill-dropdown-btn {
+            height: 38px !important;
+            padding: 0 12px !important;
+            font-size: 13px !important;
+            gap: 4px !important;
+        }
+
+        .custom-pill-dropdown-btn i {
+            font-size: 8px !important;
+            margin-left: 4px !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="benefit-con find-agents-con position-relative" style="padding-top: 0 !important;">
+    <!-- Compact Horizontal Filter Bar (Spans full page width) -->
+    <div class="compact-filter-bar">
+        <div class="container d-flex align-items-center">
+            <!-- Back Button -->
+            <a href="{% url 'home:home' %}" class="compact-filter-btn" title="Go Home">
+                <i class="fas fa-chevron-left" style="font-size: 15px;"></i>
+            </a>
+
+            <!-- Filter Icon Button -->
+            <button type="button" class="compact-filter-btn position-relative" id="toggle-compact-filter" title="Toggle Sidebar Filters">
+                <i class="fas fa-sliders-h"></i>
+                {% if request.GET.ServiceType or request.GET.InsuranceType or request.GET.InsuranceCompany or request.session.last_pincode %}
+                    <div class="filter-badge-dot" style="position: absolute; top: 6px; right: 6px;"></div>
+                {% endif %}
+            </button>
+
+            <!-- Service Type Custom Dropdown -->
+            <div class="custom-pill-dropdown-container" id="ServiceType-compact-container">
+                <button type="button" class="custom-pill-dropdown-btn">
+                    <span class="btn-text">Service</span>
+                    <i class="fas fa-chevron-down ms-1 text-muted" style="font-size: 10px; margin-left: 6px !important;"></i>
+                </button>
+                <div class="custom-pill-dropdown-menu">
+                    <div class="dropdown-mobile-header d-lg-none">
+                        <div class="mobile-handle"></div>
+                        <span>Service Type</span>
+                    </div>
+                    <div class="dropdown-options-list">
+                        <a href="#" data-value="" class="dropdown-item">All Services</a>
+                        <a href="#" data-value="New Policy" class="dropdown-item">New Policy</a>
+                        <a href="#" data-value="Claim Assistance" class="dropdown-item">Claim Assistance</a>
+                        <a href="#" data-value="Policy Review" class="dropdown-item">Policy Review</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Insurance Type Custom Dropdown -->
+            <div class="custom-pill-dropdown-container" id="InsuranceType-compact-container">
+                <button type="button" class="custom-pill-dropdown-btn">
+                    <span class="btn-text">Insurance</span>
+                    <i class="fas fa-chevron-down ms-1 text-muted" style="font-size: 10px; margin-left: 6px !important;"></i>
+                </button>
+                <div class="custom-pill-dropdown-menu">
+                    <div class="dropdown-mobile-header d-lg-none">
+                        <div class="mobile-handle"></div>
+                        <span>Insurance Type</span>
+                    </div>
+                    <div class="dropdown-options-list" id="InsuranceType-compact-options">
+                        <!-- Options dynamically populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row find-agents-grid">
+            <!-- Sidebar Filters (Visible as sidebar on desktop) -->
+            <div class="col-lg-4 col-xl-3" id="sidebar-filters">
+                <div class="find-agents-filter-wrapper premium-dark-filter">
+                    <!-- Mobile Bottom Sheet Header -->
+                    <div class="mobile-filter-top d-lg-none">
+                        <div class="mobile-filter-title-wrap">
+                            <i class="fas fa-sliders-h"></i>
+                            <span class="mobile-filter-title">Filter</span>
+                        </div>
+                        <a href="javascript:void(0)" class="close-mobile-filter">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    </div>
+                    <div class="find-agents-filter">
+                        <!-- Location Status & Change Option -->
+                        <div class="current-location-sidebar mb-4 p-3 rounded border d-flex align-items-center justify-content-between shadow-sm" style="border-left: 4px solid #047857 !important; background: #f8fafc; border-color: #e2e8f0;">
+                            <div style="overflow: hidden;">
+                                <div class="text-slate-500" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; color: #64748b;">Location</div>
+                                <div class="text-dark font-weight-bold truncate" style="font-size: 13px; color: #0f172a;">{{ detectedArea|default:"Current Location" }}</div>
+                            </div>
+                            <button type="button" onclick="window.showLocationPopup('{% url 'home:find_agents' %}')" class="btn btn-sm text-blue p-0 ms-2" style="font-size: 11px; font-weight: 700; text-decoration: underline; color: #047857; border: none; background: transparent; cursor: pointer;">Change</button>
+                        </div>
+                        <form id="filter-form" action="{% url 'home:find_agents' %}" method="GET"
+                              hx-boost="false"
+                              hx-get="{% url 'home:find_agents' %}"
+                              hx-target=".find-agents-list"
+                              hx-select=".find-agents-list"
+                              hx-swap="outerHTML show:none"
+                              hx-indicator="#filter-indicator"
+                              hx-push-url="true">
+                            <input type="hidden" name="pincode" value="{{ request.GET.pincode|default:"" }}">
+                            <input type="hidden" name="lat" value="{{ request.GET.lat|default:"" }}">
+                            <input type="hidden" name="lng" value="{{ request.GET.lng|default:"" }}">
+                            <input type="hidden" name="sort_by" id="filter_sort_by" value="{{ request.GET.sort_by|default:"distance" }}">
+                            
+                            <!-- Hidden containers for query params -->
+                            <div id="hidden-service-types"></div>
+                            <div id="hidden-insurance-types"></div>
+                            <div id="hidden-insurance-companies"></div>
+
+                            <!-- Mandatory-field validation banner -->
+                            <div id="filter-validation-error" style="display:none; background:#7f1d1d; border:1px solid #b91c1c; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:13px; color:#fca5a5; font-weight:600;">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                <span id="filter-validation-message">Please select both a Service Type and an Insurance Type.</span>
+                            </div>
+
+                            <!-- 1. Looking for Section -->
+                            <div class="filter-section mb-4">
+                                <h4 class="filter-section-title">I AM LOOKING PADOSIAGENT FOR...</h4>
+                                <div class="pills-grid">
+                                    <button type="button" class="filter-pill" data-value="Buying new insurance" data-service-value="New Policy">
+                                        <i class="fas fa-shopping-cart mr-2"></i>Buy New Insurance
+                                    </button>
+                                    <button type="button" class="filter-pill" data-value="Port / transfer" data-service-value="Policy Review">
+                                        <i class="fas fa-shield-alt mr-2"></i> Port / Transfer Insurance
+                                    </button>
+                                    <button type="button" class="filter-pill" data-value="Insurance audit" data-service-value="Policy Review">
+                                        <i class="fas fa-search-dollar mr-2"></i> Insurance Audit
+                                    </button>
+                                    <button type="button" class="filter-pill" data-value="Claim" data-service-value="Claim Assistance">
+                                        <i class="fas fa-exclamation-triangle mr-2"></i> Claims Support
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Complaint Type (only visible if Claim is active) -->
+                            <div class="form-group mb-4" id="ComplaintTypeContainer" style="display: none; border-bottom: none !important;">
+                                <label for="ComplaintType">Complaint Type</label>
+                                <select class="selectbox" name="ComplaintType" id="ComplaintType" style="background: #f8fafc; color: #334155; border: 1px solid #e2e8f0; border-radius: 8px; width: 100%; padding: 10px 12px; font-family: 'Outfit', sans-serif;">
+                                    <option value="" style="background: #f8fafc; color: #334155;">All Types</option>
+                                    <option value="Claim Rejection" {% if request.GET.ComplaintType == 'Claim Rejection' %}selected{% endif %} style="background: #f8fafc; color: #334155;">Claim Rejection</option>
+                                    <option value="Claim Delay" {% if request.GET.ComplaintType == 'Claim Delay' %}selected{% endif %} style="background: #f8fafc; color: #334155;">Claim Delay</option>
+                                    <option value="Claim Short settled" {% if request.GET.ComplaintType == 'Claim Short settled' %}selected{% endif %} style="background: #f8fafc; color: #334155;">Claim Short settled</option>
+                                    <option value="Mis-selling" {% if request.GET.ComplaintType == 'Mis-selling' %}selected{% endif %} style="background: #f8fafc; color: #334155;">Mis-selling</option>
+                                </select>
+                            </div>
+
+                            <!-- 2. Health Insurance Section -->
+                            <div class="product-category-section mb-4" data-category="Health Insurance">
+                                <div class="category-header d-flex align-items-center mb-3">
+                                    <h4 class="category-title mb-0">HEALTH INSURANCE PRODUCTS</h4>
+                                </div>
+                                <div class="circle-tiles-grid grid-3">
+                                    <button type="button" class="circle-tile" data-product="Mediclaim">
+                                        <div class="tile-icon-wrapper">
+                                            <i class="fas fa-heartbeat"></i>
+                                        </div>
+                                        <span class="tile-label">Mediclaim</span>
+                                    </button>
+                                    <button type="button" class="circle-tile" data-product="Family Mediclaim">
+                                        <div class="tile-icon-wrapper">
+                                            <i class="fas fa-users"></i>
+                                        </div>
+                                        <span class="tile-label">Family Mediclaim</span>
+                                    </button>
+                                    <button type="button" class="circle-tile" data-product="Personal Accident">
+                                        <div class="tile-icon-wrapper">
+                                            <i class="fas fa-wave-square"></i>
+                                        </div>
+                                        <span class="tile-label">Accident Insurance</span>
+                                    </button>
+                                    <button type="button" class="circle-tile" data-product="Critical Illness">
+                                        <div class="tile-icon-wrapper">
+                                            <i class="fas fa-stethoscope"></i>
+                                        </div>
+                                        <span class="tile-label">Critical Illness</span>
+                                    </button>
+                                    <button type="button" class="circle-tile" data-product="Top-up">
+                                        <div class="tile-icon-wrapper">
+                                            <i class="fas fa-arrow-circle-up"></i>
+                                        </div>
+                                        <span class="tile-label">Top-up</span>
+                                    </button>
+                                    <button type="button" class="circle-tile" data-product="Hospital Cash">
+                                        <div class="tile-icon-wrapper">
+                                            <i class="fas fa-bed"></i>
+                                        </div>
+                                        <span class="tile-label">Hospital Cash</span>
+                                    </button>
+                                    <button type="button" class="circle-tile" data-product="Others">
+                                        <div class="tile-icon-wrapper">
+                                            <i class="fas fa-ellipsis-h"></i>
+                                        </div>
+                                        <span class="tile-label">Others</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 3. Vehicle Insurance Section -->
+                            <div class="product-category-section mb-4" data-category="Motor Insurance">
+                                <div class="category-header d-flex align-items-center mb-3">
+                                    <i class="fas fa-car mr-2 category-icon"></i>
+                                    <h4 class="category-title mb-0">VEHICLE INSURANCE</h4>
+                                </div>
+                                <div class="circle-tiles-grid grid-4">
+                                    <button type="button" class="circle-tile" data-product="Private Car">
+                                        <div class="tile-icon-wrapper">
+                                            <i class="fas fa-car"></i>
+                                        </div>
+                                        <span class="tile-label">Car</span>
+                                    </button>
+                                    <button type="button" class="circle-tile" data-product="Two Wheeler">
+                                        <div class="tile-icon-wrapper">
+                                            <i class="fas fa-motorcycle"></i>
+                                        </div>
+                                        <span class="tile-label">2-Wheeler</span>
+                                    </button>
+                                    <button type="button" class="circle-tile" data-product="Commercial Vehicle">
+                                        <div class="tile-icon-wrapper">
+                                            <i class="fas fa-truck"></i>
+                                        </div>
+                                        <span class="tile-label">Commercial</span>
+                                    </button>
+                                    <button type="button" class="circle-tile" data-product="Others">
+                                        <div class="tile-icon-wrapper">
+                                            <i class="fas fa-ellipsis-h"></i>
+                                        </div>
+                                        <span class="tile-label">Others</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 4. Life Insurance Section -->
+                            <div class="product-category-section mb-4" id="life-insurance-section" data-category="Life Insurance">
+                                <div class="category-header d-flex align-items-center mb-3">
+                                    <i class="fas fa-umbrella mr-2 category-icon"></i>
+                                    <h4 class="category-title mb-0">LIFE INSURANCE</h4>
+                                </div>
+                                <div class="circle-tiles-grid grid-4">
+                                    <button type="button" class="circle-tile" data-product="Term Plan">
+                                        <div class="tile-icon-wrapper">
+                                            <i class="fas fa-shield-alt"></i>
+                                        </div>
+                                        <span class="tile-label">Term</span>
+                                    </button>
+                                    <button type="button" class="circle-tile" data-product="ULIP Plan">
+                                        <div class="tile-icon-wrapper">
+                                            <i class="fas fa-chart-line"></i>
+                                        </div>
+                                        <span class="tile-label">ULIP</span>
+                                    </button>
+                                    <button type="button" class="circle-tile" data-product="Saving Plan">
+                                        <div class="tile-icon-wrapper">
+                                            <i class="fas fa-piggy-bank"></i>
+                                        </div>
+                                        <span class="tile-label">Endowment</span>
+                                    </button>
+                                    <button type="button" class="circle-tile" data-product="Pension Plan">
+                                        <div class="tile-icon-wrapper">
+                                            <i class="fas fa-clock"></i>
+                                        </div>
+                                        <span class="tile-label">Pension</span>
+                                    </button>
+                                    <button type="button" class="circle-tile" data-product="Others">
+                                        <div class="tile-icon-wrapper">
+                                            <i class="fas fa-ellipsis-h"></i>
+                                        </div>
+                                        <span class="tile-label">Others</span>
+                                    </button>
+                                </div>
+                                <!-- Disclaimer banner -->
+                                <div id="life-insurance-disclaimer" class="disclaimer-banner mt-3" style="display: none;">
+                                    <i class="fas fa-info-circle mr-2"></i>
+                                    <span>Life insurance is not applicable for port/transfer</span>
+                                </div>
+                            </div>
+
+                            <!-- 5. Business Insurance Section -->
+                            <div class="product-category-section mb-4" data-category="SME Insurance">
+                                <div class="category-header d-flex align-items-center mb-3">
+                                    <i class="fas fa-building mr-2 category-icon"></i>
+                                    <h4 class="category-title mb-0">BUSINESS INSURANCE</h4>
+                                </div>
+                                <div class="circle-tiles-grid grid-4">
+                                    <button type="button" class="circle-tile" data-product="Fire">
+                                        <div class="tile-icon-wrapper">
+                                            <i class="fas fa-store"></i>
+                                        </div>
+                                        <span class="tile-label">Property</span>
+                                    </button>
+                                    <button type="button" class="circle-tile" data-product="GPA/GMC">
+                                        <div class="tile-icon-wrapper">
+                                            <i class="fas fa-users"></i>
+                                        </div>
+                                        <span class="tile-label">Group health</span>
+                                    </button>
+                                    <button type="button" class="circle-tile" data-product="Liability">
+                                        <div class="tile-icon-wrapper">
+                                            <i class="fas fa-briefcase"></i>
+                                        </div>
+                                        <span class="tile-label">Liability</span>
+                                    </button>
+                                    <button type="button" class="circle-tile" data-product="Cyber">
+                                        <div class="tile-icon-wrapper">
+                                            <i class="fas fa-desktop"></i>
+                                        </div>
+                                        <span class="tile-label">Cyber</span>
+                                    </button>
+                                    <button type="button" class="circle-tile" data-product="Others">
+                                        <div class="tile-icon-wrapper">
+                                            <i class="fas fa-ellipsis-h"></i>
+                                        </div>
+                                        <span class="tile-label">Others</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Insurance Company Dropdown (only shown in Claim mode after a tile is selected) -->
+                            <div class="form-group mb-4" id="ClaimInsuranceCompanyContainer" style="display: none; padding-top: 16px; border-top: 1px solid #e2e8f0; margin-top: 4px;">
+                                <label for="ClaimInsuranceCompany" style="font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; display: block; color: #14b8a6; margin-bottom: 8px;">
+                                    <i class="fas fa-building mr-1"></i> Insurance Company
+                                </label>
+                                <select class="selectbox" name="ClaimInsuranceCompany" id="ClaimInsuranceCompany" style="background: #f8fafc; color: #334155; border: 1px solid #14b8a6; border-radius: 8px; width: 100%; padding: 10px 12px; font-family: 'Outfit', sans-serif; font-size: 13px; outline: none; cursor: pointer;">
+                                    <option value="" style="background: #f8fafc; color: #334155;">All Companies</option>
+                                </select>
+                                <p id="ClaimInsuranceCompanyHint" style="font-size: 11px; color: #6b7280; margin-top: 6px; margin-bottom: 0;"></p>
+                            </div>
+
+                            <!-- Find agent nearby link -->
+                            <div class="text-center mt-3">
+                                <a href="javascript:void(0)" onclick="window.showLocationPopup('{% url 'home:find_agents' %}')" class="nearby-link">
+                                    <i class="fas fa-map-marker-alt mr-1"></i> Find agent nearby ↗
+                                </a>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="filter-actions-container">
+                                <button type="button" id="clear-filters-btn" class="btn-clear shadow-sm">
+                                    Clear
+                                </button>
+                                <button type="button" id="apply-filters-btn" class="btn-apply shadow-sm">
+                                    <span id="filter-indicator" class="htmx-indicator mr-2" style="display: none;">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                    </span>
+                                    <span class="btn-text">Apply filters</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Area: Agent List -->
+            <div class="col-lg-8 col-xl-9" id="agent-list-container">
+                <div class="find-agents-list">
+                    {% include 'partials/find-agents-list.html' with agents=agents shouldGateGuest=shouldGateGuest %}
+                </div>
+            </div>
+
+            <!-- Skeleton Template for HTMX Loading State (Animated Shimmer) -->
+            <template id="agents-skeleton-template">
+                <div style="opacity: 0.9; pointer-events: none; user-select: none;">
+                    {% include 'partials/agent-card-skeleton.html' %}
+                </div>
+            </template>
+        </div>
+    </div>
+</section>
+
+<!-- Comparison Bar -->
+<div id="compare-bar" class="compare-bar">
+    <div class="compare-bar-header w-100 d-flex align-items-center justify-content-between mb-2 d-sm-none">
+        <div class="compare-info text-dark">
+            <span id="compare-count-mobile">0</span>/3 Selected
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="compare-bar-control-btn text-danger border" onclick="clearComparison()" title="Clear and Close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="compare-info d-none d-sm-block">
+        <span id="compare-count">0</span>/3 Agents selected
+    </div>
+    
+    <div class="compare-selected-agents" id="compare-selected-agents">
+        <!-- Selected agents thumbs will appear here -->
+    </div>
+
+    <div class="compare-actions d-flex align-items-center">
+        <button id="compare-now-btn" onclick="showComparisonModal()" disabled>Compare Now</button>
+        <div class="d-none d-sm-flex" style="margin-left: 30px;">
+            <button type="button" class="compare-bar-control-btn shadow-sm text-danger" onclick="clearComparison()" title="Clear and Close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Comparison Modal -->
+<div class="modal fade" id="comparisonModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 20px; overflow: hidden; border: none;">
+            <div class="modal-header border-0 bg-light p-4">
+                <h5 class="modal-title font-weight-bold" style="font-size: 24px;">Agent Comparison</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" data-dismiss="modal" onclick="closeComparisonModal()" aria-label="Close" style="font-size: 28px; line-height: 1; border: none; background: transparent; position: absolute; right: 24px;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive">
+                    <table class="comparison-table" id="comparison-table-content">
+                        <!-- Content injected via JS -->
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer border-0 p-4">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal" data-dismiss="modal" onclick="closeComparisonModal()">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Filter Overlay Backdrop -->
+<div class="filter-overlay d-lg-none"></div>
+
+<!-- Floating Action Button for Filters on Mobile -->
+<div class="filter-fab-container d-lg-none">
+    <button class="btn-filter-fab" onclick="window.openMobileFilter()">
+        <i class="fas fa-sliders-h"></i>
+        <span>Filters</span>
+        {% if request.GET.ServiceType or request.GET.InsuranceType or request.GET.InsuranceCompany or request.session.last_pincode %}
+            <div class="filter-badge-dot"></div>
+        {% endif %}
+    </button>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ portfolioCompaniesByType|json_script:"portfolio-companies-data" }}
+<script>
+    // Portfolio companies data from controller
+    var portfolioCompaniesByType = JSON.parse(document.getElementById('portfolio-companies-data').textContent);
+</script>
+<script>
+    $(document).ready(function() {
+        // =====================================================
+        // Redesigned Premium Filter Logic
+        // =====================================================
+
+        const categoryAbbr = {
+            'Health Insurance': 'Health',
+            'Motor Insurance': 'Motor',
+            'Life Insurance': 'Life',
+            'SME Insurance': 'SME'
+        };
+
+        const categoryNames = {
+            'Health': 'Health Insurance',
+            'Motor': 'Motor Insurance',
+            'Life': 'Life Insurance',
+            'SME': 'SME Insurance'
+        };
+
+        // --- Single-select Pill Logic ---
+        $('.filter-pill').on('click', function(e) {
+            e.preventDefault();
+            const $this = $(this);
+
+            if ($this.hasClass('active')) {
+                return; // Already active, do nothing
+            }
+
+            $('.filter-pill').removeClass('active');
+            $this.addClass('active');
+
+            // If switching to Claim mode, enforce single-select (clear if multiple are selected)
+            if ($this.data('value') === 'Claim') {
+                if ($('.circle-tile.active').length > 1) {
+                    $('.circle-tile').removeClass('active');
+                }
+            }
+
+            // Update UI sections based on active selections
+            updateUiState();
+            syncFiltersToHiddenInputs();
+        });
+
+        // --- Circle Tile Toggle Logic ---
+        $('.circle-tile').on('click', function(e) {
+            e.preventDefault();
+            const $this = $(this);
+            const parentSection = $this.closest('.product-category-section');
+
+            // If the Life Insurance section is collapsed, don't allow interactions
+            if (parentSection.attr('id') === 'life-insurance-section' && parentSection.hasClass('collapsed')) {
+                return;
+            }
+
+            const isClaimActive = $('.filter-pill[data-value="Claim"]').hasClass('active');
+            
+            if (isClaimActive) {
+                // CLAIM MODE: Single-select
+                if ($this.hasClass('active')) {
+                    $this.removeClass('active');
+                } else {
+                    $('.circle-tile').removeClass('active');
+                    $this.addClass('active');
+
+                    // Automatically scroll to the company dropdown
+                    setTimeout(() => {
+                        const target = document.getElementById('ClaimInsuranceCompanyContainer');
+                        if (target && target.style.display !== 'none') {
+                            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }, 300);
+                }
+            } else {
+                // NORMAL MODE: Multi-select toggle
+                $this.toggleClass('active');
+            }
+
+            updateUiState();
+            syncFiltersToHiddenInputs();
+        });
+
+        // --- Complaint Type Dropdown Change Logic ---
+        $('#ComplaintType').on('change', function() {
+            syncFiltersToHiddenInputs();
+        });
+
+        // --- Claim Insurance Company Dropdown Change Logic ---
+        $('#ClaimInsuranceCompany').on('change', function() {
+            syncFiltersToHiddenInputs();
+        });
+
+        // --- Update UI State (Section Visibility & Collapsing) ---
+        function updateUiState() {
+            const isClaimActive = $('.filter-pill[data-value="Claim"]').hasClass('active');
+            const isPortActive = $('.filter-pill[data-value="Port / transfer"]').hasClass('active');
+
+            // 1. Complaint Container + Claim-mode helpers
+            if (isClaimActive) {
+                $('#ComplaintTypeContainer').slideDown(250);
+                $('#claim-step-guide').slideDown(200);
+
+                // Company dropdown: only show after an insurance type tile is selected
+                const hasSelectedTile = $('.circle-tile.active').length > 0;
+                if (hasSelectedTile) {
+                    $('#ClaimInsuranceCompanyContainer').slideDown(250);
+                } else {
+                    $('#ClaimInsuranceCompanyContainer').slideUp(250);
+                    $('#ClaimInsuranceCompany').val('');
+                }
+            } else {
+                $('#ComplaintTypeContainer').slideUp(250);
+                $('#ComplaintType').val('');
+                $('#claim-step-guide').slideUp(200);
+                $('#ClaimInsuranceCompanyContainer').slideUp(250);
+                $('#ClaimInsuranceCompany').val('');
+            }
+
+            // 2. Life Insurance Section Collapsing for Port/Transfer
+            const $lifeSection = $('#life-insurance-section');
+            const $lifeDisclaimer = $('#life-insurance-disclaimer');
+
+            if (isPortActive) {
+                if (!$lifeSection.hasClass('collapsed')) {
+                    $lifeSection.addClass('collapsed');
+                    $lifeDisclaimer.fadeIn(300);
+                    $lifeSection.find('.circle-tile').removeClass('active');
+                }
+            } else {
+                if ($lifeSection.hasClass('collapsed')) {
+                    $lifeSection.removeClass('collapsed');
+                    $lifeDisclaimer.fadeOut(300);
+                }
+            }
+
+            // 3. Update claim company dropdown options
+            updateClaimCompanyDropdown();
+        }
+
+        // --- Populate Claim Company Dropdown based on the ONE selected insurance type tile ---
+        function updateClaimCompanyDropdown() {
+            const isClaimActive = $('.filter-pill[data-value="Claim"]').hasClass('active');
+            if (!isClaimActive) return;
+
+            const $activeTile = $('.circle-tile.active').first();
+            if ($activeTile.length === 0) {
+                // No tile selected — reset dropdown and show placeholder hint
+                $('#ClaimInsuranceCompany').empty()
+                    .append('<option value="" style="background:#f8fafc;color:#334155;">— Select insurance type first —</option>');
+                $('#ClaimInsuranceCompanyHint').text('Select an insurance type above to see available companies');
+                return;
+            }
+
+            // Get the parent category of the selected tile (e.g. "Health Insurance")
+            const parentSection = $activeTile.closest('.product-category-section');
+            const catName = parentSection.data('category');
+            const companies = (portfolioCompaniesByType[catName] || []).slice().sort();
+
+            const $select = $('#ClaimInsuranceCompany');
+            const currentVal = $select.val();
+            $select.empty();
+            $select.append('<option value="" style="background:#f8fafc;color:#334155;">All Companies</option>');
+
+            if (companies.length === 0) {
+                $select.append('<option value="" disabled style="background:#f8fafc;color:#64748b;">No companies listed</option>');
+                $('#ClaimInsuranceCompanyHint').text('No companies found for ' + catName);
+            } else {
+                companies.forEach(function(company) {
+                    const opt = $('<option></option>')
+                        .attr('value', company)
+                        .css({ background: '#f8fafc', color: '#334155' })
+                        .text(company);
+                    $select.append(opt);
+                });
+
+                // Restore previous selection if still in the list
+                if (currentVal && companies.includes(currentVal)) {
+                    $select.val(currentVal);
+                }
+
+                const displayName = catName.replace(' Insurance', '');
+                $('#ClaimInsuranceCompanyHint').text(companies.length + ' companies for ' + displayName + ' Insurance');
+            }
+        }
+
+        // --- Synchronize Active Filters to Hidden Form Inputs ---
+        function syncFiltersToHiddenInputs() {
+            const $serviceContainer = $('#hidden-service-types');
+            const $typeContainer = $('#hidden-insurance-types');
+            const $companyContainer = $('#hidden-insurance-companies');
+
+            $serviceContainer.empty();
+            $typeContainer.empty();
+            $companyContainer.empty();
+
+            // 1. Service Types (Pills)
+            const activeServices = [];
+            $('.filter-pill.active').each(function() {
+                const serviceVal = $(this).data('value');
+                activeServices.push(serviceVal);
+                $serviceContainer.append(`<input type="hidden" name="ServiceType[]" value="${serviceVal}">`);
+            });
+
+            const isClaimActive = activeServices.includes('Claim');
+
+            // 2. Insurance Companies & Types (Circle Tiles)
+            const activeTypes = new Set();
+            $('.circle-tile.active').each(function() {
+                const productVal = $(this).data('product');
+                // Only add circle tile sub-products as InsuranceCompany[] when NOT in Claim mode
+                if (!isClaimActive) {
+                    $companyContainer.append(`<input type="hidden" name="InsuranceCompany[]" value="${productVal}">`);
+                }
+
+                const parentSection = $(this).closest('.product-category-section');
+                const catName = parentSection.data('category');
+                const abbr = categoryAbbr[catName];
+                if (abbr) {
+                    activeTypes.add(abbr);
+                }
+            });
+
+            // 3. Claim mode: use the company dropdown value instead
+            if (isClaimActive) {
+                const selectedCompany = $('#ClaimInsuranceCompany').val();
+                if (selectedCompany && selectedCompany !== '') {
+                    $companyContainer.append(`<input type="hidden" name="InsuranceCompany[]" value="${selectedCompany}">`);
+                }
+            }
+
+            // Populate the active categories as InsuranceType[] hidden inputs
+            activeTypes.forEach(type => {
+                $typeContainer.append(`<input type="hidden" name="InsuranceType[]" value="${type}">`);
+            });
+
+            // Update the compact filter bar elements
+            syncCompactFilterBar(activeServices, Array.from(activeTypes));
+        }
+
+        // --- Synchronize Compact Filter Bar Display ---
+        function syncCompactFilterBar(activeServices, activeTypes) {
+            // Update Service Type Button Text & Class
+            const $serviceBtnText = $('#ServiceType-compact-container .btn-text');
+            const $serviceContainer = $('#ServiceType-compact-container');
+
+            if (activeServices.length > 0) {
+                $serviceContainer.addClass('filled');
+                if (activeServices.includes('Claim')) {
+                    $serviceBtnText.text('Claim Assistance');
+                } else {
+                    const displayNames = activeServices.map(s => {
+                        if (s === 'Buying new insurance') return 'New Policy';
+                        if (s === 'Insurance audit' || s === 'Port / transfer') return 'Policy Review';
+                        return s;
+                    });
+                    const uniqueNames = Array.from(new Set(displayNames));
+                    $serviceBtnText.text(uniqueNames.length === 1 ? uniqueNames[0] : `${uniqueNames.length} Selected`);
+                }
+            } else {
+                $serviceContainer.removeClass('filled');
+                $serviceBtnText.text('Service');
+            }
+
+            // Update Insurance Type Button Text & Class
+            const $insuranceBtnText = $('#InsuranceType-compact-container .btn-text');
+            const $insuranceContainer = $('#InsuranceType-compact-container');
+
+            if (activeTypes.length > 0) {
+                $insuranceContainer.addClass('filled');
+                if (activeTypes.length === 1) {
+                    $insuranceBtnText.text(activeTypes[0]);
+                } else {
+                    $insuranceBtnText.text(`${activeTypes.length} Selected`);
+                }
+            } else {
+                $insuranceContainer.removeClass('filled');
+                $insuranceBtnText.text('Insurance');
+            }
+
+            // Sync Service dropdown active classes
+            $('#ServiceType-compact-container .dropdown-item').removeClass('active');
+            if (activeServices.length === 0) {
+                $('#ServiceType-compact-container .dropdown-item[data-value=""]').addClass('active');
+            } else {
+                if (activeServices.includes('Claim')) {
+                    $('#ServiceType-compact-container .dropdown-item[data-value="Claim Assistance"]').addClass('active');
+                }
+                if (activeServices.includes('Buying new insurance')) {
+                    $('#ServiceType-compact-container .dropdown-item[data-value="New Policy"]').addClass('active');
+                }
+                if (activeServices.includes('Insurance audit') || activeServices.includes('Port / transfer')) {
+                    $('#ServiceType-compact-container .dropdown-item[data-value="Policy Review"]').addClass('active');
+                }
+            }
+
+            // Populate dynamic Insurance dropdown items
+            const $insOptionsContainer = $('#InsuranceType-compact-options');
+            let optionsHtml = '<a href="#" data-value="" class="dropdown-item">All Insurance Types</a>';
+            
+            Object.keys(categoryNames).forEach(abbr => {
+                const catName = categoryNames[abbr];
+                const isActive = activeTypes.includes(abbr) ? 'active' : '';
+                optionsHtml += `<a href="#" data-value="${catName}" class="dropdown-item ${isActive}">${catName}</a>`;
+            });
+            $insOptionsContainer.html(optionsHtml);
+        }
+
+        // --- Compact Service Type Dropdown Click Handlers ---
+        $(document).on('click', '#ServiceType-compact-container .dropdown-item', function(e) {
+            e.preventDefault();
+            const val = $(this).data('value');
+
+            $('.filter-pill').removeClass('active');
+            if (val === 'New Policy') {
+                $('.filter-pill[data-value="Buying new insurance"]').addClass('active');
+            } else if (val === 'Claim Assistance') {
+                $('.filter-pill[data-value="Claim"]').addClass('active');
+            } else if (val === 'Policy Review') {
+                $('.filter-pill[data-value="Insurance audit"]').addClass('active');
+            } else {
+                $('.filter-pill[data-value="Buying new insurance"]').addClass('active');
+            }
+
+            // Close mobile menu/backdrop if open
+            $('.custom-pill-dropdown-container').removeClass('active');
+            $('.custom-pill-dropdown-menu').removeClass('show');
+            $('body').removeClass('dropdown-open');
+            $('.dropdown-backdrop').remove();
+
+            updateUiState();
+            syncFiltersToHiddenInputs();
+            submitFilterForm();
+        });
+
+        // --- Compact Insurance Type Dropdown Click Handlers ---
+        $(document).on('click', '#InsuranceType-compact-container .dropdown-item', function(e) {
+            e.preventDefault();
+            const val = $(this).data('value');
+
+            if (val === '') {
+                $('.circle-tile').removeClass('active');
+            } else {
+                const abbr = categoryAbbr[val];
+                if (abbr) {
+                    const $section = $(`.product-category-section[data-category="${val}"]`);
+                    // Toggle section: if some tiles are active, clear them all. Otherwise select them all.
+                    const anyActive = $section.find('.circle-tile.active').length > 0;
+                    if (anyActive) {
+                        $section.find('.circle-tile').removeClass('active');
+                    } else {
+                        // Check if section is collapsed (e.g. Life Insurance when Port/Transfer is active)
+                        if (!($section.attr('id') === 'life-insurance-section' && $section.hasClass('collapsed'))) {
+                            $section.find('.circle-tile').addClass('active');
+                        }
+                    }
+                }
+            }
+
+            // Close mobile menu/backdrop if open
+            $('.custom-pill-dropdown-container').removeClass('active');
+            $('.custom-pill-dropdown-menu').removeClass('show');
+            $('body').removeClass('dropdown-open');
+            $('.dropdown-backdrop').remove();
+
+            syncFiltersToHiddenInputs();
+            submitFilterForm();
+        });
+
+        // --- Toggle custom compact dropdown menus ---
+        $(document).on('click', '.custom-pill-dropdown-btn', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const $container = $(this).closest('.custom-pill-dropdown-container');
+            const $menu = $container.find('.custom-pill-dropdown-menu');
+            const isActive = $container.hasClass('active');
+            
+            $('.custom-pill-dropdown-container').not($container).removeClass('active');
+            $('.custom-pill-dropdown-menu').not($menu).removeClass('show');
+            
+            if (!isActive) {
+                $container.addClass('active');
+                $menu.addClass('show');
+                
+                if (window.innerWidth <= 991) {
+                    $('body').addClass('dropdown-open');
+                    if (!$('.dropdown-backdrop').length) {
+                        $('body').append('<div class="dropdown-backdrop"></div>');
+                    }
+                }
+            } else {
+                $('body').removeClass('dropdown-open');
+                $('.dropdown-backdrop').remove();
+            }
+        });
+
+        // Close dropdowns on click outside
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('.custom-pill-dropdown-container').length) {
+                $('.custom-pill-dropdown-container').removeClass('active');
+                $('.custom-pill-dropdown-menu').removeClass('show');
+                $('body').removeClass('dropdown-open');
+                $('.dropdown-backdrop').remove();
+            }
+        });
+
+        $(document).on('click', '.dropdown-backdrop, .close-mobile-filter', function() {
+            $('.custom-pill-dropdown-container').removeClass('active');
+            $('.custom-pill-dropdown-menu').removeClass('show');
+            $('body').removeClass('dropdown-open');
+            $('.dropdown-backdrop').remove();
+        });
+
+        // --- Apply Filters Action ---
+        $('#apply-filters-btn').on('click', function(e) {
+            e.preventDefault();
+            
+            syncFiltersToHiddenInputs();
+            
+            if (window.innerWidth <= 1180) {
+                window.closeMobileFilter();
+            }
+
+            submitFilterForm();
+        });
+
+        // --- Clear Filters Action ---
+        $('#clear-filters-btn').on('click', function(e) {
+            e.preventDefault();
+            
+            // Reset all controls to defaults (except location hidden fields)
+            $('.filter-pill').removeClass('active');
+            $('.filter-pill[data-value="Buying new insurance"]').addClass('active');
+            $('.circle-tile').removeClass('active');
+            $('#ComplaintType').val('');
+
+            if (window.innerWidth <= 1180) {
+                window.closeMobileFilter();
+            }
+
+            updateUiState();
+            syncFiltersToHiddenInputs();
+            submitFilterForm();
+        });
+
+        // Helper to submit the form using native HTMX event dispatching
+        function submitFilterForm() {
+            const form = $('#filter-form')[0];
+            if (form) {
+                const event = new Event('submit', { bubbles: true, cancelable: true });
+                form.dispatchEvent(event);
+            }
+        }
+
+        // --- State Restoration on Load ---
+        function restoreFiltersFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+
+            // ─── Map from homepage ServiceType values → pill data-value ───────
+            const serviceTypeToPill = {
+                'New Policy':        'Buying new insurance',
+                'Claim Assistance':  'Claim',
+                'Policy Review':     'Insurance audit',   // default pill for Policy Review
+                'Buying new insurance': 'Buying new insurance',
+                'Claim':             'Claim',
+                'Insurance audit':   'Insurance audit',
+                'Port / transfer':   'Port / transfer',
+            };
+
+            // ─── 1. Restore Service Type pill ─────────────────────────────────
+            let services = [];
+            for (let key of urlParams.keys()) {
+                if (key.startsWith('ServiceType')) {
+                    services = services.concat(urlParams.getAll(key));
+                }
+            }
+
+            if (services.length > 0) {
+                $('.filter-pill').removeClass('active');
+                let matched = false;
+                for (let service of services) {
+                    const pillVal = serviceTypeToPill[service] || service;
+                    const $pill = $(`.filter-pill[data-value="${pillVal}"]`)
+                        .add($(`.filter-pill[data-service-value="${service}"]`));
+                    if ($pill.length > 0) {
+                        $pill.first().addClass('active');
+                        matched = true;
+                        break;
+                    }
+                }
+                if (!matched) {
+                    // Fallback default
+                    $('.filter-pill[data-value="Buying new insurance"]').addClass('active');
+                }
+            } else {
+                $('.filter-pill[data-value="Buying new insurance"]').addClass('active');
+            }
+
+            const isClaimMode = services.some(s => s === 'Claim' || s === 'Claim Assistance');
+
+            // ─── 2. Restore InsuranceType → activate matching category tiles ──
+            let insuranceTypes = [];
+            for (let key of urlParams.keys()) {
+                if (key === 'InsuranceType' || key === 'InsuranceType[]') {
+                    insuranceTypes = insuranceTypes.concat(urlParams.getAll(key));
+                }
+            }
+
+            if (insuranceTypes.length > 0) {
+                $('.circle-tile').removeClass('active');
+            }
+
+            // ─── 3. Restore InsuranceCompany sub-products (non-claim mode) ───
+            let subProducts = [];
+            for (let key of urlParams.keys()) {
+                if (key.startsWith('InsuranceCompany')) {
+                    subProducts = subProducts.concat(urlParams.getAll(key));
+                }
+            }
+
+            if (subProducts.length > 0) {
+                $('.circle-tile').removeClass('active');
+                if (isClaimMode) {
+                    // Single select
+                    const $tile = $(`.circle-tile[data-product="${subProducts[0]}"]`);
+                    if ($tile.length > 0) {
+                        $tile.addClass('active');
+                    }
+                } else {
+                    // Multi select
+                    subProducts.forEach(product => {
+                        const $tile = $(`.circle-tile[data-product="${product}"]`);
+                        if ($tile.length > 0) {
+                            $tile.addClass('active');
+                        }
+                    });
+                }
+            }
+
+            // ─── 4. Restore Complaint Type ────────────────────────────────────
+            const complaint = urlParams.get('ComplaintType');
+            if (complaint) {
+                $('#ComplaintType').val(complaint);
+            }
+
+            // ─── 5. Update UI (shows/hides Claim containers etc.) ────────────
+            updateUiState();
+
+            // ─── 6. Restore Claim company dropdown (after updateUiState builds options) ─
+            if (isClaimMode && subProducts.length > 0) {
+                const $select = $('#ClaimInsuranceCompany');
+                const firstCompanyMatch = subProducts.find(p => $select.find(`option[value="${p}"]`).length > 0);
+                if (firstCompanyMatch) {
+                    $select.val(firstCompanyMatch);
+                }
+            }
+
+            // ─── 7. Sync hidden inputs ────────────────────────────────────────
+            syncFiltersToHiddenInputs();
+
+            // ─── 8. Auto-submit if pre-filters came from homepage ─────────────
+            const hasPreFilters = services.length > 0 || insuranceTypes.length > 0;
+            const isHomepageReferral = hasPreFilters && document.referrer.includes(window.location.host)
+                && !document.referrer.includes('find-agents');
+
+            if (isHomepageReferral || (hasPreFilters && services.length > 0 && insuranceTypes.length > 0)) {
+                setTimeout(() => {
+                    submitFilterForm();
+                }, 300);
+            }
+        }
+
+        // --- Mobile Bottom Sheet Toggles ---
+        window.openMobileFilter = function() {
+            $(".find-agents-filter-wrapper").addClass("show-filter");
+            $(".filter-overlay").addClass("active");
+            $("body").css("overflow", "hidden"); 
+        };
+
+        window.closeMobileFilter = function() {
+            $(".find-agents-filter-wrapper").removeClass("show-filter");
+            $(".filter-overlay").removeClass("active");
+            $("body").css("overflow", "auto");
+        };
+
+        $(document).on("click", ".find-agents-filter-wrapper", function (e) {
+            e.stopPropagation();
+        });
+
+        $(document).on("click", ".mobile-filter, .btn-filter-fab, #toggle-compact-filter", function (e) {
+            if (window.innerWidth <= 1180) {
+                e.preventDefault();
+                e.stopPropagation();
+                window.openMobileFilter();
+            } else if ($(this).attr('id') === 'toggle-compact-filter') {
+                const $sidebar = $('#sidebar-filters');
+                const $listContainer = $('#agent-list-container');
+                
+                $sidebar.toggle();
+                $(this).toggleClass('active');
+                
+                if ($sidebar.is(':visible')) {
+                    $listContainer.removeClass('col-lg-12').addClass('col-lg-8 col-xl-9');
+                } else {
+                    $listContainer.removeClass('col-lg-8 col-xl-9').addClass('col-lg-12');
+                }
+            }
+        });
+
+        $(document).on("click", ".close-mobile-filter, .filter-overlay", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            window.closeMobileFilter();
+        });
+
+        // Run restoration on load
+        restoreFiltersFromUrl();
+
+        // HTMX: Show skeleton loader while fetching results
+        document.body.addEventListener('htmx:beforeRequest', function(evt) {
+            if (evt.detail.target && evt.detail.target.classList && evt.detail.target.classList.contains('find-agents-list')) {
+                const skeletonHtml = $('#agents-skeleton-template').html();
+                if (skeletonHtml) {
+                    $('.find-agents-list').html(skeletonHtml).css('opacity', '1');
+                    
+                    const listTop = $('.find-agents-list').offset().top;
+                    if (window.scrollY > listTop - 100) {
+                        $('html, body').animate({ scrollTop: listTop - 100 }, 300);
+                    }
+                }
+            }
+        });
+
+        // --- Auto-show Location Popup if missing ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasLocation = {% if request.session.last_pincode or request.session.last_lat %}true{% else %}false{% endif %} ||
+            urlParams.has('pincode') || urlParams.has('location') ||
+            (urlParams.has('lat') && urlParams.has('lng'));
+        const findAgentsPath = "{% url 'home:find_agents' %}";
+        const isFindAgentsPage = function () {
+            return window.location.pathname.replace(/\/+$/, '') === findAgentsPath.replace(/\/+$/, '');
+        };
+        let locationPopupTimer = null;
+
+        if (!hasLocation) {
+            locationPopupTimer = setTimeout(() => {
+                if (!isFindAgentsPage()) {
+                    return;
+                }
+                if (typeof window.showLocationPopup === 'function') {
+                    window.showLocationPopup('{% url 'home:find_agents' %}');
+                }
+            }, 100);
+        }
+
+        window.addEventListener('pagehide', function () {
+            if (locationPopupTimer) {
+                clearTimeout(locationPopupTimer);
+                locationPopupTimer = null;
+            }
+        });
+
+        // Agent Comparison Logic
+        const _compareUserId = '{{ request.user.id|default:"guest" }}';
+        const _compareStorageKey = 'selectedCompareAgents_' + _compareUserId;
+        localStorage.removeItem('selectedCompareAgents');
+        let selectedCompareAgents = JSON.parse(localStorage.getItem(_compareStorageKey)) || [];
+
+        window.closeComparisonModal = function() {
+            $('#comparisonModal').modal('hide');
+        };
+
+        // Hide filter FAB when comparison modal opens, restore when it closes
+        $('#comparisonModal').on('show.bs.modal', function() {
+            $('.filter-fab-container').hide();
+        });
+        $('#comparisonModal').on('hidden.bs.modal', function() {
+            $('.filter-fab-container').show();
+        });
+
+        // Dedicated lead capture for comparison modal buttons.
+        window.compareContactAgent = function(agentId, destination, interactionType, serviceType, insuranceType) {
+            window.closeComparisonModal();
+
+            const isAuth = {{ request.user.is_authenticated|yesno:"true,false" }};
+            const csrfToken = "{{ csrf_token }}";
+
+            const fireLead = function(guestData) {
+                var postData = {
+                    agent_id: agentId,
+                    interaction_type: interactionType,
+                    service_type: serviceType || '',
+                    insurance_type: insuranceType || '',
+                    source_page: window.location.pathname
+                };
+                if (guestData) {
+                    postData.fullname = guestData.fullname;
+                    postData.email    = guestData.email;
+                    postData.mobile   = guestData.mobile;
+                }
+                
+                $.ajax({
+                    url: "{% url 'agents:agent_leads_capture' %}",
+                    type: 'POST',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    data: postData,
+                });
+                
+                if (interactionType === 'call') {
+                    window.location.href = destination;
+                } else {
+                    window.open(destination, '_blank', 'noopener');
+                }
+            };
+
+            if (!isAuth) {
+                if (typeof window.showQuickRegisterPopup === 'function') {
+                    window.showQuickRegisterPopup('Connect with Agent', function(guestData) {
+                        fireLead(guestData);
+                    });
+                } else {
+                    if (interactionType === 'call') {
+                        window.location.href = destination;
+                    } else {
+                        window.open(destination, '_blank', 'noopener');
+                    }
+                }
+            } else {
+                fireLead(null);
+            }
+        };
+
+        window.toggleCompareAgent = function(el) {
+            const btn = $(el);
+            const agentId = btn.data('agent-id');
+            const agentData = {
+                id: agentId,
+                name: btn.data('agent-name'),
+                experience: btn.data('agent-experience'),
+                rating: btn.data('agent-rating'),
+                reviews: btn.data('agent-reviews'),
+                claims: btn.data('agent-claims'),
+                settled: btn.data('agent-settled'),
+                clients: btn.data('agent-clients'),
+                segments: btn.data('agent-segments') || 'N/A',
+                approved: String(btn.data('agent-approved')) === '1',
+                verified: String(btn.data('agent-verified')) === '1',
+                trusted: String(btn.data('agent-trusted')) === '1',
+                badge: btn.data('agent-badge') || 'none',
+                location: btn.data('agent-location'),
+                slug: btn.data('agent-slug'),
+                mobile: btn.data('agent-mobile'),
+                whatsapp: btn.data('agent-whatsapp'),
+                image: btn.data('agent-image')
+            };
+
+            const index = selectedCompareAgents.findIndex(a => a.id === agentId);
+
+            if (index > -1) {
+                selectedCompareAgents.splice(index, 1);
+                btn.removeClass('is-selected');
+                $(el).find('svg').css('stroke', 'currentColor');
+            } else {
+                if (selectedCompareAgents.length >= 3) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Limit Reached',
+                        text: 'You can only compare up to 3 agents.',
+                        confirmButtonColor: '#0d9488'
+                    });
+                    return;
+                }
+                selectedCompareAgents.push(agentData);
+                btn.addClass('is-selected');
+                $(el).find('svg').css('stroke', 'white');
+            }
+
+            localStorage.setItem(_compareStorageKey, JSON.stringify(selectedCompareAgents));
+            updateCompareBar();
+        }
+
+        window.updateCompareBar = function() {
+            const bar = $('#compare-bar');
+            const countSpan = $('#compare-count');
+            const countMobile = $('#compare-count-mobile');
+            const thumbsContainer = $('#compare-selected-agents');
+            const compareBtn = $('#compare-now-btn');
+
+            countSpan.text(selectedCompareAgents.length);
+            countMobile.text(selectedCompareAgents.length);
+            thumbsContainer.empty();
+
+            $('.compare-btn').removeClass('is-selected').find('svg').css('stroke', 'currentColor');
+            selectedCompareAgents.forEach(agent => {
+                const cardBtn = $(`.compare-btn[data-agent-id="${agent.id}"]`);
+                if(cardBtn.length) {
+                    cardBtn.addClass('is-selected').find('svg').css('stroke', 'white');
+                }
+
+                thumbsContainer.append(`
+                    <div class="selected-agent-thumb">
+                        <img src="${agent.image}" alt="${agent.name}">
+                        <div class="remove-compare" onclick="removeCompareAgent(${agent.id})">&times;</div>
+                    </div>
+                `);
+            });
+
+            if (selectedCompareAgents.length > 0) {
+                bar.addClass('show');
+                $('.filter-fab-container').addClass('pushed-up');
+                compareBtn.prop('disabled', selectedCompareAgents.length < 2);
+            } else {
+                bar.removeClass('show');
+                $('.filter-fab-container').removeClass('pushed-up');
+            }
+        }
+
+        window.removeCompareAgent = function(id) {
+            selectedCompareAgents = selectedCompareAgents.filter(a => a.id !== id);
+            localStorage.setItem(_compareStorageKey, JSON.stringify(selectedCompareAgents));
+            updateCompareBar();
+        }
+
+        window.clearComparison = function() {
+            selectedCompareAgents = [];
+            localStorage.removeItem(_compareStorageKey);
+            updateCompareBar();
+        }
+
+        window.showComparisonModal = function() {
+            const table = $('#comparison-table-content');
+            table.empty();
+
+            const currentServiceType = document.getElementById('ServiceType') ? document.getElementById('ServiceType').value : '';
+            const currentInsuranceType = document.getElementById('InsuranceType') ? document.getElementById('InsuranceType').value : '';
+
+            let headerRow = '<tr><th class="compare-row-title">Agents</th>';
+            let experienceRow = '<tr><th class="compare-row-title">Experience</th>';
+            let ratingRow = '<tr><th class="compare-row-title">Rating</th>';
+            let reviewsRow = '<tr><th class="compare-row-title">Reviews</th>';
+            let claimsRow = '<tr><th class="compare-row-title">Claims Processed</th>';
+            let settledRow = '<tr><th class="compare-row-title">Claims Settled</th>';
+            let clientsRow = '<tr><th class="compare-row-title">Active Clients</th>';
+            let segmentsRow = '<tr><th class="compare-row-title">Specializations</th>';
+            let locationRow = '<tr><th class="compare-row-title">Location</th>';
+            let actionRow = '<tr><th class="compare-row-title">Action</th>';
+
+            selectedCompareAgents.forEach(agent => {
+                headerRow += `
+                    <td>
+                        <div class="compare-agent-header">
+                            <img src="${agent.image}" alt="${agent.name}">
+                            <div class="compare-agent-name">${agent.name}</div>
+                            <div class="d-flex align-items-center justify-content-center flex-nowrap mt-1" style="gap:5px; overflow:hidden;">
+                                ${(() => {
+                                    if(!agent.badge || agent.badge === 'none') return '';
+                                    const allBadges = agent.badge.split(',').map(b => b.trim().toLowerCase()).filter(b => b);
+                                    return allBadges.map(singleBadge => {
+                                        let style = 'border: 1px solid #cbd5e1; color: #475569; background: #f8fafc;';
+                                        let icon = 'fa-check-circle';
+                                        let label = singleBadge.charAt(0).toUpperCase() + singleBadge.slice(1);
+                                        
+                                        if(singleBadge === 'irdai') {
+                                            style = 'border: 1px solid #bfdbfe; color: #1d4ed8; background: #eff6ff;';
+                                            icon = 'fa-medal';
+                                            label = 'Licensed';
+                                        } else if(singleBadge === 'trusted') {
+                                            style = 'border: 1px solid #fde68a; color: #b45309; background: #fffbeb;';
+                                            icon = 'fa-award';
+                                            label = 'Trusted';
+                                        } else if(singleBadge === 'verified') {
+                                            style = 'border: 1px solid #bbf7d0; color: #15803d; background: #f0fdf4;';
+                                            icon = 'fa-check-circle';
+                                            label = 'Verified';
+                                        }
+                                        
+                                        return `<span class="badge badge-light flex-shrink-0" style="${style} font-size:10px; text-transform: capitalize; white-space:nowrap;"><i class="fas ${icon} mr-1"></i>${label}</span>`;
+                                    }).join('');
+                                })()}
+                            </div>
+                        </div>
+                    </td>
+                `;
+                experienceRow += `<td class="compare-value">${agent.experience}</td>`;
+                ratingRow += `<td class="compare-value"><i class="fas fa-star text-warning"></i> ${agent.rating}</td>`;
+                reviewsRow += `<td class="compare-value">${agent.reviews}</td>`;
+                claimsRow += `<td class="compare-value">${agent.claims}</td>`;
+                settledRow += `<td class="compare-value">${agent.settled}</td>`;
+                clientsRow += `<td class="compare-value">${agent.clients}</td>`;
+                
+                let segmentsHtml = agent.segments !== 'N/A'
+                    ? (() => {
+                        const rawSegments = agent.segments.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+                        const priority = ['health', 'life', 'motor', 'sme'];
+                        const ordered = [];
+
+                        priority.forEach(item => {
+                            if (rawSegments.includes(item)) {
+                                ordered.push(item);
+                            }
+                        });
+
+                        rawSegments.forEach(item => {
+                            if (!ordered.includes(item)) {
+                                ordered.push(item);
+                            }
+                        });
+
+                        return ordered.map(item => {
+                            const label = item === 'sme' ? 'SME' : item.charAt(0).toUpperCase() + item.slice(1);
+                            return `<span class="badge text-white m-1 shadow-sm" style="background-color: #2b7a70; padding: 6px 14px; border-radius: 20px; font-weight: 600; font-size: 12px;">${label}</span>`;
+                        }).join('');
+                    })()
+                    : agent.segments;
+                segmentsRow += `<td class="compare-value">${segmentsHtml}</td>`;
+                
+                locationRow += `<td class="compare-value">${agent.location}</td>`;
+                
+                let whatsappNumber = agent.whatsapp;
+                if (whatsappNumber && whatsappNumber.length === 10) {
+                    whatsappNumber = '91' + whatsappNumber;
+                }
+                
+                actionRow += `
+                    <td>
+                        <div class="d-flex flex-column mx-auto" style="max-width: 150px;">
+                            <button type="button"
+                               onclick="window.compareContactAgent(${agent.id}, 'tel:${agent.mobile}', 'call', '${currentServiceType}', '${currentInsuranceType}')" 
+                               class="btn btn-sm btn-outline-primary rounded-pill px-3 d-flex align-items-center justify-content-center mb-2">
+                                <i class="fas fa-phone mr-2"></i> Call Now
+                            </button>
+                            <button type="button"
+                               onclick="window.compareContactAgent(${agent.id}, 'https://wa.me/${whatsappNumber}', 'whatsapp', '${currentServiceType}', '${currentInsuranceType}')" 
+                               class="btn btn-sm btn-outline-success rounded-pill px-3 d-flex align-items-center justify-content-center">
+                                <i class="fab fa-whatsapp mr-2"></i> WhatsApp
+                            </button>
+                        </div>
+                    </td>
+                `;
+            });
+
+            headerRow += '</tr>';
+            experienceRow += '</tr>';
+            ratingRow += '</tr>';
+            reviewsRow += '</tr>';
+            claimsRow += '</tr>';
+            settledRow += '</tr>';
+            clientsRow += '</tr>';
+            segmentsRow += '</tr>';
+            locationRow += '</tr>';
+            actionRow += '</tr>';
+
+            table.append(headerRow + experienceRow + ratingRow + reviewsRow + claimsRow + settledRow + clientsRow + segmentsRow + locationRow + actionRow);
+            
+            const modalEl = document.getElementById('comparisonModal');
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
+            } else {
+                $('#comparisonModal').modal('show');
+            }
+        }
+
+        // Initially sync the compare bar
+        updateCompareBar();
+        
+        // Add event listener for htmx afterSettle to re-bind compare logic
+        document.body.addEventListener('htmx:afterSettle', function() {
+            updateCompareBar();
+        });
+
+        // Load More Agents Function
+        window.loadMoreAgents = function(nextPageUrl) {
+            const button = $('#load-more-button');
+            const textSpan = $('#load-more-text');
+            const spinner = $('#load-more-spinner');
+            const icon = $('#load-more-icon');
+            
+            button.prop('disabled', true);
+            textSpan.text('Loading...');
+            spinner.show();
+            icon.hide();
+            
+            $.ajax({
+                url: nextPageUrl,
+                type: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(response) {
+                    const $response = $(response);
+                    const $agentCards = $response.find('.find-agents-list-item');
+                    const $newLoadMore = $response.find('#load-more-wrapper');
+                    
+                    if ($agentCards.length > 0) {
+                        $('#load-more-wrapper').before($agentCards);
+                        if (typeof updateCompareBar === 'function') {
+                            updateCompareBar();
+                        }
+                    }
+                    
+                    if ($newLoadMore.length > 0) {
+                        $('#load-more-wrapper').replaceWith($newLoadMore);
+                    } else {
+                        $('#load-more-wrapper').html(`
+                            <div class="text-center" style="margin-top: 30px; margin-bottom: 40px; padding: 20px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                                <i class="fas fa-check-circle" style="font-size: 32px; color: #10b981; margin-bottom: 10px;"></i>
+                                <p style="font-size: 15px; color: #475569; font-weight: 600; margin: 0;">
+                                    You've viewed all available agents
+                                </p>
+                            </div>
+                        `);
+                    }
+                    
+                    if ($agentCards.length > 0) {
+                        $('html, body').animate({
+                            scrollTop: $agentCards.first().offset().top - 100
+                        }, 500);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Load more failed:', error);
+                    button.prop('disabled', false);
+                    textSpan.text('Load More Agents');
+                    spinner.hide();
+                    icon.show();
+                    alert('Failed to load more agents. Please try again.');
+                }
+            });
+        };
+
+        // Global sorting handler
+        window.updateSortBy = function(val) {
+            if (val === 'distance') {
+                const hasLoc = (
+                    (document.getElementById('filter_lat') && document.getElementById('filter_lat').value) ||
+                    (document.getElementById('filter_lng') && document.getElementById('filter_lng').value) ||
+                    (document.getElementById('filter_pincode') && document.getElementById('filter_pincode').value) ||
+                    (document.getElementById('filter_location') && document.getElementById('filter_location').value) ||
+                    {% if request.session.last_lat or request.session.last_pincode or request.session.last_location %}true{% else %}false{% endif %}
+                );
+                if (!hasLoc) {
+                    const selectEl = document.getElementById('sort_by_select');
+                    if (selectEl) selectEl.value = 'match';
+                    if (typeof window.showLocationPopup === 'function') {
+                        window.showLocationPopup('{% url 'home:find_agents' %}');
+                    } else {
+                        alert('Please set your location first to sort by distance.');
+                    }
+                    return;
+                }
+            }
+
+            const hiddenInput = document.getElementById('filter_sort_by');
+            if (hiddenInput) {
+                hiddenInput.value = val;
+            }
+            if (typeof syncFiltersToHiddenInputs === 'function') {
+                syncFiltersToHiddenInputs();
+            }
+            if (typeof submitFilterForm === 'function') {
+                submitFilterForm();
+            } else {
+                const filterForm = document.getElementById('filter-form');
+                if (filterForm) {
+                    filterForm.submit();
+                }
+            }
+        };
+
+        // =========================================================================
+        // Geolocation & Quick Register sweetalert helper popups
+        // =========================================================================
+
+        window.handlePincodeInput = function(val) {
+            const searchBtn = $('#swal-btn-search-pill');
+            const nearMeBtn = $('#detect-location-btn');
+            const separator = $('#near-me-separator');
+            if (val && val.length > 0) {
+                searchBtn.css({ 'opacity': '1', 'transform': 'scale(1)', 'pointer-events': 'auto' });
+                nearMeBtn.css({ 'opacity': '0', 'height': '0', 'margin': '0', 'padding': '0', 'overflow': 'hidden', 'pointer-events': 'none' });
+                separator.css({ 'opacity': '0', 'height': '0', 'margin': '0', 'overflow': 'hidden' });
+            } else {
+                searchBtn.css({ 'opacity': '0', 'transform': 'scale(0.8)', 'pointer-events': 'none' });
+                nearMeBtn.css({ 'opacity': '1', 'height': '60px', 'margin-top': '0', 'padding': '', 'pointer-events': 'auto' });
+                separator.css({ 'opacity': '1', 'height': 'auto', 'margin': '15px 0' });
+            }
+        };
+
+        window.showLocationPopup = function(baseUrl) {
+            if (Swal.isVisible()) return;
+            if (typeof window.closeMobileFilter === 'function') window.closeMobileFilter();
+            const isMobilePopup = window.matchMedia('(max-width: 576px)').matches;
+
+            Swal.fire({
+                title: '',
+                html: `
+                    <div class="swal-welcome-content" style="font-family: 'Urbanist', sans-serif;">
+                        <div class="guest-gate-brand">
+                            <img src="{% static 'img/logo.png' %}" alt="PadosiAgent" style="width: 120px;">
+                        </div>
+                        <h3 class="guest-gate-heading" style="font-size: 24px; font-weight: 800; color: #1e3a8a; margin-top: 15px;">Find Agents Near You</h3>
+                        <p class="guest-gate-subtext" style="color: #64748b; font-size: 14px; margin-bottom: 20px;">"Agents can serve you better when they are your Padosi"</p>
+
+                        <div class="guest-gate-form mt-4">
+                            <div id="swal-error-container-loc" class="alert alert-danger d-none" style="font-size: 13px; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: none; background-color: #fef2f2; color: #991b1b; text-align: left;">
+                                <i class="fas fa-exclamation-circle mr-2"></i> <span id="swal-error-message-loc"></span>
+                            </div>
+
+                            <form id="padosi-location-form" class="pa-no-compact" data-no-branding="true">
+                                <div class="padosi-location-flow mt-4" style="font-family: 'Urbanist', sans-serif;">
+                                    <div class="padosi-input-group" style="position: relative; display: flex; align-items: center; background: #ffffff; border: 2px solid #e2e8f0; border-radius: 16px; height: 60px; transition: all 0.3s ease; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+                                        <div style="padding-left: 20px; color: #64748b; font-size: 18px;">
+                                            <i class="fas fa-map-pin"></i>
+                                        </div>
+                                        <input type="text" id="swal-manual-pincode" placeholder="Enter Pincode" maxlength="6" inputmode="numeric" 
+                                               oninput="this.value = this.value.replace(/[^0-9]/g, ''); window.handlePincodeInput(this.value)"
+                                               style="flex: 1; border: none; outline: none; padding: 0 15px; font-size: 17px; font-weight: 600; background: transparent; color: #1e293b; pointer-events: auto !important;"
+                                               autocomplete="off">
+                                        
+                                        <button id="swal-btn-search-pill" type="button" 
+                                                style="margin-right: 6px; background: #273c8e; color: #fff; border: none; border-radius: 12px; width: 48px; height: 48px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; opacity: 0; transform: scale(0.8); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: none;">
+                                            <i class="fas fa-arrow-right"></i>
+                                        </button>
+                                    </div>
+
+                                    <div id="near-me-separator" style="text-align: center; margin: 15px 0; display: flex; align-items: center; gap: 10px; transition: all 0.3s;">
+                                        <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
+                                        <span style="font-size: 12px; color: #94a3b8; font-weight: 700;">OR</span>
+                                        <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
+                                    </div>
+
+                                    <button id="detect-location-btn" type="button" 
+                                            style="width: 100%; height: 60px; background: #fff; color: #273c8e; border: 2px solid #273c8e; border-radius: 16px; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s;">
+                                        <i class="fas fa-location-arrow"></i>
+                                        Use Current Location
+                                    </button>
+                                    <div id="swal-manual-error" class="text-danger d-none mt-2 text-center" style="font-size: 12px; font-weight: 500;"></div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                `,
+                showConfirmButton: false,
+                focusConfirm: false,
+                padding: isMobilePopup ? '1rem' : '1.5rem',
+                width: isMobilePopup ? '92vw' : '450px',
+                customClass: { popup: 'guest-gate-popup' },
+                didOpen: () => {
+                    setTimeout(() => {
+                        const pincodeInput = document.getElementById('swal-manual-pincode');
+                        if (pincodeInput) pincodeInput.focus();
+                    }, 200);
+
+                    $('#swal-btn-search-pill').on('click', function(e) {
+                        e.preventDefault();
+                        const pincode = $('#swal-manual-pincode').val().trim();
+                        if (pincode.length < 6) {
+                            $('#swal-manual-error').text('Please enter a valid 6-digit pincode').removeClass('d-none');
+                            return;
+                        }
+                        
+                        let targetUrl;
+                        try {
+                            targetUrl = new URL(baseUrl, window.location.origin);
+                        } catch(err) {
+                            targetUrl = new URL(window.location.origin + baseUrl);
+                        }
+                        targetUrl.searchParams.set('pincode', pincode);
+                        window.location.href = targetUrl.toString();
+                    });
+                    
+                    $('#swal-manual-pincode').on('keypress', (e) => {
+                        if (e.which == 13) {
+                            e.preventDefault();
+                            $('#swal-btn-search-pill').trigger('click');
+                        }
+                    });
+
+                    $('#detect-location-btn').on('click', function() {
+                        const btn = $(this);
+                        const origHtml = btn.html();
+                        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Detecting...');
+                        
+                        if (!navigator.geolocation) {
+                            $('#swal-error-message-loc').text('Geolocation is not supported by your browser.');
+                            $('#swal-error-container-loc').removeClass('d-none');
+                            btn.prop('disabled', false).html(origHtml);
+                            return;
+                        }
+
+                        navigator.geolocation.getCurrentPosition((pos) => {
+                            let targetUrl;
+                            try {
+                                targetUrl = new URL(baseUrl, window.location.origin);
+                            } catch(err) {
+                                targetUrl = new URL(window.location.origin + baseUrl);
+                            }
+                            targetUrl.searchParams.set('lat', pos.coords.latitude);
+                            targetUrl.searchParams.set('lng', pos.coords.longitude);
+                            window.location.href = targetUrl.toString();
+                        }, (err) => {
+                            let errorMsg = 'Location access denied.';
+                            if (err.code === err.PERMISSION_DENIED) {
+                                errorMsg = 'Permission denied. Please enable location access.';
+                            } else if (err.code === err.POSITION_UNAVAILABLE) {
+                                errorMsg = 'Location information is unavailable.';
+                            } else if (err.code === err.TIMEOUT) {
+                                errorMsg = 'Location request timed out.';
+                            }
+                            $('#swal-error-message-loc').text(errorMsg);
+                            $('#swal-error-container-loc').removeClass('d-none');
+                            btn.prop('disabled', false).html(origHtml);
+                        }, { timeout: 10000 });
+                    });
+                }
+            });
+        };
+
+        window.showQuickRegisterPopup = function(redirectUrl, onSuccessCallback) {
+            if (Swal.isVisible()) return;
+
+            const isMobilePopup = window.matchMedia('(max-width: 576px)').matches;
+
+            let welcomeHtml = `
+                <div class="swal-welcome-content" style="font-family: 'Urbanist', sans-serif; text-align: left;">
+                    <div class="guest-gate-brand" style="text-align: center;">
+                        <img src="{% static 'img/logo.png' %}" alt="PadosiAgent" style="width: 120px; display: block; margin: 0 auto 10px;">
+                    </div>
+                    <h3 class="guest-gate-heading" style="font-size: 22px; font-weight: 800; color: #1e3a8a; text-align: center; margin-top: 15px; margin-bottom: 5px;">Welcome to PadosiAgent! 👋</h3>
+                    <p class="guest-gate-subtext" style="color: #64748b; font-size: 13px; text-align: center; margin-bottom: 20px;">
+                        "Agents can serve you better when they are your Padosi"
+                    </p>
+
+                    <div id="swal-error-container" class="alert alert-danger d-none" style="font-size: 13px; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: none; background-color: #fef2f2; color: #991b1b; text-align: left;">
+                        <i class="fas fa-exclamation-circle mr-2"></i> <span id="swal-error-message"></span>
+                    </div>
+
+                    <div class="guest-gate-form">
+                        <div class="guest-gate-group" style="margin-bottom: 15px;">
+                            <label class="guest-gate-label" style="font-weight: 700; font-size: 12px; color: #475569; display: block; margin-bottom: 5px;">
+                                <i class="far fa-user mr-2"></i> Name *
+                            </label>
+                            <input type="text" id="swal-fullname" class="form-control guest-gate-input" placeholder="Enter your full name" style="height: 48px; border-radius: 12px; border: 1.5px solid #cbd5e1; outline: none; padding: 10px 14px; font-size: 14px; font-weight: 600; width: 100%;">
+                        </div>
+                        
+                        <div class="guest-gate-group" style="margin-bottom: 15px;">
+                            <label class="guest-gate-label" style="font-weight: 700; font-size: 12px; color: #475569; display: block; margin-bottom: 5px;">
+                                <i class="far fa-envelope mr-2"></i> Email *
+                            </label>
+                            <input type="email" id="swal-email" class="form-control guest-gate-input" placeholder="your.email@example.com" style="height: 48px; border-radius: 12px; border: 1.5px solid #cbd5e1; outline: none; padding: 10px 14px; font-size: 14px; font-weight: 600; width: 100%;">
+                        </div>
+                        
+                        <div class="guest-gate-group" style="margin-bottom: 20px;">
+                            <label class="guest-gate-label" style="font-weight: 700; font-size: 12px; color: #475569; display: block; margin-bottom: 5px;">
+                                <i class="fas fa-phone-volume mr-2"></i> Mobile Number *
+                            </label>
+                            <div class="guest-gate-mobile-wrap" style="position: relative; display: flex; align-items: center; border: 1.5px solid #cbd5e1; border-radius: 12px; height: 48px; overflow: hidden; background: #fff; width: 100%;">
+                                <span class="guest-gate-prefix" style="padding: 0 14px; background: #f1f5f9; border-right: 1.5px solid #cbd5e1; font-weight: 700; color: #475569; font-size: 14px; height: 100%; display: flex; align-items: center;">+91</span>
+                                <input type="tel" id="swal-mobile" class="form-control guest-gate-mobile" placeholder="98765 43210" maxlength="10" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" style="flex: 1; border: none; outline: none; padding: 0 14px; font-size: 14px; font-weight: 600; background: transparent; height: 100%;">
+                            </div>
+                        </div>
+                        
+                        <input type="hidden" id="swal-pincode" value="${new URLSearchParams(window.location.search).get('pincode') || ''}">
+                    </div>
+                </div>
+            `;
+
+            Swal.fire({
+                title: '',
+                html: welcomeHtml,
+                showCancelButton: false,
+                confirmButtonText: 'Get Started',
+                confirmButtonColor: '#273c8e',
+                padding: isMobilePopup ? '0.75rem' : '1.25rem',
+                width: isMobilePopup ? '88vw' : '430px',
+                customClass: {
+                    popup: 'guest-gate-popup',
+                    confirmButton: 'btn btn-primary btn-lg rounded-pill px-5 w-100',
+                    title: 'p-0 mb-2'
+                },
+                preConfirm: () => {
+                    const fullname = $('#swal-fullname').val().trim();
+                    const email = $('#swal-email').val().trim();
+                    const mobile = $('#swal-mobile').val().trim();
+                    const pincode = $('#swal-pincode').val().trim();
+
+                    const showError = (msg) => {
+                        $('#swal-error-message').text(msg);
+                        $('#swal-error-container').removeClass('d-none').hide().fadeIn();
+                        setTimeout(() => {
+                            $('#swal-error-container').fadeOut(function() {
+                                $(this).addClass('d-none');
+                            });
+                        }, 3000);
+                    };
+
+                    $('#swal-error-container').addClass('d-none');
+
+                    if (!fullname) { showError('Full Name is required'); return false; }
+                    if (!email) { showError('Email Address is required'); return false; }
+                    if (!/^\S+@\S+\.\S+$/.test(email)) { showError('Please enter a valid email address'); return false; }
+                    if (!mobile) { showError('Mobile Number is required'); return false; }
+                    if (mobile.length < 10) { showError('Please enter a valid 10-digit mobile number'); return false; }
+
+                    return { fullname, email, mobile, pincode };
+                },
+                allowOutsideClick: true,
+                allowEscapeKey: true,
+                backdrop: `rgba(0,0,0,0.6)`
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Connecting you...',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                            $.ajax({
+                                url: "{% url 'agents:client_quick_register' %}",
+                                type: "POST",
+                                headers: { 'X-CSRFToken': "{{ csrf_token }}" },
+                                contentType: "application/json",
+                                dataType: "json",
+                                timeout: 30000,
+                                data: JSON.stringify({
+                                    ...result.value,
+                                    redirect_url: redirectUrl || (function() {
+                                        var u = new URL(window.location.href);
+                                        u.searchParams.set('openFilter', '1');
+                                        return u.pathname + u.search;
+                                    })()
+                                }),
+                                success: function(response) {
+                                    if (response.status === 'success' || response.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Welcome!',
+                                            text: 'We found matching agents for you.',
+                                            timer: 2500,
+                                            showConfirmButton: false,
+                                            padding: '2rem'
+                                        }).then(() => {
+                                            if (typeof onSuccessCallback === 'function') {
+                                                onSuccessCallback(response);
+                                            } else {
+                                                window.location.reload();
+                                            }
+                                        });
+                                    } else {
+                                        Swal.fire('Oops!', response.message || 'Something went wrong. Please try again.', 'warning');
+                                    }
+                                },
+                                error: function(xhr) {
+                                    const message = xhr.status === 0
+                                        ? 'Request timed out. Please check your internet and try again.'
+                                        : (xhr.responseJSON ? xhr.responseJSON.message : 'An error occurred');
+                                    Swal.fire('Oops!', message || 'We couldn\'t process that. Please refresh and try again.', 'warning');
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        };
+
+        window.proceedToDestination = function(url, target) {
+            if (target === '_blank') {
+                window.open(url, '_blank', 'noopener');
+                return;
+            }
+            window.location.href = url;
+        };
+
+        window.handleAgentContactClick = function(event, element, interactionType) {
+            if (!element) return true;
+            event.preventDefault();
+
+            const isAuth = {{ request.user.is_authenticated|yesno:"true,false" }};
+            const href = element.getAttribute('href');
+            const agentId = element.getAttribute('data-agent-id');
+            const serviceType = element.getAttribute('data-service-type') || '';
+            const insuranceType = element.getAttribute('data-insurance-type') || '';
+            const insuranceCompany = element.getAttribute('data-insurance-company') || '';
+            const target = element.getAttribute('target');
+
+            const captureLeadAndProceed = (guestData) => {
+                var postData = {
+                    agent_id: agentId,
+                    interaction_type: interactionType,
+                    service_type: serviceType,
+                    insurance_type: insuranceType,
+                    insurance_company: insuranceCompany,
+                    source_page: window.location.pathname
+                };
+
+                if (guestData) {
+                    postData.fullname = guestData.fullname;
+                    postData.email = guestData.email;
+                    postData.mobile = guestData.mobile;
+                }
+
+                const captureLead = function() {
+                    $.ajax({
+                        url: "{% url 'agents:agent_leads_capture' %}",
+                        type: "POST",
+                        headers: { 'X-CSRFToken': "{{ csrf_token }}" },
+                        data: postData,
+                        success: function(resp) {
+                            Swal.close();
+                            if (resp.success && resp.url && resp.url !== '#') {
+                                window.proceedToDestination(resp.url, target);
+                            } else if (resp.message) {
+                                const errMsg = resp.message || 'This agent has not provided contact details for this format.';
+                                Swal.fire('Notice', errMsg, 'info');
+                            }
+                        },
+                        error: function(xhr) {
+                            Swal.close();
+                            let msg = 'Something went wrong. Please refresh the page and try again.';
+                            if (xhr.status === 403) {
+                                msg = 'Access denied. Suspicious activity has been detected from your IP.';
+                            }
+                            Swal.fire('Oops!', msg, 'warning');
+                        }
+                    });
+                };
+
+                Swal.fire({
+                    title: 'Connecting you...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                        if (!isAuth && guestData) {
+                            $.ajax({
+                                url: "{% url 'agents:client_quick_register' %}",
+                                type: "POST",
+                                headers: { 'X-CSRFToken': "{{ csrf_token }}" },
+                                contentType: "application/json",
+                                dataType: "json",
+                                data: JSON.stringify(guestData),
+                                success: function() {
+                                    captureLead();
+                                },
+                                error: function() {
+                                    Swal.close();
+                                    Swal.fire('Almost there!', 'We had a small hiccup during registration. Please try again.', 'info');
+                                }
+                            });
+                        } else {
+                            captureLead();
+                        }
+                    }
+                });
+            };
+
+            if (!isAuth) {
+                window.showQuickRegisterPopup(window.location.pathname + window.location.search, function(response) {
+                    var postData = {
+                        agent_id: agentId,
+                        interaction_type: interactionType,
+                        service_type: serviceType,
+                        insurance_type: insuranceType,
+                        insurance_company: insuranceCompany,
+                        source_page: window.location.pathname
+                    };
+                    
+                    Swal.fire({
+                        title: 'Connecting you...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                            $.ajax({
+                                url: "{% url 'agents:agent_leads_capture' %}",
+                                type: "POST",
+                                headers: { 'X-CSRFToken': "{{ csrf_token }}" },
+                                data: postData,
+                                success: function(resp) {
+                                    Swal.close();
+                                    if (resp.success && resp.url && resp.url !== '#') {
+                                        window.proceedToDestination(resp.url, target);
+                                        setTimeout(() => { window.location.reload(); }, 1500);
+                                    } else if (resp.message) {
+                                        const errMsg = resp.message || 'This agent has not provided contact details for this format.';
+                                        Swal.fire('Notice', errMsg, 'info').then(() => { window.location.reload(); });
+                                    } else {
+                                        window.location.reload();
+                                    }
+                                },
+                                error: function() {
+                                    Swal.close();
+                                    window.location.reload();
+                                }
+                            });
+                        }
+                    });
+                });
+            } else {
+                captureLeadAndProceed();
+            }
+        };
+
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,580 @@
+{% extends 'admin/layout.html' %}
+{% load static %}
+
+{% block title %}Push Notification Center — PadosiAgent Admin{% endblock %}
+{% block breadcrumb %}Communications &rsaquo; Push Notifications{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h5 class="fw-bold mb-1">
+            <i class="fa-solid fa-bell me-2" style="color: var(--primary);"></i>
+            Push Notification Center
+        </h5>
+        <span class="text-muted" style="font-size: 13px;">Send real-time push notifications to agents via their PWA</span>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+        <div style="text-align:right;">
+            <div style="font-size: 12px; color: var(--text-muted);">Agents with push enabled</div>
+            <div style="font-size: 20px; font-weight: 700; color: var(--primary);">{{ token_count }}</div>
+        </div>
+        <div style="width: 44px; height: 44px; background: var(--primary-light, #eff6ff); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+            <i class="fa-solid fa-mobile-screen-button" style="color: var(--primary); font-size: 18px;"></i>
+        </div>
+    </div>
+</div>
+
+{# Tab Navigation #}
+<div style="display: flex; gap: 0; border-bottom: 2px solid var(--border-color); margin-bottom: 28px;">
+    <button onclick="switchTab('single')" id="tab-single" class="notif-tab-btn active"
+        style="padding: 10px 24px; border: none; background: none; font-size: 14px; font-weight: 600; color: var(--primary); border-bottom: 2px solid var(--primary); margin-bottom: -2px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-user"></i> Single Agent
+    </button>
+    <button onclick="switchTab('broadcast')" id="tab-broadcast" class="notif-tab-btn"
+        style="padding: 10px 24px; border: none; background: none; font-size: 14px; font-weight: 600; color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -2px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-bullhorn"></i> Broadcast All
+    </button>
+</div>
+
+<div class="row">
+    {# LEFT: Form Panel #}
+    <div class="col-lg-7">
+
+        {# SINGLE AGENT TAB #}
+        <div id="panel-single">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header py-3" style="background: var(--bg-card, #fff);">
+                    <h6 class="m-0 fw-bold">
+                        <i class="fa-solid fa-paper-plane me-2 text-primary"></i>
+                        Send to Specific Agent
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{% url 'admin_panel:agent_notify_send' %}" id="singleNotifForm">
+                        {% csrf_token %}
+
+                        <div class="mb-4">
+                            <label for="agent_id" class="form-label fw-semibold" style="font-size: 13px;">Select Agent</label>
+                            <div style="position: relative;">
+                                <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 13px; z-index: 1;"></i>
+                                <select name="agent_id" id="agent_id" class="form-select" required style="padding-left: 36px; border-radius: 10px; font-size: 14px;">
+                                    <option value="" disabled selected>— Choose an agent —</option>
+                                    {% for agent in agents %}
+                                        <option value="{{ agent.id }}">{{ agent.fullname }} ({{ agent.mobile }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <small class="text-muted mt-1 d-block">Only active agents are shown. Agent must have the PWA installed.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="single_title" class="form-label fw-semibold" style="font-size: 13px;">Notification Title</label>
+                            <input type="text" name="title" id="single_title" class="form-control"
+                                placeholder="e.g. New Lead Alert, Important Update" required maxlength="100"
+                                style="border-radius: 10px;">
+                            <div class="d-flex justify-content-end mt-1">
+                                <small id="titleCount" class="text-muted">0 / 100</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="single_body" class="form-label fw-semibold" style="font-size: 13px;">Notification Message</label>
+                            <textarea name="body" id="single_body" class="form-control" rows="4"
+                                placeholder="Enter the push notification message..." required maxlength="255"
+                                style="border-radius: 10px; resize: none; font-size: 14px; line-height: 1.6;"></textarea>
+                            <div class="d-flex justify-content-end mt-1">
+                                <small id="bodyCount" class="text-muted">0 / 255</small>
+                            </div>
+                        </div>
+
+                        {# Live Preview #}
+                        <div id="singlePreview" class="mb-4" style="background: var(--bg-body, #f8fafc); border-radius: 12px; padding: 16px; border: 1px solid var(--border-color); display: none;">
+                            <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 10px;">
+                                <i class="fa-solid fa-eye me-1"></i> Live Preview
+                            </div>
+                            <div style="background: #1e293b; border-radius: 16px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px; max-width: 320px;">
+                                <div style="width: 38px; height: 38px; background: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i class="fa-solid fa-shield-halved" style="color: white; font-size: 16px;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-size: 13px; font-weight: 700; color: white;" id="previewTitle">Your Title Here</div>
+                                    <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;" id="previewBody">Your message will appear here...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary px-5" id="singleSendBtn" style="border-radius: 10px; font-weight: 600; height: 44px;">
+                            <i class="fa-solid fa-paper-plane me-2"></i>Send Notification
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {# BROADCAST TAB #}
+        <div id="panel-broadcast" style="display: none;">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header py-3" style="background: var(--bg-card, #fff);">
+                    <h6 class="m-0 fw-bold">
+                        <i class="fa-solid fa-bullhorn me-2 text-warning"></i>
+                        Broadcast Push to All Agents
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    {# Warning banner #}
+                    <div class="mb-4" style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 12px 16px; display: flex; align-items: flex-start; gap: 10px;">
+                        <i class="fa-solid fa-triangle-exclamation" style="color: #d97706; margin-top: 2px; flex-shrink: 0;"></i>
+                        <div style="font-size: 13px; color: #92400e;">
+                            <strong>Broadcast Notice:</strong> This will send a push notification to <strong>all matching agents' devices</strong> simultaneously. Use carefully.
+                        </div>
+                    </div>
+
+                    <form method="POST" action="{% url 'admin_panel:agent_notify_broadcast' %}" id="broadcastPushForm">
+                        {% csrf_token %}
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold" style="font-size: 13px;">Target Audience</label>
+                            <div class="d-flex flex-wrap gap-3">
+                                <label class="target-pill selected" for="bp_target_all">
+                                    <input type="radio" name="target" id="bp_target_all" value="all" checked style="display: none;">
+                                    <i class="fa-solid fa-users me-2"></i>All Active Agents
+                                    <span class="ms-2 badge" style="background: var(--primary); color: white; font-size: 10px;">{{ active_count }}</span>
+                                </label>
+                                <label class="target-pill" for="bp_target_professional">
+                                    <input type="radio" name="target" id="bp_target_professional" value="professional" style="display: none;">
+                                    <i class="fa-solid fa-star me-2"></i>Professional Plan
+                                </label>
+                                <label class="target-pill" for="bp_target_starter">
+                                    <input type="radio" name="target" id="bp_target_starter" value="starter" style="display: none;">
+                                    <i class="fa-solid fa-seedling me-2"></i>Starter Plan
+                                </label>
+                                <label class="target-pill" for="bp_target_expiring">
+                                    <input type="radio" name="target" id="bp_target_expiring" value="expiring" style="display: none;">
+                                    <i class="fa-solid fa-hourglass-half me-2"></i>Expiring Soon
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="bc_title" class="form-label fw-semibold" style="font-size: 13px;">Notification Title</label>
+                            <input type="text" name="title" id="bc_title" class="form-control"
+                                placeholder="e.g. Platform Update, Special Offer" required maxlength="100"
+                                style="border-radius: 10px;">
+                            <div class="d-flex justify-content-end mt-1">
+                                <small id="bcTitleCount" class="text-muted">0 / 100</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="bc_body" class="form-label fw-semibold" style="font-size: 13px;">Notification Message</label>
+                            <textarea name="body" id="bc_body" class="form-control" rows="4"
+                                placeholder="Keep it short and impactful..." required maxlength="255"
+                                style="border-radius: 10px; resize: none; font-size: 14px; line-height: 1.6;"></textarea>
+                            <div class="d-flex justify-content-end mt-1">
+                                <small id="bcBodyCount" class="text-muted">0 / 255</small>
+                            </div>
+                        </div>
+
+                        {# Live Preview #}
+                        <div id="broadcastPreview" class="mb-4" style="background: var(--bg-body, #f8fafc); border-radius: 12px; padding: 16px; border: 1px solid var(--border-color); display: none;">
+                            <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 10px;">
+                                <i class="fa-solid fa-eye me-1"></i> Live Preview
+                            </div>
+                            <div style="background: #1e293b; border-radius: 16px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px; max-width: 320px;">
+                                <div style="width: 38px; height: 38px; background: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i class="fa-solid fa-shield-halved" style="color: white; font-size: 16px;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-size: 13px; font-weight: 700; color: white;" id="bcPreviewTitle">Your Title Here</div>
+                                    <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;" id="bcPreviewBody">Your message will appear here...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-3">
+                            <button type="submit" class="btn btn-warning px-5 text-dark" id="broadcastSendBtn"
+                                style="border-radius: 10px; font-weight: 700; height: 44px;">
+                                <i class="fa-solid fa-bullhorn me-2"></i>Send Broadcast Push
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    {# RIGHT: Info Panel #}
+    <div class="col-lg-5">
+
+        {# How It Works #}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header py-3" style="background: var(--bg-card, #fff);">
+                <h6 class="m-0 fw-bold"><i class="fa-solid fa-circle-info me-2 text-primary"></i>How Push Notifications Work</h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="d-flex align-items-start gap-3 mb-3">
+                    <div style="width: 32px; height: 32px; background: var(--primary-light, #eff6ff); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fa-solid fa-mobile-screen-button" style="color: var(--primary); font-size: 13px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 13px; font-weight: 600;">PWA Required</div>
+                        <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">Agent must have the PadosiAgent PWA installed with notifications allowed.</div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-start gap-3 mb-3">
+                    <div style="width: 32px; height: 32px; background: #dcfce7; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fa-solid fa-bolt" style="color: #16a34a; font-size: 13px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 13px; font-weight: 600;">Instant Delivery</div>
+                        <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">Notifications are sent instantly via Firebase Cloud Messaging and appear as system notifications.</div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-start gap-3 mb-3">
+                    <div style="width: 32px; height: 32px; background: #fef3c7; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fa-solid fa-user-plus" style="color: #d97706; font-size: 13px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 13px; font-weight: 600;">Auto Lead Alerts</div>
+                        <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">New leads from the website automatically send push alerts to the relevant agent — no manual action needed.</div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-start gap-3">
+                    <div style="width: 32px; height: 32px; background: #ede9fe; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fa-solid fa-bell-slash" style="color: #7c3aed; font-size: 13px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 13px; font-weight: 600;">No Token = No Push</div>
+                        <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">If an agent hasn't enabled notifications, they won't appear in push lists but will still receive emails.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Quick Stats #}
+        <div class="card border-0 shadow-sm">
+            <div class="card-header py-3" style="background: var(--bg-card, #fff);">
+                <h6 class="m-0 fw-bold"><i class="fa-solid fa-chart-bar me-2 text-muted"></i>Quick Stats</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                    <span style="font-size: 13px;"><i class="fa-solid fa-users me-2 text-primary"></i>Total Active Agents</span>
+                    <span class="fw-bold">{{ active_count }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                    <span style="font-size: 13px;"><i class="fa-solid fa-mobile-screen-button me-2 text-success"></i>With Push Enabled</span>
+                    <span class="fw-bold text-success">{{ token_count }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center p-3">
+                    <span style="font-size: 13px;"><i class="fa-solid fa-bell-slash me-2 text-muted"></i>Without Push</span>
+                    <span class="fw-bold text-muted">{{ without_push }}</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{# Full-Width: Agents with Push Notifications Allowed #}
+<div class="mt-4">
+    <div class="card border-0 shadow-sm">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center" style="background: var(--bg-card, #fff);">
+            <div>
+                <h6 class="m-0 fw-bold">
+                    <i class="fa-solid fa-mobile-screen-button me-2 text-success"></i>
+                    Agents with Push Notifications Allowed
+                </h6>
+                <small class="text-muted" style="font-size: 12px;">These agents have the PWA installed and have accepted push notification permission</small>
+            </div>
+            <span class="badge rounded-pill" style="background: #dcfce7; color: #15803d; font-size: 12px; padding: 6px 14px;">
+                {{ token_count }} agent{{ token_count|pluralize }}
+            </span>
+        </div>
+
+        {% if not push_agents %}
+            <div class="card-body text-center py-5">
+                <div style="width: 64px; height: 64px; background: var(--bg-body, #f8fafc); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                    <i class="fa-solid fa-bell-slash" style="font-size: 24px; color: var(--text-muted);"></i>
+                </div>
+                <div style="font-size: 14px; font-weight: 600; margin-bottom: 6px;">No agents have push enabled yet</div>
+                <div style="font-size: 13px; color: var(--text-muted);">Agents need to install the PWA and allow notifications permission on their device.</div>
+            </div>
+        {% else %}
+            <div class="table-responsive">
+                <table class="table mb-0" style="font-size: 13px;">
+                    <thead>
+                        <tr>
+                            <th style="padding: 12px 20px; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); border-bottom: 1px solid var(--border-color);">#</th>
+                            <th style="padding: 12px 16px; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); border-bottom: 1px solid var(--border-color);">Agent</th>
+                            <th style="padding: 12px 16px; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); border-bottom: 1px solid var(--border-color);">Mobile</th>
+                            <th style="padding: 12px 16px; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); border-bottom: 1px solid var(--border-color);">Email</th>
+                            <th style="padding: 12px 16px; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); border-bottom: 1px solid var(--border-color);">Platform</th>
+                            <th style="padding: 12px 16px; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); border-bottom: 1px solid var(--border-color);">Devices</th>
+                            <th style="padding: 12px 16px; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); border-bottom: 1px solid var(--border-color);">Last Active</th>
+                            <th style="padding: 12px 16px; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); border-bottom: 1px solid var(--border-color);">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pa in push_agents %}
+                        <tr style="border-bottom: 1px solid var(--border-color, #f1f5f9); transition: background 0.15s;" onmouseover="this.style.background='var(--menu-hover-bg, #f8fafc)'" onmouseout="this.style.background=''">
+                            <td style="padding: 14px 20px; color: var(--text-muted);">{{ forloop.counter }}</td>
+                            <td style="padding: 14px 16px;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1d7d5d, #0d9488); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: white; font-weight: 700; font-size: 14px;">
+                                        {{ pa.fullname|slice:":1"|upper }}
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 600;">{{ pa.fullname }}</div>
+                                        <div style="font-size: 11px; color: var(--text-muted);">ID #{{ pa.id }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="padding: 14px 16px;">{{ pa.mobile }}</td>
+                            <td style="padding: 14px 16px; color: var(--text-muted); font-size: 12px;">{{ pa.email }}</td>
+                            <td style="padding: 14px 16px;">
+                                {% if pa.platform == 'android' %}
+                                    <span style="display:inline-flex;align-items:center;gap:5px;background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;">
+                                        <i class="fa-brands fa-android"></i> Android
+                                    </span>
+                                {% elif pa.platform == 'ios' %}
+                                    <span style="display:inline-flex;align-items:center;gap:5px;background:#f1f5f9;color:#475569;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;">
+                                        <i class="fa-brands fa-apple"></i> iOS
+                                    </span>
+                                {% else %}
+                                    <span style="display:inline-flex;align-items:center;gap:5px;background:#eff6ff;color:#2563eb;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;">
+                                        <i class="fa-solid fa-globe"></i> Web PWA
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 14px 16px; text-align: center;">
+                                <span style="display:inline-flex;align-items:center;gap:4px;background:var(--primary-light, #eff6ff);color:var(--primary);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">
+                                    <i class="fa-solid fa-mobile-screen-button"></i> {{ pa.token_count }}
+                                </span>
+                            </td>
+                            <td style="padding: 14px 16px; color: var(--text-muted); font-size: 12px;">
+                                {% if pa.last_seen_at %}
+                                    <div style="display:flex;align-items:center;gap:6px;">
+                                        <span style="width:7px;height:7px;border-radius:50%;background:{% if pa.is_recent %}#22c55e{% else %}#94a3b8{% endif %};flex-shrink:0;"></span>
+                                        <span title="{{ pa.last_seen_at|date:'d M Y, h:i A' }}">{{ pa.last_seen_at|timesince }} ago</span>
+                                    </div>
+                                {% else %}
+                                    <span>—</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 14px 16px;">
+                                <button type="button"
+                                    class="btn btn-sm"
+                                    style="background:var(--primary-light, #eff6ff);color:var(--primary);border:1px solid var(--primary);border-radius:8px;font-size:12px;font-weight:600;padding:5px 12px;"
+                                    onclick="quickSend({{ pa.id }}, '{{ pa.fullname|escapejs }}')"
+                                    title="Send push to {{ pa.fullname }}">
+                                    <i class="fa-solid fa-paper-plane me-1"></i> Notify
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{# Quick Notify Modal #}
+<div class="modal fade" id="quickSendModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 460px;">
+        <div class="modal-content" style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 20px 60px rgba(0,0,0,0.15);">
+            <div class="modal-header border-0 px-4 pt-4 pb-2">
+                <div>
+                    <h6 class="fw-bold mb-1" style="font-size: 16px;">
+                        <i class="fa-solid fa-paper-plane me-2" style="color: var(--primary);"></i>
+                        Quick Notify: <span id="qs_agentName" style="color: var(--primary);"></span>
+                    </h6>
+                    <p class="text-muted mb-0" style="font-size: 12px;">Send an instant push notification to this agent</p>
+                </div>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form method="POST" action="{% url 'admin_panel:agent_notify_send' %}" id="quickSendForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="agent_id" id="qs_agentId">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" style="font-size: 13px;">Title</label>
+                        <input type="text" name="title" id="qs_title" class="form-control"
+                            placeholder="e.g. You have a new lead!" required maxlength="100"
+                            style="border-radius: 10px;"
+                            oninput="document.getElementById('qs_previewTitle').textContent = this.value || 'Title preview'">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" style="font-size: 13px;">Message</label>
+                        <textarea name="body" id="qs_body" class="form-control" rows="3"
+                            placeholder="Keep it brief and clear..." required maxlength="255"
+                            style="border-radius: 10px; resize: none;"
+                            oninput="document.getElementById('qs_previewBody').textContent = this.value || 'Message preview...'"></textarea>
+                    </div>
+
+                    {# Phone-style push preview #}
+                    <div style="background: #0f172a; border-radius: 14px; padding: 12px 14px; display: flex; align-items: flex-start; gap: 10px; margin-bottom: 20px;">
+                        <div style="width: 34px; height: 34px; background: #1d7d5d; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="fa-solid fa-shield-halved" style="color: white; font-size: 14px;"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-size: 12px; font-weight: 700; color: white;" id="qs_previewTitle">Title preview</div>
+                            <div style="font-size: 11px; color: #94a3b8; margin-top: 2px; word-break: break-word;" id="qs_previewBody">Message preview...</div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100" id="qs_submitBtn"
+                        style="border-radius: 10px; font-weight: 600; height: 44px;"
+                        onclick="this.innerHTML='<i class=\'fa-solid fa-spinner fa-spin me-2\'></i>Sending...'; this.disabled=true; this.form.submit();">
+                        <i class="fa-solid fa-paper-plane me-2"></i>Send Now
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<style>
+.notif-tab-btn { transition: all 0.2s; }
+.notif-tab-btn:hover { color: var(--primary) !important; }
+
+.target-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    border-radius: 50px;
+    border: 1.5px solid var(--border-color, #e2e8f0);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-muted, #64748b);
+    user-select: none;
+    background: var(--bg-card, #fff);
+}
+.target-pill:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+.target-pill.selected {
+    background: var(--primary-light, #eff6ff);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ─── Tab Switcher ───────────────────────────────────────────────────────────
+function switchTab(tab) {
+    const single    = document.getElementById('panel-single');
+    const broadcast = document.getElementById('panel-broadcast');
+    const tabSingle = document.getElementById('tab-single');
+    const tabBc     = document.getElementById('tab-broadcast');
+
+    if (tab === 'single') {
+        single.style.display = 'block';
+        broadcast.style.display = 'none';
+        tabSingle.style.color = 'var(--primary)';
+        tabSingle.style.borderBottomColor = 'var(--primary)';
+        tabBc.style.color = 'var(--text-muted)';
+        tabBc.style.borderBottomColor = 'transparent';
+    } else {
+        single.style.display = 'none';
+        broadcast.style.display = 'block';
+        tabBc.style.color = 'var(--primary)';
+        tabBc.style.borderBottomColor = 'var(--primary)';
+        tabSingle.style.color = 'var(--text-muted)';
+        tabSingle.style.borderBottomColor = 'transparent';
+    }
+}
+
+// ─── Live Preview: Single ───────────────────────────────────────────────────
+function updateSinglePreview() {
+    const t = document.getElementById('single_title').value.trim();
+    const b = document.getElementById('single_body').value.trim();
+    const preview = document.getElementById('singlePreview');
+    if (t || b) {
+        preview.style.display = 'block';
+        document.getElementById('previewTitle').textContent = t || 'Your Title Here';
+        document.getElementById('previewBody').textContent  = b || 'Your message...';
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+document.getElementById('single_title').addEventListener('input', function() {
+    document.getElementById('titleCount').textContent = this.value.length + ' / 100';
+    updateSinglePreview();
+});
+document.getElementById('single_body').addEventListener('input', function() {
+    document.getElementById('bodyCount').textContent = this.value.length + ' / 255';
+    updateSinglePreview();
+});
+
+// ─── Live Preview: Broadcast ────────────────────────────────────────────────
+function updateBcPreview() {
+    const t = document.getElementById('bc_title').value.trim();
+    const b = document.getElementById('bc_body').value.trim();
+    const preview = document.getElementById('broadcastPreview');
+    if (t || b) {
+        preview.style.display = 'block';
+        document.getElementById('bcPreviewTitle').textContent = t || 'Your Title Here';
+        document.getElementById('bcPreviewBody').textContent  = b || 'Your message...';
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+document.getElementById('bc_title').addEventListener('input', function() {
+    document.getElementById('bcTitleCount').textContent = this.value.length + ' / 100';
+    updateBcPreview();
+});
+document.getElementById('bc_body').addEventListener('input', function() {
+    document.getElementById('bcBodyCount').textContent = this.value.length + ' / 255';
+    updateBcPreview();
+});
+
+// ─── Target Pill Selection ──────────────────────────────────────────────────
+document.querySelectorAll('.target-pill').forEach(pill => {
+    pill.addEventListener('click', function() {
+        document.querySelectorAll('.target-pill').forEach(p => p.classList.remove('selected'));
+        this.classList.add('selected');
+    });
+});
+
+// ─── Quick Send from Table ──────────────────────────────────────────────────
+function quickSend(agentId, agentName) {
+    document.getElementById('qs_agentId').value = agentId;
+    document.getElementById('qs_agentName').textContent = agentName;
+    document.getElementById('qs_title').value = '';
+    document.getElementById('qs_body').value = '';
+    document.getElementById('qs_previewTitle').textContent = 'Title preview';
+    document.getElementById('qs_previewBody').textContent = 'Message preview...';
+    const modal = new bootstrap.Modal(document.getElementById('quickSendModal'));
+    modal.show();
+}
+
+// ─── Form Submit Guards ─────────────────────────────────────────────────────
+document.getElementById('singleNotifForm').addEventListener('submit', function() {
+    const btn = document.getElementById('singleSendBtn');
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Sending...';
+    btn.disabled = true;
+});
+
+document.getElementById('broadcastPushForm').addEventListener('submit', function(e) {
+    if (!confirm('Send this push notification to ALL matching agents? This cannot be undone.')) {
+        e.preventDefault();
+        return;
+    }
+    const btn = document.getElementById('broadcastSendBtn');
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Broadcasting...';
+    btn.disabled = true;
+});
+</script>
+{% endblock %}

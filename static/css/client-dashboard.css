@@ -1,0 +1,15 @@
+/* Client Dashboard CSS */
+
+/* 
+ * This file contains styles specific to the Client Dashboard and related pages.
+ * It is intended to be loaded only on client-facing pages to keep the main stylesheet light.
+ */
+
+/* Example: Client Dashboard Wrapper */
+.client-dashboard-wrapper {
+    background-color: #f8fafc;
+    min-height: calc(100vh - 80px); /* Adjust based on header height */
+    padding-bottom: 40px;
+}
+
+/* Add your client-specific styles here */

@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ faq_content.title|default:"FAQ" }} — PadosiAgent{% endblock %}
+
+{% block content %}
+<div class="sub_banner position-relative">
+    <!-- {% include 'partials/header.html' %} -->
+    <!-- Sub banner -->
+    <section class="sub_banner_con position-relative">
+        <div class="container position-relative">
+            <div class="row">
+                <div class="col-xl-8 col-lg-9 col-12 mx-auto">
+                    <div class="sub_banner_content" data-aos="fade-up">
+                        <h1 class="text-white">{{ faq_content.title|default:"Got Questions? I've Got Your Answers" }}
+                        </h1>
+                        <p class="text-white text-size-18">Everything you need to know
+                            before finding your PadosiAgent</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<section class="faqpage-con position-relative">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="faq_content text-center" data-aos="fade-up">
+                    <h6>Faq's</h6>
+                    <h2>Frequently Asked Questions</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq" data-aos="fade-up">
+            <div class="accordian-section-inner position-relative">
+                <div class="accordian-inner">
+                    <div id="faq_accordion1">
+                        <div class="row">
+
+                            <!-- Left Column -->
+                            <div class="col-lg-6 col-md-12 col-sm-12 col-12">
+                                {% for faq in faqs_left %}
+                                <div class="accordion-card">
+                                    <div class="card-header" id="heading{{ faq.id }}">
+                                        <a href="#" class="btn btn-link collapsed" data-toggle="collapse"
+                                            data-target="#collapse{{ faq.id }}" aria-expanded="false"
+                                            aria-controls="collapse{{ faq.id }}">
+                                            <h4>{{ faq.question }}</h4>
+                                        </a>
+                                    </div>
+                                    <div id="collapse{{ faq.id }}" class="collapse"
+                                        aria-labelledby="heading{{ faq.id }}" data-parent="#faq_accordion1">
+                                        <div class="card-body">
+                                            <p class="text-size-14 text-left mb-0">{{ faq.answer }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Right Column -->
+                            <div class="col-lg-6 col-md-12 col-sm-12 col-12">
+                                {% for faq in faqs_right %}
+                                <div class="accordion-card">
+                                    <div class="card-header" id="heading{{ faq.id }}">
+                                        <a href="#" class="btn btn-link collapsed" data-toggle="collapse"
+                                            data-target="#collapse{{ faq.id }}" aria-expanded="false"
+                                            aria-controls="collapse{{ faq.id }}">
+                                            <h4>{{ faq.question }}</h4>
+                                        </a>
+                                    </div>
+                                    <div id="collapse{{ faq.id }}" class="collapse"
+                                        aria-labelledby="heading{{ faq.id }}" data-parent="#faq_accordion1">
+                                        <div class="card-body">
+                                            <p class="text-size-14 text-left mb-0">{{ faq.answer }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                        </div><!-- /.row -->
+                    </div><!-- /#faq_accordion1 -->
+                </div>
+            </div>
+        </div><!-- /.faq -->
+
+        {% if not faqs_left and not faqs_right %}
+        <div class="text-center py-5 text-muted">
+            <i class="fa-solid fa-circle-question fa-3x mb-3 d-block opacity-25"></i>
+            <p>No FAQs available yet. Check back soon!</p>
+        </div>
+        {% endif %}
+
+    </div>
+</section>
+{% endblock %}

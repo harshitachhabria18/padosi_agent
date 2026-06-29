@@ -1,0 +1,1994 @@
+/*------------------------------------------------------------------
+[Agent Dashboard Stylesheet]
+
+Project:  PadosiAgent
+Purpose:  All CSS for Agent Dashboard, Profile, and related pages
+-------------------------------------------------------------------*/
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+/*------------------------------------------------------------------
+# COMMON AGENT STYLES
+-------------------------------------------------------------------*/
+
+.agent-dashboard-wrapper,
+.edit-profile-wrapper {
+    background-color: #f7f9fb;
+    min-height: 100vh;
+    font-family: 'Outfit', sans-serif;
+    color: #1e293b;
+    padding-bottom: 50px;
+}
+
+/*------------------------------------------------------------------
+# DASHBOARD - HEADER STYLING
+-------------------------------------------------------------------*/
+
+.agent-avatar-circle {
+    width: 64px;
+    height: 64px;
+    background-color: #2c7a7b;
+    /* Dark teal */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(44, 122, 123, 0.2);
+}
+
+.avatar-letter {
+    color: white;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.agent-name-text {
+    font-size: 26px;
+    letter-spacing: -0.6px;
+    color: #0f172a;
+}
+
+.starter-plan-badge {
+    font-size: 11px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    background-color: #1a365d;
+    /* Navy */
+    color: white;
+    font-weight: 600;
+    vertical-align: middle;
+    letter-spacing: 0.2px;
+}
+
+.agent-role-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: #64748b;
+}
+
+/*------------------------------------------------------------------
+# DASHBOARD - BUTTONS
+-------------------------------------------------------------------*/
+
+.btn-profile-view {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 10px 24px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #475569;
+    transition: all 0.2s;
+}
+
+.btn-profile-view:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.btn-add-lead-top {
+    background-color: #0d9488;
+    /* Emerald teal */
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 24px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.2);
+}
+
+.btn-add-lead-top:hover {
+    background-color: #0f766e;
+    transform: translateY(-1px);
+}
+
+/*------------------------------------------------------------------
+# DASHBOARD - TABS BAR
+-------------------------------------------------------------------*/
+
+.dashboard-main-tabs {
+    gap: 10px;
+}
+
+.dashboard-main-tabs .nav-link {
+    background: transparent;
+    color: #64748b;
+    border: 0;
+    border-radius: 12px;
+    padding: 10px 20px;
+    font-size: 15px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.dashboard-main-tabs .nav-link.active {
+    background: white !important;
+    color: #0f172a !important;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.dashboard-main-tabs .nav-link:hover:not(.active) {
+    background: #ecf1f6;
+    color: #334155;
+}
+
+/*------------------------------------------------------------------
+# DASHBOARD - CARDS STYLING
+-------------------------------------------------------------------*/
+
+.premium-dashboard-card {
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.02);
+    background: white;
+}
+
+.card-section-title {
+    font-size: 17px;
+    color: #334155;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+}
+
+/*------------------------------------------------------------------
+# DASHBOARD - PERFORMANCE SECTION
+-------------------------------------------------------------------*/
+
+.perf-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.perf-value {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.perf-progress {
+    height: 8px;
+    background-color: #f1f5f9;
+    border-radius: 10px;
+}
+
+.bg-navy {
+    background-color: #1a365d;
+}
+
+.stats-item {
+    font-size: 14px;
+    color: #64748b;
+}
+
+.stats-value {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+/*------------------------------------------------------------------
+# DASHBOARD - MINI STAT BOXES
+-------------------------------------------------------------------*/
+
+.mini-stat-box {
+    padding: 18px 15px;
+    border-radius: 16px;
+    height: 100%;
+    transition: transform 0.2s;
+}
+
+.box-blue {
+    background-color: #f0f9ff;
+}
+
+.box-green {
+    background-color: #f0fdf4;
+}
+
+.box-teal {
+    background-color: #f0fdfa;
+}
+
+.box-yellow {
+    background-color: #fefce8;
+}
+
+.stat-icon-wrap {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.box-blue .stat-icon-wrap {
+    background-color: #e0f2fe;
+    color: #0284c7;
+}
+
+.box-green .stat-icon-wrap {
+    background-color: #dcfce7;
+    color: #16a34a;
+}
+
+.box-teal .stat-icon-wrap {
+    background-color: #ccfbf1;
+    color: #0d9488;
+}
+
+.box-yellow .stat-icon-wrap {
+    background-color: #fef9c3;
+    color: #ca8a04;
+}
+
+.mini-bubble {
+    background-color: #1a365d;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    padding: 0 4px;
+}
+
+.mini-stat-big-num {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-top: 5px;
+}
+
+.mini-stat-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
+}
+
+/*------------------------------------------------------------------
+# DASHBOARD - INSIGHTS CONTENT
+-------------------------------------------------------------------*/
+
+.insight-label {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.insight-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.no-leads-text {
+    font-size: 15px;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.btn-add-first-lead {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 12px 20px;
+    font-weight: 700;
+    font-size: 14px;
+    color: #334155;
+    transition: all 0.2s;
+}
+
+.btn-add-first-lead:hover {
+    background: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/*------------------------------------------------------------------
+# DASHBOARD - TABLE / LIST EMPTY STATE
+-------------------------------------------------------------------*/
+
+.btn-view-all {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 8px 18px;
+    font-weight: 700;
+    font-size: 13px;
+    color: #475569;
+}
+
+.empty-icon-wrap {
+    color: #e2e8f0;
+}
+
+.empty-msg-text {
+    color: #64748b;
+    font-size: 15px;
+}
+
+/*------------------------------------------------------------------
+# DASHBOARD - PROFILE SPECIFIC STYLES
+-------------------------------------------------------------------*/
+
+.profile-status-box {
+    padding: 15px;
+    border-radius: 12px;
+    border-width: 1px;
+    border-style: solid;
+    height: 100%;
+}
+
+.box-warning {
+    background-color: #fffbeb;
+    border-color: #fcd34d;
+}
+
+.box-success {
+    background-color: #f0fdf9;
+    border-color: #6ee7b7;
+}
+
+.text-warning-dark {
+    color: #b45309;
+}
+
+.text-success-dark {
+    color: #047857;
+}
+
+/*------------------------------------------------------------------
+# DASHBOARD - TIPS & TOOLS SECTION
+-------------------------------------------------------------------*/
+
+.tip-item {
+    padding: 18px 20px;
+    border-radius: 12px;
+    transition: all 0.2s;
+}
+
+.tip-high-priority {
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+}
+
+.tip-recommended {
+    background-color: #fefce8;
+    border: 1px solid #fef08a;
+}
+
+.tip-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    transform: translateY(-1px);
+}
+
+.badge-high-priority {
+    background-color: #dc2626;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.badge-recommended {
+    background-color: #f59e0b;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.tip-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.tip-description {
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+.btn-tip-action {
+    background-color: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.btn-tip-action:hover {
+    background-color: #0f172a;
+    color: white;
+    border-color: #0f172a;
+    transform: translateX(2px);
+}
+
+.btn-tip-action i {
+    font-size: 11px;
+    transition: transform 0.2s;
+}
+
+.btn-tip-action:hover i {
+    transform: translateX(3px);
+}
+
+/*------------------------------------------------------------------
+# EDIT PROFILE - STEPS HEADER
+-------------------------------------------------------------------*/
+
+.steps-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    overflow-x: auto;
+    gap: 10px;
+}
+
+.step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 100px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 8px;
+    transition: all 0.3s;
+}
+
+.step-item.active .step-number {
+    background: #0d9488;
+    color: white;
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+}
+
+.step-item.completed .step-number {
+    background: #10b981;
+    color: white;
+}
+
+.step-item.completed .step-number::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+}
+
+.step-label {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 500;
+    text-align: center;
+}
+
+.step-item.active .step-label {
+    color: #0d9488;
+    font-weight: 700;
+}
+
+/*------------------------------------------------------------------
+# EDIT PROFILE - FORM CARD
+-------------------------------------------------------------------*/
+
+.edit-profile-card {
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.02);
+}
+
+.step-header {
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 20px;
+}
+
+.step-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.step-subtitle {
+    font-size: 14px;
+}
+
+/*------------------------------------------------------------------
+# EDIT PROFILE - FORM STEPS
+-------------------------------------------------------------------*/
+
+.form-step {
+    display: none;
+}
+
+.form-step.active {
+    display: block;
+    animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/*------------------------------------------------------------------
+# EDIT PROFILE - FORM CONTROLS
+-------------------------------------------------------------------*/
+
+.form-label {
+    font-weight: 600;
+    color: #334155;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.form-control {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.form-control:focus {
+    border-color: #0d9488;
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+}
+
+/*------------------------------------------------------------------
+# EDIT PROFILE - PROFILE PHOTO UPLOAD
+-------------------------------------------------------------------*/
+
+.profile-photo-upload {
+    display: inline-block;
+}
+
+.photo-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    border: 3px dashed #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin: 0 auto;
+}
+
+.photo-circle:hover {
+    border-color: #0d9488;
+    background: #f0fdfa;
+    color: #0d9488;
+}
+
+.photo-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+}
+
+.photo-circle:hover img {
+    transform: scale(1.05);
+}
+
+.photo-circle {
+    position: relative;
+    overflow: hidden;
+}
+
+.photo-circle.has-image {
+    cursor: grab;
+    touch-action: none;
+}
+
+.photo-circle.has-image.is-adjusting {
+    cursor: grabbing;
+}
+
+.photo-circle.has-image::after {
+    content: 'Change Photo';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(13, 148, 136, 0.8);
+    color: white;
+    font-size: 10px;
+    padding: 4px 0;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    font-weight: 600;
+}
+
+.photo-circle.has-image:hover::after {
+    opacity: 1;
+}
+
+.upload-btn {
+    color: #0d9488;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+/*------------------------------------------------------------------
+# EDIT PROFILE - LANGUAGE TAGS DISPLAY
+-------------------------------------------------------------------*/
+
+.language-tags-display {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.language-tag {
+    background: #1e40af;
+    color: white;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.language-tag:hover {
+    background: #1e3a8a;
+}
+
+.language-tag i {
+    cursor: pointer;
+    font-size: 11px;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.language-tag i:hover {
+    opacity: 1;
+}
+
+/*------------------------------------------------------------------
+# EDIT PROFILE - CUSTOM LANGUAGE DROPDOWN
+-------------------------------------------------------------------*/
+
+.custom-language-dropdown {
+    position: relative;
+    width: 100%;
+}
+
+.dropdown-toggle-custom {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    color: #64748b;
+    transition: all 0.2s;
+}
+
+.dropdown-toggle-custom:hover {
+    border-color: #cbd5e1;
+}
+
+.dropdown-toggle-custom.active {
+    border-color: #0d9488;
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+}
+
+.dropdown-toggle-custom i {
+    transition: transform 0.3s;
+}
+
+.dropdown-toggle-custom.active i {
+    transform: rotate(180deg);
+}
+
+.dropdown-menu-custom {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+}
+
+.dropdown-menu-custom.show {
+    display: block;
+    animation: dropdownSlide 0.2s ease-out;
+}
+
+@keyframes dropdownSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.language-option {
+    position: relative;
+}
+
+.language-option input[type="checkbox"] {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.language-option label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin: 0;
+    font-weight: 400;
+    color: #475569;
+    font-size: 13px;
+    position: relative;
+}
+
+.language-option label:hover {
+    background: #f8fafc;
+}
+
+.language-option input[type="checkbox"]:checked+label {
+    background: #f0fdfa;
+    color: #0d9488;
+}
+
+.language-option label i {
+    font-size: 16px;
+    color: #cbd5e1;
+    transition: color 0.2s;
+    flex-shrink: 0;
+}
+
+.language-option input[type="checkbox"]:checked+label i.fas {
+    color: #0d9488;
+}
+
+.language-option label span {
+    flex: 1;
+}
+
+/*------------------------------------------------------------------
+# EDIT PROFILE - SEGMENT CHECKBOXES
+-------------------------------------------------------------------*/
+
+.segment-checkbox {
+    position: relative;
+}
+
+.segment-checkbox input[type="checkbox"] {
+    display: none;
+}
+
+.segment-checkbox label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 600;
+    color: #475569;
+}
+
+.segment-checkbox label i {
+    font-size: 24px;
+    color: #94a3b8;
+}
+
+.segment-checkbox input[type="checkbox"]:checked+label {
+    border-color: #0d9488;
+    background: #f0fdfa;
+    color: #0d9488;
+}
+
+.segment-checkbox input[type="checkbox"]:checked+label i {
+    color: #0d9488;
+}
+
+
+
+
+/*------------------------------------------------------------------
+# EDIT PROFILE - NAVIGATION BUTTONS
+-------------------------------------------------------------------*/
+
+.btn-prev,
+.btn-next,
+.btn-submit,
+.btn-preview {
+    padding: 12px 28px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.btn-next,
+.btn-submit {
+    background: #0d9488;
+    border-color: #0d9488;
+    color: white;
+}
+
+.btn-next:hover,
+.btn-submit:hover {
+    background: #0f766e;
+    transform: translateY(-1px);
+}
+
+/*------------------------------------------------------------------
+# EDIT PROFILE - FAMILY MEMBER SECTION
+-------------------------------------------------------------------*/
+
+.family-member-headers {
+    padding: 0 15px;
+    margin-bottom: 10px;
+}
+
+.family-member-headers .form-label {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 13px;
+    margin-bottom: 0;
+}
+
+.family-member-row {
+    transition: all 0.3s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    padding: 18px 15px !important;
+}
+
+.family-member-row:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.family-member-row .form-control {
+    font-size: 14px;
+    padding: 10px 14px;
+    border-color: #e2e8f0;
+    height: 45px;
+    line-height: 1.5;
+}
+
+.family-member-row select.form-control {
+    padding-right: 30px;
+}
+
+.family-member-row .form-control:focus {
+    border-color: #0d9488;
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+}
+
+.family-member-row .form-control::placeholder {
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+.remove-family-member {
+    transition: all 0.2s;
+    border-radius: 8px;
+}
+
+.remove-family-member:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3);
+}
+
+/*------------------------------------------------------------------
+# EDIT PROFILE - CUSTOM SWITCH TOGGLE
+-------------------------------------------------------------------*/
+
+
+
+/*------------------------------------------------------------------
+# EDIT PROFILE - PRODUCT PORTFOLIO
+-------------------------------------------------------------------*/
+
+.portfolio-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    margin-top: 20px;
+}
+
+.portfolio-empty-state .empty-icon {
+    font-size: 64px;
+    color: #cbd5e1;
+    margin-bottom: 24px;
+}
+
+.portfolio-empty-state h5 {
+    font-size: 18px;
+    color: #475569;
+    margin-bottom: 24px;
+    font-weight: 500;
+}
+
+.portfolio-card {
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.portfolio-card h6 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 20px;
+}
+
+.portfolio-card .form-label {
+    font-size: 13px;
+    color: #475569;
+    margin-bottom: 8px;
+}
+
+.portfolio-card .form-control {
+    background: white;
+    height: 45px;
+    line-height: 1.5;
+}
+
+.portfolio-card select.form-control {
+    padding-right: 30px;
+}
+
+.segment-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.segment-title i {
+    color: #0d9488;
+}
+
+/*------------------------------------------------------------------
+# EDIT PROFILE - ADDITIONAL (STEP 5)
+-------------------------------------------------------------------*/
+
+.achievement-photos-section h5,
+.digital-presence-section h5,
+.career-highlights-section h5 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.btn-upload-achievements {
+    border-radius: 10px;
+    padding: 10px 24px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.photos-preview-grid {
+    min-height: 120px;
+    padding: 20px;
+    background: #f8fafc;
+    border: 2px dashed #e2e8f0;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.photos-preview-grid:not(:empty) {
+    justify-content: flex-start;
+}
+
+.photos-preview-grid:empty::before {
+    content: 'No photos uploaded yet. Click upload to add achievements, awards, etc.';
+    color: #94a3b8;
+    font-size: 14px;
+    text-align: center;
+}
+
+.photo-preview-item {
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    background: white;
+}
+
+.photo-preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.photo-preview-item .remove-photo {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 20px;
+    height: 20px;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+}
+
+.photo-preview-item .remove-photo:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+}
+
+/*------------------------------------------------------------------
+# PROFILE - PRODUCT EXPERTISE RATING
+-------------------------------------------------------------------*/
+
+.expertise-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 15px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.expertise-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.expertise-header h6 {
+    margin-bottom: 0;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.expertise-subtitle {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 20px;
+}
+
+.product-rating-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.product-rating-row:last-of-type {
+    border-bottom: none;
+}
+
+.product-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #334155;
+}
+
+.star-rating {
+    display: flex;
+    gap: 4px;
+}
+
+.star-rating i {
+    cursor: pointer;
+    font-size: 18px;
+    color: #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.star-rating i.active {
+    color: #fbbf24 !important;
+}
+
+.star-rating i:hover~i {
+    color: #e2e8f0 !important;
+}
+
+.star-rating:hover i {
+    color: #fbbf24;
+}
+
+.rating-guide {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.guide-item {
+    font-size: 11px;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+}
+
+.guide-item i {
+    color: #fbbf24;
+    margin-right: 4px;
+}
+
+.add-other-product-btn {
+    margin-top: 15px;
+}
+
+.custom-product-row {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 10px;
+    border-left: 3px solid #0d9488;
+}
+
+.add-product-inline-container {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 10px;
+    margin-top: 15px;
+    border: 1px solid #e2e8f0;
+}
+
+.add-product-inline-container .form-control {
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    padding: 12px 15px;
+}
+
+.btn-teal {
+    background-color: #94b8b1;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 25px;
+    font-weight: 600;
+}
+
+.btn-teal:hover {
+    background-color: #83a59e;
+    color: white;
+}
+
+.product-name-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.remove-custom-product-inline {
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 14px;
+    transition: color 0.2s;
+}
+
+.remove-custom-product-inline:hover {
+    color: #ef4444;
+}
+
+/* Ensure stars are clickable */
+.star-rating i {
+    cursor: pointer !important;
+    pointer-events: auto !important;
+}
+
+.digital-presence-section .form-control {
+    background-color: #f8fafc;
+}
+
+/*------------------------------------------------------------------
+# EDIT PROFILE - LEAD PREFERENCES (STEP 6)
+-------------------------------------------------------------------*/
+
+.lead-preference-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.lead-preference-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border-color: #cbd5e1;
+}
+
+.lead-preference-card.locked {
+    background: #f8fafc;
+    border-style: dashed;
+}
+
+.lead-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.lead-icon {
+    width: 44px;
+    height: 44px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+.lead-preference-card:not(.locked) .lead-icon {
+    background: #e0f2fe;
+    color: #0284c7;
+}
+
+.lead-content h6 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lead-badge {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+.badge-all {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.badge-experience-locked {
+    background: #3b82f6;
+    color: #ffffff;
+}
+
+.lead-desc {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.lock-requirement {
+    font-size: 12px;
+    color: #f59e0b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.lead-switch {
+    margin-left: 20px;
+}
+
+/* Custom Toggle Switch for Lead Pref */
+.lead-toggle {
+    width: 42px;
+    height: 24px;
+    position: relative;
+    display: inline-block;
+}
+
+.lead-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #e2e8f0;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked+.toggle-slider {
+    background-color: #10b981;
+}
+
+input:checked+.toggle-slider:before {
+    transform: translateX(18px);
+}
+
+input:disabled+.toggle-slider {
+    background-color: #f1f5f9;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.lead-charging-details {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #f1f5f9;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.charging-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 15px;
+}
+
+.charging-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.charging-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #475569;
+    cursor: pointer;
+}
+
+.charging-option input[type="radio"] {
+    accent-color: #0d9488;
+    width: 18px;
+    height: 18px;
+}
+
+.inline-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 5px;
+    margin-left: 28px;
+}
+
+.inline-input-group span {
+    color: #64748b;
+    font-size: 13px;
+}
+
+.charging-input {
+    width: 100px;
+    height: 32px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 0 10px;
+    font-size: 13px;
+    background: #f8fafc;
+}
+
+.charging-input:focus {
+    outline: none;
+    border-color: #0d9488;
+    background: white;
+}
+
+
+/*------------------------------------------------------------------
+# EDIT PROFILE - DECLARATIONS (STEP 7)
+-------------------------------------------------------------------*/
+
+.declarations-container {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 30px;
+}
+
+.declaration-warning {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    padding: 12px 20px;
+    color: #92400e;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.declaration-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.declaration-pill {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 14px;
+    color: #1e293b;
+    transition: all 0.2s;
+}
+
+.declaration-pill .dot {
+    width: 8px;
+    height: 8px;
+    background: #0d9488;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.agree-checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 0 0;
+    cursor: pointer;
+}
+
+.custom-checkbox {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #cbd5e1;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.agree-checkbox-wrapper input:checked+.custom-checkbox,
+.custom-checkbox.checked {
+    border-color: #0d9488;
+    background: #0d9488;
+}
+
+.agree-checkbox-wrapper input:checked+.custom-checkbox::after,
+.custom-checkbox.checked::after {
+    content: '';
+    width: 10px;
+    height: 6px;
+    border-left: 2px solid white;
+    border-bottom: 2px solid white;
+    transform: rotate(-45deg) translateY(-1px);
+}
+
+.agree-text {
+    font-size: 15px;
+    color: #1e293b;
+}
+
+.agree-text a {
+    color: #0d9488;
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+/* Shake Animation for Validation */
+.shake-element {
+    animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+    transform: translate3d(0, 0, 0);
+}
+
+@keyframes shake {
+
+    10%,
+    90% {
+        transform: translate3d(-1px, 0, 0);
+    }
+
+    20%,
+    80% {
+        transform: translate3d(2px, 0, 0);
+    }
+
+    30%,
+    50%,
+    70% {
+        transform: translate3d(-4px, 0, 0);
+    }
+
+    40%,
+    60% {
+        transform: translate3d(4px, 0, 0);
+    }
+}
+
+/*------------------------------------------------------------------
+# RESPONSIVE STYLES
+-------------------------------------------------------------------*/
+
+@media (min-width: 992px) {
+    .border-right-lg {
+        border-right: 1px solid #e2e8f0;
+    }
+}
+
+@media (max-width: 991px) {
+    .dashboard-main-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 8px;
+    }
+
+    .dashboard-main-tabs .nav-item {
+        flex-shrink: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .steps-header {
+        justify-content: flex-start;
+    }
+
+    .step-item {
+        min-width: 80px;
+    }
+
+    .step-number {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+    }
+
+    .step-label {
+        font-size: 10px;
+    }
+
+    .tip-item .d-flex {
+        flex-direction: column;
+    }
+
+    .btn-tip-action {
+        margin-left: 0 !important;
+        margin-top: 12px;
+        width: 100%;
+    }
+
+    .tip-title {
+        font-size: 14px;
+    }
+
+    .tip-description {
+        font-size: 12px;
+    }
+
+    /* Form Navigation Responsive */
+    .form-navigation {
+        flex-direction: row;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .form-navigation .ml-auto {
+        margin-left: 0 !important;
+        width: 100%;
+        gap: 12px !important;
+    }
+
+    .form-navigation button {
+        flex: 1;
+        justify-content: center;
+        padding: 12px 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .form-navigation {
+        flex-direction: column-reverse;
+    }
+
+    .form-navigation .ml-auto {
+        flex-direction: column;
+    }
+
+    .form-navigation button {
+        width: 100%;
+    }
+
+    /* Lead Preferences Mobile Fix */
+    .lead-preference-card {
+        padding: 16px !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 15px;
+    }
+
+    .lead-preference-card .d-flex.justify-content-between.align-items-center {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 15px;
+    }
+
+    .lead-info {
+        gap: 12px !important;
+    }
+
+    .lead-switch {
+        margin-left: 0 !important;
+        padding-top: 10px;
+        border-top: 1px solid #f1f5f9;
+        width: 100%;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .lead-content h6 {
+        flex-wrap: wrap;
+    }
+
+    .lead-charging-details {
+        width: 100%;
+    }
+
+    .inline-input-group {
+        margin-left: 0 !important;
+        flex-wrap: wrap;
+    }
+}
+
+/*------------------------------------------------------------------
+# SELECT2 - CUSTOM DASHBOARD STYLING
+-------------------------------------------------------------------*/
+
+.select2-container--default .select2-selection--multiple,
+.select2-container--default .select2-selection--single {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0 10px;
+    min-height: 45px;
+    display: flex;
+    align-items: center;
+    background-color: white;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #334155;
+    font-size: 14px;
+    padding: 0;
+    line-height: normal;
+    width: 100%;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 43px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.select2-container--default.select2-container--focus .select2-selection--multiple,
+.select2-container--default.select2-container--focus .select2-selection--single {
+    border-color: #0d9488;
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+}
+
+/* Serviceable Cities Specific: Single-line layout */
+#serviceable-cities+.select2-container--default .select2-selection--multiple .select2-selection__rendered {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    align-items: center !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    gap: 6px;
+    margin: 0 !important;
+}
+
+/* Base Select2 Multiple styles (for Companies and others) */
+.select2-container--default .select2-selection--multiple .select2-selection__rendered {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    width: 100%;
+    padding: 2px 0;
+    gap: 4px;
+}
+
+.select2-selection__rendered::-webkit-scrollbar {
+    display: none;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+    flex: 0 0 auto;
+    background-color: #0d9488 !important;
+    border: none !important;
+    color: white !important;
+    border-radius: 6px;
+    padding: 4px 10px;
+    margin: 0 !important;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    float: none !important;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+    color: white !important;
+    margin-right: 6px !important;
+    border: none !important;
+    padding: 0 !important;
+    font-weight: bold;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+    background-color: transparent !important;
+    color: #fca5a5 !important;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove::after {
+    display: none !important;
+}
+
+.select2-container--default .select2-search--inline {
+    flex: 1;
+    margin: 0 !important;
+}
+
+.select2-container--default .select2-search--inline .select2-search__field {
+    margin: 0 !important;
+    height: 38px !important;
+    line-height: 38px !important;
+    border: none !important;
+    outline: none !important;
+    background: transparent !important;
+    width: 100% !important;
+    min-width: 50px !important;
+}
+
+.select2-dropdown {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    z-index: 1060;
+}
+
+.select2-results__option--highlighted[aria-selected] {
+    background-color: #0d9488 !important;
+}
+
+/* Validation Styling for Select2 */
+.is-invalid-select2+.select2-container .select2-selection {
+    border-color: #dc3545 !important;
+}
+
+/*------------------------------------------------------------------
+# PROFILE - IMAGE PREVIEWS & ACHIEVEMENTS
+-------------------------------------------------------------------*/
+
+.photo-preview-item {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 10px;
+}
+
+.photo-preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.remove-photo {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    padding: 0;
+    font-size: 12px;
+    border: none;
+    cursor: pointer;
+    color: #ef4444;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+}
+
+.remove-photo:hover {
+    background: #fff;
+    color: #dc2626;
+    transform: scale(1.1);
+}
+
+/*------------------------------------------------------------------
+# CAREER TIMELINE STYLES
+-------------------------------------------------------------------*/
+
+.career-timeline-section .timeline-container {
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.timeline-item-row {
+    transition: all 0.3s ease;
+    border-color: #e2e8f0;
+}
+
+.timeline-item-row:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+    border-color: #cbd5e1;
+}
+
+.timeline-date span {
+    font-size: 18px;
+    color: #1e293b;
+    font-weight: 800;
+}
+
+.timeline-content {
+    position: relative;
+    border-left: 3px solid #e2e8f0;
+}
+
+.timeline-content h6 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #334155;
+}
+
+/* Timeline Type Badges */
+.badge-timeline {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+}

@@ -1,0 +1,307 @@
+{% extends 'admin/layout.html' %}
+{% load static %}
+
+{% block title %}Admin Activity Logs — PadosiAgent Admin{% endblock %}
+{% block breadcrumb %}Advanced &rsaquo; Activity Logs{% endblock %}
+
+{% block extra_css %}
+<style>
+    .action-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.4;
+        white-space: nowrap;
+        max-width: 260px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .action-badge.type-auth       { background: #ede9fe; color: #5b21b6; }
+    .action-badge.type-agent      { background: #ecfdf5; color: #065f46; }
+    .action-badge.type-plan       { background: #fef3c7; color: #92400e; }
+    .action-badge.type-broadcast  { background: #dbeafe; color: #1e40af; }
+    .action-badge.type-lead       { background: #dcfce7; color: #15803d; }
+    .action-badge.type-content    { background: #fee2e2; color: #991b1b; }
+    .action-badge.type-review     { background: #fdf4ff; color: #86198f; }
+    .action-badge.type-settings   { background: #f0f9ff; color: #0369a1; }
+    .action-badge.type-default    { background: #f1f5f9; color: #334155; }
+
+    body.dark-mode .action-badge.type-auth      { background: rgba(109,40,217,0.2); color: #c4b5fd; }
+    body.dark-mode .action-badge.type-agent     { background: rgba(16,185,129,0.15); color: #6ee7b7; }
+    body.dark-mode .action-badge.type-plan      { background: rgba(245,158,11,0.15); color: #fcd34d; }
+    body.dark-mode .action-badge.type-broadcast { background: rgba(59,130,246,0.15); color: #93c5fd; }
+    body.dark-mode .action-badge.type-lead      { background: rgba(34,197,94,0.15);  color: #86efac; }
+    body.dark-mode .action-badge.type-content   { background: rgba(239,68,68,0.15);  color: #fca5a5; }
+    body.dark-mode .action-badge.type-review    { background: rgba(192,38,211,0.15); color: #f0abfc; }
+    body.dark-mode .action-badge.type-settings  { background: rgba(14,165,233,0.15); color: #7dd3fc; }
+    body.dark-mode .action-badge.type-default   { background: rgba(100,116,139,0.15); color: #cbd5e1; }
+
+    .log-row td { vertical-align: middle; }
+    .log-row:hover { background-color: var(--menu-hover-bg) !important; }
+    .admin-avatar {
+        width: 32px; height: 32px; border-radius: 10px;
+        background: linear-gradient(135deg, var(--primary), #3b82f6);
+        color: white; font-weight: 700; font-size: 13px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{# Stats row #}
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card d-flex align-items-center gap-3">
+            <div style="width:44px;height:44px;border-radius:12px;background:#ede9fe;display:flex;align-items:center;justify-content:center;">
+                <i class="fa-solid fa-clock-rotate-left" style="color:#7c3aed;"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ total_records }}</div>
+                <div class="stat-label">Total Records</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card d-flex align-items-center gap-3">
+            <div style="width:44px;height:44px;border-radius:12px;background:#dcfce7;display:flex;align-items:center;justify-content:center;">
+                <i class="fa-solid fa-calendar-day" style="color:#16a34a;"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ actions_today }}</div>
+                <div class="stat-label">Actions Today</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card d-flex align-items-center gap-3">
+            <div style="width:44px;height:44px;border-radius:12px;background:#dbeafe;display:flex;align-items:center;justify-content:center;">
+                <i class="fa-solid fa-shield-halved" style="color:#2563eb;"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ action_types_count }}</div>
+                <div class="stat-label">Action Types</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card d-flex align-items-center gap-3">
+            <div style="width:44px;height:44px;border-radius:12px;background:#fef3c7;display:flex;align-items:center;justify-content:center;">
+                <i class="fa-solid fa-user-gear" style="color:#d97706;"></i>
+            </div>
+            <div>
+                <div class="stat-value" style="font-size: 16px; font-weight: 700;">
+                    {{ last_active_admin_name }}
+                </div>
+                <div class="stat-label">Last Active Admin</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm" style="border-top: 3px solid var(--primary);">
+    <div class="card-header py-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h6 class="m-0 fw-bold"><i class="fa-solid fa-list-ul me-2" style="color:var(--primary);"></i>Admin Activity History</h6>
+                <span style="font-size: 12px; color: var(--text-muted);">Complete audit trail of admin actions</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge" style="background:#f1f5f9;color:#334155;font-size:11px;padding:5px 10px;border-radius:8px;border:1px solid #e2e8f0;">
+                    <i class="fa-solid fa-database me-1"></i>{{ total_records }} Records
+                </span>
+                <a href="{% url 'admin_panel:advanced_activity_logs' %}" class="btn btn-sm btn-light border" style="font-size:12px;">
+                    <i class="fa-solid fa-rotate-right me-1"></i>Refresh
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); padding: 12px 16px; background: var(--bg-table-header); border-bottom: 1px solid var(--border-color); width: 13%;">Timestamp</th>
+                        <th style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); padding: 12px 16px; background: var(--bg-table-header); border-bottom: 1px solid var(--border-color); width: 13%;">Admin</th>
+                        <th style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); padding: 12px 16px; background: var(--bg-table-header); border-bottom: 1px solid var(--border-color); width: 26%;">Action</th>
+                        <th style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); padding: 12px 16px; background: var(--bg-table-header); border-bottom: 1px solid var(--border-color); width: 28%;">Details / Entity</th>
+                        <th style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); padding: 12px 16px; background: var(--bg-table-header); border-bottom: 1px solid var(--border-color); width: 14%;">IP Address</th>
+                        <th style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); padding: 12px 16px; background: var(--bg-table-header); border-bottom: 1px solid var(--border-color); width: 6%; text-align: center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr class="log-row">
+                        <td style="padding: 14px 16px; border-bottom: 1px solid var(--border-light);">
+                            <div class="fw-semibold" style="font-size: 13px; color: var(--text-primary);">{{ log.created_at|date:"d M Y" }}</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">{{ log.created_at|date:"h:i A" }}</div>
+                            <div style="font-size: 10px; color: var(--text-label); margin-top: 2px;">{{ log.created_at|timesince }} ago</div>
+                        </td>
+                        <td style="padding: 14px 16px; border-bottom: 1px solid var(--border-light);">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="admin-avatar">{{ log.admin_obj.name|slice:":1"|upper|default:"S" }}</div>
+                                <span class="fw-semibold" style="font-size: 13px; color: var(--text-primary);">{{ log.admin_obj.name|default:"System" }}</span>
+                            </div>
+                        </td>
+                        <td style="padding: 14px 16px; border-bottom: 1px solid var(--border-light);">
+                            <span class="action-badge {{ log.badge_class }}">
+                                <i class="fa-solid {{ log.badge_icon }}" style="font-size: 10px;"></i>
+                                {{ log.action }}
+                            </span>
+                        </td>
+                        <td style="padding: 14px 16px; border-bottom: 1px solid var(--border-light);">
+                            {% if log.model_type %}
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fw-semibold" style="font-size: 13px; color: var(--text-primary);">{{ log.model_type }}</span>
+                                    {% if log.model_id %}
+                                    <span style="font-size: 11px; color: var(--text-muted); background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; padding: 1px 6px;">#{{ log.model_id }}</span>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <span style="font-size: 13px; color: var(--text-muted);">General</span>
+                            {% endif %}
+
+                            {% if log.details %}
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; font-family: monospace; background: var(--bg-body); border: 1px solid var(--border-light); border-radius: 6px; padding: 3px 8px; word-break: break-all;">
+                                {{ log.details_display|slice:":120" }}{% if log.details_display|length > 120 %}...{% endif %}
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 14px 16px; border-bottom: 1px solid var(--border-light);">
+                            <code style="font-size: 11px; color: var(--text-muted); background: var(--bg-body); border: 1px solid var(--border-light); border-radius: 6px; padding: 2px 8px; display: inline-block;">{{ log.ip_address|default:"127.0.0.1" }}</code>
+                        </td>
+                        <td style="padding: 14px 16px; border-bottom: 1px solid var(--border-light); text-align: center;">
+                            <button type="button" class="btn btn-danger btn-sm delete-btn" data-id="{{ log.id }}" title="Delete" style="padding: 4px 8px;"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5">
+                            <i class="fa-solid fa-clock-rotate-left fa-3x mb-3 opacity-25" style="color: var(--text-muted);"></i>
+                            <h6 class="fw-bold" style="color: var(--text-muted);">No Activity Logs Found</h6>
+                            <p style="font-size: 13px; color: var(--text-muted);">System actions will appear here once recorded.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if logs.has_other_pages %}
+    <div class="card-footer bg-white d-flex justify-content-center p-3 border-top">
+        <nav>
+            <ul class="pagination mb-0">
+                {% if logs.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ logs.previous_page_number }}">&laquo;</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                {% endif %}
+
+                {% for num in logs.paginator.page_range %}
+                    {% if logs.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > logs.number|add:'-3' and num < logs.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if logs.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ logs.next_page_number }}">&raquo;</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.pagination { margin-bottom: 0; flex-wrap: wrap; justify-content: center; gap: 5px; }
+.pagination .page-item .page-link { border-radius: 8px; padding: 8px 16px; color: var(--primary); border: 1px solid var(--border-color); font-weight: 500; transition: all 0.2s; }
+.pagination .page-item.active .page-link { background-color: var(--primary); border-color: var(--primary); color: white; }
+.pagination .page-item.disabled .page-link { color: var(--text-muted); background-color: var(--bg-body); }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).on('click', '.delete-btn', function(e) {
+    e.preventDefault();
+    
+    const button = $(this);
+    const id = button.data('id');
+    const row = button.closest('tr');
+    
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "This action cannot be undone!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+            
+            $.ajax({
+                url: '{% url "admin_panel:advanced_activity_logs_delete" %}',
+                type: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                data: {
+                    id: id
+                },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            title: 'Deleted!',
+                            text: response.message,
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                        
+                        row.fadeOut(300, function() {
+                            $(this).remove();
+                            // Reload to update stats cards cleanly
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: response.message,
+                            icon: 'error'
+                        });
+                        button.prop('disabled', false).html('<i class="fas fa-trash"></i>');
+                    }
+                },
+                error: function() {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'An error occurred while deleting the log.',
+                        icon: 'error'
+                    });
+                    button.prop('disabled', false).html('<i class="fas fa-trash"></i>');
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

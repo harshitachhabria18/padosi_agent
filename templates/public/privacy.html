@@ -1,0 +1,395 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="http://127.0.0.1:8000/images/favicon.png">
+    <title>Privacy Policy - PadosiAgent</title>
+    <style>
+        :root {
+            --primary-color: #3a86ff;
+            --secondary-color: #8338ec;
+            --accent-color: #ff006e;
+            --success-color: #06d6a0;
+            --text-color: #333;
+            --light-bg: #f8f9fa;
+            --border-color: #dee2e6;
+            --padosi-blue: #003AAD;
+            --agent-green: #06A441;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            color: var(--text-color);
+            line-height: 1.6;
+            background-color: var(--light-bg);
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .content-card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+            margin-top: 30px;
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 2rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        h2 {
+            color: var(--secondary-color);
+            margin: 25px 0 15px;
+            font-size: 1.5rem;
+        }
+        
+        h3 {
+            color: var(--accent-color);
+            margin: 20px 0 10px;
+            font-size: 1.2rem;
+        }
+        
+        p {
+            margin-bottom: 15px;
+        }
+        
+        ul, ol {
+            margin-left: 20px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, #fff5f5, #f0f8ff);
+            border-left: 4px solid var(--accent-color);
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .warning-box {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-left: 4px solid #fdcb6e;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .security-box {
+            background: linear-gradient(135deg, #e3fcef, #d0f0fd);
+            border: 1px solid var(--success-color);
+            border-left: 4px solid var(--success-color);
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .data-table th, .data-table td {
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            text-align: left;
+        }
+        
+        .data-table th {
+            background-color: var(--light-bg);
+            font-weight: 600;
+        }
+        
+        .data-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .consent-section {
+            background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
+            border-radius: 10px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            color: #6c757d;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .logo {
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .logo span.padosi {
+            color: #003AAD !important;
+        }
+        
+        .logo span.agent {
+            color: #06A441;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .content-card {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.7rem;
+            }
+            
+            h2 {
+                font-size: 1.3rem;
+            }
+            
+            .data-table {
+                font-size: 0.9rem;
+            }
+            
+            .data-table th, .data-table td {
+                padding: 8px;
+            }
+        }
+        
+        .policy-header {
+            background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
+            border-radius: 10px;
+            padding: 25px;
+            margin: 0 0 30px 0;
+        }
+        
+        .definition-item {
+            margin-bottom: 15px;
+            padding-left: 10px;
+            border-left: 2px solid var(--border-color);
+        }
+        
+        .definition-term {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .no-list {
+            list-style-type: none;
+            margin-left: 0;
+        }
+        
+        .no-list li {
+            position: relative;
+            padding-left: 25px;
+        }
+        
+        .no-list li:before {
+            content: "•";
+            color: var(--accent-color);
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+        
+        .prohibited-item {
+            color: #ff006e;
+            font-weight: bold;
+        }
+        
+        .data-category {
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .legal-compliance {
+            background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+            border-left: 4px solid #4caf50;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        
+        <div class="content-card">
+            <h1>Privacy Policy</h1>
+            
+            <div class="policy-header">
+                <p><strong>PadosiAgent ServTech Private Limited</strong></p>
+                <p>Last Updated: <strong>December 25, 2025</strong></p>
+                <p>Effective From: <strong>December 25, 2025</strong></p>
+            </div>
+            
+            <div class="legal-compliance">
+                <h2>1. LEGAL BASIS</h2>
+                <p>This Privacy Policy complies with:</p>
+                <ul class="no-list">
+                    <li>Information Technology Act, 2000</li>
+                    <li>IT Rules, 2011</li>
+                    <li>Digital Personal Data Protection Act, 2023</li>
+                </ul>
+            </div>
+            
+            <h2>2. INFORMATION COLLECTED</h2>
+            
+            <div class="data-category">
+                <h3>A. Personal Data</h3>
+                <ul class="no-list">
+                    <li>Name, mobile, email</li>
+                    <li>PAN, licenses, certifications</li>
+                    <li>Business details</li>
+                    <li>Profile content</li>
+                </ul>
+            </div>
+            
+            <div class="data-category">
+                <h3>B. Technical Data</h3>
+                <ul class="no-list">
+                    <li>IP address</li>
+                    <li>Device details</li>
+                    <li>Cookies</li>
+                    <li>Usage analytics</li>
+                </ul>
+            </div>
+            
+            <div class="data-category">
+                <h3>C. Payment Data</h3>
+                <div class="warning-box">
+                    <p><strong>Handled only by third-party gateways. We do not store card data.</strong></p>
+                </div>
+            </div>
+            
+            <h2>3. PURPOSE OF COLLECTION</h2>
+            <ul class="no-list">
+                <li>Account creation</li>
+                <li>Verification</li>
+                <li>Lead facilitation</li>
+                <li>Platform improvement</li>
+                <li>Legal compliance</li>
+                <li>Communication & support</li>
+            </ul>
+            
+            <h2>4. DATA SHARING</h2>
+            <p>Data may be shared with:</p>
+            <ul class="no-list">
+                <li>Payment processors</li>
+                <li>Technology partners</li>
+                <li>Legal authorities (if required)</li>
+            </ul>
+            
+            <div class="warning-box">
+                <p><span class="prohibited-item">❌ No sale of personal data</span></p>
+            </div>
+            
+            <h2>5. DATA SECURITY</h2>
+            <ul class="no-list">
+                <li>Reasonable technical safeguards</li>
+                <li>Restricted access</li>
+                <li>Encrypted storage (where applicable)</li>
+            </ul>
+            
+            <div class="warning-box">
+                <p><strong>However, no system is 100% secure.</strong></p>
+            </div>
+            
+            <h2>6. DATA RETENTION</h2>
+            <p>Data is retained:</p>
+            <ul class="no-list">
+                <li>As long as account exists</li>
+                <li>Or as required by law</li>
+                <li>Or until legitimate business purpose ends</li>
+            </ul>
+            
+            <h2>7. USER RIGHTS</h2>
+            <p>User may:</p>
+            <ul class="no-list">
+                <li>Request correction</li>
+                <li>Request deletion (subject to law)</li>
+                <li>Withdraw consent</li>
+            </ul>
+            
+            <div class="warning-box">
+                <p><strong>Requests may be rejected if legally restricted.</strong></p>
+            </div>
+            
+            <h2>8. COOKIES</h2>
+            <p>Cookies are used for:</p>
+            <ul class="no-list">
+                <li>Session management</li>
+                <li>Analytics</li>
+                <li>Performance optimization</li>
+            </ul>
+            
+            <div class="warning-box">
+                <p><strong>Disabling cookies may limit functionality.</strong></p>
+            </div>
+            
+            <h2>9. CHILDREN'S DATA</h2>
+            <div class="highlight-box">
+                <p><strong>Platform is strictly for 18+ users. No intentional data collection from minors.</strong></p>
+            </div>
+            
+            <h2>10. THIRD-PARTY LINKS</h2>
+            <div class="warning-box">
+                <p><strong>The Company is not responsible for external websites or services.</strong></p>
+            </div>
+            
+            <h2>11. CHANGES TO POLICY</h2>
+            <div class="warning-box">
+                <p><strong>Updates may occur without prior notice. Continued use implies acceptance.</strong></p>
+            </div>
+            
+            <h2>12. CONTACT – DATA PROTECTION</h2>
+            <div class="highlight-box">
+                <p><strong>📧 privacy@padosiagent.com</strong></p>
+                <p><strong>📍 Ahmedabad, Gujarat, India</strong></p>
+            </div>
+            
+            <div class="consent-section">
+                <h3>Your Consent</h3>
+                <p>By using PadosiAgent, you consent to the collection and use of your information as described in this Privacy Policy. If you do not agree with this policy, please do not use our platform.</p>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="container">
+            <p>© 2026 PadosiAgent ServTech Private Limited. All rights reserved. | <a href="http://127.0.0.1:8000/privacy" style="color: inherit; text-decoration: none;">Privacy Policy</a> | <a href="http://127.0.0.1:8000/terms" style="color: inherit; text-decoration: none;">Terms & Conditions</a></p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,87 @@
+{% extends 'admin/layout.html' %}
+
+{% block title %}Contact Page — PadosiAgent Admin{% endblock %}
+{% block breadcrumb_title %}Content Control › Contact Page{% endblock %}
+
+{% block content %}
+
+{% if messages %}
+<div class="mb-3">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<form method="POST" action="{% url 'admin_panel:content_contact_update' %}">
+    {% csrf_token %}
+
+    <!-- Banner Section -->
+    <div class="card mb-4" style="border-left: 4px solid var(--primary);">
+        <div class="card-header bg-white py-3">
+            <h6 class="m-0 fw-bold">
+                <i class="fa-solid fa-flag me-2" style="color: var(--primary);"></i>Page Banner
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <label class="form-label fw-bold" style="font-size: 13px;">Banner Title</label>
+                    <input type="text" name="banner_title"
+                           value="{{ contact.banner_title|default:'Contact Us' }}"
+                           class="form-control">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Form Section -->
+    <div class="card mb-4">
+        <div class="card-header bg-white py-3">
+            <h6 class="m-0 fw-bold">
+                <i class="fa-solid fa-envelope-open-text me-2 text-primary"></i>Contact Section Header
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label fw-bold" style="font-size: 13px;">Section Title</label>
+                <input type="text" name="section_title"
+                       value="{{ contact.section_title|default:'' }}"
+                       class="form-control"
+                       placeholder="Enter Section Title...">
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold" style="font-size: 13px;">Section Subtitle</label>
+                <textarea name="section_subtitle" class="form-control" rows="3"
+                          placeholder="Enter Section Subtitle/Description...">{{ contact.section_subtitle|default:'' }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <a href="/contact/" target="_blank" class="btn btn-outline-secondary">
+            <i class="fa-solid fa-external-link me-1"></i> Preview Contact Page
+        </a>
+        <button type="submit" class="btn btn-primary px-5">
+            <i class="fa-solid fa-save me-2"></i> Save Contact Page Content
+        </button>
+    </div>
+</form>
+
+<!-- Info card: General Settings -->
+<div class="card border-0 shadow-sm bg-light">
+    <div class="card-body d-flex align-items-center justify-content-between p-4">
+        <div>
+            <h5 class="fw-bold mb-1 text-dark">
+                <i class="fa-solid fa-info-circle me-2 text-primary"></i>Manage Contact Email &amp; Address?
+            </h5>
+            <p class="text-muted mb-0 small">Support email, phone, and office address are managed under General Settings.</p>
+        </div>
+        <a href="#" class="btn btn-outline-primary btn-sm px-4">Go to General Settings</a>
+    </div>
+</div>
+
+{% endblock %}

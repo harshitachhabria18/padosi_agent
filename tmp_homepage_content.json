@@ -1,0 +1,336 @@
+{
+    "hero": {
+        "visible": "1",
+        "headline": "Find Trusted & Verified Insurance Experts in your Neighbourhood",
+        "subheadline": "Connect with your local PadosiAgent"
+    },
+    "dyk": {
+        "visible": "1",
+        "label": "Did you know?",
+        "title": "Insights from the Padosi network",
+        "slides": [
+            {
+                "accent": "accent-rose",
+                "bg": "bg-rose-500",
+                "icon": "users",
+                "title": "3\u00d7 faster claim settlements",
+                "body": "Customers served by a nearby agent report claims clearing up to 3\u00d7 faster \u2014 your agent walks the file through with the insurer."
+            },
+            {
+                "accent": "accent-emerald",
+                "bg": "bg-emerald-500",
+                "icon": "shield",
+                "title": "Local agents catch policy gaps",
+                "body": "A neighbourhood expert knows your city's hospital network, traffic risks and weather patterns \u2014 and recommends covers a tele-caller never will."
+            },
+            {
+                "accent": "accent-sky",
+                "bg": "bg-sky-500",
+                "icon": "clock",
+                "title": "Face-to-face saves hours of confusion",
+                "body": "70%+ of policyholders say they understood their cover only after meeting an agent in person. Jargon disappears across a table."
+            },
+            {
+                "accent": "accent-amber",
+                "bg": "bg-amber-500",
+                "icon": "trending-up",
+                "title": "40% lower lapse rates",
+                "body": "Customers with a dedicated nearby agent are 40% less likely to let a policy lapse \u2014 they get timely renewal nudges from a real human."
+            },
+            {
+                "accent": "accent-violet",
+                "bg": "bg-violet-500",
+                "icon": "lightbulb",
+                "title": "Zero platform fee, full licensed advice",
+                "body": "Your agent earns from the insurer \u2014 not from you. Same premium, lifetime advisor in your neighbourhood."
+            },
+            {
+                "accent": "accent-pink",
+                "bg": "bg-pink-500",
+                "icon": "heart",
+                "title": "Lifetime relationship, not a ticket number",
+                "body": "Your Padosi agent stays the same across renewals, claims and family additions \u2014 no fresh call-centre script each time."
+            },
+            {
+                "accent": "accent-indigo",
+                "bg": "bg-indigo-500",
+                "icon": "building-2",
+                "title": "Hospital networks matter locally",
+                "body": "A local agent maps the right cashless hospitals near your home and office before you ever need one."
+            },
+            {
+                "accent": "accent-teal",
+                "bg": "bg-teal-500",
+                "icon": "indian-rupee",
+                "title": "Right cover, not the costliest cover",
+                "body": "A neighbourhood advisor sizes the premium to your real life \u2014 not to a target sheet."
+            }
+        ]
+    },
+    "quickpicks": {
+        "visible": "1",
+        "label": "Quick picks",
+        "title": "Buy / Port / Renew",
+        "view_all_text": "View all products \u2192",
+        "view_all_url": "/find-agents?ServiceType=New%20Policy&openFilter=1",
+        "items": [
+            {
+                "label": "Mediclaim",
+                "badge": "Most Bought",
+                "badge_bg": "#ffe4e6",
+                "badge_color": "#be123c",
+                "icon_bg": "#fff1f2",
+                "icon_color": "#f43f5e",
+                "icon": "heart-pulse",
+                "url": "/find-agents?ServiceType=New%20Policy&InsuranceType=Health%20Insurance&InsuranceCompany=Mediclaim&openFilter=1"
+            },
+            {
+                "label": "Term Plan",
+                "badge": "Pure Cover",
+                "badge_bg": "#e0f2fe",
+                "badge_color": "#0369a1",
+                "icon_bg": "#f0f9ff",
+                "icon_color": "#0284c7",
+                "icon": "clock",
+                "url": "/find-agents?ServiceType=New%20Policy&InsuranceType=Life%20Insurance&InsuranceCompany=Term%20Plan&openFilter=1"
+            },
+            {
+                "label": "Private Car",
+                "badge": "Renew Fast",
+                "badge_bg": "#fef3c7",
+                "badge_color": "#b45309",
+                "icon_bg": "#fffbeb",
+                "icon_color": "#d97706",
+                "icon": "car-front",
+                "url": "/find-agents?ServiceType=New%20Policy&InsuranceType=Motor%20Insurance&InsuranceCompany=Private%20Car&openFilter=1"
+            },
+            {
+                "label": "Two Wheeler",
+                "badge": null,
+                "badge_bg": "#ffe4e6",
+                "badge_color": "#be123c",
+                "icon_bg": "#ecfdf5",
+                "icon_color": "#059669",
+                "icon": "bike",
+                "url": "/find-agents?ServiceType=New%20Policy&InsuranceType=Motor%20Insurance&InsuranceCompany=Two%20Wheeler&openFilter=1"
+            },
+            {
+                "label": "Critical Illness",
+                "badge": "Lumpsum",
+                "badge_bg": "#fae8ff",
+                "badge_color": "#a21caf",
+                "icon_bg": "#fdf4ff",
+                "icon_color": "#c026d3",
+                "icon": "alert-triangle",
+                "url": "/find-agents?ServiceType=New%20Policy&InsuranceType=Health%20Insurance&InsuranceCompany=Critical%20Illness&openFilter=1"
+            },
+            {
+                "label": "Personal Accident",
+                "badge": null,
+                "badge_bg": "#ffe4e6",
+                "badge_color": "#be123c",
+                "icon_bg": "#fff7ed",
+                "icon_color": "#ea580c",
+                "icon": "user-check",
+                "url": "/find-agents?ServiceType=New%20Policy&InsuranceType=Health%20Insurance&InsuranceCompany=Personal%20Accident&openFilter=1"
+            },
+            {
+                "label": "Super Top-up",
+                "badge": "Save Big",
+                "badge_bg": "#ccfbf1",
+                "badge_color": "#0f766e",
+                "icon_bg": "#f0fdfa",
+                "icon_color": "#0d9488",
+                "icon": "trending-up",
+                "url": "/find-agents?ServiceType=New%20Policy&InsuranceType=Health%20Insurance&InsuranceCompany=Super%20Top-up&openFilter=1"
+            },
+            {
+                "label": "ULIP Plan",
+                "badge": null,
+                "badge_bg": "#ffe4e6",
+                "badge_color": "#be123c",
+                "icon_bg": "#f5f3ff",
+                "icon_color": "#7c3aed",
+                "icon": "bar-chart-3",
+                "url": "/find-agents?ServiceType=New%20Policy&InsuranceType=Life%20Insurance&InsuranceCompany=ULIP%20Plan&openFilter=1"
+            },
+            {
+                "label": "Pension Plan",
+                "badge": "Lifetime",
+                "badge_bg": "#e0e7ff",
+                "badge_color": "#4338ca",
+                "icon_bg": "#eef2ff",
+                "icon_color": "#4f46e5",
+                "icon": "landmark",
+                "url": "/find-agents?ServiceType=New%20Policy&InsuranceType=Life%20Insurance&InsuranceCompany=Pension%20Plan&openFilter=1"
+            },
+            {
+                "label": "Saving Plan",
+                "badge": null,
+                "badge_bg": "#ffe4e6",
+                "badge_color": "#be123c",
+                "icon_bg": "#fdf2f8",
+                "icon_color": "#db2777",
+                "icon": "piggy-bank",
+                "url": "/find-agents?ServiceType=New%20Policy&InsuranceType=Life%20Insurance&InsuranceCompany=Saving%20Plan&openFilter=1"
+            },
+            {
+                "label": "Commercial Vehicle",
+                "badge": null,
+                "badge_bg": "#ffe4e6",
+                "badge_color": "#be123c",
+                "icon_bg": "#fef9c3",
+                "icon_color": "#a16207",
+                "icon": "truck",
+                "url": "/find-agents?ServiceType=New%20Policy&InsuranceType=Motor%20Insurance&InsuranceCompany=Commercial%20Vehicle&openFilter=1"
+            },
+            {
+                "label": "Fire (SME)",
+                "badge": null,
+                "badge_bg": "#ffe4e6",
+                "badge_color": "#be123c",
+                "icon_bg": "#fef2f2",
+                "icon_color": "#dc2626",
+                "icon": "flame",
+                "url": "/find-agents?ServiceType=New%20Policy&InsuranceType=SME%20Insurance&InsuranceCompany=Fire%20(SME)&openFilter=1"
+            },
+            {
+                "label": "Cyber (SME)",
+                "badge": "New",
+                "badge_bg": "#cffafe",
+                "badge_color": "#0e7490",
+                "icon_bg": "#ecfeff",
+                "icon_color": "#0891b2",
+                "icon": "lock",
+                "url": "/find-agents?ServiceType=New%20Policy&InsuranceType=SME%20Insurance&InsuranceCompany=Cyber%20(SME)&openFilter=1"
+            },
+            {
+                "label": "Liability (SME)",
+                "badge": null,
+                "badge_bg": "#ffe4e6",
+                "badge_color": "#be123c",
+                "icon_bg": "#f1f5f9",
+                "icon_color": "#475569",
+                "icon": "scale",
+                "url": "/find-agents?ServiceType=New%20Policy&InsuranceType=SME%20Insurance&InsuranceCompany=Liability%20(SME)&openFilter=1"
+            }
+        ]
+    },
+    "why_choose": {
+        "visible": "1",
+        "label": "Why PadosiAgent",
+        "title": "What makes PadosiAgent one of India's most trusted ways to buy insurance?",
+        "description": "No Spam / No Platform Fee / Licensed PadosiAgents",
+        "button_text": "Find My PadosiAgent",
+        "button_url": "/find-agents?openFilter=1",
+        "cards": [
+            {
+                "bg": "#fff1f2",
+                "stat": "0",
+                "caption": "Spam Calls",
+                "icon_color": "#f43f5e",
+                "icon": "shield-check",
+                "title": "Privacy-first by design",
+                "body": "Only YOU can contact an agent. Agents can never call you first \u2014 your number is never sold or shared."
+            },
+            {
+                "bg": "#ecfdf5",
+                "stat": "\u20b90",
+                "caption": "Platform Fee",
+                "icon_color": "#059669",
+                "icon": "indian-rupee",
+                "title": "100% free for buyers",
+                "body": "No charges, no hidden costs. Your premium stays the same \u2014 the agent earns from the insurer, never from you."
+            },
+            {
+                "bg": "#f0f9ff",
+                "stat": "100%",
+                "caption": "Licensed Agents",
+                "icon_color": "#0284c7",
+                "icon": "badge-check",
+                "title": "Verified, licensed experts only",
+                "body": "Every agent is a licensed insurance professional, vetted before listing. No call-centre scripts, ever."
+            },
+            {
+                "bg": "#fffbeb",
+                "stat": "500+",
+                "caption": "Padosi Agents",
+                "icon_color": "#d97706",
+                "icon": "map-pin",
+                "title": "A neighbour in every PIN code",
+                "body": "Discover trusted advisors within your locality who understand local hospitals, traffic and risks."
+            },
+            {
+                "bg": "#f5f3ff",
+                "stat": "1L+",
+                "caption": "Families Covered",
+                "icon_color": "#7c3aed",
+                "icon": "users",
+                "title": "A network you can rely on",
+                "body": "Lakhs of Indian families have already found their PadosiAgent for buying, renewing and claims."
+            },
+            {
+                "bg": "#fdf4ff",
+                "stat": "4.8\u2605",
+                "caption": "Average Rating",
+                "icon_color": "#c026d3",
+                "icon": "star",
+                "title": "Loved by buyers across India",
+                "body": "Real reviews from real customers \u2014 no incentivised ratings, no fake testimonials."
+            }
+        ]
+    },
+    "works": {
+        "visible": "1",
+        "label": "How It Works",
+        "title": "Find My PadosiAgent in 4 Simple Steps",
+        "subtitle": "From search to service - it takes just minutes for you",
+        "button_text": "Find Agent",
+        "button_url": "/find-agents?openFilter=1",
+        "steps": [
+            {
+                "icon": "search",
+                "accent": "accent-primary",
+                "badge": "1",
+                "title": "Search",
+                "desc": "Find verified agents",
+                "tooltip": "Find verified insurance experts by area or service."
+            },
+            {
+                "icon": "git-compare",
+                "accent": "accent-secondary",
+                "badge": "2",
+                "title": "Compare",
+                "desc": "Review ratings",
+                "tooltip": "Review ratings and profiles to find your perfect match."
+            },
+            {
+                "icon": "message-square",
+                "accent": "accent-accent",
+                "badge": "3",
+                "title": "Connect",
+                "desc": "Call or WhatsApp",
+                "tooltip": "Get in touch via Call or WhatsApp instantly."
+            },
+            {
+                "icon": "hand-heart",
+                "accent": "accent-violet",
+                "badge": "4",
+                "title": "Assist Me",
+                "desc": "Personalized service",
+                "tooltip": "Get professional support for policies, claims, and more."
+            }
+        ]
+    },
+    "testimonials": {
+        "visible": "1",
+        "label": "Testimonials",
+        "title": "What Users Say About Their PadosiAgent",
+        "subtitle": "Real experiences from users who found their PadosiAgent"
+    },
+    "sections": {
+        "claim_assistance": "1",
+        "policy_review": "1",
+        "stats": "1"
+    }
+}

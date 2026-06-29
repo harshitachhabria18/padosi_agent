@@ -1,0 +1,1453 @@
+{% load static %}
+
+{# ═══════════════════════════════════════════════════════════════════════
+   Hero Section component — self-contained CSS (Django include can't push
+   to blocks, so we embed the style block directly here)
+   ═══════════════════════════════════════════════════════════════════════ #}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700;800&family=Urbanist:wght@400;500;600;700;800;900&display=swap');
+
+  :root {
+    --pa-page-top-offset: 104px;
+    --pa-primary-h: 168;
+    --pa-primary-s: 55%;
+    --pa-primary-l: 32%;
+    --pa-secondary-h: 212;
+    --pa-secondary-s: 79%;
+    --pa-secondary-l: 33%;
+    --pa-accent-h: 155;
+    --pa-accent-s: 60%;
+    --pa-accent-l: 28%;
+    --pa-background-h: 150;
+    --pa-background-s: 10%;
+    --pa-background-l: 97%;
+    --pa-foreground-h: 210;
+    --pa-foreground-s: 25%;
+    --pa-foreground-l: 15%;
+    --pa-card-h: 0;
+    --pa-card-s: 0%;
+    --pa-card-l: 100%;
+    --pa-muted-foreground-h: 215;
+    --pa-muted-foreground-s: 16%;
+    --pa-muted-foreground-l: 47%;
+    --pa-border-h: 214;
+    --pa-border-s: 32%;
+    --pa-border-l: 91%;
+    --pa-claim-h: 25;
+    --pa-claim-s: 85%;
+    --pa-claim-l: 52%;
+    --pa-review-h: 245;
+    --pa-review-s: 50%;
+    --pa-review-l: 48%;
+
+    --pa-primary: hsl(var(--pa-primary-h), var(--pa-primary-s), var(--pa-primary-l));
+    --pa-secondary: hsl(var(--pa-secondary-h), var(--pa-secondary-s), var(--pa-secondary-l));
+    --pa-accent: hsl(var(--pa-accent-h), var(--pa-accent-s), var(--pa-accent-l));
+    --pa-background: hsl(var(--pa-background-h), var(--pa-background-s), var(--pa-background-l));
+    --pa-foreground: hsl(var(--pa-foreground-h), var(--pa-foreground-s), var(--pa-foreground-l));
+    --pa-card: hsl(var(--pa-card-h), var(--pa-card-s), var(--pa-card-l));
+    --pa-muted-foreground: hsl(var(--pa-muted-foreground-h), var(--pa-muted-foreground-s), var(--pa-muted-foreground-l));
+    --pa-border: hsl(var(--pa-border-h), var(--pa-border-s), var(--pa-border-l));
+    --pa-claim: hsl(var(--pa-claim-h), var(--pa-claim-s), var(--pa-claim-l));
+    --pa-review: hsl(var(--pa-review-h), var(--pa-review-s), var(--pa-review-l));
+  }
+
+  /* ═══ Transparent header overrides ═══ */
+  .family_banner_outer .header {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  /* ═══ Section ═══ */
+  .pa-hero {
+    position: relative;
+    overflow: hidden;
+    min-height: auto;
+    display: flex;
+    align-items: center;
+    font-family: 'Jost', system-ui, sans-serif;
+    color: var(--pa-foreground);
+    background: var(--pa-background);
+    margin-top: calc(-1 * var(--pa-page-top-offset));
+    padding-bottom: 2rem;
+  }
+
+  @media (max-width: 1023px) {
+    .pa-hero {
+      align-items: flex-start;
+    }
+  }
+
+  .pa-hero-bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, hsla(var(--pa-primary-h), var(--pa-primary-s), var(--pa-primary-l), 0.05), transparent 40%, hsla(var(--pa-secondary-h), var(--pa-secondary-s), var(--pa-secondary-l), 0.05));
+    pointer-events: none;
+  }
+
+  .pa-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(64px);
+    pointer-events: none;
+  }
+
+  .pa-blob-1 {
+    top: -12rem;
+    left: -12rem;
+    width: 44rem;
+    height: 44rem;
+    background: hsla(var(--pa-primary-h), var(--pa-primary-s), var(--pa-primary-l), 0.12);
+  }
+
+  .pa-blob-2 {
+    bottom: -12rem;
+    right: -12rem;
+    width: 40rem;
+    height: 40rem;
+    background: hsla(var(--pa-secondary-h), var(--pa-secondary-s), var(--pa-secondary-l), 0.12);
+  }
+
+  @media (min-width: 1600px) {
+    .pa-blob-1 {
+      width: 56rem;
+      height: 56rem;
+    }
+    .pa-blob-2 {
+      width: 52rem;
+      height: 52rem;
+    }
+  }
+
+  .pa-container {
+    position: relative;
+    width: 100%;
+    max-width: 100rem;
+    margin: 0 auto;
+    padding: calc(var(--pa-page-top-offset) + 1rem) 1rem 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .pa-container {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+      padding-bottom: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .pa-container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+      padding-bottom: 2.5rem;
+    }
+  }
+
+  /* ═══ Mobile / Desktop visibility ═══ */
+  .pa-mobile-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding-bottom: 1rem;
+  }
+
+  @media (min-width: 1024px) {
+    .pa-mobile-layout {
+      display: none;
+    }
+  }
+
+  .pa-desktop-layout {
+    display: none;
+  }
+
+  @media (min-width: 1024px) {
+    .pa-desktop-layout {
+      display: block;
+    }
+  }
+
+  /* ═══ Slider card ═══ */
+  .pa-slider-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 6.25rem;
+    border-radius: 1rem;
+    border: 1px solid hsla(var(--pa-border-h), var(--pa-border-s), var(--pa-border-l), 0.5);
+    background: var(--pa-card);
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+
+  .pa-slider-card-lg {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: auto;
+  }
+
+  .pa-slider-viewport {
+    overflow: hidden;
+    border-radius: 0.75rem;
+    flex: 1;
+  }
+
+  @media (min-width: 640px) {
+    .pa-slider-viewport {
+      border-radius: 1rem;
+    }
+  }
+
+  .pa-slider-track {
+    display: flex;
+    height: 100%;
+    transition: transform 0.35s ease;
+  }
+
+  .pa-slide {
+    flex: 0 0 100%;
+    min-width: 0;
+  }
+
+  .pa-slide-inner {
+    height: 100%;
+    padding: 0.875rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  @media (min-width: 640px) {
+    .pa-slide-inner-mob {
+      padding: 1.25rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .pa-slide-inner-desk {
+      padding: 1rem;
+    }
+  }
+
+  /* ═══ Slide icon (white bg on gradient) ═══ */
+  .pa-slide-icon-white {
+    display: flex;
+    height: 2rem;
+    width: 2rem;
+    min-width: 2rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .pa-slide-icon-white svg {
+    height: 1rem;
+    width: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .pa-slide-icon-white {
+      height: 3.5rem;
+      width: 3.5rem;
+      min-width: 3.5rem;
+      border-radius: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .pa-slide-icon-white svg {
+      height: 1.5rem;
+      width: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .pa-slide-icon-box-desk {
+      height: 3rem !important;
+      width: 3rem !important;
+      min-width: 3rem !important;
+      margin-bottom: 0.75rem !important;
+    }
+    .pa-slide-icon-box-desk svg {
+      height: 1.25rem;
+      width: 1.25rem;
+    }
+  }
+
+  .pa-slide-hero {
+    font-size: 0.875rem;
+    font-weight: 800;
+    color: var(--pa-foreground);
+    line-height: 1.25;
+    margin: 0 0 0.125rem;
+  }
+
+  .pa-slide-hero-chart {
+    font-size: 0.8125rem;
+    margin-bottom: 0.25rem;
+  }
+
+  @media (min-width: 640px) {
+    .pa-slide-hero-chart {
+      font-size: 1.125rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .pa-slide-hero-chart {
+      font-size: 1rem;
+    }
+  }
+
+  .pa-slide-tag-chart {
+    margin-bottom: 0.5rem;
+  }
+
+  @media (min-width: 640px) {
+    .pa-slide-tag-chart {
+      margin-bottom: 0.75rem;
+    }
+  }
+
+  .pa-slide-tag {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: hsla(var(--pa-muted-foreground-h), var(--pa-muted-foreground-s), var(--pa-muted-foreground-l), 0.8);
+    margin: 0 0 0.25rem;
+  }
+
+  .pa-slide-body {
+    font-size: 0.6875rem;
+    line-height: 1.25rem;
+    color: var(--pa-muted-foreground);
+    margin: 0;
+  }
+
+  @media (min-width: 640px) {
+    .pa-slide-hero {
+      font-size: 1.25rem;
+    }
+    .pa-slide-tag {
+      font-size: 0.875rem;
+      margin-bottom: 0.375rem;
+    }
+    .pa-slide-body {
+      font-size: 0.875rem;
+      line-height: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .pa-slide-hero-desk {
+      font-size: 1.125rem;
+    }
+    .pa-slide-tag-desk {
+      font-size: 0.75rem;
+    }
+    .pa-slide-body-desk {
+      font-size: 0.75rem;
+      line-height: 1.25rem;
+    }
+  }
+
+  @media (min-width: 1400px) {
+    .pa-slide-hero-desk {
+      font-size: 1.25rem;
+    }
+    .pa-slide-tag-desk {
+      font-size: 0.875rem;
+    }
+    .pa-slide-body-desk {
+      font-size: 0.875rem;
+      line-height: 1.5rem;
+    }
+    .pa-slide-icon-box-desk {
+      height: 3.5rem !important;
+      width: 3.5rem !important;
+      min-width: 3.5rem !important;
+    }
+    .pa-slide-icon-box-desk svg {
+      height: 1.5rem;
+      width: 1.5rem;
+    }
+  }
+
+  /* ═══ Chart ═══ */
+  .pa-chart {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.375rem;
+    max-width: 200px;
+    min-height: 70px;
+  }
+
+  @media (min-width: 640px) {
+    .pa-chart {
+      gap: 0.75rem;
+      max-width: 260px;
+      min-height: 90px;
+    }
+  }
+
+  .pa-chart-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.125rem;
+    flex: 1;
+    height: 100%;
+    justify-content: flex-end;
+  }
+
+  .pa-chart-val {
+    font-size: 8px;
+    font-weight: 800;
+    color: var(--pa-foreground);
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (min-width: 640px) {
+    .pa-chart-val {
+      font-size: 10px;
+    }
+  }
+
+  .pa-chart-bar {
+    width: 100%;
+    border-radius: 2px 2px 0 0;
+    background: linear-gradient(to top, hsla(0, 72%, 51%, 0.7), hsla(0, 86%, 67%, 0.4));
+  }
+
+  .pa-chart-year {
+    font-size: 7px;
+    font-weight: 600;
+    color: hsla(var(--pa-muted-foreground-h), var(--pa-muted-foreground-s), var(--pa-muted-foreground-l), 0.7);
+  }
+
+  @media (min-width: 640px) {
+    .pa-chart-year {
+      font-size: 9px;
+    }
+  }
+
+  .pa-chart-footnote {
+    font-size: 7px;
+    color: hsla(var(--pa-muted-foreground-h), var(--pa-muted-foreground-s), var(--pa-muted-foreground-l), 0.5);
+    margin: 0.375rem 0 0;
+  }
+
+  @media (min-width: 640px) {
+    .pa-chart-footnote {
+      font-size: 9px;
+    }
+  }
+
+  /* ═══ Desktop Grid ═══ */
+  .pa-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem 3rem;
+    align-items: stretch;
+  }
+
+  @media (min-width: 1400px) {
+    .pa-grid {
+      gap: 1.5rem 4rem;
+    }
+  }
+
+  @media (min-width: 1600px) {
+    .pa-grid {
+      gap: 2rem 5rem;
+    }
+  }
+
+  .pa-cell {
+    min-width: 0;
+  }
+
+  .pa-cell-r1l {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .pa-cell-r1l {
+      gap: 1.25rem;
+    }
+  }
+
+  .pa-cell-r1r {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .pa-dyk-desktop-inner {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .pa-cell-r2l {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .pa-cell-r2r {
+    display: flex;
+  }
+
+  /* ═══ Trust Badges ═══ */
+  .pa-badges-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .pa-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  @media (min-width: 640px) {
+    .pa-badge {
+      gap: 0.625rem;
+    }
+  }
+
+  .pa-badge-icon-box {
+    display: flex;
+    height: 1.75rem;
+    width: 1.75rem;
+    min-width: 1.75rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+  }
+
+  @media (min-width: 640px) {
+    .pa-badge-icon-box {
+      height: 2.25rem;
+      width: 2.25rem;
+      min-width: 2.25rem;
+      border-radius: 0.75rem;
+    }
+  }
+
+  .pa-badge-icon-box svg {
+    height: 1rem;
+    width: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .pa-badge-icon-box svg {
+      height: 1.25rem;
+      width: 1.25rem;
+    }
+  }
+
+  .pa-badge-icon-primary {
+    background: hsla(var(--pa-primary-h), var(--pa-primary-s), var(--pa-primary-l), 0.15);
+    color: var(--pa-primary);
+  }
+
+  .pa-badge-icon-secondary {
+    background: hsla(var(--pa-secondary-h), var(--pa-secondary-s), var(--pa-secondary-l), 0.15);
+    color: var(--pa-secondary);
+  }
+
+  .pa-badge-icon-accent {
+    background: hsla(var(--pa-accent-h), var(--pa-accent-s), var(--pa-accent-l), 0.15);
+    color: var(--pa-accent);
+  }
+
+  .pa-badge-text {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: var(--pa-foreground);
+    line-height: 1.25;
+  }
+
+  @media (min-width: 640px) {
+    .pa-badge-text {
+      font-size: 0.875rem;
+    }
+  }
+
+  /* ═══ Heading ═══ */
+  .pa-heading {
+    font-size: 1.625rem;
+    line-height: 1.15;
+    font-weight: 800;
+    color: var(--pa-foreground);
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+
+  @media (min-width: 640px) {
+    .pa-heading {
+      font-size: 2.125rem;
+      line-height: 1.1;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .pa-heading {
+      font-size: 3.25rem;
+      line-height: 1.08;
+    }
+  }
+
+  @media (min-width: 1400px) {
+    .pa-heading {
+      font-size: 3.75rem;
+    }
+  }
+
+  @media (min-width: 1600px) {
+    .pa-heading {
+      font-size: 4.25rem;
+    }
+  }
+
+  .pa-heading-highlight {
+    color: var(--pa-secondary);
+  }
+
+  .pa-heading-trusted {
+    color: var(--pa-secondary);
+  }
+
+  /* ═══ Stats ═══ */
+  .pa-stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+  }
+
+  @media (min-width: 640px) {
+    .pa-stats-row {
+      gap: 0.75rem;
+    }
+  }
+
+  .pa-stat-btn {
+    text-align: center;
+    text-decoration: none;
+    transition: transform 0.15s;
+    display: block;
+    color: inherit;
+  }
+
+  .pa-stat-btn:hover {
+    transform: translateY(-2px);
+  }
+
+  .pa-stat-btn:active {
+    transform: scale(0.98);
+  }
+
+  .pa-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.125rem;
+    padding: 0.375rem;
+  }
+
+  @media (min-width: 640px) {
+    .pa-stat {
+      gap: 0.25rem;
+      padding: 0.5rem;
+    }
+  }
+
+  .pa-stat-top {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  @media (min-width: 640px) {
+    .pa-stat-top {
+      gap: 0.5rem;
+    }
+  }
+
+  .pa-stat-icon {
+    display: inline-flex;
+    align-items: center;
+    color: var(--pa-primary);
+  }
+
+  .pa-stat-icon svg {
+    height: 1.25rem;
+    width: 1.25rem;
+  }
+
+  @media (min-width: 640px) {
+    .pa-stat-icon svg {
+      height: 1.75rem;
+      width: 1.75rem;
+    }
+  }
+
+  .pa-stat-num {
+    font-size: 0.875rem;
+    font-weight: 800;
+    color: var(--pa-foreground);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (min-width: 640px) {
+    .pa-stat-num {
+      font-size: 1rem;
+    }
+  }
+
+  .pa-stat-label {
+    font-size: 9px;
+    color: var(--pa-muted-foreground);
+    font-weight: 500;
+    text-align: center;
+    line-height: 1.25;
+  }
+
+  @media (min-width: 640px) {
+    .pa-stat-label {
+      font-size: 11px;
+    }
+  }
+
+  /* ═══ Subtitle ═══ */
+  .pa-subtitle {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--pa-primary);
+    margin: 0 0 0.75rem;
+  }
+
+  @media (max-width: 1023px) {
+    .pa-subtitle {
+      display: none;
+    }
+  }
+
+  @media (min-width: 640px) {
+    .pa-subtitle {
+      font-size: 0.75rem;
+      letter-spacing: 0.3em;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .pa-subtitle {
+      margin-bottom: auto;
+    }
+  }
+
+  @media (min-width: 1400px) {
+    .pa-subtitle {
+      font-size: 0.875rem;
+    }
+  }
+
+  @media (min-width: 1600px) {
+    .pa-subtitle {
+      font-size: 1rem;
+    }
+  }
+
+  /* ═══ Product Tiles ═══ */
+  .pa-tiles-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+  }
+
+  @media (min-width: 640px) {
+    .pa-tiles-row {
+      gap: 0.75rem;
+    }
+  }
+
+  .pa-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.375rem;
+    border-radius: 1rem;
+    border: 1px solid hsla(var(--pa-border-h), var(--pa-border-s), var(--pa-border-l), 0.7);
+    padding: 0.75rem;
+    text-align: center;
+    box-shadow: 0 18px 60px -52px rgba(15, 23, 42, 0.45);
+    transition: transform 0.15s, border-color 0.15s;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  @media (min-width: 640px) {
+    .pa-tile {
+      gap: 0.75rem;
+      border-radius: 1.5rem;
+      padding: 1.25rem 1rem;
+    }
+  }
+
+  .pa-tile:hover {
+    transform: translateY(-2px);
+    border-color: hsla(var(--pa-primary-h), var(--pa-primary-s), var(--pa-primary-l), 0.5);
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .pa-tile-icon-box {
+    display: flex;
+    height: 2.5rem;
+    width: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 1rem;
+    overflow: visible;
+  }
+
+  @media (min-width: 640px) {
+    .pa-tile-icon-box {
+      height: 3.5rem;
+      width: 3.5rem;
+      border-radius: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1400px) {
+    .pa-tile-icon-box {
+      height: 4rem;
+      width: 4rem;
+      border-radius: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1600px) {
+    .pa-tile-icon-box {
+      height: 4.5rem;
+      width: 4.5rem;
+      border-radius: 2rem;
+    }
+  }
+
+  .pa-tile-icon-box svg {
+    height: 1.1rem;
+    width: 1.1rem;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.12));
+    overflow: visible;
+  }
+
+  @media (min-width: 640px) {
+    .pa-tile-icon-box svg {
+      height: 1.75rem;
+      width: 1.75rem;
+    }
+  }
+
+  @media (min-width: 1400px) {
+    .pa-tile-icon-box svg {
+      height: 2rem;
+      width: 2rem;
+    }
+  }
+
+  @media (min-width: 1600px) {
+    .pa-tile-icon-box svg {
+      height: 2.25rem;
+      width: 2.25rem;
+    }
+  }
+
+  .pa-tile-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--pa-foreground);
+    text-align: center;
+    line-height: 1.25;
+  }
+
+  @media (min-width: 640px) {
+    .pa-tile-label {
+      font-size: 0.75rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .pa-tile-label {
+      font-size: 13px;
+    }
+  }
+
+  @media (min-width: 1400px) {
+    .pa-tile-label {
+      font-size: 15px;
+    }
+  }
+
+  @media (min-width: 1600px) {
+    .pa-tile-label {
+      font-size: 16px;
+    }
+  }
+
+  /* ═══ Per-tile colors ═══ */
+  .pa-tile-rose .pa-tile-icon-box {
+    background: hsl(0, 86%, 97%);
+    color: hsl(0, 72%, 51%);
+    box-shadow: 0 10px 15px -3px hsla(0, 96%, 89%, 0.6), 0 4px 6px -4px hsla(0, 96%, 89%, 0.6);
+  }
+
+  .pa-tile-sky .pa-tile-icon-box {
+    background: hsl(204, 81%, 96%);
+    color: hsl(199, 89%, 48%);
+    box-shadow: 0 10px 15px -3px hsla(201, 94%, 86%, 0.6), 0 4px 6px -4px hsla(201, 94%, 86%, 0.6);
+  }
+
+  .pa-tile-amber .pa-tile-icon-box {
+    background: hsl(48, 100%, 96%);
+    color: hsl(38, 92%, 50%);
+    box-shadow: 0 10px 15px -3px hsla(48, 100%, 80%, 0.6), 0 4px 6px -4px hsla(48, 100%, 80%, 0.6);
+  }
+
+  .pa-tile-violet .pa-tile-icon-box {
+    background: hsl(250, 100%, 98%);
+    color: hsl(262, 83%, 58%);
+    box-shadow: 0 10px 15px -3px hsla(255, 100%, 92%, 0.6), 0 4px 6px -4px hsla(255, 100%, 92%, 0.6);
+  }
+
+  /* ═══ Claims CTA card ═══ */
+  .pa-claims-card {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-radius: 1rem;
+    border: 1px solid hsla(var(--pa-border-h), var(--pa-border-s), var(--pa-border-l), 0.5);
+    padding: 0.75rem;
+  }
+
+  @media (min-width: 640px) {
+    .pa-claims-card {
+      border-radius: 2rem;
+      padding: 1.25rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .pa-claims-card {
+      padding: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1400px) {
+    .pa-claims-card {
+      padding: 2rem;
+    }
+  }
+
+  @media (min-width: 1600px) {
+    .pa-claims-card {
+      padding: 2.5rem;
+    }
+  }
+
+  .pa-claims-heading {
+    font-size: 1rem;
+    line-height: 1.5rem;
+    font-weight: 700;
+    color: var(--pa-foreground);
+    letter-spacing: -0.01em;
+    margin: 0.5rem 0 0;
+  }
+
+  @media (min-width: 640px) {
+    .pa-claims-heading {
+      font-size: 1.5rem;
+      line-height: 2rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .pa-claims-heading {
+      font-size: 1.875rem;
+      line-height: 2.25rem;
+    }
+  }
+
+  @media (min-width: 1400px) {
+    .pa-claims-heading {
+      font-size: 2.25rem;
+      line-height: 2.5rem;
+    }
+  }
+
+  @media (min-width: 1600px) {
+    .pa-claims-heading {
+      font-size: 2.5rem;
+      line-height: 2.75rem;
+    }
+  }
+
+  .pa-claims-text {
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+    color: var(--pa-muted-foreground);
+    margin: 0.5rem 0 0;
+  }
+
+  @media (min-width: 640px) {
+    .pa-claims-text {
+      font-size: 0.875rem;
+      line-height: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1400px) {
+    .pa-claims-text {
+      font-size: 1rem;
+      line-height: 1.75rem;
+    }
+  }
+
+  /* ═══ CTA Buttons ═══ */
+  .pa-cta-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  @media (min-width: 640px) {
+    .pa-cta-row {
+      gap: 0.75rem;
+    }
+  }
+
+  .pa-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #fff;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    transition: all 0.15s;
+  }
+
+  @media (min-width: 640px) {
+    .pa-btn {
+      padding: 1rem;
+      font-size: 0.875rem;
+    }
+  }
+
+  .pa-btn:hover {
+    color: #fff;
+    text-decoration: none;
+  }
+
+  .pa-btn:active {
+    transform: scale(0.98);
+  }
+
+  .pa-btn-claim {
+    background: linear-gradient(to right, hsla(var(--pa-claim-h), var(--pa-claim-s), var(--pa-claim-l), 0.85), hsla(var(--pa-claim-h), var(--pa-claim-s), var(--pa-claim-l), 0.6));
+  }
+
+  .pa-btn-claim:hover {
+    background: linear-gradient(to right, var(--pa-claim), hsla(var(--pa-claim-h), var(--pa-claim-s), var(--pa-claim-l), 0.7));
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  }
+
+  .pa-btn-review {
+    background: linear-gradient(to right, hsla(var(--pa-review-h), var(--pa-review-s), var(--pa-review-l), 0.85), hsla(var(--pa-review-h), var(--pa-review-s), var(--pa-review-l), 0.6));
+  }
+
+  .pa-btn-review:hover {
+    background: linear-gradient(to right, var(--pa-review), hsla(var(--pa-review-h), var(--pa-review-s), var(--pa-review-l), 0.7));
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  }
+</style>
+
+<section class="pa-hero" role="banner">
+  <div class="pa-hero-bg"></div>
+  <div class="pa-blob pa-blob-1"></div>
+  <div class="pa-blob pa-blob-2"></div>
+
+  <div class="pa-container">
+
+    <!-- MOBILE LAYOUT -->
+    <div class="pa-mobile-layout">
+      <!-- Trust badges -->
+      <div class="pa-badges-row">
+        {% for badge in trust_badges %}
+          <div class="pa-badge">
+            <div class="pa-badge-icon-box pa-badge-icon-{% if badge.icon == 'check-circle' %}primary{% elif badge.icon == 'shield' %}secondary{% else %}accent{% endif %}">
+              {% include 'components/hero-icon.html' with name=badge.icon sw='2.6' %}
+            </div>
+            <span class="pa-badge-text">{{ badge.label }}</span>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- DidYouKnow slider -->
+      <div class="pa-slider-card">
+        <div class="pa-slider-viewport">
+          <div class="pa-slider-track" id="pa-track-mob">
+            {% for item in slides_zipped %}
+              <div class="pa-slide">
+                <div class="pa-slide-inner pa-slide-inner-mob" style="background: {{ item.gradient }};">
+                  <div class="pa-slide-icon-white" style="background: rgba(255,255,255,0.2); color:#fff; box-shadow: {{ item.shadow }};">
+                    {% include 'components/hero-icon.html' with name=item.fact.icon sw='2.4' %}
+                  </div>
+                  {% if item.fact.isChart %}
+                    <h3 class="pa-slide-hero pa-slide-hero-chart">{{ item.fact.hero }}</h3>
+                    <p class="pa-slide-tag pa-slide-tag-chart">{{ item.fact.tag }}</p>
+                    <div class="pa-chart">
+                      {% for d in chart_data %}
+                        <div class="pa-chart-col">
+                          <span class="pa-chart-val">{{ d.rejection }}%</span>
+                          <div class="pa-chart-bar" style="height: {% widthratio d.rejection 1 2 %}px;"></div>
+                          <span class="pa-chart-year">{{ d.year }}</span>
+                        </div>
+                      {% endfor %}
+                    </div>
+                    <p class="pa-chart-footnote">Online sales 15% → 68%</p>
+                  {% else %}
+                    <h3 class="pa-slide-hero">{{ item.fact.hero }}</h3>
+                    <p class="pa-slide-tag">{{ item.fact.tag }}</p>
+                    <p class="pa-slide-body">{{ item.fact.body }}</p>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- H1 Heading -->
+      <h1 class="pa-heading">
+        {{ formatted_heading|safe }}
+      </h1>
+
+      <!-- Product tiles title -->
+      <div style="margin-top: 0.5rem; margin-bottom: 0.75rem;">
+        <h2 style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.2em; color: var(--pa-primary); margin: 0 0 0.25rem; font-family: 'Jost', sans-serif;">
+          {{ hero.claims_card_label }}
+        </h2>
+        <div style="font-size: 10px; font-weight: 500; color: #000; margin: 0; font-family: 'Jost', sans-serif;">
+          Select to Buy New / Port / Renew Insurance
+        </div>
+      </div>
+      <div class="pa-tiles-row">
+        {% for tile in product_tiles %}
+          <a href="{{ tile.url }}" class="pa-tile {{ tile.tileClass }}">
+            <div class="pa-tile-icon-box">
+              {% include 'components/hero-icon.html' with name=tile.icon sw='2.4' %}
+            </div>
+            <span class="pa-tile-label">{{ tile.label }}</span>
+          </a>
+        {% endfor %}
+      </div>
+
+      <!-- Claims & Audit buttons -->
+      <div class="pa-cta-row">
+        <a href="{{ hero.cta_claim_url }}" class="pa-btn pa-btn-claim">{{ hero.cta_claim_text }}</a>
+        <a href="{{ hero.cta_review_url }}" class="pa-btn pa-btn-review">{{ hero.cta_review_text }}</a>
+      </div>
+
+      <!-- Stats counters -->
+      <div class="pa-stats-row">
+        {% for s in stats_data %}
+          <a href="/find-agents/?openFilter=1" class="pa-stat-btn text-decoration-none">
+            <div class="pa-stat" data-target="{{ s.target }}" data-suffix="{{ s.suffix }}" data-large="{% if s.large %}1{% else %}0{% endif %}" data-decimal="{% if s.decimal %}1{% else %}0{% endif %}">
+              <div class="pa-stat-top">
+                <span class="pa-stat-icon">{% include 'components/hero-icon.html' with name=s.icon sw='1.8' %}</span>
+                <span class="pa-stat-num"><span class="pa-stat-counter" id="pa-counter-{{ forloop.counter0 }}">0</span>{{ s.suffix }}</span>
+              </div>
+              <span class="pa-stat-label">{{ s.label }}</span>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- DESKTOP LAYOUT -->
+    <div class="pa-desktop-layout">
+      <div class="pa-grid">
+        <!-- ROW 1 LEFT -->
+        <div class="pa-cell pa-cell-r1l">
+          <div class="pa-cell-inner" id="pa-badges">
+            <div class="pa-badges-row">
+              {% for badge in trust_badges %}
+                <div class="pa-badge">
+                  <div class="pa-badge-icon-box pa-badge-icon-{% if badge.icon == 'check-circle' %}primary{% elif badge.icon == 'shield' %}secondary{% else %}accent{% endif %}">
+                    {% include 'components/hero-icon.html' with name=badge.icon sw='2.6' %}
+                  </div>
+                  <span class="pa-badge-text">{{ badge.label }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <h1 class="pa-heading" id="pa-heading-desk">
+            {{ formatted_heading|safe }}
+          </h1>
+
+          <div class="pa-stats-row" id="pa-stats-desk">
+            {% for s in stats_data %}
+              <a href="/find-agents/?openFilter=1" class="pa-stat-btn text-decoration-none">
+                <div class="pa-stat" data-target="{{ s.target }}" data-suffix="{{ s.suffix }}" data-large="{% if s.large %}1{% else %}0{% endif %}" data-decimal="{% if s.decimal %}1{% else %}0{% endif %}">
+                  <div class="pa-stat-top">
+                    <span class="pa-stat-icon">{% include 'components/hero-icon.html' with name=s.icon sw='1.8' %}</span>
+                    <span class="pa-stat-num"><span class="pa-stat-counter" id="pa-counter-d-{{ forloop.counter0 }}">0</span>{{ s.suffix }}</span>
+                  </div>
+                  <span class="pa-stat-label">{{ s.label }}</span>
+                </div>
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- ROW 1 RIGHT -->
+        <div class="pa-cell pa-cell-r1r" id="pa-dyk-desktop">
+          <div class="pa-dyk-desktop-inner">
+            <div class="pa-slider-card pa-slider-card-lg">
+              <div class="pa-slider-viewport">
+                <div class="pa-slider-track" id="pa-track-desk">
+                  {% for item in slides_zipped %}
+                    <div class="pa-slide">
+                      <div class="pa-slide-inner pa-slide-inner-desk" style="background: {{ item.gradient }};">
+                        <div class="pa-slide-icon-white pa-slide-icon-box-desk" style="background: rgba(255,255,255,0.2); color:#fff; box-shadow: {{ item.shadow }};">
+                          {% include 'components/hero-icon.html' with name=item.fact.icon sw='2.4' %}
+                        </div>
+                        {% if item.fact.isChart %}
+                          <h3 class="pa-slide-hero pa-slide-hero-chart pa-slide-hero-desk">{{ item.fact.hero }}</h3>
+                          <p class="pa-slide-tag pa-slide-tag-chart pa-slide-tag-desk">{{ item.fact.tag }}</p>
+                          <div class="pa-chart">
+                            {% for d in chart_data %}
+                              <div class="pa-chart-col">
+                                <span class="pa-chart-val">{{ d.rejection }}%</span>
+                                <div class="pa-chart-bar" style="height: {% widthratio d.rejection 1 2 %}px;"></div>
+                                <span class="pa-chart-year">{{ d.year }}</span>
+                              </div>
+                            {% endfor %}
+                          </div>
+                          <p class="pa-chart-footnote">Online sales 15% → 68%</p>
+                        {% else %}
+                          <h3 class="pa-slide-hero pa-slide-hero-desk">{{ item.fact.hero }}</h3>
+                          <p class="pa-slide-tag pa-slide-tag-desk">{{ item.fact.tag }}</p>
+                          <p class="pa-slide-body pa-slide-body-desk">{{ item.fact.body }}</p>
+                        {% endif %}
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ROW 2 LEFT -->
+        <div class="pa-cell pa-cell-r2l">
+          <div id="pa-subtitle">
+            <h2 class="pa-subtitle" style="margin-bottom: 0.25rem;">
+              {{ hero.claims_card_label }}
+            </h2>
+            <div style="font-size: 15px; font-weight: 500; color: #000; margin-bottom: 12px; font-family: 'Jost', sans-serif;">
+              Select to Buy New / Port / Renew Insurance
+            </div>
+          </div>
+          <div class="pa-tiles-row" id="pa-tiles-desk">
+            {% for tile in product_tiles %}
+              <a href="{{ tile.url }}" class="pa-tile {{ tile.tileClass }}">
+                <div class="pa-tile-icon-box">
+                  {% include 'components/hero-icon.html' with name=tile.icon sw='2.4' %}
+                </div>
+                <span class="pa-tile-label">{{ tile.label }}</span>
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- ROW 2 RIGHT -->
+        <div class="pa-cell pa-cell-r2r" id="pa-claims">
+          <div class="pa-claims-card">
+            <div>
+              <h3 class="pa-claims-heading">{{ hero.claims_card_heading }}</h3>
+              <p class="pa-claims-text">{{ hero.claims_card_text }}</p>
+            </div>
+            <div class="pa-cta-row">
+              <a href="{{ hero.cta_claim_url }}" class="pa-btn pa-btn-claim">{{ hero.cta_claim_text }}</a>
+              <a href="{{ hero.cta_review_url }}" class="pa-btn pa-btn-review">{{ hero.cta_review_text }}</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<script>
+  (function() {
+    // ── Fade-in on mount ──
+    setTimeout(function() {
+      var items = [
+        { id: 'pa-badges', delay: 0 },
+        { id: 'pa-heading-desk', delay: 0.075 },
+        { id: 'pa-stats-desk', delay: 0.075 },
+        { id: 'pa-subtitle', delay: 0.15 },
+        { id: 'pa-tiles-desk', delay: 0.15 },
+        { id: 'pa-dyk-desktop', delay: 0.3 },
+        { id: 'pa-claims', delay: 0.3 }
+      ];
+      items.forEach(function(item) {
+        var el = document.getElementById(item.id);
+        if (!el) return;
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(8px)';
+        el.style.transition = 'opacity 0.5s, transform 0.5s';
+        el.style.transitionTimingFunction = 'cubic-bezier(0.22, 1, 0.36, 1)';
+        el.style.transitionDelay = item.delay + 's';
+        requestAnimationFrame(function() {
+          requestAnimationFrame(function() {
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+          });
+        });
+      });
+    }, 80);
+
+    // ── Stat Counters (IntersectionObserver) ──
+    (function() {
+      var counters = document.querySelectorAll('.pa-stat-counter');
+      if (!counters.length) return;
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (!entry.isIntersecting) return;
+          var el = entry.target;
+          observer.unobserve(el);
+          var stat = el.closest('.pa-stat');
+          if (!stat) return;
+          var target = parseFloat(stat.dataset.target);
+          var isDecimal = stat.dataset.decimal === '1';
+          var isLarge = stat.dataset.large === '1';
+          var duration = 2500;
+          var startTime = null;
+
+          function step(ts) {
+            if (!startTime) startTime = ts;
+            var progress = Math.min((ts - startTime) / duration, 1);
+            var eased = 1 - Math.pow(1 - progress, 4);
+            var current = target * eased;
+            var formatted;
+            if (isDecimal) {
+              formatted = current.toFixed(1);
+            } else {
+              var val = Math.floor(current);
+              formatted = isLarge ? val.toLocaleString('en-IN') : String(val);
+            }
+            el.textContent = formatted;
+            if (progress < 1) requestAnimationFrame(step);
+          }
+          requestAnimationFrame(step);
+        });
+      }, { threshold: 0.3 });
+      counters.forEach(function(el) { observer.observe(el); });
+    })();
+
+    // ── Slider ──
+    function initSlider(trackId) {
+      var track = document.getElementById(trackId);
+      if (!track) return;
+      var slides = track.children;
+      var count = slides.length;
+      if (count === 0) return;
+      var current = 0;
+      var timer = null;
+      var DELAY = 6000;
+
+      function goTo(index, noAnim) {
+        current = ((index % count) + count) % count;
+        track.style.transition = noAnim ? 'none' : 'transform 0.45s ease';
+        track.style.transform = 'translateX(-' + (current * 100) + '%)';
+      }
+
+      function next() { goTo(current + 1); }
+      function start() { stop(); timer = setInterval(next, DELAY); }
+      function stop() { if (timer) { clearInterval(timer); timer = null; } }
+
+      var viewport = track.closest('.pa-slider-viewport');
+      if (viewport) {
+        viewport.addEventListener('mouseenter', stop);
+        viewport.addEventListener('mouseleave', start);
+
+        // Touch / pointer swipe
+        var isDragging = false, startX = 0, viewportW = 0;
+
+        viewport.addEventListener('pointerdown', function(e) {
+          isDragging = true;
+          startX = e.clientX;
+          viewportW = viewport.offsetWidth;
+          track.style.transition = 'none';
+          stop();
+          if (e.pointerId != null) viewport.setPointerCapture(e.pointerId);
+        });
+        viewport.addEventListener('pointermove', function(e) {
+          if (!isDragging) return;
+          var delta = e.clientX - startX;
+          track.style.transform = 'translateX(calc(-' + (current * 100) + '% + ' + delta + 'px))';
+        });
+        viewport.addEventListener('pointerup', function(e) {
+          if (!isDragging) return;
+          isDragging = false;
+          var delta = e.clientX - startX;
+          var threshold = Math.max(viewportW * 0.2, 30);
+          if (delta < -threshold) goTo(current + 1);
+          else if (delta > threshold) goTo(current - 1);
+          else goTo(current);
+          start();
+        });
+        viewport.addEventListener('pointercancel', function() {
+          isDragging = false;
+          goTo(current);
+          start();
+        });
+        viewport.style.touchAction = 'pan-y';
+      }
+
+      goTo(0, true);
+      start();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      initSlider('pa-track-mob');
+      initSlider('pa-track-desk');
+    });
+    initSlider('pa-track-mob');
+    initSlider('pa-track-desk');
+  })();
+</script>

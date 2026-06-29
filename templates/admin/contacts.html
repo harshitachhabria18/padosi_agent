@@ -1,0 +1,319 @@
+{% extends 'admin/layout.html' %}
+{% load static %}
+
+{% block title %}Contact Submissions — PadosiAgent Admin{% endblock %}
+{% block breadcrumb %}Leads &amp; Inquiries &rsaquo; Contact Inbox{% endblock %}
+
+{% block content %}
+<!-- Stats Row -->
+<div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+    <div class="stat-card">
+        <div class="d-flex align-items-center gap-3">
+            <div style="width: 44px; height: 44px; background: #ecfdf5; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-envelope" style="color: #059669; font-size: 18px;"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ stats.total }}</div>
+                <div class="stat-label">Total Submissions</div>
+            </div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="d-flex align-items-center gap-3">
+            <div style="width: 44px; height: 44px; background: #fef3c7; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-clock" style="color: #d97706; font-size: 18px;"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ stats.pending }}</div>
+                <div class="stat-label">Pending</div>
+            </div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="d-flex align-items-center gap-3">
+            <div style="width: 44px; height: 44px; background: #dbeafe; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-reply" style="color: #2563eb; font-size: 18px;"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ stats.replied }}</div>
+                <div class="stat-label">Replied</div>
+            </div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="d-flex align-items-center gap-3">
+            <div style="width: 44px; height: 44px; background: #f1f5f9; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-circle-check" style="color: #64748b; font-size: 18px;"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ stats.closed }}</div>
+                <div class="stat-label">Closed</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body py-3">
+        <form method="GET" action="{% url 'admin_panel:contacts_index' %}" class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label text-muted" style="font-size: 12px;">Search</label>
+                <input type="text" class="form-control form-control-sm" name="search" value="{{ search }}" placeholder="Name, Email, Subject, Ref ID...">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-muted" style="font-size: 12px;">Status</label>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="replied" {% if status_filter == 'replied' %}selected{% endif %}>Replied</option>
+                    <option value="closed" {% if status_filter == 'closed' %}selected{% endif %}>Closed</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary btn-sm w-100"><i class="fa-solid fa-filter me-1"></i>Filter</button>
+            </div>
+            <div class="col-md-2">
+                <a href="{% url 'admin_panel:contacts_index' %}" class="btn btn-outline-secondary btn-sm w-100">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="card">
+    <div class="card-header bg-white py-3">
+        <h6 class="m-0 fw-bold">Contact Submissions ({{ submissions.paginator.count }})</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Ref ID</th>
+                    <th>Sender</th>
+                    <th>Subject</th>
+                    <th>Message</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in submissions %}
+                <tr>
+                    <td><code style="font-size: 11px;">{{ sub.reference_id|default:"#"|add:sub.id|stringformat:"s" }}</code></td>
+                    <td>
+                        <div style="font-weight: 600; font-size: 13px;">{{ sub.name }}</div>
+                        <div style="font-size: 11px; color: #64748b;">
+                            {{ sub.email }}{% if sub.mobile %} · {{ sub.mobile }}{% endif %}
+                        </div>
+                        {% if sub.company %}
+                            <span style="font-size: 10px; color: #94a3b8;">{{ sub.company }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-weight: 600; font-size: 13px; max-width: 180px;">{{ sub.subject|truncatechars:40 }}</td>
+                    <td style="font-size: 12px; color: #475569; max-width: 250px;">
+                        {{ sub.message|truncatechars:80 }}
+                        {% if sub.message|length > 80 %}
+                            <a href="javascript:void(0)" class="view-message-btn" data-id="{{ sub.id }}" style="font-size: 11px; color: var(--primary);">Read more</a>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <select class="form-select form-select-sm contact-status-select" data-id="{{ sub.id }}" style="width: 110px; font-size: 12px;">
+                            <option value="pending" {% if sub.status == 'pending' %}selected{% endif %}>🟡 Pending</option>
+                            <option value="replied" {% if sub.status == 'replied' %}selected{% endif %}>🔵 Replied</option>
+                            <option value="closed"  {% if sub.status == 'closed'  %}selected{% endif %}>⚫ Closed</option>
+                        </select>
+                    </td>
+                    <td style="font-size: 12px; color: #64748b; white-space: nowrap;">
+                        {{ sub.created_at|date:"d M Y" }}<br>
+                        {{ sub.created_at|timesince }} ago
+                    </td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            {% if sub.email %}
+                            <a href="mailto:{{ sub.email }}?subject=Re: {{ sub.subject }}" class="btn btn-sm btn-outline-primary" title="Reply via Email"><i class="fa-solid fa-reply"></i></a>
+                            {% endif %}
+                            <button type="button" class="btn btn-danger btn-sm contact-delete-btn" data-id="{{ sub.id }}" title="Delete" style="padding: 4px 8px;"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-inbox fa-2x mb-2 d-block"></i> No submissions found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if submissions.has_other_pages %}
+    <div class="card-footer bg-white d-flex justify-content-center p-3 border-top">
+        <nav>
+            <ul class="pagination mb-0">
+                {% if submissions.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ submissions.previous_page_number }}&search={{ search }}&status={{ status_filter }}">&laquo;</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                {% endif %}
+
+                {% for num in submissions.paginator.page_range %}
+                    {% if submissions.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > submissions.number|add:'-3' and num < submissions.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}&search={{ search }}&status={{ status_filter }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if submissions.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ submissions.next_page_number }}&search={{ search }}&status={{ status_filter }}">&raquo;</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+
+    <style>
+    .pagination { margin-bottom: 0; flex-wrap: wrap; justify-content: center; gap: 5px; }
+    .pagination .page-item .page-link { border-radius: 8px; padding: 8px 16px; color: var(--primary); border: 1px solid var(--border-color); font-weight: 500; transition: all 0.2s; }
+    .pagination .page-item.active .page-link { background-color: var(--primary); border-color: var(--primary); color: white; }
+    .pagination .page-item.disabled .page-link { color: var(--text-muted); background-color: var(--bg-body); }
+    .table thead th { font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; vertical-align: middle; white-space: nowrap; color: var(--text-muted); }
+    .table tbody td { vertical-align: middle; padding-top: 15px; padding-bottom: 15px; }
+    </style>
+    {% endif %}
+</div>
+
+<!-- Message Modal -->
+<div class="modal fade" id="messageModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Full Message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modal-sender" class="mb-2"></div>
+                <div id="modal-subject" class="mb-3 fw-bold text-dark"></div>
+                <hr>
+                <div id="modal-message" style="white-space: pre-wrap; font-size: 14px; line-height: 1.6; color: #333;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF_TOKEN = '{{ csrf_token }}';
+
+/* ── Status update ─────────────────────────────────────────────────────────── */
+$(document).on('change', '.contact-status-select', function() {
+    const $el = $(this);
+    $.ajax({
+        url: '{% url "admin_panel:contacts_update_status" %}',
+        method: 'POST',
+        headers: { 'X-CSRFToken': CSRF_TOKEN },
+        data: { id: $el.data('id'), status: $el.val() },
+        success: function(res) {
+            if (res.success) {
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Status updated', showConfirmButton: false, timer: 1500 });
+            }
+        },
+        error: function() {
+            Swal.fire('Error', 'Failed to update status.', 'error');
+        }
+    });
+});
+
+/* ── Read-more / detail modal ──────────────────────────────────────────────── */
+$(document).on('click', '.view-message-btn', function(e) {
+    e.preventDefault();
+    const id  = $(this).data('id');
+    const $btn = $(this);
+    const originalText = $btn.text();
+    $btn.text('Loading...').css('pointer-events', 'none');
+
+    $.ajax({
+        url: '/admin/contacts/' + id + '/',
+        type: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+        success: function(res) {
+            $btn.text(originalText).css('pointer-events', 'auto');
+            if (res.success && res.data) {
+                $('#modal-sender').html('<span class="text-muted" style="font-size:12px;">From: <b>' + res.data.name + '</b> (' + (res.data.email || 'No email') + ')</span>');
+                $('#modal-subject').text(res.data.subject || 'No Subject');
+                $('#modal-message').text(res.data.message);
+
+                const modalEl = document.getElementById('messageModal');
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            } else {
+                Swal.fire('Error', 'Could not load message details.', 'error');
+            }
+        },
+        error: function(xhr) {
+            $btn.text(originalText).css('pointer-events', 'auto');
+            Swal.fire('Error', 'Server error: ' + xhr.status, 'error');
+        }
+    });
+});
+
+/* ── Delete ────────────────────────────────────────────────────────────────── */
+$(document).on('click', '.contact-delete-btn', function(e) {
+    e.preventDefault();
+    const button = $(this);
+    const id     = button.data('id');
+    const row    = button.closest('tr');
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'This action cannot be undone!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+            $.ajax({
+                url: '{% url "admin_panel:contacts_delete" %}',
+                type: 'POST',
+                headers: { 'X-CSRFToken': CSRF_TOKEN },
+                data: { id: id },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({ title: 'Deleted!', text: response.message, icon: 'success', timer: 1500, showConfirmButton: false });
+                        row.fadeOut(300, function() {
+                            $(this).remove();
+                            setTimeout(() => location.reload(), 500);
+                        });
+                    } else {
+                        Swal.fire('Error', response.message || 'Failed to delete', 'error');
+                        button.prop('disabled', false).html('<i class="fas fa-trash"></i>');
+                    }
+                },
+                error: function(xhr) {
+                    Swal.fire('Error', 'Server error: ' + (xhr.responseJSON?.message || 'Unknown'), 'error');
+                    button.prop('disabled', false).html('<i class="fas fa-trash"></i>');
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

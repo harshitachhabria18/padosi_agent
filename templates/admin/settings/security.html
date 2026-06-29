@@ -1,0 +1,64 @@
+{% extends 'admin/layout.html' %}
+{% load static %}
+
+{% block title %}Security Settings — PadosiAgent Admin{% endblock %}
+{% block breadcrumb %}System &rsaquo; Security Settings{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <form method="POST" action="{% url 'admin_panel:settings_update' %}">
+            {% csrf_token %}
+            <input type="hidden" name="group" value="security">
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="m-0">Security & Rate Limits</h4>
+                <button type="submit" class="btn btn-danger shadow-sm"><i class="fa-solid fa-shield-halved me-2"></i> Save Security Config</button>
+            </div>
+
+            <!-- Agent Contact Rate Limiting -->
+            <div class="card mb-4 border-danger">
+                <div class="card-header bg-danger text-white py-3">
+                    <h6 class="m-0 font-weight-bold"><i class="fa-solid fa-shield-halved me-2"></i> Agent Contact Anti-Scraping Limits</h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-4">
+                        To prevent bots from scraping agent phone numbers and WhatsApp links, we enforce IP-based rate limiting. 
+                        Adjust the threshold below. When a user exceeds this, they will be temporarily blocked from viewing further contacts.
+                    </p>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" style="font-weight: 600;">Maximum Allowed Clicks</label>
+                            <input type="number" class="form-control" name="rate_limit_clicks" value="{{ rate_limit_clicks }}" min="1" required>
+                            <div class="form-text">Number of agent contacts a single IP can view.</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" style="font-weight: 600;">Timeframe (Hours)</label>
+                            <input type="number" class="form-control" name="rate_limit_timeframe" value="{{ rate_limit_timeframe }}" min="1" required>
+                            <div class="form-text">The duration before the click count resets.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+               <h6 class="m-0 font-weight-bold">Status Informant</h6>
+            </div>
+            <div class="card-body">
+                <div style="font-size: 14px; color: #64748b; line-height: 1.6;">
+                    These settings immediately affect the frontend contact buttons (WhatsApp, Call, Socials). Tightening these limits improves security but might affect genuine power users.
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span style="font-size: 13px;">Explicit IP Blocks</span>
+                    <a href="{% url 'admin_panel:security_blocked_ips' %}" class="btn btn-sm btn-outline-danger py-1">Manage Blocked IPs</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

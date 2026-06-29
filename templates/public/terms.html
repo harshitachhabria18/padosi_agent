@@ -1,0 +1,490 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="http://127.0.0.1:8000/images/favicon.png">
+    <title>Terms and Conditions - PadosiAgent</title>
+    <style>
+        :root {
+            --primary-color: #3a86ff;
+            --secondary-color: #8338ec;
+            --accent-color: #ff006e;
+            --success-color: #06d6a0;
+            --text-color: #333;
+            --light-bg: #f8f9fa;
+            --border-color: #dee2e6;
+            --padosi-blue: #003AAD;
+            --agent-green: #06A441;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            color: var(--text-color);
+            line-height: 1.6;
+            background-color: var(--light-bg);
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin: 30px 0 20px 0;
+        }
+        
+        .logo span.padosi {
+            color: #003AAD !important;
+        }
+        
+        .logo span.agent {
+            color: #06A441;
+        }
+        
+        .content-card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 2rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        h2 {
+            color: var(--secondary-color);
+            margin: 25px 0 15px;
+            font-size: 1.5rem;
+        }
+        
+        h3 {
+            color: var(--accent-color);
+            margin: 20px 0 10px;
+            font-size: 1.2rem;
+        }
+        
+        p {
+            margin-bottom: 15px;
+        }
+        
+        ul, ol {
+            margin-left: 20px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, #fff5f5, #f0f8ff);
+            border-left: 4px solid var(--accent-color);
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .warning-box {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-left: 4px solid #fdcb6e;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .security-box {
+            background: linear-gradient(135deg, #e3fcef, #d0f0fd);
+            border: 1px solid var(--success-color);
+            border-left: 4px solid var(--success-color);
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .early-bird {
+            background: linear-gradient(135deg, #ffd89b, #19547b);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 25px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .early-bird::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            transform: rotate(30deg);
+        }
+        
+        .early-bird h3 {
+            color: white;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+        
+        .spot-counter {
+            display: inline-block;
+            background: var(--accent-color);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        .security-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        
+        .badge {
+            background: var(--success-color);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .payment-logos {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .payment-logo {
+            height: 40px;
+            filter: grayscale(100%);
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+        
+        .payment-logo:hover {
+            filter: grayscale(0%);
+            opacity: 1;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            color: #6c757d;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .content-card {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.7rem;
+            }
+            
+            h2 {
+                font-size: 1.3rem;
+            }
+            
+            .payment-logos {
+                gap: 10px;
+            }
+            
+            .payment-logo {
+                height: 30px;
+            }
+            
+            .logo {
+                font-size: 2rem;
+                margin: 20px 0 15px 0;
+            }
+        }
+        
+        .definition-item {
+            margin-bottom: 15px;
+            padding-left: 10px;
+            border-left: 2px solid var(--border-color);
+        }
+        
+        .definition-term {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .clause-header {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .clause-number {
+            background: var(--primary-color);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .no-list {
+            list-style-type: none;
+            margin-left: 0;
+        }
+        
+        .no-list li {
+            position: relative;
+            padding-left: 25px;
+        }
+        
+        .no-list li:before {
+            content: "•";
+            color: var(--accent-color);
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+        
+        .prohibited-item {
+            color: #ff006e;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        
+        <div class="content-card">
+            <h1>Terms and Conditions</h1>
+            
+            <div class="highlight-box">
+                <p><strong>PadosiAgent ServTech Private Limited</strong></p>
+                <p>Last Updated: <strong>December 25, 2025</strong></p>
+                <p>Effective From: <strong>December 25, 2025</strong></p>
+                
+            </div>
+            
+            <h2>1. DEFINITIONS & INTERPRETATION</h2>
+            <div class="definition-item">
+                <p class="definition-term">"Company"</p>
+                <p>refers to PadosiAgent ServTech Private Limited, including its website, mobile applications, dashboards, APIs, tools, and all related services.</p>
+            </div>
+            
+            <div class="definition-item">
+                <p class="definition-term">"Platform"</p>
+                <p>means www.padosiagent.com and all subdomains, software, tools, and services offered by the Company.</p>
+            </div>
+            
+            <div class="definition-item">
+                <p class="definition-term">"User / Agent"</p>
+                <p>means any individual or entity registering or accessing the Platform, including insurance agents, POSPs, brokers, advisors, intermediaries, or professionals.</p>
+            </div>
+            
+            <div class="definition-item">
+                <p class="definition-term">"Services"</p>
+                <p>means digital listing, profile visibility, lead facilitation, digital tools, analytics, marketing support, and other value-added services.</p>
+            </div>
+            
+            <div class="definition-item">
+                <p class="definition-term">"Leads"</p>
+                <p>mean enquiries or contact information shared through the Platform without any guarantee of conversion.</p>
+            </div>
+            
+            <div class="definition-item">
+                <p class="definition-term">"Subscription Plan"</p>
+                <p>means any paid or free plan chosen by the User.</p>
+            </div>
+            
+            <div class="definition-item">
+                <p class="definition-term">"Lifetime Access"</p>
+                <p>means access to features only while the Company continues operations and the User pays applicable annual maintenance charges, if any.</p>
+            </div>
+            
+            <h2>2. ACCEPTANCE OF TERMS</h2>
+            <p>By accessing, registering, or using the Platform, the User irrevocably agrees to be bound by these Terms, Privacy Policy, and all policies referenced herein.</p>
+            <p>If the User does not agree, they must immediately discontinue use of the Platform.</p>
+            
+            <h2>3. ELIGIBILITY & REPRESENTATIONS</h2>
+            <p>The User confirms that:</p>
+            <ul class="no-list">
+                <li>They are 18 years or older</li>
+                <li>They are legally permitted to offer their professional services</li>
+                <li>All details submitted (PAN, licenses, certifications, experience) are true and verifiable</li>
+                <li>They shall comply with IRDAI / SEBI / RBI / State or Central regulations, as applicable</li>
+            </ul>
+            <p>The Company does not act as a regulator, employer, principal, or insurer.</p>
+            
+            <h2>4. ROLE OF THE COMPANY</h2>
+            <p>PadosiAgent is a technology-enabled service provider only.</p>
+            
+            <div class="warning-box">
+                <p>The Company:</p>
+                <ul class="no-list">
+                    <li><span class="prohibited-item">❌ Does NOT sell insurance, investments, or financial products</span></li>
+                    <li><span class="prohibited-item">❌ Does NOT guarantee sales, income, commissions, or business success</span></li>
+                    <li><span class="prohibited-item">❌ Does NOT verify suitability, advice quality, or product correctness</span></li>
+                </ul>
+                <p><strong>All professional services are solely rendered by the Agent at their own discretion and liability.</strong></p>
+            </div>
+            
+            <h2>5. ACCOUNT REGISTRATION & VERIFICATION</h2>
+            <ul class="no-list">
+                <li>Users must provide accurate information</li>
+                <li>PAN / license verification may be conducted</li>
+                <li>The Company reserves the right to reject, suspend, or terminate accounts without explanation</li>
+                <li>One person → one account unless explicitly approved</li>
+                <li>False, misleading, or forged information results in immediate termination without refund.</li>
+            </ul>
+            
+            <h2>6. SUBSCRIPTIONS, PRICING & PAYMENTS</h2>
+            <ul class="no-list">
+                <li>All fees are exclusive of applicable taxes</li>
+                <li>Payments are processed via third-party gateways</li>
+                <li>No refunds once service access is activated</li>
+                <li>Plans, features, and pricing may be modified at any time</li>
+                <li>Promotional or pre-launch pricing is time-bound and non-precedential</li>
+            </ul>
+            
+            <h2>7. LEADS & BUSINESS DISCLAIMER (NO GUARANTEE)</h2>
+            <ul class="no-list">
+                <li>Leads are shared on availability basis</li>
+                <li>Lead quality, intent, and conversion are not guaranteed</li>
+                <li>Duplicate or non-responsive leads do not entitle refunds</li>
+                <li>Leads are non-transferable and non-resellable</li>
+            </ul>
+            
+            <div class="warning-box">
+                <p><strong>The Company shall not be liable for:</strong></p>
+                <ul class="no-list">
+                    <li>Loss of business</li>
+                    <li>Loss of opportunity</li>
+                    <li>Client disputes</li>
+                    <li>Non-conversion</li>
+                </ul>
+            </div>
+            
+            <h2>8. AGENT OBLIGATIONS</h2>
+            <p>The User agrees:</p>
+            <ul class="no-list">
+                <li>Not to mis-sell or misrepresent</li>
+                <li>Not to violate any law or regulation</li>
+                <li>To maintain professional ethics</li>
+                <li>To handle client data lawfully</li>
+            </ul>
+            <p><strong>Any misconduct is solely the Agent's liability.</strong></p>
+            
+            <h2>9. MIS-SELLING, LEGAL ISSUES & LIABILITY</h2>
+            <p>In case of:</p>
+            <ul class="no-list">
+                <li>Client complaint</li>
+                <li>Legal notice</li>
+                <li>Regulatory action</li>
+                <li>Financial loss</li>
+                <li>Criminal or civil dispute</li>
+            </ul>
+            
+            <div class="warning-box">
+                <p><strong>The Company bears ZERO responsibility.</strong></p>
+                <p>The Agent agrees to indemnify and hold harmless the Company, its directors, employees, and partners.</p>
+            </div>
+            
+            <h2>10. CONTENT & INTELLECTUAL PROPERTY</h2>
+            <ul class="no-list">
+                <li>All platform content belongs to the Company</li>
+                <li>User grants the Company a royalty-free license to display profile content</li>
+                <li>Unauthorized copying, scraping, or resale is prohibited</li>
+            </ul>
+            
+            <h2>11. SUSPENSION & TERMINATION</h2>
+            <p>The Company may:</p>
+            <ul class="no-list">
+                <li>Suspend access without notice</li>
+                <li>Terminate accounts permanently</li>
+                <li>Remove content at its discretion</li>
+            </ul>
+            <p><strong>No compensation or refund shall be payable.</strong></p>
+            
+            <h2>12. LIMITATION OF LIABILITY</h2>
+            <p><strong>Maximum liability of the Company, if any, shall be limited to the amount paid by the User in the last 3 months.</strong></p>
+            <p>No liability for:</p>
+            <ul class="no-list">
+                <li>Indirect damages</li>
+                <li>Loss of profits</li>
+                <li>Data loss</li>
+                <li>Business interruption</li>
+            </ul>
+            
+            <h2>13. FORCE MAJEURE</h2>
+            <p>The Company shall not be liable for delays or failures due to events beyond control including:</p>
+            <ul class="no-list">
+                <li>Natural disasters</li>
+                <li>Government actions</li>
+                <li>Internet failures</li>
+                <li>Cyber incidents</li>
+            </ul>
+            
+            <h2>14. GOVERNING LAW & JURISDICTION</h2>
+            <div class="highlight-box">
+                <p><strong>Governed by laws of India</strong></p>
+                <p><strong>Exclusive jurisdiction: Courts of Ahmedabad, Gujarat</strong></p>
+            </div>
+            
+            <h2>15. MODIFICATIONS</h2>
+            <p>The Company may update these Terms at any time. Continued use constitutes acceptance.</p>
+            
+            <h2>16. CONTACT</h2>
+            <div class="highlight-box">
+                <p><strong>📧 support@padosiagent.com</strong></p>
+                <p><strong>📍 Ahmedabad, Gujarat, India</strong></p>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="container">
+            <p>© 2026 PadosiAgent ServTech Private Limited. All rights reserved. | <a href="http://127.0.0.1:8000/privacy" style="color: inherit; text-decoration: none;">Privacy Policy</a> | <a href="http://127.0.0.1:8000/terms" style="color: inherit; text-decoration: none;">Terms & Conditions</a></p>
+        </div>
+    </footer>
+</body>
+</html>

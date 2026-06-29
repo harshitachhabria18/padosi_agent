@@ -1,0 +1,230 @@
+{% extends 'admin/layout.html' %}
+
+{% block title %}FAQ Manager — PadosiAgent Admin{% endblock %}
+{% block breadcrumb_title %}Content Control › FAQ Manager{% endblock %}
+
+{% block content %}
+
+{% if messages %}
+<div class="mb-3">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="row">
+    <!-- FAQ Page Header Settings -->
+    <div class="col-12 mb-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h6 class="m-0 fw-bold"><i class="fa-solid fa-gear me-2 text-primary"></i>FAQ Page Header &amp; Settings</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{% url 'admin_panel:content_faqs_settings_update' %}">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold" style="font-size: 13px;">Page Title</label>
+                            <input type="text" name="title"
+                                   value="{{ faq_content.title|default:'' }}"
+                                   class="form-control"
+                                   placeholder="Enter Page Title...">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold" style="font-size: 13px;">Page Subtitle</label>
+                            <input type="text" name="subtitle"
+                                   value="{{ faq_content.subtitle|default:'' }}"
+                                   class="form-control"
+                                   placeholder="Enter Page Subtitle...">
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary px-4 shadow-sm">Save Page Header</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Add New FAQ Form -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h6 class="m-0 fw-bold"><i class="fa-solid fa-plus me-2 text-success"></i>Add New FAQ</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{% url 'admin_panel:content_faqs_store' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold" style="font-size: 13px;">Question</label>
+                        <textarea name="question" class="form-control" rows="3" required placeholder="Enter the question..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold" style="font-size: 13px;">Answer</label>
+                        <textarea name="answer" class="form-control" rows="5" required placeholder="Enter the answer..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold" style="font-size: 13px;">Category</label>
+                        <select name="category" class="form-select form-select-sm">
+                            <option value="general">General</option>
+                            <option value="for_customers">For Customers</option>
+                            <option value="for_agents">For Agents</option>
+                            <option value="claims">Claims</option>
+                            <option value="payments">Payments</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fa-solid fa-plus me-1"></i> Add FAQ
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Stats Card -->
+        <div class="card mt-3">
+            <div class="card-body text-center">
+                <div style="font-size: 40px; margin-bottom: 8px;">📋</div>
+                <h6 class="fw-bold">{{ faqs|length }} Total FAQs</h6>
+                <p class="text-muted" style="font-size: 12px;">
+                    {{ active_count }} active · {{ hidden_count }} hidden
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ List -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 fw-bold"><i class="fa-solid fa-list-check me-2"></i>All FAQs</h6>
+                <span class="text-muted" style="font-size: 12px;">Drag to reorder (coming soon)</span>
+            </div>
+            <div class="card-body p-0">
+                {% if faqs %}
+                    {% for faq in faqs %}
+                    <div class="faq-item p-3 {% if not forloop.last %}border-bottom{% endif %} {% if not faq.is_active %}opacity-50{% endif %}"
+                         data-id="{{ faq.id }}">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge {% if faq.is_active %}bg-success{% else %}bg-secondary{% endif %}"
+                                      style="font-size: 10px;">
+                                    {% if faq.is_active %}ACTIVE{% else %}HIDDEN{% endif %}
+                                </span>
+                                <span class="badge bg-light text-dark" style="font-size: 10px;">
+                                    {{ faq.get_category_display_label }}
+                                </span>
+                                <span class="text-muted" style="font-size: 10px;">#{{ faq.sort_order }}</span>
+                            </div>
+                            <div class="d-flex gap-1">
+                                <!-- Edit toggle -->
+                                <button class="btn btn-sm btn-outline-primary"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#editFaq{{ faq.id }}"
+                                        title="Edit">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                <!-- Active/Hidden toggle -->
+                                <button class="btn btn-sm {% if faq.is_active %}btn-outline-warning{% else %}btn-outline-success{% endif %} toggle-faq-btn"
+                                        data-id="{{ faq.id }}"
+                                        data-current="{{ faq.is_active|yesno:'true,false' }}"
+                                        title="{% if faq.is_active %}Hide{% else %}Show{% endif %}">
+                                    <i class="fa-solid {% if faq.is_active %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
+                                </button>
+                                <!-- Delete -->
+                                <form method="POST"
+                                      action="{% url 'admin_panel:content_faqs_delete' faq.id %}"
+                                      onsubmit="return confirm('Delete this FAQ?')"
+                                      style="display:inline;">
+                                    {% csrf_token %}
+                                    <button class="btn btn-sm btn-outline-danger" title="Delete">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <h6 class="fw-bold mb-1" style="font-size: 14px;">{{ faq.question }}</h6>
+                        <p class="text-muted mb-0" style="font-size: 13px;">
+                            {{ faq.answer|truncatechars:150 }}
+                        </p>
+
+                        <!-- Inline Edit Form (collapsed) -->
+                        <div class="collapse mt-3" id="editFaq{{ faq.id }}">
+                            <form method="POST" action="{% url 'admin_panel:content_faqs_update' faq.id %}">
+                                {% csrf_token %}
+                                <div class="mb-2">
+                                    <input type="text" name="question"
+                                           value="{{ faq.question }}"
+                                           class="form-control form-control-sm" required>
+                                </div>
+                                <div class="mb-2">
+                                    <textarea name="answer" class="form-control form-control-sm"
+                                              rows="3" required>{{ faq.answer }}</textarea>
+                                </div>
+                                <div class="mb-2">
+                                    <select name="category" class="form-select form-select-sm">
+                                        {% for val, label in faq_categories %}
+                                        <option value="{{ val }}" {% if faq.category == val %}selected{% endif %}>
+                                            {{ label }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                    <i class="fa-solid fa-save me-1"></i>Save Changes
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="text-center py-5 text-muted">
+                    <i class="fa-solid fa-circle-question fa-2x mb-2 d-block opacity-25"></i>
+                    No FAQs yet. Add your first one!
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).on('click', '.toggle-faq-btn', function () {
+    var $btn = $(this);
+    var faqId = $btn.data('id');
+    var currentStatus = $btn.data('current');  // 'true' or 'false'
+
+    $.ajax({
+        url: '{% url "admin_panel:content_faqs_toggle" %}',
+        method: 'POST',
+        data: {
+            csrfmiddlewaretoken: '{{ csrf_token }}',
+            id: faqId,
+            current_status: currentStatus
+        },
+        success: function (res) {
+            if (res.success) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        toast: true, position: 'top-end', icon: 'success',
+                        title: 'FAQ visibility toggled', showConfirmButton: false, timer: 1500
+                    });
+                }
+                setTimeout(function () { location.reload(); }, 800);
+            }
+        },
+        error: function () {
+            alert('Failed to toggle FAQ. Please try again.');
+        }
+    });
+});
+</script>
+{% endblock %}

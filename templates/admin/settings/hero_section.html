@@ -1,0 +1,477 @@
+{% extends 'admin/layout.html' %}
+{% load static %}
+
+{% block title %}Hero Section Editor — PadosiAgent Admin{% endblock %}
+{% block breadcrumb %}Settings › Hero Section Editor{% endblock %}
+
+{% block content %}
+<form method="POST" action="{% url 'admin_panel:settings_hero_section_update' %}" id="hero-form">
+    {% csrf_token %}
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="m-0 fw-bold">🎯 Hero Section Editor</h4>
+            <p class="text-muted mb-0" style="font-size:13px;">Edit every piece of content in the homepage hero section. Changes reflect live on the site.</p>
+        </div>
+        <button type="submit" class="btn btn-primary shadow-sm px-4">
+            <i class="fa-solid fa-cloud-arrow-up me-2"></i> Save All Changes
+        </button>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-4" id="heroTab" role="tablist" style="border-bottom:2px solid #e2e8f0; flex-wrap:wrap; gap:4px;">
+        <li class="nav-item"><a class="nav-link active fw-semibold" data-toggle="tab" data-bs-toggle="tab" href="#tab-heading"  style="font-size:13px;">🔤 Heading</a></li>
+        <li class="nav-item"><a class="nav-link fw-semibold"        data-toggle="tab" data-bs-toggle="tab" href="#tab-badges"   style="font-size:13px;">✅ Trust Badges</a></li>
+        <li class="nav-item"><a class="nav-link fw-semibold"        data-toggle="tab" data-bs-toggle="tab" href="#tab-stats"    style="font-size:13px;">📊 Stats</a></li>
+        <li class="nav-item"><a class="nav-link fw-semibold"        data-toggle="tab" data-bs-toggle="tab" href="#tab-tiles"    style="font-size:13px;">🏷️ Product Tiles</a></li>
+        <li class="nav-item"><a class="nav-link fw-semibold"        data-toggle="tab" data-bs-toggle="tab" href="#tab-slides"   style="font-size:13px;">🎠 Slides</a></li>
+        <li class="nav-item"><a class="nav-link fw-semibold"        data-toggle="tab" data-bs-toggle="tab" href="#tab-cta"      style="font-size:13px;">🔗 CTAs & Claims</a></li>
+    </ul>
+
+    <div class="tab-content active">
+
+        <!-- TAB: HEADING -->
+        <div class="tab-pane fade show active" id="tab-heading">
+            <div class="card mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold"><i class="fa-solid fa-heading me-2 text-primary"></i>Main Heading</h6>
+                    <small class="text-muted">Use <code>{Trusted}</code> and <code>{Padosi}</code> as placeholders — they get brand colors automatically.</small>
+                </div>
+                <div class="card-body">
+                    <input type="text" class="form-control form-control-lg" name="heading"
+                        value="{{ hero.heading }}"
+                        placeholder="Find a {Trusted} Insurance Expert in your {Padosi}">
+                    <small class="text-muted mt-2 d-block">
+                        Preview: <strong>Find a <span style="color:#1d4ed8;">Trusted</span> Insurance Expert in your <span style="color:#1a6b53;">Padosi</span></strong>
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: TRUST BADGES -->
+        <div class="tab-pane fade" id="tab-badges">
+            <div class="card mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold"><i class="fa-solid fa-shield-halved me-2 text-success"></i>Trust Badges</h6>
+                    <small class="text-muted">Shown at the top of the hero (Licensed, No Spam Calls, etc.).</small>
+                </div>
+                <div class="card-body" id="badges-container">
+                    {% for badge in hero.trust_badges %}
+                    <div class="row g-2 align-items-center mb-3 badge-row border rounded p-2">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" style="font-size:12px;">Icon</label>
+                            <select class="form-select form-select-sm" name="trust_badges[{{ forloop.counter0 }}][icon]">
+                                {% for ico in iconOptions %}
+                                <option value="{{ ico }}" {% if badge.icon == ico %}selected{% endif %}>{{ ico }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" style="font-size:12px;">Label</label>
+                            <input type="text" class="form-control form-control-sm" name="trust_badges[{{ forloop.counter0 }}][label]" value="{{ badge.label }}" placeholder="Licensed">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-danger btn-sm w-100 remove-row">Remove</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="card-footer">
+                    <button type="button" class="btn btn-outline-success btn-sm" id="add-badge-btn">+ Add Badge</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: STATS -->
+        <div class="tab-pane fade" id="tab-stats">
+            <div class="card mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold"><i class="fa-solid fa-chart-bar me-2 text-warning"></i>Stats Counters</h6>
+                    <small class="text-muted">Animated numbers shown below the heading. Use structured array indexes.</small>
+                </div>
+                <div class="card-body" id="stats-container">
+                    {% for stat in hero.stats %}
+                    <div class="row g-2 align-items-end mb-3 stat-row border rounded p-2">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold" style="font-size:12px;">Label</label>
+                            <input type="text" class="form-control form-control-sm" name="stats[{{ forloop.counter0 }}][label]" value="{{ stat.label }}" placeholder="Expert Agents">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold" style="font-size:12px;">Target Number</label>
+                            <input type="number" step="0.1" class="form-control form-control-sm" name="stats[{{ forloop.counter0 }}][target]" value="{{ stat.target }}">
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label fw-semibold" style="font-size:12px;">Suffix</label>
+                            <input type="text" class="form-control form-control-sm" name="stats[{{ forloop.counter0 }}][suffix]" value="{{ stat.suffix }}" placeholder="+">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold" style="font-size:12px;">Icon</label>
+                            <select class="form-select form-select-sm" name="stats[{{ forloop.counter0 }}][icon]">
+                                {% for ico in iconOptions %}
+                                <option value="{{ ico }}" {% if stat.icon == ico %}selected{% endif %}>{{ ico }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-check mt-1">
+                                <input type="hidden" name="stats[{{ forloop.counter0 }}][large]" value="{% if stat.large %}1{% else %}0{% endif %}">
+                                <input class="form-check-input stat-large-cb" type="checkbox" value="1" {% if stat.large %}checked{% endif %} onchange="syncHidden(this)">
+                                <label class="form-check-label" style="font-size:12px;">Large format</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="hidden" name="stats[{{ forloop.counter0 }}][decimal]" value="{% if stat.decimal %}1{% else %}0{% endif %}">
+                                <input class="form-check-input stat-decimal-cb" type="checkbox" value="1" {% if stat.decimal %}checked{% endif %} onchange="syncHidden(this)">
+                                <label class="form-check-label" style="font-size:12px;">Decimal (4.8)</label>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-outline-danger btn-sm w-100 remove-row">Remove</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="card-footer">
+                    <button type="button" class="btn btn-outline-success btn-sm" id="add-stat-btn">+ Add Stat</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: PRODUCT TILES -->
+        <div class="tab-pane fade" id="tab-tiles">
+            <div class="card mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold"><i class="fa-solid fa-th-large me-2 text-info"></i>Product Tiles</h6>
+                    <small class="text-muted">The 4 insurance type tiles (Health, Life, Vehicle, Business).</small>
+                </div>
+                <div class="card-body" id="tiles-container">
+                    {% for tile in hero.tiles %}
+                    <div class="row g-2 align-items-end mb-3 tile-row border rounded p-2">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold" style="font-size:12px;">Label</label>
+                            <input type="text" class="form-control form-control-sm" name="tiles[{{ forloop.counter0 }}][label]" value="{{ tile.label }}" placeholder="Health Insurance">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold" style="font-size:12px;">Icon</label>
+                            <select class="form-select form-select-sm" name="tiles[{{ forloop.counter0 }}][icon]">
+                                {% for ico in iconOptions %}
+                                <option value="{{ ico }}" {% if tile.icon == ico %}selected{% endif %}>{{ ico }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold" style="font-size:12px;">URL</label>
+                            <input type="text" class="form-control form-control-sm" name="tiles[{{ forloop.counter0 }}][url]" value="{{ tile.url }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold" style="font-size:12px;">Color Style</label>
+                            <select class="form-select form-select-sm" name="tiles[{{ forloop.counter0 }}][tileClass]">
+                                {% for tc in tileClasses %}
+                                <option value="{{ tc }}" {% if tile.tileClass == tc %}selected{% endif %}>{{ tc|cut:"pa-tile-" }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-outline-danger btn-sm w-100 remove-row">Remove</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="card-footer">
+                    <button type="button" class="btn btn-outline-success btn-sm" id="add-tile-btn">+ Add Tile</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: SLIDES -->
+        <div class="tab-pane fade" id="tab-slides">
+            <div class="card mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold"><i class="fa-solid fa-film me-2"></i>Did You Know? Slides</h6>
+                    <small class="text-muted">Auto-rotating fact cards. Max 7 slides recommended.</small>
+                </div>
+                <div class="card-body" id="slides-container">
+                    {% for slide in hero.slides %}
+                    <div class="slide-row border rounded p-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-secondary">Slide {{ forloop.counter }}</span>
+                            <button type="button" class="btn btn-outline-danger btn-sm remove-row">Remove</button>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-2">
+                                <label class="form-label fw-semibold" style="font-size:12px;">Icon</label>
+                                <select class="form-select form-select-sm" name="slides[{{ forloop.counter0 }}][icon]">
+                                    {% for ico in iconOptions %}
+                                    <option value="{{ ico }}" {% if slide.icon == ico %}selected{% endif %}>{{ ico }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold" style="font-size:12px;">Hero Stat / Number</label>
+                                <input type="text" class="form-control form-control-sm" name="slides[{{ forloop.counter0 }}][hero]" value="{{ slide.hero }}" placeholder="₹25,00,000 Cr">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold" style="font-size:12px;">Tag / Subtitle</label>
+                                <input type="text" class="form-control form-control-sm" name="slides[{{ forloop.counter0 }}][tag]" value="{{ slide.tag }}" placeholder="Unclaimed Insurance">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold" style="font-size:12px;">Body Text</label>
+                                <input type="text" class="form-control form-control-sm" name="slides[{{ forloop.counter0 }}][body]" value="{{ slide.body }}" placeholder="Description...">
+                            </div>
+                            <div class="col-md-1 d-flex align-items-end pb-1">
+                                <div>
+                                    <div style="font-size:11px; font-weight:600; margin-bottom:2px;">Chart?</div>
+                                    <input type="hidden" name="slides[{{ forloop.counter0 }}][isChart]" value="{% if slide.isChart %}1{% else %}0{% endif %}">
+                                    <input class="form-check-input" type="checkbox" value="1" {% if slide.isChart %}checked{% endif %} onchange="syncHidden(this)" title="Is Chart Slide">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="card-footer">
+                    <button type="button" class="btn btn-outline-success btn-sm" id="add-slide-btn">+ Add Slide</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: CTAs & CLAIMS CARD -->
+        <div class="tab-pane fade" id="tab-cta">
+            <div class="card mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold"><i class="fa-solid fa-link me-2 text-danger"></i>CTA Buttons</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-4 pb-4 border-bottom">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Claims Button Text</label>
+                            <input type="text" class="form-control" name="cta_claim_text" value="{{ hero.cta_claim_text }}">
+                        </div>
+                        <div class="col-md-7">
+                            <label class="form-label fw-semibold">Claims Button URL</label>
+                            <input type="text" class="form-control" name="cta_claim_url" value="{{ hero.cta_claim_url }}">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <span class="badge bg-warning text-dark w-100 py-2 text-center">🟠 Orange</span>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Review Button Text</label>
+                            <input type="text" class="form-control" name="cta_review_text" value="{{ hero.cta_review_text }}">
+                        </div>
+                        <div class="col-md-7">
+                            <label class="form-label fw-semibold">Review Button URL</label>
+                            <input type="text" class="form-control" name="cta_review_url" value="{{ hero.cta_review_url }}">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <span class="badge bg-primary w-100 py-2 text-center">🔵 Purple</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold"><i class="fa-solid fa-id-card me-2 text-secondary"></i>Claims Card <small class="text-muted">(Desktop Right Panel)</small></h6>
+                    <small class="text-muted">The card shown in the bottom-right of the desktop hero layout.</small>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                             <label class="form-label fw-semibold">Product Section Label <small class="text-muted">(small uppercase tag shown on the left panel above product tiles)</small></label>
+                            <input type="text" class="form-control" name="claims_card_label" value="{{ hero.claims_card_label }}">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Card Heading</label>
+                            <input type="text" class="form-control" name="claims_card_heading" value="{{ hero.claims_card_heading }}">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Card Body Text</label>
+                            <textarea class="form-control" name="claims_card_text" rows="3">{{ hero.claims_card_text }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>{# /.tab-content #}
+
+    <div class="d-flex justify-content-end mt-2 mb-5">
+        <a href="{% url 'admin_panel:settings_homepage' %}" class="btn btn-outline-secondary me-3">← Homepage Settings</a>
+        <button type="submit" class="btn btn-primary btn-lg shadow-sm px-5">
+            <i class="fa-solid fa-save me-2"></i> Save Hero Section
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    'use strict';
+
+    // JSON constants from python view
+    var ICONS = {{ iconOptions_json|safe }};
+    var TILE_CLASSES = {{ tileClasses_json|safe }};
+
+    /* ── Helpers ─────────────────────────────────────────────────────────── */
+    function iconSelect(name, selected) {
+        return '<select class="form-select form-select-sm" name="' + name + '">' +
+            ICONS.map(function (i) {
+                return '<option value="' + i + '"' + (i === selected ? ' selected' : '') + '>' + i + '</option>';
+            }).join('') + '</select>';
+    }
+
+    function tileClassSelect(name, selected) {
+        return '<select class="form-select form-select-sm" name="' + name + '">' +
+            TILE_CLASSES.map(function (t) {
+                var label = t.replace('pa-tile-', '');
+                return '<option value="' + t + '"' + (t === selected ? ' selected' : '') + '>' + label + '</option>';
+            }).join('') + '</select>';
+    }
+
+    /* When a checkbox changes, update its adjacent hidden field */
+    window.syncHidden = function (cb) {
+        var hidden = cb.previousElementSibling;
+        if (hidden && hidden.type === 'hidden') {
+            hidden.value = cb.checked ? '1' : '0';
+        }
+    };
+
+    /* ── Remove rows ─────────────────────────────────────────────────────── */
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.remove-row');
+        if (btn) {
+            var row = btn.closest('.badge-row, .stat-row, .tile-row, .slide-row');
+            if (row) row.remove();
+        }
+    });
+
+    /* ── Add Badge ───────────────────────────────────────────────────────── */
+    document.getElementById('add-badge-btn').addEventListener('click', function () {
+        var idx = document.querySelectorAll('.badge-row').length;
+        var html =
+            '<div class="row g-2 align-items-center mb-3 badge-row border rounded p-2">' +
+            '<div class="col-md-4"><label class="form-label fw-semibold" style="font-size:12px;">Icon</label>' +
+            iconSelect('trust_badges[' + idx + '][icon]', '') + '</div>' +
+            '<div class="col-md-6"><label class="form-label fw-semibold" style="font-size:12px;">Label</label>' +
+            '<input type="text" class="form-control form-control-sm" name="trust_badges[' + idx + '][label]" placeholder="Licensed"></div>' +
+            '<div class="col-md-2 d-flex align-items-end">' +
+            '<button type="button" class="btn btn-outline-danger btn-sm w-100 remove-row">Remove</button></div></div>';
+        document.getElementById('badges-container').insertAdjacentHTML('beforeend', html);
+    });
+
+    /* ── Add Stat ────────────────────────────────────────────────────────── */
+    document.getElementById('add-stat-btn').addEventListener('click', function () {
+        var idx = document.querySelectorAll('.stat-row').length;
+        var html =
+            '<div class="row g-2 align-items-end mb-3 stat-row border rounded p-2">' +
+            '<div class="col-md-3"><label class="form-label fw-semibold" style="font-size:12px;">Label</label>' +
+            '<input type="text" class="form-control form-control-sm" name="stats[' + idx + '][label]" placeholder="Label"></div>' +
+            '<div class="col-md-2"><label class="form-label fw-semibold" style="font-size:12px;">Target Number</label>' +
+            '<input type="number" step="0.1" class="form-control form-control-sm" name="stats[' + idx + '][target]" value="0"></div>' +
+            '<div class="col-md-1"><label class="form-label fw-semibold" style="font-size:12px;">Suffix</label>' +
+            '<input type="text" class="form-control form-control-sm" name="stats[' + idx + '][suffix]" placeholder="+"></div>' +
+            '<div class="col-md-2"><label class="form-label fw-semibold" style="font-size:12px;">Icon</label>' +
+            iconSelect('stats[' + idx + '][icon]', '') + '</div>' +
+            '<div class="col-md-2">' +
+            '<div class="form-check mt-1">' +
+            '<input type="hidden" name="stats[' + idx + '][large]" value="0">' +
+            '<input class="form-check-input stat-large-cb" type="checkbox" value="1" onchange="syncHidden(this)">' +
+            '<label class="form-check-label" style="font-size:12px;">Large format</label>' +
+            '</div>' +
+            '<div class="form-check">' +
+            '<input type="hidden" name="stats[' + idx + '][decimal]" value="0">' +
+            '<input class="form-check-input stat-decimal-cb" type="checkbox" value="1" onchange="syncHidden(this)">' +
+            '<label class="form-check-label" style="font-size:12px;">Decimal (4.8)</label>' +
+            '</div>' +
+            '</div>' +
+            '<div class="col-md-2"><button type="button" class="btn btn-outline-danger btn-sm w-100 remove-row">Remove</button></div></div>';
+        document.getElementById('stats-container').insertAdjacentHTML('beforeend', html);
+    });
+
+    /* ── Add Tile ────────────────────────────────────────────────────────── */
+    document.getElementById('add-tile-btn').addEventListener('click', function () {
+        var idx = document.querySelectorAll('.tile-row').length;
+        var html =
+            '<div class="row g-2 align-items-end mb-3 tile-row border rounded p-2">' +
+            '<div class="col-md-3"><label class="form-label fw-semibold" style="font-size:12px;">Label</label>' +
+            '<input type="text" class="form-control form-control-sm" name="tiles[' + idx + '][label]" placeholder="Insurance Type"></div>' +
+            '<div class="col-md-2"><label class="form-label fw-semibold" style="font-size:12px;">Icon</label>' +
+            iconSelect('tiles[' + idx + '][icon]', '') + '</div>' +
+            '<div class="col-md-3"><label class="form-label fw-semibold" style="font-size:12px;">URL</label>' +
+            '<input type="text" class="form-control form-control-sm" name="tiles[' + idx + '][url]" placeholder="/find-agents?..."></div>' +
+            '<div class="col-md-2"><label class="form-label fw-semibold" style="font-size:12px;">Color</label>' +
+            tileClassSelect('tiles[' + idx + '][tileClass]', '') + '</div>' +
+            '<div class="col-md-2"><button type="button" class="btn btn-outline-danger btn-sm w-100 remove-row">Remove</button></div></div>';
+        document.getElementById('tiles-container').insertAdjacentHTML('beforeend', html);
+    });
+
+    /* ── Add Slide ───────────────────────────────────────────────────────── */
+    document.getElementById('add-slide-btn').addEventListener('click', function () {
+        var idx = document.querySelectorAll('.slide-row').length;
+        var html =
+            '<div class="slide-row border rounded p-3 mb-3">' +
+            '<div class="d-flex justify-content-between align-items-center mb-2">' +
+            '<span class="badge bg-secondary">New Slide</span>' +
+            '<button type="button" class="btn btn-outline-danger btn-sm remove-row">Remove</button></div>' +
+            '<div class="row g-2">' +
+            '<div class="col-md-2"><label class="form-label fw-semibold" style="font-size:12px;">Icon</label>' +
+            iconSelect('slides[' + idx + '][icon]', '') + '</div>' +
+            '<div class="col-md-3"><label class="form-label fw-semibold" style="font-size:12px;">Hero Stat</label>' +
+            '<input type="text" class="form-control form-control-sm" name="slides[' + idx + '][hero]" placeholder="Stat here"></div>' +
+            '<div class="col-md-3"><label class="form-label fw-semibold" style="font-size:12px;">Tag</label>' +
+            '<input type="text" class="form-control form-control-sm" name="slides[' + idx + '][tag]" placeholder="Tag"></div>' +
+            '<div class="col-md-3"><label class="form-label fw-semibold" style="font-size:12px;">Body</label>' +
+            '<input type="text" class="form-control form-control-sm" name="slides[' + idx + '][body]" placeholder="Description"></div>' +
+            '<div class="col-md-1 d-flex align-items-end pb-1">' +
+            '<div><div style="font-size:11px;font-weight:600;margin-bottom:2px;">Chart?</div>' +
+            '<input type="hidden" name="slides[' + idx + '][isChart]" value="0">' +
+            '<input class="form-check-input" type="checkbox" value="1" onchange="syncHidden(this)" title="Is Chart Slide"></div>' +
+            '</div></div></div>';
+        document.getElementById('slides-container').insertAdjacentHTML('beforeend', html);
+    });
+
+    // ─── Hash Navigation & Synchronization ───
+    function initHashTab() {
+        var hash = window.location.hash;
+        if (hash) {
+            var tabLink = document.querySelector('a[href="' + hash + '"]');
+            if (tabLink) {
+                if (typeof jQuery !== 'undefined') {
+                    $(tabLink).tab('show');
+                } else {
+                    tabLink.click();
+                }
+            }
+        }
+
+        // Sync tab clicks to URL hash
+        document.querySelectorAll('a[data-toggle="tab"], a[data-bs-toggle="tab"]').forEach(function (el) {
+            if (typeof jQuery !== 'undefined') {
+                $(el).on('shown.bs.tab', function (e) {
+                    var target = $(e.target).attr('href');
+                    if (target && target.indexOf('#') === 0) {
+                        history.replaceState(null, null, target);
+                    }
+                });
+            } else {
+                el.addEventListener('shown.bs.tab', function (e) {
+                    var target = e.target.getAttribute('href');
+                    if (target && target.startsWith('#')) {
+                        history.replaceState(null, null, target);
+                    }
+                });
+            }
+        });
+    }
+
+    if (document.readyState === 'complete') {
+        initHashTab();
+    } else {
+        window.addEventListener('load', initHashTab);
+    }
+
+})();
+</script>
+{% endblock %}

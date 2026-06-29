@@ -1,0 +1,789 @@
+{% extends 'admin/layout.html' %}
+{% load static %}
+
+{% block title %}Homepage Dynamic — PadosiAgent Admin{% endblock %}
+{% block breadcrumb %}Content Control › Homepage Dynamic{% endblock %}
+
+{% block content %}
+<form method="POST" action="{% url 'admin_panel:settings_homepage_update' %}" id="homepage-form">
+    {% csrf_token %}
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="m-0 fw-bold">Homepage Dynamic Sections</h4>
+            <p class="text-muted mb-0" style="font-size: 13px;">Control every piece of text, every card, every slide, and every step from here.</p>
+        </div>
+        <button type="submit" class="btn btn-primary shadow-sm px-4">
+            <i class="fa-solid fa-cloud-arrow-up me-2"></i> Save All Changes
+        </button>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <ul class="nav nav-tabs mb-4" id="homeTab" role="tablist" style="border-bottom:2px solid #e2e8f0; flex-wrap:wrap; gap:4px;">
+        <li class="nav-item"><a class="nav-link active fw-semibold" data-toggle="tab" data-bs-toggle="tab" href="#tab-hero" style="font-size:13px;">🎯 Hero Banner</a></li>
+        <li class="nav-item"><a class="nav-link fw-semibold" data-toggle="tab" data-bs-toggle="tab" href="#tab-dyk" style="font-size:13px;">💡 Did You Know?</a></li>
+        <li class="nav-item"><a class="nav-link fw-semibold" data-toggle="tab" data-bs-toggle="tab" href="#tab-quickpicks" style="font-size:13px;">⚡ Quick Picks</a></li>
+        <li class="nav-item"><a class="nav-link fw-semibold" data-toggle="tab" data-bs-toggle="tab" href="#tab-why" style="font-size:13px;">🛡️ Why PadosiAgent</a></li>
+        <li class="nav-item"><a class="nav-link fw-semibold" data-toggle="tab" data-bs-toggle="tab" href="#tab-works" style="font-size:13px;">🪜 How It Works</a></li>
+        <li class="nav-item"><a class="nav-link fw-semibold" data-toggle="tab" data-bs-toggle="tab" href="#tab-testimonials" style="font-size:13px;">💬 Testimonials</a></li>
+        <li class="nav-item"><a class="nav-link fw-semibold" data-toggle="tab" data-bs-toggle="tab" href="#tab-visibility" style="font-size:13px;">👁️ Visibility</a></li>
+    </ul>
+
+    <div class="tab-content active">
+
+        <!-- TAB: Hero Banner -->
+        <div class="tab-pane fade show active" id="tab-hero">
+            <div class="card mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="m-0 fw-bold"><i class="fa-solid fa-flag me-2 text-primary"></i>Hero / Banner Section</h6>
+                        <small class="text-muted">The main headline and subheadline at the top of the homepage.</small>
+                    </div>
+                    <div class="form-check form-switch ms-3">
+                        <input type="hidden" name="homepage_content[hero][visible]" value="0">
+                        <input class="form-check-input" type="checkbox" name="homepage_content[hero][visible]" value="1" {% if content.hero.visible %}checked{% endif %} id="heroVisible">
+                        <label class="form-check-label fw-semibold" for="heroVisible" style="font-size:13px;">Visible</label>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Main Headline <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="homepage_content[hero][headline]"
+                                value="{{ content.hero.headline }}"
+                                placeholder="Enter hero headline text">
+                            <small class="text-muted">The large primary heading visible to visitors.</small>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Subheadline</label>
+                            <input type="text" class="form-control" name="homepage_content[hero][subheadline]"
+                                value="{{ content.hero.subheadline }}"
+                                placeholder="Enter subheadline text">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Did You Know? -->
+        <div class="tab-pane fade" id="tab-dyk">
+            <div class="card mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="m-0 fw-bold"><i class="fa-solid fa-lightbulb me-2 text-warning"></i>Did You Know? — Section Heading</h6>
+                        <small class="text-muted">The eyebrow label and main title above the insight carousel.</small>
+                    </div>
+                    <div class="form-check form-switch ms-3">
+                        <input type="hidden" name="homepage_content[dyk][visible]" value="0">
+                        <input class="form-check-input" type="checkbox" name="homepage_content[dyk][visible]" value="1" {% if content.dyk.visible %}checked{% endif %} id="dykVisible">
+                        <label class="form-check-label fw-semibold" for="dykVisible" style="font-size:13px;">Visible</label>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Eyebrow Label</label>
+                            <input type="text" class="form-control" name="homepage_content[dyk][label]"
+                                value="{{ content.dyk.label }}" placeholder="e.g. Did you know?">
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Section Title</label>
+                            <input type="text" class="form-control" name="homepage_content[dyk][title]"
+                                value="{{ content.dyk.title }}" placeholder="e.g. Insights from the Padosi network">
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold mb-3" style="font-size:13px;color:#0d9488;"><i class="fa-solid fa-layer-group me-2"></i>Insight Slides <span class="badge bg-secondary ms-2" id="dyk-count">{{ content.dyk.slides|length }}</span></h6>
+                    <div id="dyk-slides-wrap">
+                        {% for slide in content.dyk.slides %}
+                        <div class="dyk-slide-row card mb-3 border-0 bg-light" style="border-radius:12px;">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="badge bg-teal text-white fw-bold" style="background:#0d9488;">Slide {{ forloop.counter }}</span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this, 'dyk-slides-wrap', 'dyk-count')">
+                                        <i class="fa-solid fa-trash-can"></i> Remove
+                                    </button>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Card Accent Class</label>
+                                        <select class="form-select form-select-sm" name="homepage_content[dyk][slides][{{ forloop.counter0 }}][accent]">
+                                            <option value="accent-rose" {% if slide.accent == 'accent-rose' %}selected{% endif %}>accent-rose</option>
+                                            <option value="accent-emerald" {% if slide.accent == 'accent-emerald' %}selected{% endif %}>accent-emerald</option>
+                                            <option value="accent-sky" {% if slide.accent == 'accent-sky' %}selected{% endif %}>accent-sky</option>
+                                            <option value="accent-amber" {% if slide.accent == 'accent-amber' %}selected{% endif %}>accent-amber</option>
+                                            <option value="accent-violet" {% if slide.accent == 'accent-violet' %}selected{% endif %}>accent-violet</option>
+                                            <option value="accent-pink" {% if slide.accent == 'accent-pink' %}selected{% endif %}>accent-pink</option>
+                                            <option value="accent-indigo" {% if slide.accent == 'accent-indigo' %}selected{% endif %}>accent-indigo</option>
+                                            <option value="accent-teal" {% if slide.accent == 'accent-teal' %}selected{% endif %}>accent-teal</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Icon Background Class</label>
+                                        <select class="form-select form-select-sm" name="homepage_content[dyk][slides][{{ forloop.counter0 }}][bg]">
+                                            <option value="bg-rose-500" {% if slide.bg == 'bg-rose-500' %}selected{% endif %}>bg-rose-500</option>
+                                            <option value="bg-emerald-500" {% if slide.bg == 'bg-emerald-500' %}selected{% endif %}>bg-emerald-500</option>
+                                            <option value="bg-sky-500" {% if slide.bg == 'bg-sky-500' %}selected{% endif %}>bg-sky-500</option>
+                                            <option value="bg-amber-500" {% if slide.bg == 'bg-amber-500' %}selected{% endif %}>bg-amber-500</option>
+                                            <option value="bg-violet-500" {% if slide.bg == 'bg-violet-500' %}selected{% endif %}>bg-violet-500</option>
+                                            <option value="bg-pink-500" {% if slide.bg == 'bg-pink-500' %}selected{% endif %}>bg-pink-500</option>
+                                            <option value="bg-indigo-500" {% if slide.bg == 'bg-indigo-500' %}selected{% endif %}>bg-indigo-500</option>
+                                            <option value="bg-teal-500" {% if slide.bg == 'bg-teal-500' %}selected{% endif %}>bg-teal-500</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Icon Name</label>
+                                        <input type="text" class="form-control form-control-sm" name="homepage_content[dyk][slides][{{ forloop.counter0 }}][icon]" value="{{ slide.icon }}" placeholder="e.g. users, shield, clock">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Card Title</label>
+                                        <input type="text" class="form-control form-control-sm" name="homepage_content[dyk][slides][{{ forloop.counter0 }}][title]" value="{{ slide.title }}" placeholder="e.g. 3× faster claim settlements">
+                                    </div>
+                                    <div class="col-md-7">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Body Text</label>
+                                        <textarea class="form-control form-control-sm" name="homepage_content[dyk][slides][{{ forloop.counter0 }}][body]" rows="2" placeholder="Short description...">{{ slide.body }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addDykSlide()">
+                        <i class="fa-solid fa-plus me-1"></i> Add Insight Slide
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Quick Picks -->
+        <div class="tab-pane fade" id="tab-quickpicks">
+            <div class="card mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="m-0 fw-bold"><i class="fa-solid fa-bolt me-2 text-warning"></i>Quick Picks — Shortcuts Grid</h6>
+                        <small class="text-muted">Heading and shortcut tiles for the "Also buy / renew shortcuts" grid.</small>
+                    </div>
+                    <div class="form-check form-switch ms-3">
+                        <input type="hidden" name="homepage_content[quickpicks][visible]" value="0">
+                        <input class="form-check-input" type="checkbox" name="homepage_content[quickpicks][visible]" value="1" {% if content.quickpicks.visible %}checked{% endif %} id="qpVisible">
+                        <label class="form-check-label fw-semibold" for="qpVisible" style="font-size:13px;">Visible</label>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Eyebrow Label</label>
+                            <input type="text" class="form-control" name="homepage_content[quickpicks][label]" value="{{ content.quickpicks.label }}" placeholder="Quick picks">
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label fw-semibold">Section Title</label>
+                            <input type="text" class="form-control" name="homepage_content[quickpicks][title]" value="{{ content.quickpicks.title }}" placeholder="Also buy / renew shortcuts">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">"View All" Text</label>
+                            <input type="text" class="form-control" name="homepage_content[quickpicks][view_all_text]" value="{{ content.quickpicks.view_all_text }}" placeholder="View all products →">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">"View All" URL</label>
+                            <input type="text" class="form-control" name="homepage_content[quickpicks][view_all_url]" value="{{ content.quickpicks.view_all_url }}" placeholder="/find-agents?...">
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold mb-3" style="font-size:13px;color:#0d9488;"><i class="fa-solid fa-layer-group me-2"></i>Shortcut Tiles <span class="badge bg-secondary ms-2" id="qp-count">{{ content.quickpicks.items|length }}</span></h6>
+                    <div id="qp-items-wrap">
+                        {% for item in content.quickpicks.items %}
+                        <div class="qp-item-row card mb-3 border-0 bg-light" style="border-radius:12px;">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="badge bg-primary fw-bold">Tile {{ forloop.counter }}</span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this, 'qp-items-wrap', 'qp-count')">
+                                        <i class="fa-solid fa-trash-can"></i> Remove
+                                    </button>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-md-2">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Label</label>
+                                        <input type="text" class="form-control form-control-sm" name="homepage_content[quickpicks][items][{{ forloop.counter0 }}][label]" value="{{ item.label }}" placeholder="e.g. Mediclaim">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Badge Text (optional)</label>
+                                        <input type="text" class="form-control form-control-sm" name="homepage_content[quickpicks][items][{{ forloop.counter0 }}][badge]" value="{{ item.badge }}" placeholder="e.g. Most Bought">
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Badge BG</label>
+                                        <input type="color" class="form-control form-control-sm form-control-color" name="homepage_content[quickpicks][items][{{ forloop.counter0 }}][badge_bg]" value="{% if item.badge_bg %}{{ item.badge_bg }}{% else %}#ffe4e6{% endif %}">
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Badge Color</label>
+                                        <input type="color" class="form-control form-control-sm form-control-color" name="homepage_content[quickpicks][items][{{ forloop.counter0 }}][badge_color]" value="{% if item.badge_color %}{{ item.badge_color }}{% else %}#be123c{% endif %}">
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Icon BG</label>
+                                        <input type="color" class="form-control form-control-sm form-control-color" name="homepage_content[quickpicks][items][{{ forloop.counter0 }}][icon_bg]" value="{% if item.icon_bg %}{{ item.icon_bg }}{% else %}#fff1f2{% endif %}">
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Icon Color</label>
+                                        <input type="color" class="form-control form-control-sm form-control-color" name="homepage_content[quickpicks][items][{{ forloop.counter0 }}][icon_color]" value="{% if item.icon_color %}{{ item.icon_color }}{% else %}#f43f5e{% endif %}">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Icon Name</label>
+                                        <input type="text" class="form-control form-control-sm" name="homepage_content[quickpicks][items][{{ forloop.counter0 }}][icon]" value="{{ item.icon }}" placeholder="e.g. heart-pulse">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">URL</label>
+                                        <input type="text" class="form-control form-control-sm" name="homepage_content[quickpicks][items][{{ forloop.counter0 }}][url]" value="{{ item.url }}" placeholder="/find-agents?...">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addQpItem()">
+                        <i class="fa-solid fa-plus me-1"></i> Add Quick Pick Tile
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Why PadosiAgent -->
+        <div class="tab-pane fade" id="tab-why">
+            <div class="card mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="m-0 fw-bold"><i class="fa-solid fa-shield-halved me-2 text-success"></i>Why PadosiAgent — Trust Cards</h6>
+                        <small class="text-muted">Section heading, CTA button, and the scrollable feature cards.</small>
+                    </div>
+                    <div class="form-check form-switch ms-3">
+                        <input type="hidden" name="homepage_content[why_choose][visible]" value="0">
+                        <input class="form-check-input" type="checkbox" name="homepage_content[why_choose][visible]" value="1" {% if content.why_choose.visible %}checked{% endif %} id="whyVisible">
+                        <label class="form-check-label fw-semibold" for="whyVisible" style="font-size:13px;">Visible</label>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Eyebrow Label</label>
+                            <input type="text" class="form-control" name="homepage_content[why_choose][label]" value="{{ content.why_choose.label }}" placeholder="Why PadosiAgent">
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label fw-semibold">Section Heading</label>
+                            <input type="text" class="form-control" name="homepage_content[why_choose][title]" value="{{ content.why_choose.title }}" placeholder="What makes PadosiAgent one of India's most trusted ways to buy insurance?">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Description Text</label>
+                            <input type="text" class="form-control" name="homepage_content[why_choose][description]" value="{{ content.why_choose.description }}" placeholder="No spam, no platform fees...">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Button Text</label>
+                            <input type="text" class="form-control" name="homepage_content[why_choose][button_text]" value="{{ content.why_choose.button_text }}" placeholder="Find My PadosiAgent">
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Button URL</label>
+                            <input type="text" class="form-control" name="homepage_content[why_choose][button_url]" value="{{ content.why_choose.button_url }}" placeholder="/find-agents?openFilter=1">
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold mb-3" style="font-size:13px;color:#0d9488;"><i class="fa-solid fa-layer-group me-2"></i>Feature Cards <span class="badge bg-secondary ms-2" id="why-count">{{ content.why_choose.cards|length }}</span></h6>
+                    <div id="why-cards-wrap">
+                        {% for card in content.why_choose.cards %}
+                        <div class="why-card-row card mb-3 border-0 bg-light" style="border-radius:12px;">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="badge fw-bold" style="background:#0d9488;color:#fff;">Card {{ forloop.counter }}</span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this, 'why-cards-wrap', 'why-count')">
+                                        <i class="fa-solid fa-trash-can"></i> Remove
+                                    </button>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-md-1">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Card BG</label>
+                                        <input type="color" class="form-control form-control-sm form-control-color" name="homepage_content[why_choose][cards][{{ forloop.counter0 }}][bg]" value="{% if card.bg %}{{ card.bg }}{% else %}#fff1f2{% endif %}">
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Stat</label>
+                                        <input type="text" class="form-control form-control-sm" name="homepage_content[why_choose][cards][{{ forloop.counter0 }}][stat]" value="{{ card.stat }}" placeholder="0, ₹0, 100%">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Stat Caption</label>
+                                        <input type="text" class="form-control form-control-sm" name="homepage_content[why_choose][cards][{{ forloop.counter0 }}][caption]" value="{{ card.caption }}" placeholder="e.g. Spam Calls">
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Icon Color</label>
+                                        <input type="color" class="form-control form-control-sm form-control-color" name="homepage_content[why_choose][cards][{{ forloop.counter0 }}][icon_color]" value="{% if card.icon_color %}{{ card.icon_color }}{% else %}#f43f5e{% endif %}">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Icon Name</label>
+                                        <input type="text" class="form-control form-control-sm" name="homepage_content[why_choose][cards][{{ forloop.counter0 }}][icon]" value="{{ card.icon }}" placeholder="e.g. shield-check">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Card Title</label>
+                                        <input type="text" class="form-control form-control-sm" name="homepage_content[why_choose][cards][{{ forloop.counter0 }}][title]" value="{{ card.title }}" placeholder="e.g. Privacy-first by design">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Card Body</label>
+                                        <textarea class="form-control form-control-sm" name="homepage_content[why_choose][cards][{{ forloop.counter0 }}][body]" rows="2" placeholder="Short description...">{{ card.body }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addWhyCard()">
+                        <i class="fa-solid fa-plus me-1"></i> Add Feature Card
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: How It Works -->
+        <div class="tab-pane fade" id="tab-works">
+            <div class="card mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="m-0 fw-bold"><i class="fa-solid fa-stairs me-2 text-warning"></i>How It Works — Steps</h6>
+                        <small class="text-muted">Section heading and the step-by-step guide (desktop + mobile grid).</small>
+                    </div>
+                    <div class="form-check form-switch ms-3">
+                        <input type="hidden" name="homepage_content[works][visible]" value="0">
+                        <input class="form-check-input" type="checkbox" name="homepage_content[works][visible]" value="1" {% if content.works.visible %}checked{% endif %} id="worksVisible">
+                        <label class="form-check-label fw-semibold" for="worksVisible" style="font-size:13px;">Visible</label>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Eyebrow Label</label>
+                            <input type="text" class="form-control" name="homepage_content[works][label]" value="{{ content.works.label }}" placeholder="How It Works">
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label fw-semibold">Section Title</label>
+                            <input type="text" class="form-control" name="homepage_content[works][title]" value="{{ content.works.title }}" placeholder="Find My PadosiAgent in 4 Simple Steps">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Subtitle / Description</label>
+                            <input type="text" class="form-control" name="homepage_content[works][subtitle]" value="{{ content.works.subtitle }}" placeholder="From search to service - it takes just minutes for you">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">CTA Button Text</label>
+                            <input type="text" class="form-control" name="homepage_content[works][button_text]" value="{{ content.works.button_text }}" placeholder="Find Agent">
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">CTA Button URL</label>
+                            <input type="text" class="form-control" name="homepage_content[works][button_url]" value="{{ content.works.button_url }}" placeholder="/find-agents?openFilter=1">
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold mb-3" style="font-size:13px;color:#0d9488;"><i class="fa-solid fa-layer-group me-2"></i>Steps <span class="badge bg-secondary ms-2" id="steps-count">{{ content.works.steps|length }}</span></h6>
+                    <div id="steps-wrap">
+                        {% for step in content.works.steps %}
+                        <div class="step-row card mb-3 border-0 bg-light" style="border-radius:12px;">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="badge bg-warning text-dark fw-bold">Step {{ forloop.counter }}</span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this, 'steps-wrap', 'steps-count')">
+                                        <i class="fa-solid fa-trash-can"></i> Remove
+                                    </button>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-md-2">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Icon Name</label>
+                                        <input type="text" class="form-control form-control-sm" name="homepage_content[works][steps][{{ forloop.counter0 }}][icon]" value="{{ step.icon }}" placeholder="e.g. search">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Accent Class</label>
+                                        <select class="form-select form-select-sm" name="homepage_content[works][steps][{{ forloop.counter0 }}][accent]">
+                                            <option value="accent-primary" {% if step.accent == 'accent-primary' %}selected{% endif %}>accent-primary</option>
+                                            <option value="accent-secondary" {% if step.accent == 'accent-secondary' %}selected{% endif %}>accent-secondary</option>
+                                            <option value="accent-accent" {% if step.accent == 'accent-accent' %}selected{% endif %}>accent-accent</option>
+                                            <option value="accent-violet" {% if step.accent == 'accent-violet' %}selected{% endif %}>accent-violet</option>
+                                            <option value="accent-rose" {% if step.accent == 'accent-rose' %}selected{% endif %}>accent-rose</option>
+                                            <option value="accent-emerald" {% if step.accent == 'accent-emerald' %}selected{% endif %}>accent-emerald</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Badge</label>
+                                        <input type="text" class="form-control form-control-sm" name="homepage_content[works][steps][{{ forloop.counter0 }}][badge]" value="{{ step.badge }}" placeholder="1">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Step Title</label>
+                                        <input type="text" class="form-control form-control-sm" name="homepage_content[works][steps][{{ forloop.counter0 }}][title]" value="{{ step.title }}" placeholder="e.g. Search">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Short Description</label>
+                                        <input type="text" class="form-control form-control-sm" name="homepage_content[works][steps][{{ forloop.counter0 }}][desc]" value="{{ step.desc }}" placeholder="e.g. Find verified agents">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-semibold" style="font-size:12px;">Tooltip Text</label>
+                                        <input type="text" class="form-control form-control-sm" name="homepage_content[works][steps][{{ forloop.counter0 }}][tooltip]" value="{{ step.tooltip }}" placeholder="Hover tooltip text">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addStep()">
+                        <i class="fa-solid fa-plus me-1"></i> Add Step
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Testimonials -->
+        <div class="tab-pane fade" id="tab-testimonials">
+            <div class="card mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="m-0 fw-bold"><i class="fa-solid fa-comments me-2 text-info"></i>Testimonials — Section</h6>
+                        <small class="text-muted">Heading text and source control for the review carousel.</small>
+                    </div>
+                    <div class="form-check form-switch ms-3">
+                        <input type="hidden" name="homepage_content[testimonials][visible]" value="0">
+                        <input class="form-check-input" type="checkbox" name="homepage_content[testimonials][visible]" value="1" {% if content.testimonials.visible %}checked{% endif %} id="testimonialVisible">
+                        <label class="form-check-label fw-semibold" for="testimonialVisible" style="font-size:13px;">Visible</label>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Eyebrow Label</label>
+                            <input type="text" class="form-control" name="homepage_content[testimonials][label]" value="{{ content.testimonials.label }}" placeholder="Testimonials">
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label fw-semibold">Section Title</label>
+                            <input type="text" class="form-control" name="homepage_content[testimonials][title]" value="{{ content.testimonials.title }}" placeholder="What Users Say About Their PadosiAgent">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Subtitle</label>
+                            <input type="text" class="form-control" name="homepage_content[testimonials][subtitle]" value="{{ content.testimonials.subtitle }}" placeholder="Real experiences from users who found their PadosiAgent">
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mb-4" style="border-radius:12px; font-size:13px;">
+                        <strong><i class="fa-solid fa-circle-info me-2"></i>Review Source:</strong>
+                        By default the carousel shows <b>approved agent reviews from the database</b>. Toggle the option below to override with manual custom reviews instead.
+                    </div>
+
+                    <div class="form-check form-switch mb-4">
+                        <input class="form-check-input" type="checkbox" name="homepage_content[testimonials][use_custom]" value="1"
+                            {% if content.testimonials.use_custom %}checked{% endif %} id="useCustomReviews"
+                            onchange="document.getElementById('custom-reviews-panel').style.display = this.checked ? 'block' : 'none'">
+                        <label class="form-check-label fw-semibold" for="useCustomReviews">Use custom manual testimonials instead of database reviews</label>
+                    </div>
+
+                    <div id="custom-reviews-panel" style="{% if content.testimonials.use_custom %}{% else %}display:none;{% endif %}">
+                        <h6 class="fw-bold mb-3" style="font-size:13px;color:#0d9488;"><i class="fa-solid fa-layer-group me-2"></i>Custom Testimonials <span class="badge bg-secondary ms-2" id="reviews-count">{{ content.testimonials.custom_list|length }}</span></h6>
+                        <div id="reviews-wrap">
+                            {% for review in content.testimonials.custom_list %}
+                            <div class="review-row card mb-3 border-0 bg-light" style="border-radius:12px;">
+                                <div class="card-body p-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <span class="badge bg-info text-white fw-bold">Review {{ forloop.counter }}</span>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this, 'reviews-wrap', 'reviews-count')">
+                                            <i class="fa-solid fa-trash-can"></i> Remove
+                                        </button>
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-md-3">
+                                            <label class="form-label fw-semibold" style="font-size:12px;">Reviewer Name</label>
+                                            <input type="text" class="form-control form-control-sm" name="homepage_content[testimonials][custom_list][{{ forloop.counter0 }}][name]" value="{{ review.name }}" placeholder="e.g. Sneha Patel">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label fw-semibold" style="font-size:12px;">Service Label</label>
+                                            <input type="text" class="form-control form-control-sm" name="homepage_content[testimonials][custom_list][{{ forloop.counter0 }}][service]" value="{{ review.service }}" placeholder="e.g. Client of Rajesh Kumar">
+                                        </div>
+                                        <div class="col-md-1">
+                                            <label class="form-label fw-semibold" style="font-size:12px;">Rating</label>
+                                            <input type="number" class="form-control form-control-sm" name="homepage_content[testimonials][custom_list][{{ forloop.counter0 }}][rating]" value="{{ review.rating }}" min="1" max="5" step="0.5">
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label class="form-label fw-semibold" style="font-size:12px;">Review Text</label>
+                                            <textarea class="form-control form-control-sm" name="homepage_content[testimonials][custom_list][{{ forloop.counter0 }}][comment]" rows="2" placeholder="Review text...">{{ review.comment }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addReview()">
+                            <i class="fa-solid fa-plus me-1"></i> Add Testimonial
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Visibility -->
+        <div class="tab-pane fade" id="tab-visibility">
+            <div class="card mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold"><i class="fa-solid fa-toggle-on me-2"></i>Section Visibility Toggles</h6>
+                    <small class="text-muted">Toggle entire sections on or off without deleting content.</small>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4 p-2">
+                        <div class="col-md-4">
+                            <div class="card border-0 bg-light p-3 h-100" style="border-radius:12px;">
+                                <div class="d-flex align-items-center gap-3 mb-2">
+                                    <div style="width:40px;height:40px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.08);">
+                                        <i class="fa-solid fa-hand-holding-medical text-danger"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold" style="font-size:14px;">Claims Section</div>
+                                        <div class="text-muted" style="font-size:12px;">Toggle the claim assistance finder section</div>
+                                    </div>
+                                </div>
+                                <div class="form-check form-switch mt-1">
+                                    <input type="hidden" name="homepage_content[sections][claim_assistance]" value="0">
+                                    <input class="form-check-input" type="checkbox" name="homepage_content[sections][claim_assistance]" value="1"
+                                        {% if content.sections.claim_assistance %}checked{% endif %} id="sec-claim_assistance">
+                                    <label class="form-check-label" for="sec-claim_assistance" style="font-size:13px;">Enabled</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card border-0 bg-light p-3 h-100" style="border-radius:12px;">
+                                <div class="d-flex align-items-center gap-3 mb-2">
+                                    <div style="width:40px;height:40px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.08);">
+                                        <i class="fa-solid fa-clipboard-list text-info"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold" style="font-size:14px;">Policy Review Section</div>
+                                        <div class="text-muted" style="font-size:12px;">Toggle the policy portfolio audit section</div>
+                                    </div>
+                                </div>
+                                <div class="form-check form-switch mt-1">
+                                    <input type="hidden" name="homepage_content[sections][policy_review]" value="0">
+                                    <input class="form-check-input" type="checkbox" name="homepage_content[sections][policy_review]" value="1"
+                                        {% if content.sections.policy_review %}checked{% endif %} id="sec-policy_review">
+                                    <label class="form-check-label" for="sec-policy_review" style="font-size:13px;">Enabled</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card border-0 bg-light p-3 h-100" style="border-radius:12px;">
+                                <div class="d-flex align-items-center gap-3 mb-2">
+                                    <div style="width:40px;height:40px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.08);">
+                                        <i class="fa-solid fa-chart-bar text-warning"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold" style="font-size:14px;">Counter Stats Row</div>
+                                        <div class="text-muted" style="font-size:12px;">Toggle the animated number counters</div>
+                                    </div>
+                                </div>
+                                <div class="form-check form-switch mt-1">
+                                    <input type="hidden" name="homepage_content[sections][stats]" value="0">
+                                    <input class="form-check-input" type="checkbox" name="homepage_content[sections][stats]" value="1"
+                                        {% if content.sections.stats %}checked{% endif %} id="sec-stats">
+                                    <label class="form-check-label" for="sec-stats" style="font-size:13px;">Enabled</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>{# end tab-content #}
+
+    <div class="d-flex justify-content-end mt-2 mb-5">
+        <button type="submit" class="btn btn-primary btn-lg shadow-sm px-5">
+            <i class="fa-solid fa-save me-2"></i> Save All Updates
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    'use strict';
+
+    /* ── Tab hash sync ─────────────────────────────── */
+    function initHashTab() {
+        var hash = window.location.hash;
+        if (hash) {
+            var tabLink = document.querySelector('a[href="' + hash + '"]');
+            if (tabLink) {
+                if (typeof jQuery !== 'undefined') { $(tabLink).tab('show'); } else { tabLink.click(); }
+            }
+        }
+        document.querySelectorAll('a[data-toggle="tab"], a[data-bs-toggle="tab"]').forEach(function (el) {
+            el.addEventListener('shown.bs.tab', function (e) {
+                var target = e.target.getAttribute('href');
+                if (target && target.startsWith('#')) history.replaceState(null, null, target);
+            });
+        });
+    }
+    if (document.readyState === 'complete') { initHashTab(); } else { window.addEventListener('load', initHashTab); }
+
+    /* ── Generic counter helper ─────────────────────── */
+    window.removeRow = function (btn, wrapId, countId) {
+        var row = btn.closest('.card.mb-3');
+        if (row) row.remove();
+        reindex(wrapId, countId);
+    };
+
+    function reindex(wrapId, countId) {
+        var wrap = document.getElementById(wrapId);
+        if (!wrap) return;
+        var count = wrap.querySelectorAll(':scope > .card').length;
+        var badge = document.getElementById(countId);
+        if (badge) badge.textContent = count;
+        // Re-number slide badges
+        wrap.querySelectorAll(':scope > .card .badge.fw-bold, :scope > .card .badge.text-white.fw-bold').forEach(function(b, i) {
+            if (/\d/.test(b.textContent)) { b.textContent = b.textContent.replace(/\d+/, i + 1); }
+        });
+        // Re-index input names
+        wrap.querySelectorAll(':scope > .card').forEach(function (row, idx) {
+            row.querySelectorAll('input,textarea,select').forEach(function (el) {
+                if (el.name) {
+                    el.name = el.name.replace(/\[\d+\]/, '[' + idx + ']');
+                }
+            });
+        });
+    }
+
+    /* ── DYK Slide add ──────────────────────────────── */
+    var dykIdx = {{ content.dyk.slides|length }};
+    window.addDykSlide = function () {
+        var wrap = document.getElementById('dyk-slides-wrap');
+        var i = dykIdx++;
+        var html = `
+        <div class="dyk-slide-row card mb-3 border-0 bg-light" style="border-radius:12px;">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span class="badge text-white fw-bold" style="background:#0d9488;">Slide ${wrap.querySelectorAll(':scope>.card').length+1}</span>
+              <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this,'dyk-slides-wrap','dyk-count')"><i class="fa-solid fa-trash-can"></i> Remove</button>
+            </div>
+            <div class="row g-2">
+              <div class="col-md-3"><label class="form-label fw-semibold" style="font-size:12px;">Card Accent Class</label>
+                <select class="form-select form-select-sm" name="homepage_content[dyk][slides][${i}][accent]">
+                  ${['accent-rose','accent-emerald','accent-sky','accent-amber','accent-violet','accent-pink','accent-indigo','accent-teal'].map(a=>`<option value="${a}">${a}</option>`).join('')}
+                </select></div>
+              <div class="col-md-3"><label class="form-label fw-semibold" style="font-size:12px;">Icon BG Class</label>
+                <select class="form-select form-select-sm" name="homepage_content[dyk][slides][${i}][bg]">
+                  ${['bg-rose-500','bg-emerald-500','bg-sky-500','bg-amber-500','bg-violet-500','bg-pink-500','bg-indigo-500','bg-teal-500'].map(b=>`<option value="${b}">${b}</option>`).join('')}
+                </select></div>
+              <div class="col-md-6"><label class="form-label fw-semibold" style="font-size:12px;">Icon Name</label>
+                <input type="text" class="form-control form-control-sm" name="homepage_content[dyk][slides][${i}][icon]" placeholder="e.g. users, shield, clock"></div>
+              <div class="col-md-5"><label class="form-label fw-semibold" style="font-size:12px;">Card Title</label>
+                <input type="text" class="form-control form-control-sm" name="homepage_content[dyk][slides][${i}][title]" placeholder="Insight title"></div>
+              <div class="col-md-7"><label class="form-label fw-semibold" style="font-size:12px;">Body Text</label>
+                <textarea class="form-control form-control-sm" name="homepage_content[dyk][slides][${i}][body]" rows="2" placeholder="Short description..."></textarea></div>
+            </div>
+          </div>
+        </div>`;
+        wrap.insertAdjacentHTML('beforeend', html);
+        document.getElementById('dyk-count').textContent = wrap.querySelectorAll(':scope>.card').length;
+    };
+
+    /* ── Quick Pick item add ────────────────────────── */
+    var qpIdx = {{ content.quickpicks.items|length }};
+    window.addQpItem = function () {
+        var wrap = document.getElementById('qp-items-wrap');
+        var i = qpIdx++;
+        var html = `
+        <div class="qp-item-row card mb-3 border-0 bg-light" style="border-radius:12px;">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span class="badge bg-primary fw-bold">Tile ${wrap.querySelectorAll(':scope>.card').length+1}</span>
+              <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this,'qp-items-wrap','qp-count')"><i class="fa-solid fa-trash-can"></i> Remove</button>
+            </div>
+            <div class="row g-2">
+              <div class="col-md-2"><label class="form-label fw-semibold" style="font-size:12px;">Label</label><input type="text" class="form-control form-control-sm" name="homepage_content[quickpicks][items][${i}][label]" placeholder="e.g. Mediclaim"></div>
+              <div class="col-md-2"><label class="form-label fw-semibold" style="font-size:12px;">Badge Text</label><input type="text" class="form-control form-control-sm" name="homepage_content[quickpicks][items][${i}][badge]" placeholder="e.g. Most Bought"></div>
+              <div class="col-md-1"><label class="form-label fw-semibold" style="font-size:12px;">Badge BG</label><input type="color" class="form-control form-control-sm form-control-color" name="homepage_content[quickpicks][items][${i}][badge_bg]" value="#ffe4e6"></div>
+              <div class="col-md-1"><label class="form-label fw-semibold" style="font-size:12px;">Badge Color</label><input type="color" class="form-control form-control-sm form-control-color" name="homepage_content[quickpicks][items][${i}][badge_color]" value="#be123c"></div>
+              <div class="col-md-1"><label class="form-label fw-semibold" style="font-size:12px;">Icon BG</label><input type="color" class="form-control form-control-sm form-control-color" name="homepage_content[quickpicks][items][${i}][icon_bg]" value="#fff1f2"></div>
+              <div class="col-md-1"><label class="form-label fw-semibold" style="font-size:12px;">Icon Color</label><input type="color" class="form-control form-control-sm form-control-color" name="homepage_content[quickpicks][items][${i}][icon_color]" value="#f43f5e"></div>
+              <div class="col-md-2"><label class="form-label fw-semibold" style="font-size:12px;">Icon Name</label><input type="text" class="form-control form-control-sm" name="homepage_content[quickpicks][items][${i}][icon]" placeholder="e.g. heart-pulse"></div>
+              <div class="col-md-2"><label class="form-label fw-semibold" style="font-size:12px;">URL</label><input type="text" class="form-control form-control-sm" name="homepage_content[quickpicks][items][${i}][url]" placeholder="/find-agents?..."></div>
+            </div>
+          </div>
+        </div>`;
+        wrap.insertAdjacentHTML('beforeend', html);
+        document.getElementById('qp-count').textContent = wrap.querySelectorAll(':scope>.card').length;
+    };
+
+    /* ── Why Choose card add ────────────────────────── */
+    var whyIdx = {{ content.why_choose.cards|length }};
+    window.addWhyCard = function () {
+        var wrap = document.getElementById('why-cards-wrap');
+        var i = whyIdx++;
+        var html = `
+        <div class="why-card-row card mb-3 border-0 bg-light" style="border-radius:12px;">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span class="badge fw-bold" style="background:#0d9488;color:#fff;">Card ${wrap.querySelectorAll(':scope>.card').length+1}</span>
+              <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this,'why-cards-wrap','why-count')"><i class="fa-solid fa-trash-can"></i> Remove</button>
+            </div>
+            <div class="row g-2">
+              <div class="col-md-1"><label class="form-label fw-semibold" style="font-size:12px;">Card BG</label><input type="color" class="form-control form-control-sm form-control-color" name="homepage_content[why_choose][cards][${i}][bg]" value="#fff1f2"></div>
+              <div class="col-md-1"><label class="form-label fw-semibold" style="font-size:12px;">Stat</label><input type="text" class="form-control form-control-sm" name="homepage_content[why_choose][cards][${i}][stat]" placeholder="0, ₹0, 100%"></div>
+              <div class="col-md-2"><label class="form-label fw-semibold" style="font-size:12px;">Stat Caption</label><input type="text" class="form-control form-control-sm" name="homepage_content[why_choose][cards][${i}][caption]" placeholder="e.g. Spam Calls"></div>
+              <div class="col-md-1"><label class="form-label fw-semibold" style="font-size:12px;">Icon Color</label><input type="color" class="form-control form-control-sm form-control-color" name="homepage_content[why_choose][cards][${i}][icon_color]" value="#f43f5e"></div>
+              <div class="col-md-2"><label class="form-label fw-semibold" style="font-size:12px;">Icon Name</label><input type="text" class="form-control form-control-sm" name="homepage_content[why_choose][cards][${i}][icon]" placeholder="e.g. shield-check"></div>
+              <div class="col-md-2"><label class="form-label fw-semibold" style="font-size:12px;">Card Title</label><input type="text" class="form-control form-control-sm" name="homepage_content[why_choose][cards][${i}][title]" placeholder="e.g. Privacy-first"></div>
+              <div class="col-md-3"><label class="form-label fw-semibold" style="font-size:12px;">Card Body</label><textarea class="form-control form-control-sm" name="homepage_content[why_choose][cards][${i}][body]" rows="2" placeholder="Short description..."></textarea></div>
+            </div>
+          </div>
+        </div>`;
+        wrap.insertAdjacentHTML('beforeend', html);
+        document.getElementById('why-count').textContent = wrap.querySelectorAll(':scope>.card').length;
+    };
+
+    /* ── Step add ───────────────────────────────────── */
+    var stepIdx = {{ content.works.steps|length }};
+    window.addStep = function () {
+        var wrap = document.getElementById('steps-wrap');
+        var i = stepIdx++;
+        var accents = ['accent-primary','accent-secondary','accent-accent','accent-violet','accent-rose','accent-emerald'];
+        var html = `
+        <div class="step-row card mb-3 border-0 bg-light" style="border-radius:12px;">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span class="badge bg-warning text-dark fw-bold">Step ${wrap.querySelectorAll(':scope>.card').length+1}</span>
+              <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this,'steps-wrap','steps-count')"><i class="fa-solid fa-trash-can"></i> Remove</button>
+            </div>
+            <div class="row g-2">
+              <div class="col-md-2"><label class="form-label fw-semibold" style="font-size:12px;">Icon Name</label><input type="text" class="form-control form-control-sm" name="homepage_content[works][steps][${i}][icon]" placeholder="e.g. search"></div>
+              <div class="col-md-2"><label class="form-label fw-semibold" style="font-size:12px;">Accent Class</label><select class="form-select form-select-sm" name="homepage_content[works][steps][${i}][accent]">${accents.map(a=>`<option value="${a}">${a}</option>`).join('')}</select></div>
+              <div class="col-md-1"><label class="form-label fw-semibold" style="font-size:12px;">Badge</label><input type="text" class="form-control form-control-sm" name="homepage_content[works][steps][${i}][badge]" value="${i+1}"></div>
+              <div class="col-md-2"><label class="form-label fw-semibold" style="font-size:12px;">Step Title</label><input type="text" class="form-control form-control-sm" name="homepage_content[works][steps][${i}][title]" placeholder="e.g. Search"></div>
+              <div class="col-md-2"><label class="form-label fw-semibold" style="font-size:12px;">Short Description</label><input type="text" class="form-control form-control-sm" name="homepage_content[works][steps][${i}][desc]" placeholder="e.g. Find verified agents"></div>
+              <div class="col-md-3"><label class="form-label fw-semibold" style="font-size:12px;">Tooltip Text</label><input type="text" class="form-control form-control-sm" name="homepage_content[works][steps][${i}][tooltip]" placeholder="Hover tooltip text"></div>
+            </div>
+          </div>
+        </div>`;
+        wrap.insertAdjacentHTML('beforeend', html);
+        document.getElementById('steps-count').textContent = wrap.querySelectorAll(':scope>.card').length;
+    };
+
+    /* ── Review add ─────────────────────────────────── */
+    var reviewIdx = {{ content.testimonials.custom_list|length }};
+    window.addReview = function () {
+        var wrap = document.getElementById('reviews-wrap');
+        var i = reviewIdx++;
+        var html = `
+        <div class="review-row card mb-3 border-0 bg-light" style="border-radius:12px;">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span class="badge bg-info text-white fw-bold">Review ${wrap.querySelectorAll(':scope>.card').length+1}</span>
+              <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this,'reviews-wrap','reviews-count')"><i class="fa-solid fa-trash-can"></i> Remove</button>
+            </div>
+            <div class="row g-2">
+              <div class="col-md-3"><label class="form-label fw-semibold" style="font-size:12px;">Reviewer Name</label><input type="text" class="form-control form-control-sm" name="homepage_content[testimonials][custom_list][${i}][name]" placeholder="e.g. Sneha Patel"></div>
+              <div class="col-md-3"><label class="form-label fw-semibold" style="font-size:12px;">Service Label</label><input type="text" class="form-control form-control-sm" name="homepage_content[testimonials][custom_list][${i}][service]" placeholder="e.g. Client of Rajesh Kumar"></div>
+              <div class="col-md-1"><label class="form-label fw-semibold" style="font-size:12px;">Rating</label><input type="number" class="form-control form-control-sm" name="homepage_content[testimonials][custom_list][${i}][rating]" value="5" min="1" max="5" step="0.5"></div>
+              <div class="col-md-5"><label class="form-label fw-semibold" style="font-size:12px;">Review Text</label><textarea class="form-control form-control-sm" name="homepage_content[testimonials][custom_list][${i}][comment]" rows="2" placeholder="Review text..."></textarea></div>
+            </div>
+          </div>
+        </div>`;
+        wrap.insertAdjacentHTML('beforeend', html);
+        document.getElementById('reviews-count').textContent = wrap.querySelectorAll(':scope>.card').length;
+    };
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,247 @@
+{% extends 'admin/layout.html' %}
+{% load static %}
+
+{% block title %}Manage Blocked IPs — PadosiAgent Admin{% endblock %}
+{% block breadcrumb %}Security &rsaquo; Blocked IPs{% endblock %}
+
+{% block extra_css %}
+<style>
+    .avatar-sm { width: 32px; height: 32px; }
+    .badge { font-weight: 500; font-size: 11px; }
+    .small { font-size: 13px; }
+    code { color: #d63384; font-size: 11px; }
+    .btn-sm { padding: .25rem .5rem; }
+    .table thead th {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        padding: 12px 16px;
+        background: var(--bg-table-header);
+        border-bottom: 1px solid var(--border-color);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Block New IP Form -->
+    <div class="col-lg-4">
+        <div class="card mb-4 border-danger">
+            <div class="card-header bg-danger text-white py-3">
+                <h6 class="m-0 font-weight-bold"><i class="fa-solid fa-ban me-2"></i> Block IP Address</h6>
+            </div>
+            <div class="card-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="POST" action="{% url 'admin_panel:security_block_ip' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold">IP Address</label>
+                        <input type="text" class="form-control" name="ip_address" placeholder="e.g. 192.168.1.1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label font-weight-bold">Reason (Optional)</label>
+                        <textarea class="form-control" name="reason" rows="2" placeholder="e.g. Scraping attempt detected"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100">Block IP</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-white py-3">
+                <h6 class="m-0 font-weight-bold"><i class="fa-solid fa-bolt me-2"></i> Recent Suspicious Activity</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" style="font-size: 13px;">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>IP Address</th>
+                                <th>Clicks</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for activity in recentActivity %}
+                            <tr>
+                                <td>{{ activity.ip_address }}</td>
+                                <td>
+                                    <span class="badge bg-{% if activity.total_clicks > 15 %}danger{% else %}warning text-dark{% endif %}">
+                                        {{ activity.total_clicks }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <form method="POST" action="{% url 'admin_panel:security_block_ip' %}" style="display:inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="ip_address" value="{{ activity.ip_address }}">
+                                        <input type="hidden" name="reason" value="Blocked from Activity Monitor">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger py-0" style="font-size: 11px;">Block</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-3">No recent IP tracking data.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Currently Blocked IPs List -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h6 class="m-0 font-weight-bold text-dark"><i class="fa-solid fa-list-ul me-2"></i> Explicitly Blocked IP Addresses</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>IP Address</th>
+                                <th>Reason</th>
+                                <th>Blocked At</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for blocked in blockedIps %}
+                            <tr>
+                                <td><span class="font-weight-bold">{{ blocked.ip_address }}</span></td>
+                                <td class="text-muted"><small>{{ blocked.reason|default:'Manually blocked.' }}</small></td>
+                                <td><small>{{ blocked.created_at|date:"d M y, h:i A" }}</small></td>
+                                <td class="text-end pe-3">
+                                    <form method="POST" action="{% url 'admin_panel:security_unblock_ip' blocked.id %}" onsubmit="return confirm('Are you sure you want to unblock this IP?');" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-success">Unblock</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    <i class="fa-solid fa-circle-check fs-2 mb-2 text-success" style="opacity: 0.5;"></i><br>
+                                    No IPs are currently blocked.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                {% if blockedIps.has_other_pages %}
+                <div class="card-footer bg-white border-top py-3 d-flex justify-content-center">
+                    <nav>
+                        <ul class="pagination mb-0">
+                            {% if blockedIps.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ blockedIps.previous_page_number }}">&laquo;</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                            {% endif %}
+
+                            {% for num in blockedIps.paginator.page_range %}
+                                {% if blockedIps.number == num %}
+                                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                {% elif num > blockedIps.number|add:'-3' and num < blockedIps.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if blockedIps.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ blockedIps.next_page_number }}">&raquo;</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Security Threat Monitor Section -->
+        <div class="card shadow-sm border-warning">
+            <div class="card-header bg-warning py-3">
+                <h6 class="m-0 font-weight-bold text-dark"><i class="fa-solid fa-user-secret me-2"></i> Security Threat Monitor (Hacker Activity)</h6>
+            </div>
+            <div class="card-body p-0">
+                <p class="p-3 text-muted small mb-0">
+                    The middleware automatically logs potential SQL Injection, XSS, and Path Traversal attempts. 
+                    IPs consistently hitting these patterns will be <strong>auto-blocked</strong> after 3 attempts.
+                </p>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+                        <thead class="bg-dark text-white">
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>IP Address</th>
+                                <th>Type</th>
+                                <th>Attempted Path</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for threat in threatLogs %}
+                            <tr>
+                                <td><small>{{ threat.created_at|timesince }} ago</small></td>
+                                <td><strong>{{ threat.ip_address }}</strong></td>
+                                <td><span class="badge bg-danger">{{ threat.event_type }}</span></td>
+                                <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    <code>{{ threat.url }}</code>
+                                </td>
+                                <td>
+                                    {% if threat.is_blocked %}
+                                        <form method="POST" action="{% url 'admin_panel:security_unblock_ip' threat.blocked_id %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-success py-0" style="font-size: 11px;">Lift Block</button>
+                                        </form>
+                                    {% else %}
+                                        <form method="POST" action="{% url 'admin_panel:security_block_ip' %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="ip_address" value="{{ threat.ip_address }}">
+                                            <input type="hidden" name="reason" value="Manual block due to security threat ({{ threat.event_type }})">
+                                            <button type="submit" class="btn btn-sm btn-danger py-0" style="font-size: 11px;">Ban Instantly</button>
+                                        </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">No security threats detected recently.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.pagination { margin-bottom: 0; flex-wrap: wrap; justify-content: center; gap: 5px; }
+.pagination .page-item .page-link { border-radius: 8px; padding: 8px 16px; color: var(--primary); border: 1px solid var(--border-color); font-weight: 500; transition: all 0.2s; }
+.pagination .page-item.active .page-link { background-color: var(--primary); border-color: var(--primary); color: white; }
+.pagination .page-item.disabled .page-link { color: var(--text-muted); background-color: var(--bg-body); }
+</style>
+{% endblock %}

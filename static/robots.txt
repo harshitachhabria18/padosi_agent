@@ -1,0 +1,84 @@
+# robots.txt for PadosiAgent
+# This file tells search engines which pages to crawl and which to avoid
+
+# Allow all bots by default
+User-agent: *
+Allow: /
+
+# Disallow private/admin areas
+Disallow: /admin/
+Disallow: /admin/*
+Disallow: /agent/dashboard*
+Disallow: /client/dashboard*
+Disallow: /user/dashboard*
+
+# Disallow authentication pages (they shouldn't be indexed)
+Disallow: /agent-login
+Disallow: /login
+Disallow: /logout
+Disallow: /forgot-password
+Disallow: /reset-password*
+Disallow: /register
+
+# Disallow internal/API endpoints
+Disallow: /api/
+Disallow: /api/*
+Disallow: /ajax/
+Disallow: /ajax/*
+
+# Disallow search and filter pages (prevent duplicate content)
+Disallow: /*?*
+Disallow: /search*
+Disallow: /filter*
+
+# Disallow temporary/staging content
+Disallow: /staging/
+Disallow: /test/
+Disallow: /dev/
+
+# Allow specific pages to be indexed
+Allow: /find-agents
+Allow: /profile/
+Allow: /about
+Allow: /faq
+Allow: /contact
+Allow: /calculator
+
+# Specific rules for Googlebot (can crawl more aggressively)
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+Disallow: /agent/dashboard*
+Disallow: /client/dashboard*
+Disallow: /agent-login
+Disallow: /forgot-password
+Disallow: /reset-password*
+Crawl-delay: 1
+
+# Specific rules for Bingbot
+User-agent: Bingbot
+Allow: /
+Disallow: /admin/
+Disallow: /agent/dashboard*
+Disallow: /client/dashboard*
+Disallow: /agent-login
+Crawl-delay: 2
+
+# Block bad bots
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+# Sitemap location
+Sitemap: https://padosiagent.com/sitemap.xml
+
+# Crawl delay (time in seconds between requests)
+Crawl-delay: 1
+
+# Request rate (pages per second)
+Request-rate: 1/1s

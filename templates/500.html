@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Server Error — PadosiAgent{% endblock %}
+{% block meta_description %}Something went wrong. Please try again later.{% endblock %}
+{% block extra_css %}
+<style>
+    .error-page {
+        min-height: 70vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+        background: #f8fafc;
+    }
+    .error-card {
+        max-width: 520px;
+        width: 100%;
+        text-align: center;
+        background: #fff;
+        border-radius: 24px;
+        padding: 50px 40px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+    }
+    .error-icon {
+        width: 80px;
+        height: 80px;
+        background: #fef2f2;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+    }
+    .error-icon i {
+        font-size: 34px;
+        color: #dc2626;
+    }
+    .error-card h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 8px;
+    }
+    .error-card p {
+        color: #64748b;
+        font-size: 15px;
+        line-height: 1.6;
+        margin-bottom: 28px;
+    }
+    .error-card .btn-home {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 32px;
+        background: #273c8e;
+        color: #fff;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        transition: background 0.2s;
+    }
+    .error-card .btn-home:hover {
+        background: #1e2d6e;
+        color: #fff;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="error-page">
+    <div class="error-card">
+        <div class="error-icon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h1>Something Went Wrong</h1>
+        <p>We encountered an unexpected error. Our team has been notified and we are working to fix it. Please try again after some time.</p>
+        <a href="/" class="btn-home"><i class="fa-solid fa-house"></i> Back to Home</a>
+    </div>
+</div>
+{% endblock %}

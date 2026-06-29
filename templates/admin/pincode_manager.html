@@ -1,0 +1,415 @@
+{% extends 'admin/layout.html' %}
+{% load static %}
+
+{% block title %}Pincode Manager — PadosiAgent Admin{% endblock %}
+{% block breadcrumb %}Pincode Manager{% endblock %}
+
+{% block extra_css %}
+<style>
+.pin-stat-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 20px 24px; display: flex; align-items: center; gap: 16px; }
+.pin-stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.pin-stat-val { font-size: 26px; font-weight: 800; line-height: 1; }
+.pin-stat-lbl { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+.upload-zone { border: 2px dashed var(--border-color); border-radius: 14px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--bg-card); }
+.upload-zone:hover, .upload-zone.dragover { border-color: var(--primary); background: rgba(29, 125, 93, 0.05); }
+.upload-zone .upload-icon { font-size: 40px; margin-bottom: 12px; }
+.btn-pm { padding: 10px 22px; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+.btn-pm-primary { background: linear-gradient(135deg, #1d7d5d, #16a34a); color: #fff; }
+.btn-pm-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(29,125,93,.3); }
+.btn-pm-secondary { background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); }
+.btn-pm-danger { background: #ef4444; color: #fff; }
+.btn-pm:disabled { opacity: .5; cursor: not-allowed; transform: none !important; }
+.progress-wrap { height: 10px; border-radius: 99px; background: #e2e8f0; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #1d7d5d, #22c55e); transition: width .4s ease; }
+.state-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 99px; background: #dcfce7; color: #15803d; font-size: 13px; font-weight: 600; cursor: pointer; user-select: none; border: 2px solid transparent; }
+.state-chip input[type=checkbox] { display: none; }
+.state-chip.selected { background: #15803d; color: #fff; }
+.district-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 99px; background: #e0f2fe; color: #0369a1; font-size: 12px; font-weight: 600; cursor: pointer; user-select: none; border: 2px solid transparent; }
+.district-chip.selected { background: #0369a1; color: #fff; }
+.log-badge { display: inline-flex; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; }
+.log-badge.completed { background:#dcfce7; color:#15803d; }
+.log-badge.failed { background:#fee2e2; color:#b91c1c; }
+.log-badge.pending { background:#fef3c7; color:#92400e; }
+.log-badge.processing { background:#dbeafe; color:#1d4ed8; }
+#previewSection, #importSection { display: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 style="font-size:22px;font-weight:800;margin:0;">🗺️ Pincode Manager</h1>
+        <p style="color:var(--text-muted);font-size:13px;margin-top:4px;">Import, manage and filter India-wide PIN code data by state/district.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'admin_panel:pincode_sample' %}" class="btn-pm btn-pm-secondary"><i class="fas fa-download"></i> Sample CSV</a>
+        <a href="{% url 'admin_panel:pincode_export' %}{% if state %}?state={{ state }}{% endif %}" class="btn-pm btn-pm-secondary"><i class="fas fa-file-export"></i> Export</a>
+    </div>
+</div>
+
+{# Stat Cards #}
+<div class="row g-3 mb-4">
+    <div class="col-md-4 col-6">
+        <div class="pin-stat-card">
+            <div class="pin-stat-icon" style="background:#dbeafe;"><i class="fas fa-map-pin" style="color:#2563eb;"></i></div>
+            <div><div class="pin-stat-val">{{ stats.total }}</div><div class="pin-stat-lbl">Total Pincodes</div></div>
+        </div>
+    </div>
+    <div class="col-md-4 col-6">
+        <div class="pin-stat-card">
+            <div class="pin-stat-icon" style="background:#dcfce7;"><i class="fas fa-globe-asia" style="color:#16a34a;"></i></div>
+            <div><div class="pin-stat-val">{{ stats.states }}</div><div class="pin-stat-lbl">Active States</div></div>
+        </div>
+    </div>
+    <div class="col-md-4 col-6">
+        <div class="pin-stat-card">
+            <div class="pin-stat-icon" style="background:#ede9fe;"><i class="fas fa-city" style="color:#7c3aed;"></i></div>
+            <div><div class="pin-stat-val">{{ stats.districts }}</div><div class="pin-stat-lbl">Active Districts</div></div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+{# LEFT: Upload + Import #}
+<div class="col-lg-5">
+
+    {# Upload Zone #}
+    <div class="geo-action-card mb-4" style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;padding:24px;">
+        <h5 style="font-weight:700;margin-bottom:16px;">📤 Upload CSV / Excel</h5>
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+            <div class="upload-icon">📁</div>
+            <p style="font-weight:600;margin:0;">Click or drag & drop your file here</p>
+            <p style="font-size:12px;color:var(--text-muted);margin:6px 0 0;">Supports CSV, XLSX — up to 50 MB</p>
+            <input type="file" id="fileInput" accept=".csv,.xlsx,.xls,.txt" style="display:none" onchange="handleFileSelect(this)">
+        </div>
+
+        <div id="uploadProgress" style="display:none;margin-top:16px;">
+            <div class="d-flex justify-content-between mb-1" style="font-size:13px;">
+                <span id="uploadStatus">Uploading...</span><span id="uploadPct">0%</span>
+            </div>
+            <div class="progress-wrap"><div class="progress-fill" id="uploadBar" style="width:0%"></div></div>
+        </div>
+
+        {# Preview: Select States #}
+        <div id="previewSection" style="margin-top:20px;">
+            <div style="font-weight:700;margin-bottom:10px;font-size:15px;">✅ File Parsed! <span id="totalRowsLabel" style="color:var(--text-muted);font-weight:500;"></span></div>
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px;">Select which states to import:</p>
+            <div id="stateChips" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;"></div>
+
+            <div id="districtSection" style="display:none;margin-bottom:16px;">
+                <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">Optionally select specific districts (leave empty = all districts of selected states):</p>
+                <div id="districtChips" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+            </div>
+
+            <button class="btn-pm btn-pm-primary w-100 mt-2" id="importBtn" onclick="startImport()">
+                <i class="fas fa-database"></i> Import Selected Data
+            </button>
+        </div>
+
+        {# Import Progress #}
+        <div id="importSection" style="margin-top:16px;">
+            <div class="d-flex justify-content-between mb-1" style="font-size:13px;">
+                <span id="importStatus">Importing...</span>
+            </div>
+            <div class="progress-wrap"><div class="progress-fill" id="importBar" style="width:50%;"></div></div>
+            <div id="importResult" style="margin-top:12px;font-size:13px;"></div>
+        </div>
+    </div>
+
+    {# Import History #}
+    <div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;padding:24px;">
+        <h5 style="font-weight:700;margin-bottom:16px;">📋 Import History</h5>
+        {% for log in importLogs %}
+        <div style="padding:10px 0;border-bottom:1px solid var(--border-color);font-size:13px;">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <strong>{{ log.filename }}</strong>
+                    <span class="log-badge {{ log.status }} ms-2">{{ log.status|title }}</span>
+                </div>
+                <span style="color:var(--text-muted);font-size:11px;">{{ log.created_at|date:"d M Y, H:i" }}</span>
+            </div>
+            <div style="color:var(--text-muted);margin-top:4px;">
+                {{ log.imported_rows }} imported &bull;
+                {{ log.skipped_rows }} skipped &bull;
+                {{ log.failed_rows }} failed
+                {% if log.selected_states %}
+                    &bull; States: 
+                    {% for st in log.selected_states|slice:":3" %}
+                        {{ st }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                    {% if log.selected_states|length > 3 %}
+                        +{{ log.selected_states|length|add:"-3" }} more
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <p style="color:var(--text-muted);font-size:13px;">No imports yet.</p>
+        {% endfor %}
+    </div>
+</div>
+
+{# RIGHT: Filter & Table #}
+<div class="col-lg-7">
+    <div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;padding:24px;">
+        <h5 style="font-weight:700;margin-bottom:16px;">🔍 Search & Filter Pincodes</h5>
+
+        <form method="GET" class="d-flex gap-2 flex-wrap mb-4">
+            <input type="text" name="search" value="{{ search }}" placeholder="Search pincode / area..." class="form-control" style="max-width:200px;font-size:13px;">
+            <select name="state" class="form-select" style="max-width:160px;font-size:13px;" onchange="this.form.submit()">
+                <option value="">All States</option>
+                {% for s in states %}
+                    <option value="{{ s }}" {% if state == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+            <select name="district" class="form-select" style="max-width:160px;font-size:13px;" onchange="this.form.submit()">
+                <option value="">All Districts</option>
+                {% for d in districts %}
+                    <option value="{{ d }}" {% if district == d %}selected{% endif %}>{{ d }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn-pm btn-pm-primary"><i class="fas fa-search"></i></button>
+            <a href="{% url 'admin_panel:pincode_index' %}" class="btn-pm btn-pm-secondary">Reset</a>
+        </form>
+
+        <div style="overflow-x:auto;">
+            <table class="table" style="font-size:13px;">
+                <thead>
+                    <tr>
+                        <th>Pincode</th><th>Area</th><th>District</th><th>State</th><th>Lat / Lng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pc in pincodes %}
+                    <tr>
+                        <td><code>{{ pc.pincode }}</code></td>
+                        <td>{{ pc.office_name }}</td>
+                        <td>{{ pc.district }}</td>
+                        <td><span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;">{{ pc.state }}</span></td>
+                        <td style="color:var(--text-muted);">{{ pc.latitude }}, {{ pc.longitude }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center" style="color:var(--text-muted);padding:30px;">No pincodes found. Import a CSV/Excel file to get started.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {# Pagination #}
+        {% if pincodes.has_other_pages %}
+        <div class="d-flex justify-content-center mt-3">
+            <nav>
+                <ul class="pagination mb-0">
+                    {% if pincodes.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ pincodes.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if state %}&state={{ state }}{% endif %}{% if district %}&district={{ district }}{% endif %}">&laquo;</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                    {% endif %}
+
+                    {% for num in pincodes.paginator.page_range %}
+                        {% if pincodes.number == num %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% elif num > pincodes.number|add:'-3' and num < pincodes.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if state %}&state={{ state }}{% endif %}{% if district %}&district={{ district }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if pincodes.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ pincodes.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if state %}&state={{ state }}{% endif %}{% if district %}&district={{ district }}{% endif %}">&raquo;</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentLogId = null;
+let stateDistrictMap = {};
+const selectedStates = new Set();
+const selectedDistricts = new Set();
+
+// Drag & Drop
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) uploadFile(file);
+});
+
+function handleFileSelect(input) {
+    if (input.files[0]) uploadFile(input.files[0]);
+}
+
+function uploadFile(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    document.getElementById('uploadProgress').style.display = 'block';
+    document.getElementById('previewSection').style.display = 'none';
+    document.getElementById('importSection').style.display = 'none';
+    document.getElementById('uploadStatus').textContent = 'Uploading...';
+    document.getElementById('uploadPct').textContent = '0%';
+    document.getElementById('uploadBar').style.width = '0%';
+
+    const xhr = new XMLHttpRequest();
+    
+    // Listen to the upload progress
+    xhr.upload.addEventListener('progress', function(e) {
+        if (e.lengthComputable) {
+            const percent = Math.round((e.loaded / e.total) * 100);
+            document.getElementById('uploadBar').style.width = percent + '%';
+            document.getElementById('uploadPct').textContent = percent + '%';
+            if (percent === 100) {
+                document.getElementById('uploadStatus').textContent = 'Processing file (please wait)...';
+            }
+        }
+    });
+
+    xhr.addEventListener('load', function() {
+        if (xhr.status >= 200 && xhr.status < 300) {
+            let data;
+            try {
+                data = JSON.parse(xhr.responseText);
+            } catch(e) {
+                document.getElementById('uploadStatus').textContent = '❌ Server returned invalid response.';
+                return;
+            }
+            
+            document.getElementById('uploadBar').style.width = '100%';
+            document.getElementById('uploadPct').textContent = '100%';
+            
+            if (!data.success) {
+                document.getElementById('uploadStatus').textContent = '❌ ' + data.message;
+                return;
+            }
+            document.getElementById('uploadStatus').textContent = '✅ File parsed successfully!';
+            currentLogId = data.log_id;
+            stateDistrictMap = data.state_district_map;
+            document.getElementById('totalRowsLabel').textContent = `(${data.total_rows.toLocaleString()} valid rows found)`;
+            renderStateChips();
+            document.getElementById('previewSection').style.display = 'block';
+        } else {
+            let data = {};
+            try { data = JSON.parse(xhr.responseText); } catch(e) {}
+            document.getElementById('uploadStatus').textContent = '❌ Upload failed: ' + (data.message || 'Server error.');
+        }
+    });
+
+    xhr.addEventListener('error', function() {
+        document.getElementById('uploadStatus').textContent = '❌ Upload failed. Try again.';
+    });
+
+    xhr.open('POST', '{% url "admin_panel:pincode_upload" %}');
+    xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+    xhr.send(formData);
+}
+
+function renderStateChips() {
+    const container = document.getElementById('stateChips');
+    container.innerHTML = '';
+    Object.keys(stateDistrictMap).sort().forEach(state => {
+        const count = Object.values(stateDistrictMap[state]).reduce((a,b) => a+b, 0);
+        const chip = document.createElement('div');
+        chip.className = 'state-chip';
+        chip.innerHTML = `${state} <span style="opacity:.7">(${count.toLocaleString()})</span>`;
+        chip.onclick = () => toggleState(state, chip);
+        container.appendChild(chip);
+    });
+}
+
+function toggleState(state, chip) {
+    if (selectedStates.has(state)) {
+        selectedStates.delete(state);
+        chip.classList.remove('selected');
+    } else {
+        selectedStates.add(state);
+        chip.classList.add('selected');
+    }
+    renderDistrictChips();
+}
+
+function renderDistrictChips() {
+    const section = document.getElementById('districtSection');
+    const container = document.getElementById('districtChips');
+    container.innerHTML = '';
+    selectedDistricts.clear();
+
+    if (selectedStates.size === 0) { section.style.display = 'none'; return; }
+
+    const allDistricts = {};
+    selectedStates.forEach(state => {
+        Object.entries(stateDistrictMap[state] || {}).forEach(([dist, cnt]) => {
+            allDistricts[dist] = (allDistricts[dist] || 0) + cnt;
+        });
+    });
+
+    section.style.display = 'block';
+    Object.keys(allDistricts).sort().forEach(dist => {
+        const chip = document.createElement('div');
+        chip.className = 'district-chip';
+        chip.textContent = dist;
+        chip.onclick = () => {
+            if (selectedDistricts.has(dist)) { selectedDistricts.delete(dist); chip.classList.remove('selected'); }
+            else { selectedDistricts.add(dist); chip.classList.add('selected'); }
+        };
+        container.appendChild(chip);
+    });
+}
+
+function startImport() {
+    if (selectedStates.size === 0) { alert('Please select at least one state.'); return; }
+
+    document.getElementById('previewSection').style.display = 'none';
+    document.getElementById('importSection').style.display = 'block';
+    document.getElementById('importStatus').textContent = 'Importing... please wait, do not close this page.';
+    document.getElementById('importBar').style.width = '50%';
+
+    fetch('{% url "admin_panel:pincode_import" %}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+        body: JSON.stringify({
+            log_id: currentLogId,
+            selected_states: [...selectedStates],
+            selected_districts: [...selectedDistricts],
+        }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('importBar').style.width = '100%';
+        const resultDiv = document.getElementById('importResult');
+        if (data.success) {
+            document.getElementById('importStatus').textContent = '✅ Import Complete!';
+            resultDiv.innerHTML = `
+                <div style="background:#dcfce7;color:#15803d;padding:12px;border-radius:10px;font-weight:600;">
+                    ✅ ${data.imported.toLocaleString()} imported &nbsp;|&nbsp; ⏭️ ${data.skipped.toLocaleString()} skipped &nbsp;|&nbsp; ❌ ${data.failed} failed
+                </div>
+                <button class="btn-pm btn-pm-secondary mt-2" onclick="location.reload()">Refresh Page</button>
+            `;
+        } else {
+            document.getElementById('importStatus').textContent = '❌ Import Failed';
+            resultDiv.innerHTML = `<div style="background:#fee2e2;color:#b91c1c;padding:12px;border-radius:10px;">${data.message}</div>`;
+        }
+    })
+    .catch(err => {
+        document.getElementById('importStatus').textContent = '❌ Error occurred.';
+        console.error(err);
+    });
+}
+</script>
+{% endblock %}

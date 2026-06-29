@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Agent Dashboard — PadosiAgent{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+    .dashboard-con {
+        font-family: 'Outfit', sans-serif;
+        background: radial-gradient(circle at 10% 20%, rgb(240, 247, 255) 0%, rgb(255, 255, 255) 90%);
+        padding: 80px 20px;
+        min-height: calc(100vh - 100px);
+        display: flex;
+        align-items: center;
+    }
+    .dashboard-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        border-radius: 24px;
+        box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05);
+        padding: 50px;
+        max-width: 700px;
+        margin: 0 auto;
+        width: 100%;
+        transition: transform 0.3s ease;
+    }
+    .dashboard-header {
+        border-bottom: 2px solid #f1f5f9;
+        padding-bottom: 24px;
+        margin-bottom: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .dashboard-header h2 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+    }
+    .status-badge {
+        background: #ecfdf5;
+        color: #0d9488;
+        border: 1px solid #a7f3d0;
+        padding: 6px 16px;
+        border-radius: 9999px;
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: capitalize;
+    }
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+        margin-bottom: 35px;
+    }
+    .info-item {
+        background: #f8fafc;
+        padding: 18px;
+        border-radius: 14px;
+        border: 1.5px solid #cbd5e1;
+    }
+    .info-item label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+        letter-spacing: 0.5px;
+    }
+    .info-item span {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1e293b;
+        word-break: break-all;
+    }
+    .actions-bar {
+        display: flex;
+        gap: 16px;
+    }
+    .btn-action-primary {
+        background: linear-gradient(135deg, #273c8e 0%, #1e2e6d 100%);
+        color: #ffffff;
+        border: none;
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none;
+        box-shadow: 0 10px 20px -5px rgba(39, 60, 142, 0.3);
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-action-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 15px 25px -5px rgba(39, 60, 142, 0.4);
+        color: #ffffff;
+        text-decoration: none;
+    }
+    .btn-action-danger {
+        background: #fef2f2;
+        color: #b91c1c;
+        border: 1.5px solid #fca5a5;
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-action-danger:hover {
+        background: #fee2e2;
+        color: #991b1b;
+        transform: translateY(-1px);
+        text-decoration: none;
+    }
+
+    @media (max-width: 640px) {
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+        .actions-bar {
+            flex-direction: column;
+        }
+        .btn-action-primary, .btn-action-danger {
+            width: 100%;
+            justify-content: center;
+        }
+        .dashboard-card {
+            padding: 30px 20px;
+        }
+        .dashboard-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-con">
+    <div class="container">
+        <div class="dashboard-card">
+            <div class="dashboard-header">
+                <div>
+                    <h2>Welcome to PadosiAgent Portal</h2>
+                    <p class="text-muted mb-0" style="font-size: 14px; margin-top: 4px;">Agent Control Center</p>
+                </div>
+                <span class="status-badge">
+                    <i class="fas fa-check-circle mr-1"></i>Active Agent
+                </span>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Full Name</label>
+                    <span>{{ agent.fullname }}</span>
+                </div>
+                <div class="info-item">
+                    <label>Email Address</label>
+                    <span>{{ agent.email }}</span>
+                </div>
+                <div class="info-item">
+                    <label>Mobile Number</label>
+                    <span>{{ agent.mobile }}</span>
+                </div>
+                <div class="info-item">
+                    <label>Assigned Pincode</label>
+                    <span>{{ agent.agent_pincode }}</span>
+                </div>
+            </div>
+
+            <div class="actions-bar">
+                <a href="/" class="btn-action-primary">
+                    <i class="fas fa-home"></i> Go to Homepage
+                </a>
+                <a href="{% url 'agents:agent_logout' %}" class="btn-action-danger">
+                    <i class="fas fa-sign-out-alt"></i> Log Out
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

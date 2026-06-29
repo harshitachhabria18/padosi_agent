@@ -1,0 +1,734 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ homepageContent.hero.headline|default:"Expert & Trusted Insurance Agent in your Padosi" }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/owl.carousel.min.css' %}">
+<link rel="stylesheet" href="{% static 'css/owl.theme.default.min.css' %}">
+<link rel="stylesheet" href="{% static 'css/magnific-popup.css' %}">
+<link rel="stylesheet" href="{% static 'css/aos.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="family_banner_outer home-page-banner position-relative" id="homebanner">
+    {% include 'components/hero-section.html' %}
+</div>
+
+<!-- Did You Know? Section -->
+{% if homepageContent.dyk.visible %}
+<section class="dyk-section py-5 bg-transparent" data-aos="fade-up">
+    <div class="container">
+        <div class="d-flex align-items-end justify-content-between mb-4 mb-sm-5">
+            <div>
+                <p class="dyk-subtitle">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:inline-block;vertical-align:middle;position:relative;top:-1px;"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+                    {{ homepageContent.dyk.label|default:"Did you know?" }}
+                </p>
+                <h2 class="dyk-title">{{ homepageContent.dyk.title|default:"Insights from the Padosi network" }}</h2>
+            </div>
+            <div class="d-none d-sm-flex align-items-center" style="gap: 8px;">
+                <button id="dyk-prev-btn" aria-label="Previous" class="dyk-nav-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <button id="dyk-next-btn" aria-label="Next" class="dyk-nav-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="dyk-slider-container" id="dyk-slider">
+            <div class="dyk-track" id="dyk-track">
+                {% for item in slides_zipped %}
+                <div class="dyk-slide">
+                    <div class="dyk-card {{ item.fact.accent|default:'accent-rose' }}">
+                        <div class="dyk-icon-wrap {{ item.fact.bg|default:'bg-rose-500' }}">
+                            {% include 'components/hero-icon.html' with name=item.fact.icon|default:'lightbulb' sw='2.2' %}
+                        </div>
+                        <h3 class="dyk-card-title">{{ item.fact.title }}</h3>
+                        <p class="dyk-card-body">{{ item.fact.body }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="slider-dots" id="dyk-dots"></div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Quick Picks Section -->
+{% if homepageContent.quickpicks.visible %}
+<section class="quick-picks-section py-4 bg-transparent" data-aos="fade-up">
+    <div class="qp-container">
+        <div class="d-flex align-items-end justify-content-between mb-4 mb-sm-5">
+            <div>
+                <p class="qp-subtitle">{{ homepageContent.quickpicks.label|default:"Quick picks" }}</p>
+                <h2 class="qp-title-heading">{{ homepageContent.quickpicks.title|default:"Also buy / renew shortcuts" }}</h2>
+            </div>
+            <a href="{{ homepageContent.quickpicks.view_all_url|default:'/find-agents?ServiceType=New%20Policy&openFilter=1' }}" class="d-none d-sm-inline qp-view-all">
+                {{ homepageContent.quickpicks.view_all_text|default:"View all products →" }}
+            </a>
+        </div>
+
+        <div class="qp-outer-wrapper no-scrollbar">
+            <div class="qp-grid">
+                {% for qpItem in homepageContent.quickpicks.items %}
+                <a href="{{ qpItem.url|default:'#' }}" class="qp-btn">
+                    {% if qpItem.badge %}
+                    <span class="qp-badge-pill" style="background-color:{{ qpItem.badge_bg|default:'#ffe4e6' }};color:{{ qpItem.badge_color|default:'#be123c' }};">{{ qpItem.badge }}</span>
+                    {% endif %}
+                    <div class="qp-icon-box" style="background-color:{{ qpItem.icon_bg|default:'#fff1f2' }};">
+                        <span style="color:{{ qpItem.icon_color|default:'#f43f5e' }}; width: 16px; height: 16px; display: inline-flex;">
+                            {% include 'components/hero-icon.html' with name=qpItem.icon|default:'heart' sw='2' %}
+                        </span>
+                    </div>
+                    <span class="qp-label">{{ qpItem.label }}</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="d-block d-sm-none text-center mt-3">
+            <a href="{{ homepageContent.quickpicks.view_all_url|default:'/find-agents?ServiceType=New%20Policy&openFilter=1' }}" class="qp-view-all">
+                {{ homepageContent.quickpicks.view_all_text|default:"View all products →" }}
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Why Choose PadosiAgent -->
+{% if homepageContent.why_choose.visible %}
+<section class="why-choose-section py-5 bg-transparent">
+    <div class="container">
+        <!-- Desktop Grid -->
+        <div class="d-none d-md-block">
+            <div class="row">
+                <div class="col-lg-4 mb-4 mb-lg-0 why-choose-left-col">
+                    <div class="why-choose-left-container">
+                        <div class="pb-decoration-circle-1"></div>
+                        <div class="pb-decoration-circle-2"></div>
+                        <div class="pb-decoration-dots"></div>
+                        <p class="section-subtitle-small">{{ homepageContent.why_choose.label|default:"Why PadosiAgent" }}</p>
+                        
+                        <h2 class="why-choose-pb-title">
+                            {% if homepageContent.why_choose.title == "What makes PadosiAgent one of India's most trusted ways to buy insurance?" %}
+                            <span class="pb-line"><span class="pb-light">What makes</span></span>
+                            <span class="pb-line"><span class="pb-bold">PadosiAgent</span> <span class="pb-light">one of</span></span>
+                            <span class="pb-line"><span class="pb-bold">India's most trusted</span></span>
+                            <span class="pb-line"><span class="pb-light">ways to</span> <span class="pb-bold">buy insurance?</span></span>
+                            {% else %}
+                            <span class="pb-bold">{{ homepageContent.why_choose.title }}</span>
+                            {% endif %}
+                        </h2>
+
+                        <p class="text-muted mb-4" style="max-width: 320px;">
+                            {{ homepageContent.why_choose.description }}
+                        </p>
+                        <div>
+                            <a href="{{ homepageContent.why_choose.button_url|default:'/find-agents?openFilter=1' }}" class="find-agent-btn text-decoration-none">
+                                {{ homepageContent.why_choose.button_text|default:"Find My PadosiAgent" }}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="ml-2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-8 why-choose-right-col">
+                    <div class="why-choose-scroll no-scrollbar">
+                        {% for item in why_cards_zipped %}
+                        <div class="why-card pb-why-card {{ item.accent.class }}" style="border-left: 4px solid {{ item.accent.color }} !important;">
+                            <div class="pb-card-icon-row">
+                                <div class="pb-card-icon" style="color: {{ item.accent.color }} !important; width: 22px; height: 22px; display: inline-flex;">
+                                    {% include 'components/hero-icon.html' with name=item.card.icon|default:'shield-check' sw='2.2' %}
+                                </div>
+                            </div>
+                            <h3 class="pb-card-title" style="color: {{ item.accent.color }} !important;">
+                                {{ item.card.stat }} {{ item.card.caption }}
+                            </h3>
+                            <h4 class="pb-card-subtitle">{{ item.card.title }}</h4>
+                            <p class="pb-card-body">{{ item.card.body }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile View -->
+        <div class="d-block d-md-none">
+            <div class="why-choose-scroll-mobile no-scrollbar">
+                <div class="why-mobile-header-card">
+                    <p class="section-subtitle-small mb-2" style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#0d9488; margin:0;">{{ homepageContent.why_choose.label|default:"Why PadosiAgent" }}</p>
+                    <h2 style="font-size:16px!important; font-weight:800!important; color:#1e3a8a!important; line-height:1.35!important; font-family:'Urbanist', sans-serif!important; margin:0!important;">
+                        What makes PadosiAgent one of India's most trusted ways to buy insurance?
+                    </h2>
+                </div>
+
+                {% for item in why_cards_zipped %}
+                <div class="why-card-mobile pb-why-card-mobile" style="border-left: 4px solid {{ item.accent.color }} !important;">
+                    <div class="why-mobile-stat-row">
+                        <div class="pb-mobile-title" style="color: {{ item.accent.color }} !important;">
+                            {{ item.card.stat }} {{ item.card.caption }}
+                        </div>
+                        <div class="pb-mobile-icon" style="color: {{ item.accent.color }} !important; width:16px; height:16px; display:inline-flex;">
+                            {% include 'components/hero-icon.html' with name=item.card.icon|default:'shield-check' sw='2.2' %}
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="why-mobile-subtitle">{{ item.card.title }}</h3>
+                        <p class="why-mobile-body-text">{{ item.card.body }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="text-center px-3 mb-2">
+                <p class="why-mobile-description">{{ homepageContent.why_choose.description }}</p>
+            </div>
+            <div class="text-center mt-3">
+                <a href="{{ homepageContent.why_choose.button_url|default:'/find-agents?openFilter=1' }}" class="find-agent-btn text-decoration-none">
+                    {{ homepageContent.why_choose.button_text|default:"Find My PadosiAgent" }}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="ml-2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- How It Works Section (4 Steps) -->
+{% if homepageContent.works.visible %}
+<section class="how-works-section py-5 bg-transparent overflow-hidden" data-aos="fade-up">
+    <div class="container">
+        <div class="text-center mb-5">
+            <p class="section-subtitle-small">{{ homepageContent.works.label|default:"How It Works" }}</p>
+            <h2 class="font-weight-bold mb-2 text-dark" style="font-size:1.75rem; letter-spacing:-0.02em;">{{ homepageContent.works.title|default:"Find My PadosiAgent in 4 Simple Steps" }}</h2>
+            <p class="text-muted" style="font-size:15px;">{{ homepageContent.works.subtitle|default:"From search to service - it takes just minutes for you" }}</p>
+        </div>
+
+        <!-- Desktop View -->
+        <div class="d-none d-md-block mb-4">
+            <div class="row no-gutters justify-content-center">
+                {% for step in homepageContent.works.steps %}
+                <div class="col-md-3">
+                    <div class="step-card-desktop text-center px-3">
+                        <div class="step-icon-wrapper-container mb-4">
+                            <div class="step-icon-wrap {{ step.accent|default:'accent-primary' }}" data-toggle="tooltip" data-placement="top" title="{{ step.tooltip }}">
+                                <span style="width: 32px; height: 32px; display: inline-flex;">
+                                    {% include 'components/hero-icon.html' with name=step.icon|default:'search' sw='1.8' %}
+                                </span>
+                            </div>
+                            <span class="step-badge {{ step.accent|default:'accent-primary' }}">{{ step.badge|default:forloop.counter }}</span>
+                            {% if not forloop.last %}
+                            <div class="step-connector">
+                                <div class="step-connector-line"></div>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="step-connector-arrow"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <h3 class="step-title">{{ step.title }}</h3>
+                        <p class="step-desc">{{ step.desc }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Mobile View -->
+        <div class="d-block d-md-none mb-4">
+            <div class="step-grid-mobile">
+                {% for step in homepageContent.works.steps %}
+                <div class="step-card-grid-mobile">
+                    <div class="step-icon-wrapper-container-mobile">
+                        <div class="step-icon-wrap {{ step.accent|default:'accent-primary' }}" data-toggle="tooltip" data-placement="top" title="{{ step.tooltip }}">
+                            <span style="width: 24px; height: 24px; display: inline-flex;">
+                                {% include 'components/hero-icon.html' with name=step.icon|default:'search' sw='1.8' %}
+                            </span>
+                        </div>
+                        <span class="step-badge {{ step.accent|default:'accent-primary' }}">{{ step.badge|default:forloop.counter }}</span>
+                    </div>
+                    <h3 class="step-title">{{ step.title }}</h3>
+                    <p class="step-desc">{{ step.desc }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="text-center mt-5">
+            <a href="{{ homepageContent.works.button_url|default:'/find-agents?openFilter=1' }}" class="find-agent-btn-steps text-decoration-none">
+                {{ homepageContent.works.button_text|default:"Find Agent" }}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="ml-2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Testimonials Section -->
+{% if homepageContent.testimonials.visible %}
+<section class="testimonials-slider-section py-5 bg-transparent overflow-hidden" data-aos="fade-up">
+    <div class="container">
+        <div class="text-center mb-5">
+            <p class="section-subtitle-small">{{ homepageContent.testimonials.label|default:"Testimonials" }}</p>
+            <h2 class="font-weight-bold mb-2 text-dark" style="font-size: 1.75rem; letter-spacing:-0.02em;">{{ homepageContent.testimonials.title|default:"What Users Say About Their PadosiAgent" }}</h2>
+            <p class="text-muted" style="font-size: 15px;">{{ homepageContent.testimonials.subtitle|default:"Real experiences from users who found their PadosiAgent" }}</p>
+        </div>
+
+        <div class="review-scroll-container no-scrollbar" id="review-slider">
+            <!-- Infinite reviews track list built by JavaScript -->
+        </div>
+
+        <div class="slider-dots" id="review-dots"></div>
+    </div>
+</section>
+{% endif %}
+
+<script>
+    var slideColorClasses = ['slide-new-policy', 'slide-claim', 'slide-review'];
+
+    function updateBannerColors(index) {
+        var $bannerContainer = $('#homebanner');
+        var $heading = $('.banner-top-title');
+        var $pills = $('.banner-top-text-block');
+
+        var headingHtml = $heading.html();
+        if (headingHtml && headingHtml.indexOf('class="trusted"') === -1) {
+            headingHtml = headingHtml.replace(/(Trusted &amp; Verified|Trusted & Verified)/g, '<span class="trusted">$1</span>');
+            headingHtml = headingHtml.replace(/(Neighbourhood)/g, '<span class="padosi">$1</span>');
+            $heading.html(headingHtml);
+        }
+
+        var $activeWrap = $('.banner-slider .owl-item.active');
+        var slideClass = 'slide-new-policy';
+
+        if ($activeWrap.length) {
+            var $inner = $activeWrap.find('.item > div');
+            if ($inner.hasClass('claim-assistance-banner-outer')) {
+                slideClass = 'slide-claim';
+            } else if ($inner.hasClass('policy-review-banner-outer')) {
+                slideClass = 'slide-review';
+            }
+        }
+
+        $bannerContainer.removeClass(slideColorClasses.join(' ')).addClass(slideClass);
+        $heading.removeClass(slideColorClasses.join(' ') + ' animate-pop').addClass(slideClass);
+        $pills.removeClass(slideColorClasses.join(' ')).addClass(slideClass);
+        
+        void $heading[0].offsetWidth; // trigger reflow
+        $heading.addClass('animate-pop');
+
+        $('.owl-dots').removeClass(slideColorClasses.join(' ')).addClass(slideClass);
+    }
+
+    var bannerAutoplayTimeout = null;
+    function initHomeSliders() {
+        try {
+            if (typeof $ === 'undefined') return;
+            if ($('.banner-slider').length === 0 && $('#testimonialcarousel').length === 0) return;
+
+            if (!$.fn.owlCarousel) return;
+
+            $('.owl-carousel').each(function() {
+                if ($(this).data('owl.carousel')) {
+                    $(this).owlCarousel('destroy');
+                }
+            });
+
+            $('.banner-slider').owlCarousel({
+                items: 1,
+                margin: 0,
+                loop: true,
+                nav: true,
+                dots: false,
+                autoplay: true,
+                autoplayTimeout: 3000,
+                autoplayHoverPause: true,
+                smartSpeed: 800,
+                animateOut: 'fadeOut',
+                navText: ['<i class="fa fa-arrow-left"></i>', '<i class="fa fa-arrow-right"></i>'],
+                onInitialized: function(event) {
+                    updateBannerColors(event.item.index);
+                },
+                onTranslated: function(event) {
+                    updateBannerColors(event.item.index);
+                },
+                onDrag: function() {
+                    if (bannerAutoplayTimeout) clearTimeout(bannerAutoplayTimeout);
+                    $('.banner-slider').trigger('stop.owl.autoplay');
+                },
+                onDragged: function() {
+                    if (bannerAutoplayTimeout) clearTimeout(bannerAutoplayTimeout);
+                    bannerAutoplayTimeout = setTimeout(function() {
+                        $('.banner-slider').trigger('play.owl.autoplay', [3000]);
+                    }, 2000);
+                }
+            });
+
+            if ($.fn.carousel) {
+                $('#testimonialcarousel').carousel();
+            }
+
+            initTooltips();
+        } catch (err) {
+            console.error('Error in initHomeSliders:', err);
+        }
+    }
+
+    function initTooltips() {
+        if (typeof $ !== 'undefined' && $.fn.tooltip) {
+            $('[data-toggle="tooltip"]').tooltip('dispose');
+            $('[data-toggle="tooltip"]').tooltip({
+                trigger: 'click hover focus'
+            });
+
+            $('[data-toggle="tooltip"]').on('show.bs.tooltip', function () {
+               $('[data-toggle="tooltip"]').not(this).tooltip('hide');
+            });
+
+            $('body').on('click', function (e) {
+                if ($(e.target).data('toggle') !== 'tooltip' && $(e.target).parents('[data-toggle="tooltip"]').length === 0) {
+                    $('[data-toggle="tooltip"]').tooltip('hide');
+                }
+            });
+        }
+    }
+
+    window.addEventListener('beforeunload', function() {
+        if (typeof $ !== 'undefined') {
+            $('.tooltip').remove();
+        }
+    });
+
+    document.addEventListener('htmx:beforeRequest', function() {
+        if (typeof $ !== 'undefined') {
+            $('.tooltip').remove();
+        }
+    });
+
+    $(document).ready(function() {
+        initHomeSliders();
+        initTooltips();
+        initNewHomepageFeatures();
+    });
+    initHomeSliders();
+    initTooltips();
+    initNewHomepageFeatures();
+
+    if (typeof window.homeHtmxListenersAdded === 'undefined') {
+        document.addEventListener('htmx:afterSettle', function() {
+            if (typeof initHomeSliders === 'function') initHomeSliders();
+            if (typeof initTooltips === 'function') initTooltips();
+            if (typeof initNewHomepageFeatures === 'function') initNewHomepageFeatures();
+            if (typeof AOS !== 'undefined') AOS.refresh();
+            setTimeout(function() {
+                window.dispatchEvent(new Event('resize'));
+            }, 100);
+        });
+        window.homeHtmxListenersAdded = true;
+    }
+
+    function initNewHomepageFeatures() {
+        try {
+            // ── Inside Dynamic Did You Know? slider setup ──
+            (function() {
+                var slider = document.getElementById('dyk-slider');
+                var track = document.getElementById('dyk-track');
+                var dotsWrap = document.getElementById('dyk-dots');
+                var prevBtn = document.getElementById('dyk-prev-btn');
+                var nextBtn = document.getElementById('dyk-next-btn');
+
+                if (!slider || !track || !dotsWrap) return;
+                if (slider._dykDestroy) slider._dykDestroy();
+
+                var slides = Array.from(track.children);
+                var total = slides.length;
+                if (total === 0) return;
+
+                var currentIdx = 0;
+                var cardsPerView = window.innerWidth >= 992 ? 3 : (window.innerWidth >= 640 ? 2 : 1);
+                var maxIdx = Math.max(0, total - cardsPerView);
+
+                // Build Dots
+                dotsWrap.innerHTML = '';
+                var dotCount = maxIdx + 1;
+                for (var i = 0; i < dotCount; i++) {
+                    (function(index) {
+                        var dot = document.createElement('button');
+                        dot.className = index === 0 ? 'active' : '';
+                        dot.type = 'button';
+                        dot.setAttribute('aria-label', 'Go to slide ' + (index + 1));
+                        dot.addEventListener('click', function() {
+                            jumpTo(index, true);
+                        });
+                        dotsWrap.appendChild(dot);
+                    })(i);
+                }
+
+                function getSlideWidth() {
+                    return slides[0].offsetWidth;
+                }
+
+                function jumpTo(index, animate) {
+                    currentIdx = Math.max(0, Math.min(index, maxIdx));
+                    var width = getSlideWidth();
+                    var gap = 20;
+                    var offset = currentIdx * (width + gap);
+
+                    track.style.transition = animate ? 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none';
+                    track.style.transform = 'translate3d(-' + offset + 'px, 0, 0)';
+
+                    var dots = dotsWrap.querySelectorAll('button');
+                    dots.forEach(function(d, i) {
+                        d.classList.toggle('active', i === currentIdx);
+                    });
+                }
+
+                if (prevBtn) {
+                    prevBtn.addEventListener('click', function() {
+                        jumpTo(currentIdx - 1, true);
+                    });
+                }
+                if (nextBtn) {
+                    nextBtn.addEventListener('click', function() {
+                        jumpTo(currentIdx + 1, true);
+                    });
+                }
+
+                // Autoplay
+                var autoplayTimer = null;
+                var direction = 1;
+                function startAutoplay() {
+                    autoplayTimer = setInterval(function() {
+                        if (currentIdx === maxIdx) direction = -1;
+                        else if (currentIdx === 0) direction = 1;
+                        jumpTo(currentIdx + direction, true);
+                    }, 5000);
+                }
+                startAutoplay();
+
+                slider.addEventListener('mouseenter', function() { clearInterval(autoplayTimer); });
+                slider.addEventListener('mouseleave', startAutoplay);
+
+                var resizeTimer;
+                window.addEventListener('resize', function() {
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(function() {
+                        cardsPerView = window.innerWidth >= 992 ? 3 : (window.innerWidth >= 640 ? 2 : 1);
+                        maxIdx = Math.max(0, total - cardsPerView);
+                        jumpTo(currentIdx, false);
+                    }, 200);
+                });
+
+                slider._dykDestroy = function() {
+                    clearInterval(autoplayTimer);
+                    slider._dykDestroy = null;
+                };
+            })();
+
+            // ── Testimonials JavaScript ──
+            (function() {
+                var slider = document.getElementById('review-slider');
+                var dotsWrap = document.getElementById('review-dots');
+                if (!slider || !dotsWrap) return;
+                if (slider._reviewDestroy) slider._reviewDestroy();
+
+                var reviewsData = {{ reviews_json|safe }};
+                var total = reviewsData.length;
+
+                function renderStars(rating) {
+                    var full = Math.floor(rating);
+                    var partial = rating - full;
+                    var empty = 5 - Math.ceil(rating);
+                    var html = '<div class="review-stars">';
+                    for (var i = 0; i < full; i++) {
+                        html += '<svg class="fill-amber-400 text-amber-400" style="width:13px;height:13px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+                    }
+                    if (partial > 0) {
+                        html += '<div style="position:relative;display:inline-block;width:13px;height:13px;">' +
+                                '<svg class="text-amber-400/40" style="position:absolute;width:13px;height:13px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' +
+                                '<div style="position:absolute;overflow:hidden;width:' + (partial * 100) + '%;height:13px;">' +
+                                '<svg class="fill-amber-400 text-amber-400" style="width:13px;height:13px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' +
+                                '</div>' +
+                                '</div>';
+                    }
+                    for (var i = 0; i < empty; i++) {
+                        html += '<svg class="text-amber-400/40" style="width:13px;height:13px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+                    }
+                    html += '</div>';
+                    return html;
+                }
+
+                var doubleReviews = reviewsData.concat(reviewsData);
+                var htmlContent = '';
+                doubleReviews.forEach(function(review) {
+                    var serviceHtml = review.agent_url 
+                        ? 'Client of <a href="' + review.agent_url + '" class="review-agent-link">' + review.service.replace('Client of ', '') + '</a>'
+                        : review.service;
+
+                    htmlContent += '<div class="review-card-wrapper">' +
+                                    '<div class="review-card">' +
+                                    '<div class="review-user-row">' +
+                                    '<img src="' + review.image + '" alt="' + review.name + '" class="review-avatar" />' +
+                                    '<div class="flex-1 min-w-0" style="margin-left: 12px;">' +
+                                    '<h4 class="review-name">' + review.name + '</h4>' +
+                                    '<p class="review-service">' + serviceHtml + '</p>' +
+                                    '</div>' +
+                                    '<span class="review-quote-icon">“</span>' +
+                                    '</div>' +
+                                    renderStars(review.rating) +
+                                    '<p class="review-comment">"' + review.comment + '"</p>' +
+                                    '</div>' +
+                                    '</div>';
+                });
+                slider.innerHTML = htmlContent;
+
+                dotsWrap.innerHTML = '';
+                reviewsData.forEach(function(_, idx) {
+                    var dot = document.createElement('button');
+                    dot.type = 'button';
+                    dot.setAttribute('aria-label', 'Go to review ' + (idx + 1));
+                    dot.className = idx === 0 ? 'active' : '';
+                    dot.addEventListener('click', function() {
+                        scrollToIndex(idx);
+                    });
+                    dotsWrap.appendChild(dot);
+                });
+
+                var activeIndex = 0;
+                var isPaused = false;
+                var speed = 0.8;
+                var raf;
+
+                function updateDots(idx) {
+                    activeIndex = idx;
+                    var dots = dotsWrap.querySelectorAll('button');
+                    dots.forEach(function(d, i) {
+                        d.classList.toggle('active', i === activeIndex);
+                    });
+                }
+
+                function scrollToIndex(index) {
+                    var cardWrapper = slider.querySelector('.review-card-wrapper');
+                    var cardWidth = cardWrapper ? cardWrapper.offsetWidth : 320;
+                    var gap = 16;
+                    slider.scrollLeft = index * (cardWidth + gap);
+                    updateDots(index);
+                }
+
+                function scrollAnimate() {
+                    if (!isPaused) {
+                        slider.scrollLeft += speed;
+                        if (slider.scrollLeft >= slider.scrollWidth / 2) {
+                            slider.scrollLeft = 0;
+                        }
+                        var cardWrapper = slider.querySelector('.review-card-wrapper');
+                        var cardWidth = cardWrapper ? cardWrapper.offsetWidth : 320;
+                        var gap = 16;
+                        var idx = Math.round(slider.scrollLeft / (cardWidth + gap)) % total;
+                        if (idx !== activeIndex) {
+                            updateDots(idx);
+                        }
+                    }
+                    raf = requestAnimationFrame(scrollAnimate);
+                }
+
+                slider.addEventListener('mouseenter', function() { isPaused = true; });
+                slider.addEventListener('mouseleave', function() { isPaused = false; });
+                slider.addEventListener('touchstart', function() { isPaused = true; }, { passive: true });
+                slider.addEventListener('touchend', function() { isPaused = false; });
+
+                raf = requestAnimationFrame(scrollAnimate);
+
+                var resizeTimer;
+                window.addEventListener('resize', function() {
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(function() {
+                        scrollToIndex(activeIndex);
+                    }, 200);
+                });
+
+                slider._reviewDestroy = function() {
+                    cancelAnimationFrame(raf);
+                    dotsWrap.innerHTML = '';
+                    slider.innerHTML = '';
+                    slider._reviewDestroy = null;
+                };
+            })();
+
+            // ── Scroll Pinning for "Why Choose" ──
+            (function() {
+                var leftCol = document.querySelector('.why-choose-left-col');
+                var leftContainer = document.querySelector('.why-choose-left-container');
+                var rightCol = document.querySelector('.why-choose-right-col');
+                
+                if (!leftCol || !leftContainer || !rightCol) return;
+
+                var topOffset = 120;
+
+                function updatePinning() {
+                    if (window.innerWidth < 992) {
+                        leftCol.style.position = '';
+                        leftContainer.style.position = '';
+                        leftContainer.style.top = '';
+                        leftContainer.style.bottom = '';
+                        leftContainer.style.left = '';
+                        leftContainer.style.width = '';
+                        leftContainer.style.transform = '';
+                        return;
+                    }
+
+                    leftCol.style.position = 'relative';
+                    var rect = leftCol.getBoundingClientRect();
+                    var containerHeight = leftContainer.offsetHeight;
+                    var leftColHeight = leftCol.offsetHeight;
+                    var travelDistance = leftColHeight - containerHeight;
+
+                    if (travelDistance <= 0) {
+                        leftContainer.style.position = 'relative';
+                        leftContainer.style.top = '0px';
+                        leftContainer.style.bottom = 'auto';
+                        leftContainer.style.left = '0px';
+                        leftContainer.style.width = '100%';
+                        return;
+                    }
+
+                    var scrollTop = window.scrollY;
+                    var leftColPageTop = rect.top + scrollTop;
+                    var startPin = leftColPageTop - topOffset;
+                    var endPin = leftColPageTop + travelDistance - topOffset;
+
+                    if (scrollTop < startPin) {
+                        leftContainer.style.position = 'absolute';
+                        leftContainer.style.top = '0px';
+                        leftContainer.style.left = '0px';
+                        leftContainer.style.width = '100%';
+                    } else if (scrollTop >= startPin && scrollTop <= endPin) {
+                        leftContainer.style.position = 'fixed';
+                        leftContainer.style.top = topOffset + 'px';
+                        leftContainer.style.left = rect.left + 'px';
+                        leftContainer.style.width = rect.width + 'px';
+                    } else {
+                        leftContainer.style.position = 'absolute';
+                        leftContainer.style.top = travelDistance + 'px';
+                        leftContainer.style.left = '0px';
+                        leftContainer.style.width = '100%';
+                    }
+                }
+
+                window.addEventListener('scroll', updatePinning, { passive: true });
+                window.addEventListener('resize', updatePinning);
+
+                if (window.whyChooseCleanup) window.whyChooseCleanup();
+                window.whyChooseCleanup = function() {
+                    window.removeEventListener('scroll', updatePinning);
+                    window.removeEventListener('resize', updatePinning);
+                };
+            })();
+
+        } catch (e) {
+            console.error("Error in initNewHomepageFeatures:", e);
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,686 @@
+{% extends 'admin/layout.html' %}
+{% load static %}
+
+{% block title %}Pending Approvals — PadosiAgent Admin{% endblock %}
+{% block breadcrumb %}Agent Management &rsaquo; Approvals{% endblock %}
+
+{% block extra_css %}
+<style>
+    .wait-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 3px 10px; border-radius: 20px;
+        font-size: 11px; font-weight: 600;
+    }
+    .wait-urgent   { background: #fee2e2; color: #991b1b; }
+    .wait-medium   { background: #fef3c7; color: #92400e; }
+    .wait-fresh    { background: #dcfce7; color: #15803d; }
+
+    .sort-btn { padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; border: 1px solid var(--border-color); color: var(--text-muted); background: var(--bg-card); text-decoration: none; transition: all 0.15s; }
+    .sort-btn.active, .sort-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    .agent-row { transition: background 0.15s; }
+    .agent-row:hover { background: var(--menu-hover-bg) !important; }
+
+    .step-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-muted); }
+
+    .stat-mini { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 16px 20px; display: flex; align-items: center; gap: 12px; }
+    .stat-mini-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .stat-mini-val { font-size: 22px; font-weight: 800; color: var(--text-primary); line-height: 1; }
+    .stat-mini-lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.04em; margin-top: 3px; }
+
+    .timeline-dot {
+        width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 5px;
+    }
+    .agent-photo { width: 42px; height: 42px; border-radius: 12px; object-fit: cover; border: 2px solid var(--border-color); flex-shrink: 0; }
+    .agent-initials { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; color: white; flex-shrink: 0; background: linear-gradient(135deg, var(--primary), #3b82f6); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# Stat Cards #}
+<div class="row g-3 mb-4">
+    <div class="col-sm-4">
+        <div class="stat-mini">
+            <div class="stat-mini-icon" style="background: #fef3c7;">
+                <i class="fa-solid fa-hourglass-half" style="color: #d97706;"></i>
+            </div>
+            <div>
+                <div class="stat-mini-val">{{ totalPending }}</div>
+                <div class="stat-mini-lbl">Pending Approvals</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="stat-mini">
+            <div class="stat-mini-icon" style="background: #fee2e2;">
+                <i class="fa-solid fa-triangle-exclamation" style="color: #dc2626;"></i>
+            </div>
+            <div>
+                <div class="stat-mini-val" style="color: #dc2626;">{{ urgentCount }}</div>
+                <div class="stat-mini-lbl">Waiting 48h+ (Urgent)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="stat-mini">
+            <div class="stat-mini-icon" style="background: #dbeafe;">
+                <i class="fa-solid fa-clock" style="color: #2563eb;"></i>
+            </div>
+            <div>
+                <div class="stat-mini-val">{% if avgWaitHours > 0 %}{{ avgWaitHours|floatformat:0 }}h{% else %}—{% endif %}</div>
+                <div class="stat-mini-lbl">Avg. Waiting Time</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Header + Sort Controls #}
+<div class="card border-0 shadow-sm" style="border-top: 3px solid var(--primary);">
+    <div class="card-header py-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h6 class="m-0 fw-bold"><i class="fa-solid fa-user-clock me-2" style="color:var(--primary);"></i>Awaiting Verification</h6>
+                <span style="font-size: 12px; color: var(--text-muted);">Agents listed in time order. Oldest waiting shown first in "Longest Wait" mode.</span>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                {# Sort buttons #}
+                <div class="d-flex gap-1">
+                    <a href="?sort=newest{% if search %}&search={{ search }}{% endif %}{% if eventFilter %}&event_id={{ eventFilter }}{% endif %}" class="sort-btn {% if sortBy == 'newest' %}active{% endif %}">
+                        <i class="fa-solid fa-arrow-down me-1"></i>Newest
+                    </a>
+                    <a href="?sort=oldest{% if search %}&search={{ search }}{% endif %}{% if eventFilter %}&event_id={{ eventFilter }}{% endif %}" class="sort-btn {% if sortBy == 'oldest' %}active{% endif %}">
+                        <i class="fa-solid fa-arrow-up me-1"></i>Oldest
+                    </a>
+                    <a href="?sort=waiting{% if search %}&search={{ search }}{% endif %}{% if eventFilter %}&event_id={{ eventFilter }}{% endif %}" class="sort-btn {% if sortBy == 'waiting' %}active{% endif %}">
+                        <i class="fa-solid fa-hourglass me-1"></i>Longest Wait
+                    </a>
+                </div>
+
+                {# Search #}
+                <form method="GET" action="{% url 'admin_panel:approvals' %}" class="d-flex gap-1 align-items-center">
+                    <input type="hidden" name="sort" value="{{ sortBy }}">
+                    
+                    {# Event Filter Dropdown #}
+                    <select name="event_id" onchange="this.form.submit()" class="form-select form-select-sm" style="width: 180px; border-radius: 8px; font-size: 12px; height: 31px; padding: 4px 8px;">
+                        <option value="All Events" {% if eventFilter == 'All Events' %}selected{% endif %}>All Events</option>
+                        {% for event in events %}
+                            <option value="{{ event.id }}" {% if eventFilter == event.id|stringformat:"s" %}selected{% endif %}>
+                                {{ event.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <input type="text" name="search" value="{{ search }}" placeholder="Search agent…"
+                        class="form-control form-control-sm" style="width: 180px; border-radius: 8px; font-size: 12px; height: 31px;">
+                    <button type="submit" class="btn btn-sm btn-primary" style="border-radius: 8px; height: 31px; padding: 0 10px;">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </form>
+
+                <button class="btn btn-sm btn-light border" onclick="window.location.reload()" style="border-radius: 8px; font-size: 12px;">
+                    <i class="fa-solid fa-rotate me-1"></i>Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {# Bulk Actions Bar #}
+    <form method="POST" action="{% url 'admin_panel:advanced_bulk_agents' %}" id="bulkForm">
+        {% csrf_token %}
+        <div class="px-4 py-2 d-flex justify-content-between align-items-center" style="background: var(--bg-body); border-bottom: 1px solid var(--border-color);">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="selectAll">
+                <label class="form-check-label" for="selectAll" style="font-size: 12px; font-weight: 600; color: var(--text-muted);">
+                    Select All
+                </label>
+            </div>
+            <div class="d-flex gap-2">
+                <input type="hidden" name="action" value="approve">
+                <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Bulk approve selected agents?')"
+                    style="font-size: 12px; border-radius: 8px; padding: 5px 14px;">
+                    <i class="fa-solid fa-check me-1"></i>Approve Selected
+                </button>
+            </div>
+        </div>
+
+        {# Agent Table #}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width:40px; padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color);"></th>
+                        <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color);">Agent</th>
+                        <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color);">⏱ Registered</th>
+                        <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color);">⌛ Waiting</th>
+                        <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color);">Location</th>
+                        <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color);">Plan</th>
+                        <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color);">Badges</th>
+                        <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color); text-align:right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for agent in agents %}
+                    <tr class="agent-row">
+                        {# Checkbox #}
+                        <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
+                            <input class="form-check-input row-chk" type="checkbox" name="agent_ids[]" value="{{ agent.id }}">
+                        </td>
+
+                        {# Agent Info #}
+                        <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
+                            <div class="d-flex align-items-center gap-3">
+                                {% if agent.photo_path %}
+                                    <img src="{{ agent.photo_url }}" class="agent-photo" alt="{{ agent.display_name }}">
+                                {% else %}
+                                    <div class="agent-initials">{{ agent.display_name|slice:":1"|upper }}</div>
+                                {% endif %}
+                                <div>
+                                    <div class="fw-bold" style="font-size:14px; color:var(--text-primary);">{{ agent.display_name }}</div>
+                                    <div style="font-size:11px; color:var(--text-muted);">{{ agent.email }}</div>
+                                    {% if agent.mobile %}
+                                    <div style="font-size:11px; color:var(--text-muted);">
+                                        <i class="fa-solid fa-phone me-1" style="font-size:9px;"></i>{{ agent.mobile }}
+                                    </div>
+                                    {% endif %}
+                                    <div class="mt-1">
+                                        <span class="step-badge">
+                                            <i class="fa-solid fa-list-check"></i>
+                                            Step {{ agent.registration_step|default:"?" }}/5
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+
+                        {# Registered Date #}
+                        <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
+                            <div class="fw-semibold" style="font-size:13px; color:var(--text-primary);">
+                                {{ agent.created_at|date:"d M Y" }}
+                            </div>
+                            <div style="font-size:11px; color:var(--text-muted);">
+                                {{ agent.created_at|date:"h:i A" }}
+                            </div>
+                            <div style="font-size:10px; color:var(--text-label); margin-top:2px;">
+                                {{ agent.created_at|timesince }} ago
+                            </div>
+                        </td>
+
+                        {# Waiting Time #}
+                        <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
+                            <span class="wait-badge {{ agent.wait_class }}">
+                                <i class="fa-solid {{ agent.wait_icon }}" style="font-size:9px;"></i>
+                                {{ agent.wait_text }}
+                            </span>
+                        </td>
+
+                        {# Location #}
+                        <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
+                            {% if agent.agent_address %}
+                                <div style="font-size:13px; color:var(--text-primary);">
+                                    <i class="fa-solid fa-location-dot me-1" style="color:var(--primary); font-size:11px;"></i>
+                                    {{ agent.agent_address|truncatechars:28 }}
+                                </div>
+                            {% else %}
+                                <span style="font-size:12px; color:var(--text-muted);">Not provided</span>
+                            {% endif %}
+                        </td>
+
+                        {# Plan #}
+                        <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
+                            {% if agent.plan_name %}
+                                <span class="{% if agent.is_pro %}badge bg-primary{% else %}badge bg-secondary{% endif %}" style="font-size:10px; border-radius:6px;">
+                                    {% if agent.is_pro %}Professional{% else %}Starter{% endif %}
+                                </span>
+                            {% else %}
+                                <span style="font-size:12px; color:var(--text-muted);">N/A</span>
+                            {% endif %}
+                        </td>
+
+                        {# Badges #}
+                        <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-light border dropdown-toggle" type="button" data-toggle="dropdown"
+                                    style="font-size:11px; border-radius:8px; color:var(--text-primary);" id="badge-btn-approval-{{ agent.id }}">
+                                    <i class="fa-solid fa-medal me-1" style="color:#f59e0b;"></i>
+                                    {{ agent.badge_list|length }} Badge{% if agent.badge_list|length != 1 %}s{% endif %}
+                                </button>
+                                <div class="dropdown-menu p-3 shadow" style="min-width:170px; border-radius:12px; border:1px solid var(--border-color);">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input agent-badge-chk-{{ agent.id }}" type="checkbox"
+                                            value="verified" id="chk-verified-{{ agent.id }}"
+                                            {% if 'verified' in agent.badge_names %}checked{% endif %}
+                                            onchange="collectAndUpdateBadges({{ agent.id }})" style="cursor:pointer;">
+                                        <label class="form-check-label ms-1" for="chk-verified-{{ agent.id }}"
+                                            style="font-size:12px; cursor:pointer; color:var(--text-primary);">✅ Verified</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input agent-badge-chk-{{ agent.id }}" type="checkbox"
+                                            value="irdai" id="chk-irdai-{{ agent.id }}"
+                                            {% if 'irdai' in agent.badge_names %}checked{% endif %}
+                                            onchange="collectAndUpdateBadges({{ agent.id }})" style="cursor:pointer;">
+                                        <label class="form-check-label ms-1" for="chk-irdai-{{ agent.id }}"
+                                            style="font-size:12px; cursor:pointer; color:var(--text-primary);">🏛 Licensed</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input agent-badge-chk-{{ agent.id }}" type="checkbox"
+                                            value="trusted" id="chk-trusted-{{ agent.id }}"
+                                            {% if 'trusted' in agent.badge_names %}checked{% endif %}
+                                            onchange="collectAndUpdateBadges({{ agent.id }})" style="cursor:pointer;">
+                                        <label class="form-check-label ms-1" for="chk-trusted-{{ agent.id }}"
+                                            style="font-size:12px; cursor:pointer; color:var(--text-primary);">⭐ Trusted</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+
+                        {# Actions #}
+                        <td style="padding:14px 16px; border-bottom:1px solid var(--border-light); text-align:right;">
+                            <div class="d-flex gap-2 justify-content-end flex-wrap">
+                                <button type="button"
+                                    onclick="openChangesDrawer({{ agent.id }}, '{{ agent.display_name|escapejs }}')"
+                                    class="btn btn-sm" style="font-size:11px; border-radius:8px; padding:5px 12px;
+                                    background:#eff6ff;color:#1d4ed8;border:1.5px solid #bfdbfe;font-weight:600;"
+                                    title="See what the agent changed">
+                                    <i class="fa-solid fa-clock-rotate-left me-1"></i>Changes
+                                </button>
+                                <a href="/admin/agents/{{ agent.id }}/edit-full-profile/"
+                                    class="btn btn-sm btn-light border" style="font-size:12px; border-radius:8px;"
+                                    title="Review Full Profile">
+                                    <i class="fa-solid fa-file-invoice text-muted me-1"></i>Review
+                                </a>
+                                <button type="button" onclick="approveAgent({{ agent.id }}, this)"
+                                    class="btn btn-sm btn-success" data-agent-id="{{ agent.id }}"
+                                    style="font-size:12px; border-radius:8px; padding:5px 14px;">
+                                    <i class="fa-solid fa-check me-1"></i>Approve
+                                </button>
+                                <button type="button" onclick="rejectAgent({{ agent.id }}, this)"
+                                    class="btn btn-sm btn-outline-danger" data-agent-id="{{ agent.id }}"
+                                    style="font-size:12px; border-radius:8px; padding:5px 10px;" title="Reject/Suspend">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <i class="fa-solid fa-circle-check fa-3x mb-3 opacity-25" style="color: var(--primary);"></i>
+                            <h6 class="fw-bold" style="color: var(--text-muted);">All Clear! No Pending Approvals</h6>
+                            <p style="font-size: 13px; color: var(--text-muted);">New registrations will appear here for review.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </form>
+</div>
+
+{# ═══════════════ PROFILE CHANGES DRAWER ═══════════════ #}
+<div id="changes-overlay" onclick="closeChangesDrawer()" style="
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,.45);
+    z-index:1050; transition:opacity .25s;"></div>
+
+<div id="changes-drawer" style="
+    position:fixed; top:0; right:0; width:min(640px,100vw); height:100vh;
+    background:#fff; z-index:1051; box-shadow:-8px 0 40px rgba(0,0,0,.18);
+    transform:translateX(100%); transition:transform .3s cubic-bezier(.4,0,.2,1);
+    display:flex; flex-direction:column; overflow:hidden;">
+
+    {# Drawer header #}
+    <div style="padding:20px 24px; border-bottom:1px solid #e2e8f0; background:#f8fafc;
+                display:flex; align-items:center; gap:14px; flex-shrink:0;">
+        <div style="width:40px;height:40px;border-radius:10px;background:#dbeafe;
+                    display:flex;align-items:center;justify-content:center;font-size:20px;">🕵️</div>
+        <div style="flex:1;min-width:0;">
+            <div style="font-size:16px;font-weight:800;color:#1e293b;" id="drawer-agent-name">Loading…</div>
+            <div style="font-size:12px;color:#64748b;">Profile changes submitted for approval</div>
+        </div>
+        <button onclick="closeChangesDrawer()" style="
+            width:34px;height:34px;border-radius:8px;border:1.5px solid #e2e8f0;
+            background:#fff;color:#64748b;font-size:18px;cursor:pointer;
+            display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
+    </div>
+
+    {# Drawer body #}
+    <div id="drawer-body" style="flex:1;overflow-y:auto;padding:20px 24px;">
+        <div id="drawer-loading" style="text-align:center;padding:60px 20px;color:#94a3b8;">
+            <div style="font-size:36px;margin-bottom:12px;">⏳</div>
+            <p style="font-size:14px;margin:0;">Loading changes…</p>
+        </div>
+        <div id="drawer-content" style="display:none;"></div>
+        <div id="drawer-empty" style="display:none;text-align:center;padding:60px 20px;color:#94a3b8;">
+            <div style="font-size:48px;margin-bottom:12px;">📭</div>
+            <p style="font-size:15px;font-weight:600;margin:0 0 4px;">No edit history found</p>
+            <p style="font-size:13px;margin:0;">The agent hasn't made any tracked changes yet.</p>
+        </div>
+    </div>
+
+    {# Drawer footer with quick actions #}
+    <div id="drawer-footer" style="
+        padding:16px 24px; border-top:1px solid #e2e8f0; background:#f8fafc;
+        display:none; gap:10px; flex-shrink:0;" class="d-flex">
+        <button id="drawer-approve-btn" class="btn btn-success" style="flex:1;font-size:13px;font-weight:700;border-radius:10px;">
+            <i class="fa-solid fa-check me-2"></i>Approve Agent
+        </button>
+        <button id="drawer-reject-btn" class="btn btn-outline-danger" style="font-size:13px;font-weight:700;border-radius:10px;padding:8px 20px;">
+            <i class="fa-solid fa-xmark me-1"></i>Reject
+        </button>
+        <a id="drawer-full-review-btn" href="#" class="btn btn-light border" style="font-size:13px;border-radius:10px;padding:8px 16px;">
+            <i class="fa-solid fa-file-invoice me-1"></i>Full Profile
+        </a>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function approveAgent(id, btn) {
+    if (!confirm('Approve this agent?')) return;
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+    fetch("{% url 'admin_panel:agents_toggle_status' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+        body: JSON.stringify({ id: id, status: 'active' })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Agent approved ✅', showConfirmButton: false, timer: 2500 });
+            }
+            btn.closest('tr').style.transition = 'opacity 0.4s';
+            btn.closest('tr').style.opacity = '0';
+            setTimeout(() => btn.closest('tr').remove(), 400);
+            // Update pending count badge
+            const countEl = document.querySelector('.stat-mini-val');
+            if (countEl) countEl.textContent = Math.max(0, parseInt(countEl.textContent) - 1);
+        }
+    })
+    .catch(() => { btn.disabled = false; btn.innerHTML = orig; alert('Something went wrong.'); });
+}
+
+function rejectAgent(id, btn) {
+    if (!confirm('Suspend/Reject this agent? They will not be approved.')) return;
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+    fetch("{% url 'admin_panel:agents_toggle_status' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+        body: JSON.stringify({ id: id, status: 'suspended' })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ toast: true, position: 'top-end', icon: 'warning', title: 'Agent rejected', showConfirmButton: false, timer: 2500 });
+            }
+            btn.closest('tr').style.transition = 'opacity 0.4s';
+            btn.closest('tr').style.opacity = '0';
+            setTimeout(() => btn.closest('tr').remove(), 400);
+        }
+    })
+    .catch(() => { btn.disabled = false; btn.innerHTML = orig; });
+}
+
+function collectAndUpdateBadges(agentId) {
+    const badges = [];
+    document.querySelectorAll('.agent-badge-chk-' + agentId + ':checked').forEach(chk => badges.push(chk.value));
+    
+    // Update button text locally immediately
+    const btn = document.getElementById('badge-btn-approval-' + agentId);
+    if(btn) {
+        let count = badges.length;
+        let text = count > 0 ? count + ' Badge' + (count > 1 ? 's' : '') : 'No Badge';
+        btn.innerHTML = '<i class="fa-solid fa-medal me-1" style="color:#f59e0b;"></i> ' + text;
+    }
+
+    fetch("{% url 'admin_panel:agents_update_badge' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+        body: JSON.stringify({ id: agentId, badge: badges })
+    }).then(r => r.json()).then(data => {
+        if (data.success && typeof Swal !== 'undefined') {
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Badge updated', showConfirmButton: false, timer: 2000 });
+        }
+    });
+}
+
+document.getElementById('selectAll').addEventListener('change', function () {
+    document.querySelectorAll('.row-chk').forEach(c => c.checked = this.checked);
+});
+
+// ═══════════════════════════════════════════════════════
+// CHANGES DRAWER
+// ═══════════════════════════════════════════════════════
+
+const ADMIN_BASE      = '/admin/agents';
+const TOGGLE_URL      = "{% url 'admin_panel:agents_toggle_status' %}";
+const CSRF_TOKEN      = '{{ csrf_token }}';
+
+let _currentDrawerAgentId = null;
+
+function openChangesDrawer(agentId, agentName) {
+    _currentDrawerAgentId = agentId;
+
+    // Reset UI
+    document.getElementById('drawer-agent-name').textContent = agentName;
+    document.getElementById('drawer-loading').style.display = 'block';
+    document.getElementById('drawer-content').style.display = 'none';
+    document.getElementById('drawer-empty').style.display = 'none';
+    document.getElementById('drawer-footer').style.display = 'none';
+
+    // Wire footer approve/reject to call API directly
+    document.getElementById('drawer-approve-btn').dataset.agentId = agentId;
+    document.getElementById('drawer-reject-btn').dataset.agentId  = agentId;
+    document.getElementById('drawer-full-review-btn').href = ADMIN_BASE + '/' + agentId + '/edit-full-profile/';
+
+    // Open overlay + drawer
+    document.getElementById('changes-overlay').style.display = 'block';
+    setTimeout(() => {
+        document.getElementById('changes-drawer').style.transform = 'translateX(0)';
+    }, 10);
+
+    const logsUrl = ADMIN_BASE + '/' + agentId + '/edit-logs/?t=' + Date.now();
+
+    fetch(logsUrl, {
+        headers: { 'Accept': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+        cache: 'no-store'
+    })
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('drawer-loading').style.display = 'none';
+
+        if (!data.success || !data.logs || data.logs.length === 0) {
+            document.getElementById('drawer-empty').style.display = 'block';
+            document.getElementById('drawer-footer').style.display = 'flex';
+            return;
+        }
+
+        document.getElementById('drawer-content').innerHTML = buildLogsHTML(data.logs);
+        document.getElementById('drawer-content').style.display = 'block';
+        document.getElementById('drawer-footer').style.display = 'flex';
+    })
+    .catch(err => {
+        document.getElementById('drawer-loading').style.display = 'none';
+        document.getElementById('drawer-content').innerHTML =
+            '<div style="padding:20px;color:#dc2626;font-size:13px;">⚠️ Failed to load changes: ' + err.message + '</div>';
+        document.getElementById('drawer-content').style.display = 'block';
+        document.getElementById('drawer-footer').style.display = 'flex';
+    });
+}
+
+function closeChangesDrawer() {
+    document.getElementById('changes-drawer').style.transform = 'translateX(100%)';
+    setTimeout(() => {
+        document.getElementById('changes-overlay').style.display = 'none';
+    }, 300);
+    _currentDrawerAgentId = null;
+}
+
+document.getElementById('drawer-approve-btn').addEventListener('click', function () {
+    const agentId = parseInt(this.dataset.agentId);
+    if (!agentId) return;
+    if (!confirm('Approve this agent?')) return;
+
+    const origHtml = this.innerHTML;
+    this.disabled = true;
+    this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Approving…';
+
+    fetch(TOGGLE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+        body: JSON.stringify({ id: agentId, status: 'active' })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            closeChangesDrawer();
+            // Remove row from table
+            const approveBtn = document.querySelector('[data-agent-id="' + agentId + '"].btn-success');
+            if (approveBtn) {
+                const row = approveBtn.closest('tr');
+                if (row) { row.style.transition = 'opacity 0.4s'; row.style.opacity = '0'; setTimeout(() => row.remove(), 400); }
+            }
+            const countEl = document.querySelector('.stat-mini-val');
+            if (countEl) countEl.textContent = Math.max(0, parseInt(countEl.textContent) - 1);
+            if (typeof Swal !== 'undefined') Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Agent approved ✅', showConfirmButton: false, timer: 2500 });
+        } else {
+            this.disabled = false;
+            this.innerHTML = origHtml;
+            alert('Error approving agent.');
+        }
+    })
+    .catch(() => { this.disabled = false; this.innerHTML = origHtml; alert('Network error.'); });
+});
+
+document.getElementById('drawer-reject-btn').addEventListener('click', function () {
+    const agentId = parseInt(this.dataset.agentId);
+    if (!agentId) return;
+    if (!confirm('Suspend/Reject this agent? They will not be approved.')) return;
+
+    const origHtml = this.innerHTML;
+    this.disabled = true;
+    this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Rejecting…';
+
+    fetch(TOGGLE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+        body: JSON.stringify({ id: agentId, status: 'suspended' })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            closeChangesDrawer();
+            const rejectBtn = document.querySelector('[data-agent-id="' + agentId + '"].btn-outline-danger');
+            if (rejectBtn) {
+                const row = rejectBtn.closest('tr');
+                if (row) { row.style.transition = 'opacity 0.4s'; row.style.opacity = '0'; setTimeout(() => row.remove(), 400); }
+            }
+            if (typeof Swal !== 'undefined') Swal.fire({ toast: true, position: 'top-end', icon: 'warning', title: 'Agent rejected', showConfirmButton: false, timer: 2500 });
+        } else {
+            this.disabled = false;
+            this.innerHTML = origHtml;
+            alert('Error rejecting agent.');
+        }
+    })
+    .catch(() => { this.disabled = false; this.innerHTML = origHtml; alert('Network error.'); });
+});
+
+const STEP_ICONS = {1:'👤',2:'💼',3:'🛡️',4:'📊',5:'🌐',6:'📋',7:'✅'};
+
+function buildLogsHTML(logs) {
+    let totalChanges = logs.reduce((sum, l) => sum + (l.changes ? l.changes.length : 0), 0);
+    let agentEdits   = logs.filter(l => l.edited_by === 'agent').length;
+
+    let html = `
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;">
+        <span style="background:#f1f5f9;color:#334155;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;">
+            ${logs.length} save session${logs.length !== 1 ? 's' : ''}
+        </span>
+        <span style="background:#dcfce7;color:#15803d;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;">
+            ${totalChanges} field${totalChanges !== 1 ? 's' : ''} changed
+        </span>
+        <span style="background:#dbeafe;color:#1d4ed8;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;">
+            ${agentEdits} agent edit${agentEdits !== 1 ? 's' : ''}
+        </span>
+    </div>`;
+
+    logs.forEach(log => {
+        const isAgent = log.edited_by === 'agent';
+        const icon    = STEP_ICONS[log.step] || '✏️';
+        const hasStatus = log.status_before !== log.status_after;
+        const totalFields = (log.changes ? log.changes.length : 0) + (hasStatus ? 1 : 0);
+
+        html += `
+        <div style="border:1px solid #e2e8f0;border-radius:12px;margin-bottom:14px;overflow:hidden;">
+            {# header #}
+            <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;
+                        background:${isAgent ? '#f8fafc' : '#fffbeb'};cursor:pointer;"
+                 onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
+                <div style="width:34px;height:34px;border-radius:50%;background:${isAgent ? '#dbeafe' : '#fde68a'};
+                            display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">
+                    ${icon}
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                        <span style="font-size:13px;font-weight:700;color:#1e293b;">${log.step_label}</span>
+                        <span style="font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;
+                            ${isAgent ? 'background:#dbeafe;color:#1d4ed8;' : 'background:#fde68a;color:#92400e;'}">
+                            ${isAgent ? '👤 Agent' : '🛡️ Admin'}
+                        </span>
+                        ${hasStatus ? `<span style="font-size:10px;padding:2px 8px;border-radius:20px;background:#dcfce7;color:#15803d;font-weight:700;">Status changed</span>` : ''}
+                    </div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;">
+                        ${totalFields} field${totalFields !== 1 ? 's' : ''} · ${log.diff_for_humans} · ${log.created_at}
+                    </div>
+                </div>
+                <span style="color:#94a3b8;font-size:16px;">▾</span>
+            </div>
+
+            {# change rows #}
+            <div style="display:none;">
+                ${hasStatus ? `
+                <div style="display:grid;grid-template-columns:150px 1fr 1fr;border-top:1px solid #f1f5f9;">
+                    <div style="padding:9px 14px;background:#fafafa;font-size:11px;font-weight:700;color:#475569;border-right:1px solid #f1f5f9;display:flex;align-items:center;">🔄 Status</div>
+                    <div style="padding:9px 14px;background:#fff5f5;font-size:12px;color:#9f1239;border-right:1px solid #f1f5f9;">
+                        <span style="font-size:9px;color:#94a3b8;display:block;">BEFORE</span>${log.status_before || '—'}
+                    </div>
+                    <div style="padding:9px 14px;background:#f0fdf4;font-size:12px;color:#166534;font-weight:600;">
+                        <span style="font-size:9px;color:#94a3b8;display:block;">AFTER</span>${log.status_after || '—'}
+                    </div>
+                </div>` : ''}
+
+                ${(log.changes || []).map((ch, i) => {
+                    const oldV = ch.old_value == null || ch.old_value === '' ? '<em style="color:#94a3b8">empty</em>' : String(ch.old_value).substring(0, 100);
+                    const newV = ch.new_value == null || ch.new_value === '' ? '<em style="color:#94a3b8">empty</em>' : String(ch.new_value).substring(0, 100);
+                    return `
+                    <div style="display:grid;grid-template-columns:150px 1fr 1fr;border-top:1px solid #f1f5f9;">
+                        <div style="padding:9px 14px;background:#fafafa;font-size:11px;font-weight:700;color:#475569;border-right:1px solid #f1f5f9;display:flex;align-items:center;">
+                            ${ch.label || ch.field}
+                        </div>
+                        <div style="padding:9px 14px;background:#fff5f5;font-size:12px;color:#9f1239;border-right:1px solid #f1f5f9;word-break:break-all;">
+                            <span style="font-size:9px;color:#94a3b8;display:block;">PREVIOUS</span>${oldV}
+                        </div>
+                        <div style="padding:9px 14px;background:#f0fdf4;font-size:12px;color:#166534;font-weight:600;word-break:break-all;">
+                            <span style="font-size:9px;color:#94a3b8;display:block;">NEW</span>${newV}
+                        </div>
+                    </div>`;
+                }).join('')}
+
+                ${totalFields === 0 ? `<div style="padding:12px 16px;font-size:12px;color:#94a3b8;border-top:1px solid #f1f5f9;">No field changes in this session.</div>` : ''}
+            </div>
+        </div>`;
+    });
+
+    return html;
+}
+</script>
+{% endblock %}

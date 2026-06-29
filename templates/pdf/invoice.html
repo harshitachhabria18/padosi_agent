@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>{{ invoice.invoice_number|default:'Invoice' }}</title>
+    <style>
+        @page {
+            margin: 0.5cm;
+        }
+
+        body {
+            font-family: 'DejaVu Sans', sans-serif;
+            color: #2a2a2a;
+            margin: 0;
+            padding: 10px 20px;
+            font-size: 13.5px;
+            line-height: 1.4;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        td, th {
+            vertical-align: top;
+        }
+
+        .invoice-header {
+            margin-bottom: 20px;
+        }
+
+        .company-logo {
+            max-width: 160px;
+            height: auto;
+        }
+
+        .company-details {
+            text-align: right;
+            font-size: 13px;
+            color: #6a6a6a;
+        }
+
+        .company-details strong {
+            font-size: 20px;
+            color: #18529d;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .header-divider {
+            border-top: 2px solid #18529d;
+            margin: 15px 0 20px 0;
+            opacity: 0.8;
+        }
+
+        .invoice-info-section {
+            margin-bottom: 20px;
+        }
+
+        .bill-to h4,
+        .invoice-meta h4 {
+            margin: 0 0 10px 0;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #6a6a6a;
+        }
+
+        .bill-to p,
+        .invoice-meta p {
+            margin: 0 0 5px 0;
+            font-size: 14px;
+        }
+
+        .bill-to strong {
+            color: #1a1a1a;
+            font-size: 16px;
+        }
+
+        .invoice-meta {
+            text-align: right;
+        }
+
+        .invoice-meta .meta-label {
+            color: #6a6a6a;
+            font-weight: normal;
+        }
+
+        .invoice-meta .meta-value {
+            font-weight: bold;
+            color: #1a1a1a;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background-color: #e6f4ea;
+            color: #1d724f;
+            border: 1px solid #cce8d6;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+
+        .status-badge.unpaid {
+            background-color: #fce8e8;
+            color: #e53935;
+            border-color: #fad4d4;
+        }
+
+        .invoice-table {
+            margin-bottom: 30px;
+        }
+
+        .invoice-table th {
+            background-color: #f8f9fa;
+            color: #18529d;
+            font-weight: bold;
+            text-align: left;
+            padding: 12px 15px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #18529d;
+        }
+
+        .invoice-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #e5e5e5;
+            color: #2a2a2a;
+        }
+
+        .item-name {
+            font-weight: bold;
+            color: #1a1a1a;
+            margin: 0 0 4px 0;
+        }
+
+        .item-desc {
+            color: #6a6a6a;
+            font-size: 12px;
+            margin: 0;
+        }
+
+        .text-right {
+            text-align: right !important;
+        }
+
+        .text-center {
+            text-align: center !important;
+        }
+
+        .totals-table {
+            width: 300px;
+            float: right;
+        }
+
+        .totals-table td {
+            padding: 8px 15px;
+            border-bottom: 1px solid #f8f9fa;
+        }
+
+        .totals-table .total-row td {
+            border-bottom: none;
+            padding-top: 15px;
+        }
+
+        .total-amount {
+            font-size: 22px;
+            font-weight: bold;
+            color: #18529d;
+            background-color: #f0f5fc;
+            padding: 10px 15px;
+            border-radius: 6px;
+            display: inline-block;
+            white-space: nowrap;
+            line-height: normal;
+        }
+
+        .invoice-footer {
+            clear: both;
+            margin-top: 40px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e5e5;
+            text-align: center;
+            color: #6a6a6a;
+            font-size: 12px;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+        }
+
+        .thank-you {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1a1a1a;
+            margin-bottom: 5px;
+        }
+
+        .footer-branding {
+            margin-top: 15px;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            color: #999;
+        }
+
+        .footer-branding strong {
+            color: #18529d;
+        }
+
+        .clear {
+            clear: both;
+        }
+    </style>
+</head>
+
+<body>
+
+    <table class="invoice-header">
+        <tr>
+            <td style="width: 50%;">
+                {% load static %}
+                <img src="{% static 'img/logo.png' %}" alt="PadosiAgent Logo" class="company-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+                <h2 style="color: #18529d; margin: 0; display: none;">PadosiAgent</h2>
+            </td>
+            <td class="company-details">
+                <strong>PadosiAgent ServTech Private Limited</strong>
+                <p style="margin: 0;">Your Trusted Technology</p>
+                <p style="margin: 0;">support@padosiagent.com | +91 9876543210</p>
+                <p style="margin: 0;">GSTIN: 24AAPCP4222R1ZV</p>
+            </td>
+        </tr>
+    </table>
+
+    <div class="header-divider"></div>
+
+    <table class="invoice-info-section">
+        <tr>
+            <td class="bill-to" style="width: 50%;">
+                <h4>Bill To</h4>
+                <p><strong>{{ invoice.agent_name|default:'Agent Name' }}</strong></p>
+                <p>{{ invoice.agent_email|default:'agent@example.com' }}</p>
+                {% if invoice.agent_mobile %}
+                <p>+91 {{ invoice.agent_mobile }}</p>
+                {% endif %}
+            </td>
+            <td class="invoice-meta">
+                <h4>Invoice Details</h4>
+                <p><span class="meta-label">Invoice Number:</span> <span class="meta-value">{{ invoice.invoice_number|default:'INV-2026-0001' }}</span></p>
+                <p><span class="meta-label">Invoice Date:</span> <span class="meta-value">{{ invoice.created_at|date:'d M, Y'|default:'' }}</span></p>
+
+                {% if invoice.razorpay_payment_id %}
+                <p><span class="meta-label">Payment ID:</span> <span class="meta-value">{{ invoice.razorpay_payment_id }}</span></p>
+                {% endif %}
+
+                <div style="margin-top: 8px;">
+                    {% if invoice.payment_status|lower == 'paid' %}
+                    <span class="status-badge">PAID</span>
+                    {% else %}
+                    <span class="status-badge unpaid">{{ invoice.payment_status|upper }}</span>
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <table class="invoice-table">
+        <thead>
+            <tr>
+                <th style="width: 5%;">#</th>
+                <th style="width: 52%;">Service Details</th>
+                <th class="text-right" style="width: 22%;">Base Price (excl. GST)</th>
+                <th class="text-right" style="width: 21%;">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td class="text-center">{{ forloop.counter }}</td>
+                <td>
+                    <p class="item-name">{{ item.name }}</p>
+                    {% if item.description %}
+                    <p class="item-desc">{{ item.description }}</p>
+                    {% endif %}
+                </td>
+                <td class="text-right">&#8377;{{ item.amount|floatformat:2 }}</td>
+                <td class="text-right">&#8377;{{ item.amount|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="width: 100%;">
+        <table class="totals-table">
+
+            <tr>
+                <td class="text-right" style="color: #6a6a6a; padding: 8px 15px;">Base Amount:</td>
+                <td class="text-right" style="width: 130px; padding: 8px 15px;">&#8377;{{ invoice.base_amount|floatformat:2 }}</td>
+            </tr>
+
+            {% if is_gujarat %}
+            <tr>
+                <td class="text-right" style="color: #6a6a6a; padding: 8px 15px;">GST @ 18% (IGST):</td>
+                <td class="text-right" style="padding: 8px 15px;">&#8377;{{ invoice.gst_amount|floatformat:2 }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td class="text-right" style="color: #6a6a6a; padding: 8px 15px;">CGST @ 9%:</td>
+                <td class="text-right" style="padding: 8px 15px;">&#8377;{{ half_gst|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td class="text-right" style="color: #6a6a6a; padding: 8px 15px;">SGST @ 9%:</td>
+                <td class="text-right" style="padding: 8px 15px;">&#8377;{{ half_gst|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+
+            <tr>
+                <td colspan="2" style="padding: 0 15px;">
+                    <div style="border-top: 1.5px solid #18529d; margin: 4px 0;"></div>
+                </td>
+            </tr>
+
+            <tr class="total-row">
+                <td class="text-right"
+                    style="font-weight: bold; font-size: 16px; padding: 12px 15px 8px; color: #1a1a1a;">Total Amount:
+                </td>
+                <td class="text-right" style="padding: 12px 15px 8px;">
+                    <span class="total-amount">&#8377;{{ invoice.total_amount|floatformat:2 }}</span>
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="2" class="text-right" style="font-size: 10px; color: #999; padding: 4px 15px;">
+                    {% if is_gujarat %}
+                    *Inclusive of IGST &#8377;{{ invoice.gst_amount|floatformat:2 }}
+                    {% else %}
+                    *Inclusive of CGST &#8377;{{ half_gst|floatformat:2 }} + SGST &#8377;{{ half_gst|floatformat:2 }}
+                    {% endif %}
+                </td>
+            </tr>
+
+        </table>
+        <div class="clear"></div>
+    </div>
+
+    <div class="invoice-footer">
+        <p class="thank-you">Thank you for choosing PadosiAgent.</p>
+        <p>If you have any questions concerning this invoice, please contact support@padosiagent.com</p>
+
+        <p class="footer-branding">
+            Powered by <strong>PadosiAgent ServTech Pvt Ltd</strong>
+        </p>
+    </div>
+
+</body>
+
+</html>

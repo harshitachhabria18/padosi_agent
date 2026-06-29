@@ -1,0 +1,1048 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Choose Your Plan — PadosiAgent{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --primary: #273c8e;
+        --primary-dark: #1e2e6d;
+        --accent: #f59e0b;
+        --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+        --padosi-blue: #1e3a8a;
+        --padosi-blue-light: #eff6ff;
+        --highlight-pink: #fff1f2;
+        --border-pink: #fecdd3;
+        --text-pink: #e11d48;
+        --pill-green: #e6f7f0;
+        --text-green: #10b981;
+    }
+
+    .plans-container {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        padding: 80px 20px;
+        background: radial-gradient(circle at 10% 20%, rgb(240, 247, 255) 0%, rgb(255, 255, 255) 90%);
+        min-height: 100vh;
+    }
+
+    .plans-wrapper {
+        width: 100%;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .header-section {
+        text-align: center;
+        margin-bottom: 45px;
+    }
+
+    .header-section h1 {
+        font-weight: 800;
+        color: #0f172a;
+        font-size: 32px;
+        letter-spacing: -0.5px;
+        margin-bottom: 12px;
+    }
+
+    .header-section .subtitle {
+        color: #273c8e;
+        font-size: 15px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .header-section .description {
+        color: #64748b;
+        font-size: 15px;
+        font-weight: 500;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .plans-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 30px;
+        margin-bottom: 40px;
+    }
+
+    /* Beautiful Dynamic Card */
+    .plan-card {
+        background: #ffffff;
+        border-radius: 24px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        padding: 35px 28px;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .plan-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
+    }
+
+    .plan-card.recommended-theme {
+        border: 2px solid #273c8e;
+        background: #f8faff;
+    }
+
+    .plan-card.starter-theme {
+        border: 1.5px solid rgba(30, 58, 138, 0.2);
+    }
+
+    /* Diagonal Recommended Ribbon */
+    .recommended-ribbon {
+        position: absolute;
+        top: 22px;
+        right: -38px;
+        background: #273c8e;
+        color: white;
+        font-size: 9px;
+        font-weight: 800;
+        padding: 6px 40px;
+        transform: rotate(45deg);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        z-index: 10;
+    }
+
+    .plan-header {
+        text-align: center;
+        margin-bottom: 28px;
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 20px;
+    }
+
+    .plan-name {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--primary);
+        margin-bottom: 4px;
+    }
+
+    .plan-card.starter-theme .plan-name {
+        color: var(--padosi-blue);
+    }
+
+    .plan-card.recommended-theme .plan-name {
+        color: var(--padosi-blue);
+    }
+
+    .plan-price {
+        font-size: 38px;
+        font-weight: 800;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+    }
+
+    .plan-card.starter-theme .plan-price {
+        color: var(--padosi-blue);
+    }
+
+    .plan-card.recommended-theme .plan-price {
+        color: var(--padosi-blue);
+    }
+
+    .plan-price span {
+        font-size: 13px;
+        color: #64748b;
+        font-weight: 600;
+        margin-left: 4px;
+    }
+
+    .plan-subtitle {
+        font-size: 13px;
+        color: #64748b;
+        font-weight: 500;
+        font-style: italic;
+        margin-top: 4px;
+    }
+
+    /* Custom Categories & Items */
+    .category-block {
+        margin-bottom: 22px;
+        text-align: left;
+    }
+
+    .category-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--padosi-blue);
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .feature-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px dashed #f1f5f9;
+        font-size: 13px;
+        font-weight: 500;
+        color: #334155;
+    }
+
+    .feature-row.highlighted {
+        background: var(--highlight-pink);
+        border: 1px solid var(--border-pink);
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin: 4px 0;
+    }
+
+    .feature-name {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .feature-name i {
+        font-size: 13px;
+        color: var(--padosi-blue);
+    }
+
+    /* Badges */
+    .badge-capsule {
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 50px;
+        text-transform: capitalize;
+    }
+
+    .badge-filled-green {
+        background: #e6f7f0;
+        color: #10b981;
+    }
+
+    .badge-outline-green {
+        border: 1px solid #10b981;
+        color: #10b981;
+        background: transparent;
+    }
+
+    .badge-filled-red {
+        background: #ffe4e6;
+        color: var(--text-pink);
+        border: 1px solid var(--border-pink);
+    }
+
+    /* Coming Soon Panel */
+    .coming-soon-panel {
+        background: #f0fdf4;
+        border: 1px solid #d1fae5;
+        border-radius: 12px;
+        padding: 16px;
+        margin-top: 15px;
+        text-align: left;
+    }
+
+    .coming-soon-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #15803d;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+    }
+
+    .coming-soon-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #166534;
+        margin-bottom: 6px;
+    }
+
+    .coming-soon-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .coming-soon-item i {
+        font-size: 10px;
+        color: #15803d;
+    }
+
+    /* Action Buttons */
+    .btn-select-plan {
+        background: #273c8e;
+        color: white;
+        font-weight: 700;
+        font-size: 15px;
+        padding: 14px;
+        border-radius: 14px;
+        width: 100%;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 25px;
+        transition: all 0.2s;
+        box-shadow: 0 4px 12px rgba(39, 60, 142, 0.2);
+        cursor: pointer;
+    }
+
+    .btn-select-plan:hover {
+        background: #1e3075;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(39, 60, 142, 0.3);
+    }
+
+    .btn-select-plan.starter-btn {
+        background: var(--padosi-blue);
+        box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2);
+    }
+
+    .btn-select-plan.starter-btn:hover {
+        background: #152e70;
+        box-shadow: 0 6px 16px rgba(30, 58, 138, 0.3);
+    }
+
+    .btn-select-plan.trial-btn {
+        background: #10b981;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+    }
+
+    .btn-select-plan.trial-btn:hover {
+        background: #059669;
+        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+    }
+
+    .footer-note {
+        text-align: center;
+        font-size: 11px;
+        color: #64748b;
+        font-weight: 500;
+        margin-top: 8px;
+        font-style: italic;
+    }
+
+    /* Checkout Integration Styles */
+    .checkout-box {
+        background: rgba(255, 255, 255, 0.98);
+        border-radius: 20px;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        box-shadow: var(--card-shadow);
+        padding: 30px;
+        margin-top: 30px;
+        text-align: left;
+    }
+
+    .section-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--padosi-blue);
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1.5px solid #f1f5f9;
+        padding-bottom: 6px;
+        margin-top: 15px;
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #475569;
+    }
+
+    .detail-row strong {
+        color: #0f172a;
+    }
+
+    .summary-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .summary-total {
+        border-top: 1.5px solid #cbd5e1;
+        padding-top: 12px;
+        margin-top: 12px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 16px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .btn-pay {
+        background: linear-gradient(135deg, #273c8e 0%, #1e2e6d 100%);
+        color: white;
+        font-weight: 700;
+        font-size: 16px;
+        width: 100%;
+        border: none;
+        padding: 16px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: all 0.2s;
+        box-shadow: 0 8px 16px -4px rgba(39, 60, 142, 0.3);
+        cursor: pointer;
+    }
+
+    .btn-pay:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 20px -4px rgba(39, 60, 142, 0.4);
+    }
+
+    .terms-conditions-label {
+        font-size: 13.5px;
+        color: #475569;
+        cursor: pointer;
+        user-select: none;
+    }
+    .terms-conditions-label a {
+        color: #273c8e;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .terms-conditions-label a:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="plans-container position-relative">
+    <div class="plans-wrapper">
+        
+        <!-- Header -->
+        <div class="header-section">
+            <div class="subtitle">{{ pricing_config.standard_label|default:'Get started with our standard partner plans' }}</div>
+            <h1>Choose Your PadosiAgent Plan</h1>
+            <div class="description">Unlock professional features and listing visibility to reach clients instantly in your neighborhood.</div>
+        </div>
+
+        <div class="plans-grid">
+            
+            {% if has_free_trial_promo and trial_active %}
+                {# TRIAL CARD #}
+                <div class="plan-card recommended-theme" style="border-color: #10b981;">
+                    <span class="recommended-ribbon" style="background: #10b981;">Trial Plan</span>
+                    
+                    <div class="plan-header">
+                        <div class="plan-name" style="color: #10b981;">Trial Plan</div>
+                        <div class="plan-price" style="color: #10b981;">
+                            ₹{{ trial_base_price|floatformat:2 }}/-<span>{{ trial_duration }} Days</span>
+                        </div>
+                        <div style="text-align:center; font-size:11px; color:#94a3b8; font-weight:600; margin-top:4px;">+ 18% GST applicable at checkout</div>
+                        <div class="plan-subtitle">{{ trial_config.description }}</div>
+                    </div>
+
+                    <div class="plan-features">
+                        <div class="category-block">
+                            <div class="category-header">
+                                <i class="fa-solid fa-briefcase"></i> Starter Access
+                            </div>
+                            <div class="feature-row">
+                                <div class="feature-name">
+                                    <i class="fa-solid fa-chevron-right text-muted" style="font-size: 8px;"></i>
+                                    <span>All Standard Features Included</span>
+                                </div>
+                                <span class="badge-capsule badge-filled-green">Full</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <button onclick="selectPlanForPayment('free_trial')" class="btn-select-plan trial-btn">
+                            <i class="fa-solid fa-circle-check"></i> Select Trial Plan
+                        </button>
+                        <div class="footer-note">Try before you commit</div>
+                    </div>
+                </div>
+            {% endif %}
+
+            {# STARTER CARD #}
+            <div class="plan-card starter-theme">
+                {% with st_badge=pricing_config.starter.badge|default:'' %}
+                {% if st_badge %}
+                <div class="recommended-ribbon" style="background:#f59e0b;">{{ st_badge }}</div>
+                {% endif %}
+                {% endwith %}
+                <div class="plan-header">
+                    <div class="plan-name">{{ starter_name }}</div>
+                    <div class="plan-price">
+                        ₹{{ starter_base|floatformat:2 }}/-<span>1st Year Only</span>
+                    </div>
+                    <div style="text-align:center; font-size:11px; color:#94a3b8; font-weight:600; margin-top:4px;">+ 18% GST applicable at checkout</div>
+                    <div class="plan-subtitle">{{ starter_desc }}</div>
+                </div>
+
+                <!-- Categories Checklist -->
+                <div class="plan-features">
+                    <!-- Category 1: Sales Kit -->
+                    <div class="category-block">
+                        <div class="category-header">
+                            <i class="fa-solid fa-briefcase"></i> Sales Kit
+                        </div>
+                        <div class="feature-row">
+                            <div class="feature-name">
+                                <i class="fa-solid fa-chevron-right text-muted" style="font-size: 8px;"></i>
+                                <span>Organic Lead Inquiries</span>
+                            </div>
+                            <span class="badge-capsule badge-outline-green" style="border-color: var(--padosi-blue); color: var(--padosi-blue);">Standard</span>
+                        </div>
+                        <div class="feature-row">
+                            <div class="feature-name">
+                                <i class="fa-solid fa-chevron-right text-muted" style="font-size: 8px;"></i>
+                                <span>Service Lead Inquiries*</span>
+                            </div>
+                            <span class="badge-capsule badge-outline-green" style="border-color: var(--padosi-blue); color: var(--padosi-blue);">Standard</span>
+                        </div>
+                        <div class="feature-row">
+                            <div class="feature-name">
+                                <i class="fa-solid fa-chevron-right text-muted" style="font-size: 8px;"></i>
+                                <span>Referral Lead Inquiries</span>
+                            </div>
+                            <span class="badge-capsule badge-outline-green">Lifetime*</span>
+                        </div>
+                    </div>
+
+                    <!-- Category 2: Asset & Marketing -->
+                    <div class="category-block">
+                        <div class="category-header">
+                            <i class="fa-solid fa-bullhorn"></i> Asset & Marketing
+                        </div>
+                        <div class="feature-row">
+                            <div class="feature-name">
+                                <i class="fa-solid fa-chevron-right text-muted" style="font-size: 8px;"></i>
+                                <span>Webpage</span>
+                            </div>
+                            <span class="badge-capsule badge-outline-green">Lifetime*</span>
+                        </div>
+                        <div class="feature-row">
+                            <div class="feature-name">
+                                <i class="fa-solid fa-chevron-right text-muted" style="font-size: 8px;"></i>
+                                <span>Social Media Integration</span>
+                            </div>
+                            <span class="badge-capsule badge-outline-green">Lifetime*</span>
+                        </div>
+                        <div class="feature-row">
+                            <div class="feature-name">
+                                <i class="fa-solid fa-chevron-right text-muted" style="font-size: 8px;"></i>
+                                <span>Digital Business Card</span>
+                            </div>
+                            <span class="badge-capsule badge-outline-green">Lifetime*</span>
+                        </div>
+                        <div class="feature-row">
+                            <div class="feature-name">
+                                <i class="fa-solid fa-chevron-right text-muted" style="font-size: 8px;"></i>
+                                <span>Digital Gallery</span>
+                            </div>
+                            <span class="badge-capsule badge-filled-green">5 Images</span>
+                        </div>
+                    </div>
+
+                    <!-- Category 3: Business Support -->
+                    <div class="category-block">
+                        <div class="category-header">
+                            <i class="fa-solid fa-headset"></i> Business Support
+                        </div>
+                        <div class="feature-row">
+                            <div class="feature-name">
+                                <i class="fa-solid fa-chevron-right text-muted" style="font-size: 8px;"></i>
+                                <span>Profile Review & Rating</span>
+                            </div>
+                            <span class="badge-capsule badge-outline-green">Lifetime*</span>
+                        </div>
+                        <div class="feature-row">
+                            <div class="feature-name">
+                                <i class="fa-solid fa-chevron-right text-muted" style="font-size: 8px;"></i>
+                                <span>Profile Analytics</span>
+                            </div>
+                            <span class="badge-capsule badge-outline-green" style="border-color: var(--padosi-blue); color: var(--padosi-blue);">Basic</span>
+                        </div>
+                        <div class="feature-row">
+                            <div class="feature-name">
+                                <i class="fa-solid fa-chevron-right text-muted" style="font-size: 8px;"></i>
+                                <span>Retention Tools</span>
+                            </div>
+                            <span class="badge-capsule badge-outline-green" style="border-color: #94a3b8; color: #94a3b8;">Limited Access</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <button onclick="selectPlanForPayment('basic')" class="btn-select-plan starter-btn">
+                        <i class="fa-solid fa-circle-check"></i> Select Starter's Plan
+                    </button>
+                    <div class="footer-note">Special Launch Price</div>
+                </div>
+            </div>
+
+            {# PROFESSIONAL CARD #}
+            <div class="plan-card recommended-theme">
+                {% with prof_badge=pricing_config.professional.badge|default:'RECOMMENDED' %}
+                <div class="recommended-ribbon">{{ prof_badge }}</div>
+                {% endwith %}
+
+                <div class="plan-header">
+                    <div class="plan-name">{{ prof_name }}</div>
+                    <div class="plan-price">
+                        {% if has_prof_promo and prof_final < prof_full %}
+                            <span style="font-size:18px; color:#94a3b8; text-decoration:line-through; font-weight:600; margin-right:8px;">₹{{ prof_full|floatformat:2 }}</span>
+                            ₹{{ prof_base|floatformat:2 }}/-<span>1st Year Only</span>
+                        {% else %}
+                            ₹{{ prof_base|floatformat:2 }}/-<span>1st Year Only</span>
+                        {% endif %}
+                    </div>
+                    {% if has_prof_promo and prof_final < prof_full %}
+                        <div style="text-align:center; margin-top:6px;">
+                            <span style="background:#d1fae5; color:#059669; font-size:11px; font-weight:700; padding:3px 10px; border-radius:50px; border:1px solid #6ee7b7;">
+                                    <i class="fa-solid fa-tag me-1"></i> {{ pricing_config.promo_discount_label|default:'Promo Applied' }} — You Save ₹{{ prof_save_amount|floatformat:2 }}
+                            </span>
+                        </div>
+                    {% endif %}
+                    <div style="text-align:center; font-size:11px; color:#94a3b8; font-weight:600; margin-top:4px;">+ 18% GST applicable at checkout</div>
+                    <div class="plan-subtitle">{{ prof_desc }}</div>
+                </div>
+
+                <!-- Categories Checklist -->
+                <div class="plan-features">
+                    <!-- Category 1: Sales Kit -->
+                    <div class="category-block">
+                        <div class="category-header">
+                            <i class="fa-solid fa-briefcase"></i> Sales Kit
+                        </div>
+                        <div class="feature-row">
+                            <div class="feature-name">
+                                <i class="fa-solid fa-chevron-right text-muted" style="font-size: 8px;"></i>
+                                <span>Organic Lead Inquiries</span>
+                            </div>
+                            <span class="badge-capsule badge-filled-green">Priority</span>
+                        </div>
+                        <div class="feature-row">
+                            <div class="feature-name">
+                                <i class="fa-solid fa-chevron-right text-muted" style="font-size: 8px;"></i>
+                                <span>Service Lead Inquiries*</span>
+                            </div>
+                            <span class="badge-capsule badge-filled-green">Priority</span>
+                        </div>
+                        <div class="feature-row">
+                            <div class="feature-name">
+                                <i class="fa-solid fa-chevron-right text-muted" style="font-size: 8px;"></i>
+                                <span>Referral Lead Inquiries</span>
+                            </div>
+                            <span class="badge-capsule badge-outline-green">Lifetime*</span>
+                        </div>
+                    </div>
+
+                    <!-- Category 2: Asset & Marketing -->
+                    <div class="category-block">
+                        <div class="category-header">
+                            <i class="fa-solid fa-bullhorn"></i> Asset & Marketing
+                        </div>
+                        <div class="feature-row">
+                            <div class="feature-name">
+                                <i class="fa-solid fa-chevron-right text-muted" style="font-size: 8px;"></i>
+                                <span>Webpage</span>
+                            </div>
+                            <span class="badge-capsule badge-outline-green">Lifetime*</span>
+                        </div>
+                        <div class="feature-row">
+                            <div class="feature-name">
+                                <i class="fa-solid fa-chevron-right text-muted" style="font-size: 8px;"></i>
+                                <span>Social Media Integration</span>
+                            </div>
+                            <span class="badge-capsule badge-outline-green">Lifetime*</span>
+                        </div>
+                        <div class="feature-row">
+                            <div class="feature-name">
+                                <i class="fa-solid fa-chevron-right text-muted" style="font-size: 8px;"></i>
+                                <span>Digital Business Card</span>
+                            </div>
+                            <span class="badge-capsule badge-outline-green">Lifetime*</span>
+                        </div>
+                        <div class="feature-row">
+                            <div class="feature-name">
+                                <i class="fa-solid fa-chevron-right text-muted" style="font-size: 8px;"></i>
+                                <span>Digital Gallery</span>
+                            </div>
+                            <span class="badge-capsule badge-filled-green">10 Images</span>
+                        </div>
+                    </div>
+
+                    <!-- Category 3: Business Support -->
+                    <div class="category-block">
+                        <div class="category-header">
+                            <i class="fa-solid fa-headset"></i> Business Support
+                        </div>
+                        <div class="feature-row">
+                            <div class="feature-name">
+                                <i class="fa-solid fa-chevron-right text-muted" style="font-size: 8px;"></i>
+                                <span>Profile Review & Rating</span>
+                            </div>
+                            <span class="badge-capsule badge-outline-green">Lifetime*</span>
+                        </div>
+                        <div class="feature-row">
+                            <div class="feature-name">
+                                <i class="fa-solid fa-chevron-right text-muted" style="font-size: 8px;"></i>
+                                <span>Trusted Badge</span>
+                            </div>
+                            <span class="badge-capsule badge-filled-green">Yes</span>
+                        </div>
+                        <div class="feature-row">
+                            <div class="feature-name">
+                                <i class="fa-solid fa-chevron-right text-muted" style="font-size: 8px;"></i>
+                                <span>Profile Analytics</span>
+                            </div>
+                            <span class="badge-capsule badge-filled-green">Advanced</span>
+                        </div>
+                        <div class="feature-row">
+                            <div class="feature-name">
+                                <i class="fa-solid fa-chevron-right text-muted" style="font-size: 8px;"></i>
+                                <span>Retention Tools</span>
+                            </div>
+                            <span class="badge-capsule badge-filled-green">Full Access</span>
+                        </div>
+                    </div>
+
+                    <!-- Category 4: Coming Soon -->
+                    <div class="coming-soon-panel">
+                        <div class="coming-soon-title">
+                            <i class="fa-solid fa-bolt"></i> More Features Coming Soon
+                        </div>
+                        <div class="coming-soon-item">
+                            <i class="fa-regular fa-folder-closed"></i>
+                            <span>Business Ops Kit</span>
+                        </div>
+                        <div class="coming-soon-item">
+                            <i class="fa-solid fa-cubes"></i>
+                            <span>Cross Sell Products</span>
+                        </div>
+                        <div class="coming-soon-item">
+                            <i class="fa-solid fa-rocket"></i>
+                            <span>Many More...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <button onclick="selectPlanForPayment('professional')" class="btn-select-plan">
+                        <i class="fa-solid fa-crown"></i> Select Professional's Plan
+                    </button>
+                    <div class="footer-note">Special Pre-Launch Price</div>
+                </div>
+            </div>
+
+        </div>
+
+        {# Dynamic Merged Secure Checkout UI #}
+        <div class="checkout-box" id="selectedPlanSummary" style="display:none;">
+            <div class="brand-header text-center mb-3">
+                <h4 class="fw-bold text-success mb-1"><i class="fa-solid fa-shield-halved"></i> Secure Checkout</h4>
+                <p class="text-muted small">Please review your billing details to complete payment.</p>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="section-title">Order Summary</div>
+            <div class="summary-card">
+                <div class="detail-row">
+                    <span>Selected Plan</span>
+                    <strong id="selectedPlanName"></strong>
+                </div>
+                <div class="detail-row">
+                    <span>Base Registration Fee</span>
+                    <strong id="selectedPlanPrice"></strong>
+                </div>
+                <div class="detail-row">
+                    <span>GST (18%)</span>
+                    <strong id="selectedPlanGST"></strong>
+                </div>
+                <div class="summary-total">
+                    <span>Total Amount Payable</span>
+                    <strong id="selectedPlanTotal" style="color: #273c8e; font-size: 20px;"></strong>
+                </div>
+            </div>
+
+            <div class="form-check mt-3 mb-4">
+                <input class="form-check-input" type="checkbox" id="termsCheckbox">
+                <label class="form-check-label terms-conditions-label" for="termsCheckbox">
+                    I agree to the <a href="/terms/" target="_blank">Terms & Conditions</a> and <a href="/privacy/" target="_blank">Privacy Policy</a>.
+                </label>
+            </div>
+
+            <button id="confirmPaymentBtn" onclick="confirmPayment()" class="btn-pay">
+                <i class="fa-solid fa-lock"></i> Proceed to Secure Payment <i class="fa-solid fa-arrow-right ms-2"></i>
+            </button>
+            {% if is_test_mode %}
+            <div class="alert alert-warning mt-3 p-3 text-start" style="border-radius: 12px; font-size: 13px; border-left: 4px solid #f59e0b; background: #fffbeb; color: #78350f;">
+                <i class="fa-solid fa-circle-exclamation me-1" style="color: #d97706;"></i>
+                <strong>Test Mode Warning:</strong> Real UPI apps (like GPay/PhonePe) will show an "incorrect beneficiary details" error if you scan this QR code. To test, use the "Simulate Success" or "Success" button inside the Razorpay modal.
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    var isUpgradeFlow = {{ is_upgrade_flow|yesno:"true,false" }};
+    var isTestMode = {{ is_test_mode|yesno:"true,false" }};
+    var trialBase = {{ trial_base_price }};
+    var trialTotal = {{ trial_final }};
+
+    var selectedPlan = {
+        type: 'professional',
+        name: '{{ prof_name|escapejs }}',
+        price: {{ prof_base }},
+        gst: {{ prof_gst }},
+        total: {{ prof_final }}
+    };
+
+    window.selectPlanForPayment = function(planType) {
+        if (planType === 'free_trial') {
+            selectedPlan = { type: 'free_trial', name: 'Trial Plan ({{ trial_duration }} Days)', price: trialBase, gst: {{ trial_gst }}, total: trialTotal };
+        } else if (planType === 'basic') {
+            selectedPlan = { type: 'basic', name: '{{ starter_name|escapejs }}', price: {{ starter_base }}, gst: {{ starter_gst }}, total: {{ starter_final }} };
+        } else {
+            selectedPlan = { type: 'professional', name: '{{ prof_name|escapejs }}', price: {{ prof_base }}, gst: {{ prof_gst }}, total: {{ prof_final }} };
+        }
+
+        updateSelectedPlanSummary();
+    }
+
+    function updateSelectedPlanSummary() {
+        const summary = document.getElementById('selectedPlanSummary');
+        if (summary) {
+            summary.style.display = 'block';
+            document.getElementById('selectedPlanName').textContent = selectedPlan.name;
+            document.getElementById('selectedPlanPrice').textContent = `₹${selectedPlan.price.toLocaleString('en-IN')}`;
+            document.getElementById('selectedPlanGST').textContent = `₹${selectedPlan.gst.toLocaleString('en-IN')}`;
+            document.getElementById('selectedPlanTotal').textContent = `₹${selectedPlan.total.toLocaleString('en-IN')}`;
+            summary.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    function showLoadingPopup(title, message) {
+        let warningHtml = '';
+        if (isTestMode) {
+            warningHtml = `
+                <div class="alert alert-warning text-start p-2 mb-3" style="font-size: 12px; border-radius: 8px; border-left: 3px solid #f59e0b; background: #fffbeb; color: #78350f; font-family: sans-serif;">
+                    <i class="fa-solid fa-circle-exclamation me-1" style="color: #d97706;"></i>
+                    <strong>Test VPA Warning:</strong> UPI QR code scanning is disabled in sandbox. Please use test payment buttons inside the Razorpay modal.
+                </div>
+            `;
+        }
+        Swal.fire({
+            title: title,
+            html: `
+                <div class="text-center">
+                    <p class="mb-3">${message}</p>
+                    ${warningHtml}
+                    <div class="text-danger fw-bold" style="font-size: 14px;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> PLEASE DO NOT CLICK THE BACK BUTTON OR CLOSE WINDOW
+                    </div>
+                </div>
+            `,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+    }
+
+    function hideLoadingPopup() {
+        Swal.close();
+    }
+
+    async function confirmPayment() {
+        const termsCheckbox = document.getElementById('termsCheckbox');
+        if (!termsCheckbox || !termsCheckbox.checked) {
+            Swal.fire('Oops', 'Please agree to the Terms & Conditions and Privacy Policy to proceed.', 'warning');
+            return;
+        }
+
+        const paymentBtn = document.getElementById('confirmPaymentBtn');
+        paymentBtn.disabled = true;
+        paymentBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+
+        try {
+            const endpoint = '{% url "agents:agent_register_complete" %}';
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    plan_type: selectedPlan.type,
+                    plan_name: selectedPlan.name
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                if (data.test_payment && !data.order_id) {
+                    showLoadingPopup('Verifying Payment', 'We have received your payment. Please wait while we verify the transaction and set up your agent account...');
+                    setTimeout(() => {
+                        hideLoadingPopup();
+                        Swal.fire({
+                            title: 'Success',
+                            text: data.message || 'Registration completed successfully.',
+                            icon: 'success',
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            showConfirmButton: false,
+                            timer: 2000
+                        }).then(() => {
+                            window.location.href = data.redirect_url || '/';
+                        });
+                    }, 2000);
+                } else {
+                    const options = {
+                        "key": data.key,
+                        "amount": data.amount,
+                        "currency": "INR",
+                        "name": "PadosiAgent",
+                        "description": selectedPlan.name,
+                        "image": "/static/img/logo.png",
+                        "order_id": data.order_id,
+                        "handler": function (response) { handlePaymentSuccess(response, data.agent_id, selectedPlan); },
+                        "prefill": { "name": data.name, "email": data.email, "contact": data.mobile },
+                        "theme": { "color": "#273C8E" }
+                    };
+                    const rzp = new Razorpay(options);
+                    rzp.open();
+                }
+            } else {
+                Swal.fire('Error', data.message || 'Unable to complete registration.', 'error');
+            }
+        } catch {
+            Swal.fire('Error', 'Payment preparation failed.', 'error');
+        } finally {
+            paymentBtn.disabled = false;
+            paymentBtn.innerHTML = '<i class="fa-solid fa-lock"></i> Proceed to Secure Payment <i class="fa-solid fa-arrow-right ms-2"></i>';
+        }
+    }
+
+    async function handlePaymentSuccess(paymentResponse, agentId, plan) {
+        console.log("razorpay_payment_id:", paymentResponse.razorpay_payment_id);
+        console.log("razorpay_order_id:", paymentResponse.razorpay_order_id);
+        console.log("razorpay_signature:", paymentResponse.razorpay_signature);
+
+        alert("Razorpay Success Callback Triggered!\n\n" +
+              "razorpay_payment_id: " + paymentResponse.razorpay_payment_id + "\n" +
+              "razorpay_order_id: " + paymentResponse.razorpay_order_id + "\n" +
+              "razorpay_signature: " + paymentResponse.razorpay_signature);
+
+        showLoadingPopup('Verifying Payment', 'We have received your payment. Please wait while we verify the transaction and set up your agent account...');
+        try {
+            const response = await fetch('{% url "agents:payment_success" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                    razorpay_order_id: paymentResponse.razorpay_order_id,
+                    razorpay_signature: paymentResponse.razorpay_signature,
+                    agent_id: agentId,
+                    plan_type: plan.type,
+                    plan_name: plan.name
+                })
+            });
+            const data = await response.json();
+            hideLoadingPopup();
+            if (data.success) {
+                Swal.fire({
+                    title: 'Success',
+                    text: 'Registration completed successfully.',
+                    icon: 'success',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    timer: 3000
+                }).then(() => {
+                    window.location.href = data.redirect_url || '/agent/dashboard/';
+                });
+            } else {
+                Swal.fire({
+                    title: 'Error',
+                    text: data.message || 'Payment verification failed. Redirecting to transaction failure page...',
+                    icon: 'error',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: true
+                }).then(() => {
+                    window.location.href = `/agent-registration/failed/?agent_id=${agentId}`;
+                });
+            }
+        } catch {
+            hideLoadingPopup();
+            Swal.fire({
+                title: 'Error',
+                text: 'Payment verification failed. Redirecting to transaction failure page...',
+                icon: 'error',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: true
+            }).then(() => {
+                window.location.href = `/agent-registration/failed/?agent_id=${agentId}`;
+            });
+        }
+    }
+
+    async function handlePaymentFailure(agentId) {
+        try {
+            const response = await fetch('{% url "agents:payment_failure" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ agent_id: agentId })
+            });
+            const data = await response.json();
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                window.location.href = `/agent-registration/failed/?agent_id=${agentId}`;
+            }
+        } catch (e) {
+            console.error('Failed to log payment failure:', e);
+            window.location.href = `/agent-registration/failed/?agent_id=${agentId}`;
+        }
+    }
+</script>
+{% endblock %}

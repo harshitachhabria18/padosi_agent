@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Add Member Functionality</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            padding: 40px;
+            background: #f7f9fb;
+        }
+        .family-member-headers {
+            padding: 0 15px;
+            margin-bottom: 10px;
+        }
+        .family-member-headers .form-label {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 13px;
+            margin-bottom: 0;
+        }
+        .family-member-row {
+            transition: all 0.3s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .family-member-row:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Test: Add Family Member</h2>
+        <p class="text-muted">Click the "Add Member" button below to test the functionality</p>
+
+        <!-- Family / Additional Licenses Section -->
+        <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <label class="form-label mb-0">
+                    <i class="fas fa-users mr-2"></i>Family / Additional Licenses 
+                    <i class="fas fa-info-circle text-muted" style="font-size: 12px;"></i>
+                </label>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="add-family-member">
+                    <i class="fas fa-plus mr-1"></i> Add Member
+                </button>
+            </div>
+
+            <!-- Column Headers -->
+            <div class="family-member-headers mb-2" style="display: none;">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label class="form-label font-weight-bold small mb-0">Full Name</label>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label font-weight-bold small mb-0">Relationship</label>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label font-weight-bold small mb-0">PAN / IRDAI License #</label>
+                    </div>
+                    <div class="col-md-1"></div>
+                </div>
+            </div>
+
+            <!-- Family Members Container -->
+            <div id="family-members-container">
+                <!-- Family member rows will be added here dynamically -->
+            </div>
+        </div>
+
+        <div class="alert alert-info mt-4">
+            <strong>Instructions:</strong>
+            <ol class="mb-0 mt-2">
+                <li>Click the "Add Member" button</li>
+                <li>You should see column headers appear</li>
+                <li>A new row with input fields should appear below the headers</li>
+                <li>Click "Add Member" again to add more rows</li>
+                <li>Click the trash icon to remove a row</li>
+                <li>Open browser console (F12) to see debug messages</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Family Member Add/Remove Functionality
+            let familyMemberCount = 0;
+
+            const addFamilyMemberBtn = document.getElementById('add-family-member');
+            const familyMembersContainer = document.getElementById('family-members-container');
+            const familyMemberHeaders = document.querySelector('.family-member-headers');
+
+            console.log('Add Family Member Button:', addFamilyMemberBtn);
+            console.log('Family Members Container:', familyMembersContainer);
+            console.log('Family Member Headers:', familyMemberHeaders);
+
+            if (addFamilyMemberBtn) {
+                addFamilyMemberBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('Add Member button clicked!');
+                    
+                    familyMemberCount++;
+                    console.log('Adding family member #', familyMemberCount);
+                    
+                    // Show headers when first member is added
+                    if (familyMemberCount === 1 && familyMemberHeaders) {
+                        familyMemberHeaders.style.display = 'block';
+                        console.log('Headers shown');
+                    }
+                    
+                    const memberRow = createFamilyMemberRow(familyMemberCount);
+                    familyMembersContainer.insertAdjacentHTML('beforeend', memberRow);
+                    console.log('Member row added');
+                });
+                console.log('Event listener attached to Add Member button');
+            } else {
+                console.error('Add Member button not found!');
+            }
+
+            function createFamilyMemberRow(index) {
+                return `
+                    <div class="family-member-row mb-3" data-index="${index}" style="background: white; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                        <div class="row align-items-center">
+                            <div class="col-md-4 mb-2 mb-md-0">
+                                <input type="text" class="form-control" name="family_members[${index}][name]" placeholder="Name as per license">
+                            </div>
+                            <div class="col-md-3 mb-2 mb-md-0">
+                                <select class="form-control" name="family_members[${index}][relationship]">
+                                    <option value="">Select...</option>
+                                    <option value="father">Father</option>
+                                    <option value="mother">Mother</option>
+                                    <option value="spouse">Spouse</option>
+                                    <option value="son">Son</option>
+                                    <option value="daughter">Daughter</option>
+                                    <option value="brother">Brother</option>
+                                    <option value="sister">Sister</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-2 mb-md-0">
+                                <input type="text" class="form-control" name="family_members[${index}][license]" placeholder="License number">
+                            </div>
+                            <div class="col-md-1 text-center">
+                                <button type="button" class="btn btn-sm btn-danger remove-family-member" onclick="removeFamilyMember(${index})" style="padding: 8px 12px;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+
+        // Remove family member function (global scope for onclick handlers)
+        function removeFamilyMember(index) {
+            const memberRow = document.querySelector(`.family-member-row[data-index="${index}"]`);
+            if (memberRow) {
+                memberRow.remove();
+                console.log('Removed family member #', index);
+                
+                // Hide headers if no members remain
+                const remainingMembers = document.querySelectorAll('.family-member-row');
+                const familyMemberHeaders = document.querySelector('.family-member-headers');
+                if (remainingMembers.length === 0 && familyMemberHeaders) {
+                    familyMemberHeaders.style.display = 'none';
+                    console.log('Headers hidden - no members remaining');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1282 @@
+<div class="react-agent-card find-agents-list-item">
+    {% with profile=agent.profile performance=agent.performanceStats display_name=agent.display_name active_sub=agent.activeSubscription is_trusted=agent.is_trusted is_approved_by_admin=agent.is_approved_by_admin is_verified_agent=agent.is_verified_agent agent_slug=agent.agent_slug whatsapp_digits=agent.profile.whatsapp_digits whatsapp_raw=agent.whatsapp_raw exp_years=agent.experience_years client_base=agent.client_base claims_processed=performance.claims_processed|default:0 display_dist=agent.distance|default:0 has_distance=agent.has_distance rating=agent.average_rating smart_rank=agent.padosi_smart_rank calculated_match_percent=agent.calculated_match_percent badge=agent.badge|lower agent_city_display=agent.agent_city_display %}
+
+    {% comment %} MOBILE CARD {% endcomment %}
+    <div class="rac-card rac-mobile-card">
+        <div class="rac-top">
+            <div class="rac-photo-col">
+                <img src="{{ profile.profile_photo_url }}" alt="{{ display_name }}" class="rac-photo-img">
+                <div class="rac-photo-fade"></div>
+            </div>
+
+            <div class="rac-info-col">
+                <div class="rac-name-row">
+                    <h3 class="rac-name">{{ display_name }}</h3>
+                    {% if badge and badge != 'none' %}
+                        <div class="rac-badges">
+                            {% if 'verified' in badge %}
+                                <span class="agent-recognition-badge badge-verified-official">
+                                    <i class="fas fa-circle-check"></i> Verified
+                                </span>
+                            {% endif %}
+                            {% if 'irdai' in badge %}
+                                <span class="agent-recognition-badge badge-irdai-official">
+                                    <i class="fas fa-medal"></i> Licensed
+                                </span>
+                            {% endif %}
+                            {% if 'trusted' in badge %}
+                                <span class="agent-recognition-badge badge-trusted-official">
+                                    <i class="fas fa-award"></i> Trusted
+                                </span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="rac-rating">
+                    <div class="rac-stars">
+                        {% for star in agent.star_rating_list %}
+                            {% if star == 'full' %}
+                                <svg class="rac-star rac-star--full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                            {% elif star == 'half' %}
+                                <svg class="rac-star rac-star--half" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                            {% else %}
+                                <svg class="rac-star rac-star--empty" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <span class="rac-rating-val">{{ rating|floatformat:1 }}</span>
+                    <span class="rac-rating-count">({{ agent.review_count }} reviews)</span>
+                </div>
+
+                {% if has_distance %}
+                    <div class="rac-dist-pill">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="m4.93 4.93 4.24 4.24" />
+                            <path d="M14.83 9.17 19.07 4.93" />
+                            <path d="M14.83 14.83l4.24 4.24" />
+                            <path d="M9.17 14.83 4.93 19.07" />
+                            <circle cx="12" cy="12" r="4" />
+                        </svg>
+                        {% if display_dist < 1 %}
+                            Nearby
+                        {% elif display_dist > 100 %}
+                            <span style="color:#b45309;font-weight:700;">📡 Far Away</span>
+                        {% else %}
+                            {{ display_dist|floatformat:1 }}km away
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                {% if agent_city_display %}
+                    <div class="rac-location">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                            <circle cx="12" cy="10" r="3" />
+                        </svg>
+                        <span>{{ agent_city_display }}</span>
+                    </div>
+                {% endif %}
+
+                {% if agent.ordered_insurance_segments %}
+                    <div class="rac-tags">
+                        {% for seg in agent.ordered_insurance_segments|slice:":4" %}
+                            <span class="rac-tag {% if 'health' in seg %}rac-tag--health{% elif 'life' in seg %}rac-tag--life{% elif 'motor' in seg %}rac-tag--motor{% elif 'sme' in seg %}rac-tag--sme{% else %}rac-tag--default{% endif %}">
+                                <i class="fas {% if 'health' in seg %}fa-heartbeat{% elif 'life' in seg %}fa-user-shield{% elif 'motor' in seg %}fa-car{% elif 'sme' in seg %}fa-store{% else %}fa-shield-alt{% endif %}" style="font-size: 8px; margin-right: 3px;"></i>
+                                {% if seg == 'sme' %}SME{% else %}{{ seg|capfirst }}{% endif %}
+                            </span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="rac-stats-col">
+                {% if request.GET.pincode or request.GET.location or request.GET.lat or request.session.last_pincode %}
+                    <div class="rac-stat rac-stat--match {% if calculated_match_percent > 90 %}rac-match--green {% if calculated_match_percent > 90 %}rac-stat--match.rac-match--green{% endif %}{% elif calculated_match_percent >= 51 %}rac-match--amber{% else %}rac-match--red{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                        </svg>
+                        <span class="rac-stat-num">{{ calculated_match_percent }}%</span>
+                        <span class="rac-stat-lbl">Match</span>
+                    </div>
+                {% endif %}
+                <div class="rac-stat">
+                    <span class="rac-stat-num">{{ exp_years }}+</span>
+                    <span class="rac-stat-lbl">yrs exp</span>
+                </div>
+                <div class="rac-stat">
+                    <span class="rac-stat-num">{{ agent.formatted_client_base }}</span>
+                    <span class="rac-stat-lbl">clients</span>
+                </div>
+                <div class="rac-stat">
+                    <span class="rac-stat-num">{{ performance.formatted_claims_processed|default:"0" }}</span>
+                    <span class="rac-stat-lbl">claims</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="rac-actions">
+            <div class="rac-actions-right">
+                <button class="rac-icon-btn compare-btn" onclick="toggleCompareAgent(this)"
+                    data-agent-id="{{ agent.id }}" data-agent-name="{{ display_name }}"
+                    data-agent-experience="{{ agent.experience_range|default:"N/A" }}"
+                    data-agent-rating="{{ rating|floatformat:1 }}"
+                    data-agent-reviews="{{ agent.review_count }}"
+                    data-agent-claims="{{ performance.formatted_claims_processed|default:"0" }}"
+                    data-agent-settled="₹{{ performance.formatted_claims_amount|default:"0" }}"
+                    data-agent-clients="{{ agent.client_base|default:"0" }}"
+                    data-agent-segments="{{ agent.ordered_insurance_segments|join:", " }}"
+                    data-agent-location="{{ profile.city|default:"N/A" }}"
+                    data-agent-image="{{ profile.profile_photo_url }}"
+                    data-agent-slug="{{ agent_slug }}" data-agent-mobile="{{ agent.mobile }}"
+                    data-agent-whatsapp="{{ whatsapp_digits }}"
+                    data-agent-approved="{% if is_approved_by_admin %}1{% else %}0{% endif %}"
+                    data-agent-verified="{% if is_verified_agent %}1{% else %}0{% endif %}"
+                    data-agent-trusted="{% if is_trusted %}1{% else %}0{% endif %}" data-agent-badge="{{ badge }}"
+                    title="Compare Agent">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="18" cy="18" r="3" />
+                        <circle cx="6" cy="6" r="3" />
+                        <path d="M13 6h3a2 2 0 0 1 2 2v7" />
+                        <path d="M11 18H8a2 2 0 0 1-2-2V9" />
+                    </svg>
+                </button>
+                <button class="rac-icon-btn favorite-btn {% if is_favorited %}is-favorited{% endif %}"
+                    onclick="toggleFavoriteAgent(this, {{ agent.id }})" data-agent-id="{{ agent.id }}"
+                    title="Add to Favourites">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                        fill="{% if is_favorited %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                    </svg>
+                </button>
+            </div>
+            <a href="{% url 'agents:agent_public_profile' slug=agent_slug %}" class="rac-btn rac-btn--profile" target="_blank">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                </svg>
+                Profile
+            </a>
+            <a href="javascript:void(0)" class="rac-btn rac-btn--whatsapp"
+                onclick="return handleAgentContactClick(event, this, 'whatsapp')" data-agent-id="{{ agent.id }}"
+                data-service-type="{{ serviceType|default:"" }}" data-insurance-type="{{ insuranceType|default:"" }}"
+                data-insurance-company="{{ insuranceCompany|default:"" }}">
+                <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 448 512" width="14" height="14">
+                    <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z" />
+                </svg>
+                WhatsApp
+            </a>
+            <a href="javascript:void(0)" class="rac-btn rac-btn--call"
+                onclick="return handleAgentContactClick(event, this, 'call')" data-agent-id="{{ agent.id }}"
+                data-service-type="{{ serviceType|default:"" }}" data-insurance-type="{{ insuranceType|default:"" }}"
+                data-insurance-company="{{ insuranceCompany|default:"" }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M13 2a9 9 0 0 1 9 9" />
+                    <path d="M13 6a5 5 0 0 1 5 5" />
+                    <path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384" />
+                </svg>
+                Call Now
+            </a>
+        </div>
+    </div>
+
+    {% comment %} DESKTOP CARD {% endcomment %}
+    <div class="rac-card rac-desktop-card">
+        <div class="rac-d-row">
+            <div class="rac-d-photo">
+                <img src="{{ profile.profile_photo_url }}" alt="{{ display_name }}" class="rac-d-photo-img">
+            </div>
+
+            <div class="rac-d-info">
+                <div class="rac-d-name-row">
+                    <h3 class="rac-d-name">{{ display_name }}</h3>
+                    {% if badge and badge != 'none' %}
+                        {% if 'verified' in badge %}
+                            <span class="agent-recognition-badge badge-verified-official">
+                                <i class="fas fa-circle-check"></i> Verified
+                            </span>
+                        {% endif %}
+                        {% if 'irdai' in badge %}
+                            <span class="agent-recognition-badge badge-irdai-official">
+                                <i class="fas fa-medal"></i> Licensed
+                            </span>
+                        {% endif %}
+                        {% if 'trusted' in badge %}
+                            <span class="agent-recognition-badge badge-trusted-official">
+                                <i class="fas fa-award"></i> Trusted
+                            </span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+
+                <div class="rac-d-rating">
+                    <div class="rac-stars rac-stars--lg">
+                        {% for star in agent.star_rating_list %}
+                            {% if star == 'full' %}
+                                <svg class="rac-star rac-star--lg rac-star--full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                            {% elif star == 'half' %}
+                                <svg class="rac-star rac-star--lg rac-star--half" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                            {% else %}
+                                <svg class="rac-star rac-star--lg rac-star--empty" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <span class="rac-d-rating-val">{{ rating|floatformat:1 }}</span>
+                    <span class="rac-d-rating-count">({{ agent.review_count }} reviews)</span>
+                </div>
+
+                {% if has_distance %}
+                    <div class="rac-d-dist-pill">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="m4.93 4.93 4.24 4.24" />
+                            <path d="M14.83 9.17 19.07 4.93" />
+                            <path d="M14.83 14.83l4.24 4.24" />
+                            <path d="M9.17 14.83 4.93 19.07" />
+                            <circle cx="12" cy="12" r="4" />
+                        </svg>
+                        {% if display_dist < 1 %}
+                            Nearby
+                        {% elif display_dist > 100 %}
+                            <span style="color:#b45309;font-weight:700;">📡 Far Away</span>
+                        {% else %}
+                            {{ display_dist|floatformat:1 }}km away
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                {% if agent_city_display %}
+                    <div class="rac-d-location">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                            <circle cx="12" cy="10" r="3" />
+                        </svg>
+                        <span>{{ agent_city_display }}</span>
+                    </div>
+                {% endif %}
+
+                <div class="rac-d-stats-grid">
+                    <div class="rac-d-stat-box">
+                        <div class="rac-d-stat-num">{{ exp_years }}+</div>
+                        <div class="rac-d-stat-lbl">YEARS</div>
+                    </div>
+                    <div class="rac-d-stat-box">
+                        <div class="rac-d-stat-num">{{ agent.formatted_client_base }}</div>
+                        <div class="rac-d-stat-lbl">CLIENTS</div>
+                    </div>
+                    <div class="rac-d-stat-box">
+                        <div class="rac-d-stat-num">{{ performance.formatted_claims_processed|default:"0" }}</div>
+                        <div class="rac-d-stat-lbl">CLAIMS</div>
+                    </div>
+                    <div class="rac-d-stat-box">
+                        <div class="rac-d-stat-num">₹{{ performance.formatted_claims_amount|default:"0" }}</div>
+                        <div class="rac-d-stat-lbl">SETTLED</div>
+                    </div>
+                </div>
+
+                {% if agent.ordered_insurance_segments %}
+                    <div class="rac-d-tags">
+                        {% for seg in agent.ordered_insurance_segments %}
+                            <span class="rac-d-tag {% if 'health' in seg %}rac-tag--health{% elif 'life' in seg %}rac-tag--life{% elif 'motor' in seg %}rac-tag--motor{% elif 'sme' in seg %}rac-tag--sme{% else %}rac-tag--default{% endif %}">
+                                <span class="rac-d-tag-icon">
+                                    <i class="fas {% if 'health' in seg %}fa-heartbeat{% elif 'life' in seg %}fa-user-shield{% elif 'motor' in seg %}fa-car{% elif 'sme' in seg %}fa-store{% else %}fa-shield-alt{% endif %}"></i>
+                                </span>
+                                {% if seg == 'sme' %}SME{% else %}{{ seg|capfirst }}{% endif %}
+                            </span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="rac-d-right">
+                {% if request.GET.pincode or request.GET.location or request.GET.lat or request.session.last_pincode %}
+                    <div class="rac-d-match {% if calculated_match_percent > 90 %}rac-match--green{% elif calculated_match_percent >= 51 %}rac-match--amber{% else %}rac-match--red{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                        </svg>
+                        {{ calculated_match_percent }}% Match
+                    </div>
+                {% endif %}
+
+                <div class="rac-d-actions">
+                    <a href="{% url 'agents:agent_public_profile' slug=agent_slug %}" class="rac-d-btn rac-d-btn--profile" target="_blank">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
+                        View Profile
+                    </a>
+                    <a href="javascript:void(0)" class="rac-d-btn rac-d-btn--whatsapp"
+                        onclick="return handleAgentContactClick(event, this, 'whatsapp')"
+                        data-agent-id="{{ agent.id }}" data-service-type="{{ serviceType|default:"" }}"
+                        data-insurance-type="{{ insuranceType|default:"" }}" data-insurance-company="{{ insuranceCompany|default:"" }}">
+                        <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 448 512" width="14" height="14">
+                            <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z" />
+                        </svg>
+                        WhatsApp
+                    </a>
+                    <a href="javascript:void(0)" class="rac-d-btn rac-d-btn--call"
+                        onclick="return handleAgentContactClick(event, this, 'call')" data-agent-id="{{ agent.id }}"
+                        data-service-type="{{ serviceType|default:"" }}" data-insurance-type="{{ insuranceType|default:"" }}"
+                        data-insurance-company="{{ insuranceCompany|default:"" }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M13 2a9 9 0 0 1 9 9" />
+                            <path d="M13 6a5 5 0 0 1 5 5" />
+                            <path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384" />
+                        </svg>
+                        Call Now
+                    </a>
+
+                    <div class="rac-d-icon-row">
+                        <button class="rac-icon-btn compare-btn" onclick="toggleCompareAgent(this)"
+                            data-agent-id="{{ agent.id }}" data-agent-name="{{ display_name }}"
+                            data-agent-experience="{{ agent.experience_range|default:"N/A" }}"
+                            data-agent-rating="{{ rating|floatformat:1 }}"
+                            data-agent-reviews="{{ agent.review_count }}"
+                            data-agent-claims="{{ performance.formatted_claims_processed|default:"0" }}"
+                            data-agent-settled="₹{{ performance.formatted_claims_amount|default:"0" }}"
+                            data-agent-clients="{{ agent.client_base|default:"0" }}"
+                            data-agent-segments="{{ agent.ordered_insurance_segments|join:", " }}"
+                            data-agent-location="{{ profile.city|default:"N/A" }}"
+                            data-agent-image="{{ profile.profile_photo_url }}"
+                            data-agent-slug="{{ agent_slug }}" data-agent-mobile="{{ agent.mobile }}"
+                            data-agent-whatsapp="{{ whatsapp_digits }}"
+                            data-agent-approved="{% if is_approved_by_admin %}1{% else %}0{% endif %}"
+                            data-agent-verified="{% if is_verified_agent %}1{% else %}0{% endif %}"
+                            data-agent-trusted="{% if is_trusted %}1{% else %}0{% endif %}" data-agent-badge="{{ badge }}"
+                            title="Compare Agent">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <circle cx="18" cy="18" r="3" />
+                                <circle cx="6" cy="6" r="3" />
+                                <path d="M13 6h3a2 2 0 0 1 2 2v7" />
+                                <path d="M11 18H8a2 2 0 0 1-2-2V9" />
+                            </svg>
+                            Compare
+                        </button>
+                        <button class="rac-icon-btn rac-icon-btn--fav favorite-btn {% if is_favorited %}is-favorited{% endif %}"
+                            onclick="toggleFavoriteAgent(this, {{ agent.id }})" data-agent-id="{{ agent.id }}"
+                            title="Add to Favourites">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="{% if is_favorited %}currentColor{% else %}none{% endif %}" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                            </svg>
+                            Save
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% comment %} SHARED CSS {% endcomment %}
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+
+        /* ============================================================
+       React-style Agent Card — PHP Laravel version
+       Mobile card  : .rac-mobile-card   (shown < 992px)
+       Desktop card : .rac-desktop-card  (shown ≥ 992px)
+       ============================================================ */
+
+        /* Reset legacy styles inherited from .find-agents-list-item wrapper */
+        .react-agent-card.find-agents-list-item {
+            border: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+            padding: 0 !important;
+            display: block !important;
+            width: 100% !important;
+        }
+
+        /* ── Shared card shell ─────────────────────────────────── */
+        .rac-card {
+            background: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 14px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            transition: box-shadow 0.25s ease, transform 0.25s ease;
+        }
+
+        .rac-card:hover {
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+            transform: translateY(-1px);
+        }
+
+        /* Visibility toggles */
+        .rac-mobile-card {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .rac-desktop-card {
+            display: none;
+            flex-direction: column;
+        }
+
+        @media (min-width: 992px) {
+            .rac-mobile-card {
+                display: none;
+            }
+
+            .rac-desktop-card {
+                display: flex;
+            }
+        }
+
+        /* ── Shared badge styles ───────────────────────────────── */
+        .rac-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 8px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .rac-badge--trusted {
+            background: #1e3a8a;
+            color: #fff;
+        }
+
+        .rac-badge--licensed {
+            background: #059669;
+            color: #fff;
+        }
+
+        .rac-badge svg {
+            flex-shrink: 0;
+        }
+
+        /* ── Premium Agent Recognition Badges ─────────────────── */
+        .agent-recognition-badge {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+            padding: 3px 8px !important;
+            border-radius: 9999px !important;
+            font-size: 10px !important;
+            font-weight: 700 !important;
+            line-height: 1 !important;
+            margin: 0 !important;
+            white-space: nowrap !important;
+            font-family: 'Plus Jakarta Sans', 'Outfit', sans-serif !important;
+            transition: all 0.2s ease !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
+            border-width: 1px !important;
+        }
+
+        .agent-recognition-badge i {
+            font-size: 10px !important;
+        }
+
+        /* Verified Badge - Teal/Cyan */
+        .badge-verified-official {
+            background: #f0fdfa !important;
+            color: #0d9488 !important;
+            border: 1px solid #ccfbf1 !important;
+        }
+
+        /* IRDAI Badge - Indigo */
+        .badge-irdai-official {
+            background: #eff6ff !important;
+            color: #1e40af !important;
+            border: 1px solid #dbeafe !important;
+        }
+
+        /* Trusted Badge - Emerald Green */
+        .badge-trusted-official {
+            background: #f0fdf4 !important;
+            color: #16a34a !important;
+            border: 1px solid #bbf7d0 !important;
+        }
+
+        .agent-recognition-badge:hover {
+            transform: translateY(-1px) !important;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.06) !important;
+        }
+
+        /* ── Shared star styles ────────────────────────────────── */
+        .rac-stars {
+            display: inline-flex;
+            align-items: center;
+            gap: 1px;
+        }
+
+        .rac-star {
+            display: block;
+        }
+
+        .rac-star--full {
+            fill: #f59e0b;
+            color: #f59e0b;
+        }
+
+        .rac-star--half {
+            fill: #e5e7eb;
+            color: #e5e7eb;
+        }
+
+        .rac-star--empty {
+            fill: #e5e7eb;
+            color: #e5e7eb;
+        }
+
+        .rac-star {
+            width: 13px;
+            height: 13px;
+        }
+
+        .rac-star--lg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* ── Shared tag colours ────────────────────────────────── */
+        .rac-tag--health {
+            background: #fff1f2;
+            color: #be123c;
+            border-color: #fecdd3;
+        }
+
+        .rac-tag--life {
+            background: #f5f3ff;
+            color: #7c3aed;
+            border-color: #ddd6fe;
+        }
+
+        .rac-tag--motor {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-color: #bfdbfe;
+        }
+
+        .rac-tag--sme {
+            background: #fffbeb;
+            color: #b45309;
+            border-color: #fde68a;
+        }
+
+        .rac-tag--default {
+            background: #f3f4f6;
+            color: #374151;
+            border-color: #e5e7eb;
+        }
+
+        /* ── Shared icon-button ────────────────────────────────── */
+        .rac-icon-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            color: #6b7280;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            padding: 0;
+            font-size: 11px;
+            font-weight: 600;
+            gap: 4px;
+        }
+
+        .rac-icon-btn:hover {
+            background: #f3f4f6;
+            color: #111827;
+        }
+
+        .rac-icon-btn.is-favorited {
+            color: #ef4444;
+        }
+
+        .rac-icon-btn.is-favorited svg {
+            fill: #ef4444;
+        }
+
+        /* ── Match colour helpers ──────────────────────────────── */
+        .rac-match--green {
+            color: #15803d !important;
+        }
+
+        .rac-match--amber {
+            color: #b45309 !important;
+        }
+
+        .rac-match--red {
+            color: #b91c1c !important;
+        }
+
+
+        /* ════════════════════════════════════════════════════════
+       MOBILE CARD
+       ════════════════════════════════════════════════════════ */
+        .rac-mobile-card .rac-top {
+            display: flex;
+            flex-direction: row;
+            align-items: stretch;
+            flex: 1;
+        }
+
+        .rac-mobile-card .rac-photo-col {
+            position: relative;
+            width: 110px;
+            flex-shrink: 0;
+            overflow: hidden;
+            background: #e5e7eb;
+            align-self: stretch;
+        }
+
+        .rac-photo-img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .rac-photo-fade {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 32px;
+            background: linear-gradient(to right, transparent 0%, #fff 100%);
+            pointer-events: none;
+        }
+
+        .rac-info-col {
+            flex: 1;
+            min-width: 0;
+            padding: 10px 8px 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .rac-name-row {
+            display: flex;
+            flex-direction: row !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 6px !important;
+        }
+
+        .rac-name {
+            font-size: 15px;
+            font-weight: 800;
+            color: #111827;
+            line-height: 1.2;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 140px;
+        }
+
+        .rac-badges {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap !important;
+            align-items: center;
+        }
+
+        .rac-rating {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .rac-rating-val {
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .rac-rating-count {
+            font-weight: 400;
+            color: #6b7280;
+            font-size: 10px;
+        }
+
+        .rac-location {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            color: #6b7280;
+            font-size: 11px;
+            flex-wrap: nowrap;
+            min-width: 0;
+        }
+
+        .rac-location svg {
+            flex-shrink: 0;
+        }
+
+        .rac-location span {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ── Distance pill (mobile) ── */
+        .rac-dist-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 999px;
+            white-space: nowrap;
+            letter-spacing: 0.2px;
+            box-shadow: 0 1px 4px rgba(22, 163, 74, 0.35);
+            width: fit-content;
+        }
+
+        .rac-dist-pill svg {
+            flex-shrink: 0;
+            opacity: 0.9;
+        }
+
+        .rac-tags {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 3px;
+            margin-top: 2px;
+        }
+
+        .rac-tag {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px 4px;
+            border-radius: 999px;
+            border: 1px solid;
+            font-size: 9px;
+            font-weight: 700;
+            text-align: center;
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Mobile stats sidebar */
+        .rac-stats-col {
+            flex-shrink: 0;
+            width: 68px;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(to left, #f9fafb 0%, rgba(249, 250, 251, 0.4) 100%);
+        }
+
+        .rac-stat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 5px 3px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            text-align: center;
+            gap: 1px;
+        }
+
+        .rac-stat:last-child {
+            border-bottom: none;
+        }
+
+        .rac-stat--match {
+            flex-direction: row;
+            flex-wrap: nowrap;
+            gap: 2px;
+            padding: 5px 3px;
+        }
+
+        .rac-stat--match.rac-match--green {
+            background: linear-gradient(to left, rgba(187, 247, 208, 0.9) 0%, rgba(187, 247, 208, 0) 100%);
+        }
+
+        .rac-stat--match.rac-match--amber {
+            background: linear-gradient(to left, rgba(253, 230, 138, 0.9) 0%, rgba(253, 230, 138, 0) 100%);
+        }
+
+        .rac-stat--match.rac-match--red {
+            background: linear-gradient(to left, rgba(254, 202, 202, 0.9) 0%, rgba(254, 202, 202, 0) 100%);
+        }
+
+        .rac-stat--match .rac-stat-num,
+        .rac-stat--match .rac-stat-lbl {
+            display: inline;
+        }
+
+        .rac-stat-num {
+            font-size: 11px;
+            font-weight: 800;
+            color: #111827;
+            line-height: 1;
+        }
+
+        .rac-stat-lbl {
+            font-size: 8px;
+            color: #6b7280;
+            line-height: 1;
+            margin-top: 1px;
+        }
+
+        /* Mobile actions */
+        .rac-mobile-card .rac-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 10px;
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+            background: #fafafa;
+            flex-wrap: nowrap;
+        }
+
+        .rac-btn {
+            flex: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 7px 4px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: 'Plus Jakarta Sans', 'Outfit', system-ui, -apple-system, sans-serif !important;
+            text-decoration: none !important;
+            white-space: nowrap;
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .rac-btn:hover {
+            opacity: 0.88;
+            transform: translateY(-1px);
+        }
+
+        .rac-btn svg {
+            flex-shrink: 0;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .rac-btn--profile {
+            background: #1e3a8a;
+            color: #fff !important;
+        }
+
+        .rac-btn--whatsapp {
+            background: #22c55e;
+            color: #fff !important;
+        }
+
+        .rac-btn--call {
+            background: #1d4ed8;
+            color: #fff !important;
+        }
+
+        .rac-actions-right {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+
+        .rac-mobile-card .rac-icon-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            padding: 0;
+        }
+
+        .rac-mobile-card .rac-icon-btn svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        @media (max-width: 400px) {
+            .rac-mobile-card .rac-photo-col {
+                width: 88px;
+            }
+
+            .rac-stat-num {
+                font-size: 10px;
+            }
+
+            .rac-btn {
+                font-size: 10px;
+                padding: 7px 2px;
+                gap: 3px;
+            }
+
+            .rac-btn svg {
+                width: 11px;
+                height: 11px;
+                display: inline-block !important;
+            }
+        }
+
+
+        /* ════════════════════════════════════════════════════════
+       DESKTOP CARD  (≥ 992px)
+       ════════════════════════════════════════════════════════ */
+        .rac-d-row {
+            display: flex;
+            flex-direction: row;
+            align-items: stretch;
+            flex: 1;
+        }
+
+        /* Photo */
+        .rac-d-photo {
+            position: relative;
+            width: 200px;
+            flex-shrink: 0;
+            overflow: hidden;
+            background: #e5e7eb;
+            align-self: stretch;
+        }
+
+        .rac-d-photo-img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .rac-d-trusted-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: linear-gradient(135deg, #10b981, #0f766e);
+            color: #fff;
+            border-radius: 50%;
+            padding: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            border: 2px solid #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Middle info */
+        .rac-d-info {
+            flex: 1;
+            min-width: 0;
+            padding: 20px 20px 18px 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Desktop name row */
+        .rac-d-name-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .rac-d-name {
+            font-size: 18px;
+            font-weight: 800;
+            color: #111827;
+            line-height: 1.2;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 280px;
+        }
+
+        /* Desktop rating */
+        .rac-d-rating {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .rac-stars--lg {
+            gap: 2px;
+        }
+
+        .rac-d-rating-val {
+            font-size: 14px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .rac-d-rating-count {
+            font-size: 12px;
+            font-weight: 400;
+            color: #6b7280;
+        }
+
+        /* Desktop location */
+        .rac-d-location {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: #6b7280;
+            font-size: 12px;
+            flex-wrap: nowrap;
+        }
+
+        .rac-d-location svg {
+            flex-shrink: 0;
+        }
+
+        .rac-d-location span {
+            white-space: nowrap;
+        }
+
+        /* ── Distance pill (desktop) ── */
+        .rac-d-dist-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 800;
+            padding: 5px 12px;
+            border-radius: 999px;
+            white-space: nowrap;
+            letter-spacing: 0.2px;
+            box-shadow: 0 2px 8px rgba(22, 163, 74, 0.35);
+            width: fit-content;
+        }
+
+        .rac-d-dist-pill svg {
+            flex-shrink: 0;
+            opacity: 0.9;
+        }
+
+        /* Desktop stats grid (4 cols: Years · Clients · Claims · Settled) */
+        .rac-d-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 2px;
+        }
+
+        .rac-d-stat-box {
+            background: rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.07);
+            border-radius: 8px;
+            padding: 8px 6px;
+            text-align: center;
+        }
+
+        .rac-d-stat-num {
+            font-size: 14px;
+            font-weight: 800;
+            color: #111827;
+            line-height: 1;
+        }
+
+        .rac-d-stat-lbl {
+            font-size: 8px;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-top: 3px;
+        }
+
+        /* Desktop product tags with icon circles */
+        .rac-d-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 2px;
+        }
+
+        .rac-d-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px 5px 5px;
+            border-radius: 999px;
+            border: 1px solid;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .rac-d-tag-icon {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            flex-shrink: 0;
+        }
+
+        /* Desktop right column */
+        .rac-d-right {
+            width: 220px;
+            flex-shrink: 0;
+            background: rgba(0, 0, 0, 0.015);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Match % fade panel — bleeds left */
+        .rac-d-match {
+            width: calc(100% + 56px);
+            margin-left: -56px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 14px 16px;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: default;
+            border-radius: 0 8px 0 0;
+        }
+
+        .rac-d-match.rac-match--green {
+            background: linear-gradient(to left, rgba(187, 247, 208, 0.95) 0%, rgba(187, 247, 208, 0) 100%);
+        }
+
+        .rac-d-match.rac-match--amber {
+            background: linear-gradient(to left, rgba(253, 230, 138, 0.95) 0%, rgba(253, 230, 138, 0) 100%);
+        }
+
+        .rac-d-match.rac-match--red {
+            background: linear-gradient(to left, rgba(254, 202, 202, 0.95) 0%, rgba(254, 202, 202, 0) 100%);
+        }
+
+        /* Stacked action buttons */
+        .rac-d-actions {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 20px;
+        }
+
+        .rac-d-btn {
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            font-family: 'Plus Jakarta Sans', 'Outfit', system-ui, -apple-system, sans-serif !important;
+            text-decoration: none !important;
+            white-space: nowrap;
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .rac-d-btn:hover {
+            opacity: 0.88;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+        }
+
+        .rac-d-btn svg {
+            flex-shrink: 0;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .rac-d-btn--profile {
+            background: #1e3a8a;
+            color: #fff !important;
+        }
+
+        .rac-d-btn--whatsapp {
+            background: #22c55e;
+            color: #fff !important;
+        }
+
+        .rac-d-btn--call {
+            background: #1d4ed8;
+            color: #fff !important;
+        }
+
+        /* Desktop compare + save row */
+        .rac-d-icon-row {
+            display: flex;
+            gap: 6px;
+            padding-top: 4px;
+        }
+
+        .rac-d-icon-row .rac-icon-btn {
+            flex: 1;
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            gap: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rac-icon-btn--fav.is-favorited {
+            color: #ef4444;
+        }
+
+        .rac-icon-btn--fav.is-favorited svg {
+            fill: #ef4444;
+        }
+    </style>
+
+    {% endwith %}
+</div>

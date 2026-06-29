@@ -1,0 +1,875 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Agent Dashboard — PadosiAgent{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/agent-dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+{% with display_name=profile.display_name|default:agent.fullname|default:"Agent" %}
+{% with display_initial=display_name|slice:":1"|upper %}
+<div class="agent-dashboard-wrapper">
+    <div class="container py-4">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header-con d-flex justify-content-between align-items-center mb-5 flex-wrap px-2">
+            <div class="d-flex align-items-center">
+                <div class="agent-avatar-circle mr-3">
+                    {% if profile.profile_photo_path %}
+                        <img
+                            src="{{ profile.profile_photo_url }}"
+                            alt="{{ display_name }}"
+                            style="width:100%;height:100%;object-fit:cover;border-radius:50%;"
+                            onerror="this.style.display='none'; if (this.nextElementSibling) { this.nextElementSibling.style.display='flex'; }"
+                        >
+                        <span class="avatar-letter" style="display:none;">{{ display_initial }}</span>
+                    {% else %}
+                        <span class="avatar-letter">{{ display_initial }}</span>
+                    {% endif %}
+                </div>
+                <div class="agent-info">
+                    <h2 class="mb-0 font-weight-bold agent-name-text">{{ display_name }} <span class="badge starter-plan-badge ml-2">{{ planName }}</span></h2>
+                    <p class="text-muted mb-0 agent-role-text">Insurance Agent</p>
+                </div>
+            </div>
+            <div class="dashboard-top-actions mt-3 mt-md-0 d-flex flex-wrap gap-2 align-items-center">
+                <button type="button" class="btn text-white shadow-sm px-4 d-flex align-items-center mb-2 mb-sm-0" data-toggle="modal" data-target="#rankingGuideModal" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none; font-weight: 700; border-radius: 8px; margin-right: 12px; height: 42px;">
+                    <i class="fas fa-rocket mr-2"></i> Rank Boost Tips
+                </button>
+                <a href="{% url 'agents:agent_public_profile' slug=profile.slug|default:agent.id %}" class="btn btn-profile-view mb-2 mb-sm-0" style="height: 42px; display: inline-flex; align-items: center;">View My Profile</a>
+            </div>
+        </div>
+
+        {% if agent.status == 'inactive' or agent.status == 'pending_approval' %}
+        <div class="alert alert-warning d-flex align-items-center mb-4" role="alert" style="background-color: #fffbeb; border-color: #fde68a; color: #92400e; border-radius: 8px;">
+            <i class="fas fa-exclamation-triangle mr-3" style="font-size: 1.25rem;"></i>
+            <div>
+                <strong>Profile Pending Approval:</strong> Your registration is complete, but your profile is currently awaiting admin approval. It will become visible in the public agent list once approved.
+            </div>
+        </div>
+        {% endif %}
+
+        {% if isOnTrial %}
+        {# ──────── FREE TRIAL UPGRADE PROMOTION BANNER ──────── #}
+        <div id="upgradeTrialBanner" style="
+            background: linear-gradient(135deg, #1e3a6e 0%, #1d7d5d 100%);
+            border-radius: 16px;
+            padding: 24px 28px;
+            margin-bottom: 24px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(30,58,110,0.25);
+        ">
+            {# Decorative circles #}
+            <div style="position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.05);"></div>
+            <div style="position:absolute;right:60px;bottom:-60px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.04);"></div>
+
+            <div class="row align-items-center g-3 position-relative">
+                <div class="col-lg-7 col-md-12">
+                    <div class="d-flex align-items-center mb-3 flex-wrap gap-2">
+                        <span style="background:rgba(255,255,255,0.2);border-radius:20px;padding:4px 14px;font-size:13px;font-weight:700;letter-spacing:.03em;display:inline-flex;align-items:center;gap:6px;">
+                            🎯 TRIAL
+                            {% if daysLeft <= 0 %}
+                                <span style="background:#ef4444;color:white;border-radius:10px;padding:2px 8px;font-size:11px;">EXPIRED</span>
+                            {% elif daysLeft <= 5 %}
+                                <span style="background:#f59e0b;color:#1e3a6e;border-radius:10px;padding:2px 8px;font-size:11px;">⚡ {{ daysLeft }} DAYS LEFT</span>
+                            {% else %}
+                                <span style="background:rgba(0,0,0,0.15);border-radius:10px;padding:2px 8px;font-size:11px;font-weight:500;">{{ daysLeft }} days left</span>
+                            {% endif %}
+                        </span>
+                        {% if discountPct > 0 %}
+                            <span style="background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:20px;padding:4px 14px;font-size:13px;font-weight:800;box-shadow:0 2px 8px rgba(245,158,11,0.3);">
+                                {{ discountPct }}% OFF Upgrade
+                            </span>
+                        {% endif %}
+                    </div>
+                    <h4 style="font-weight:800;margin-bottom:8px;font-size:1.4rem;line-height:1.2;color:#ffffff;">
+                        🚀 Upgrade Now &amp; {% if discountPct > 0 %}Save {% else %}Get Full Access{% endif %}
+                    </h4>
+                    <p style="color:rgba(255,255,255,0.95) !important;font-size:14.5px;margin-bottom:0;line-height:1.55;font-weight:500;text-shadow:0 1px 2px rgba(0,0,0,0.1);">Your Trial gives limited visibility. Upgrade to a full plan before it expires {% if discountPct > 0 %} and lock in your <strong style="color:#ffffff;">{{ discountPct }}% early-bird discount</strong>.{% endif %}</p>
+                </div>
+                <div class="col-lg-5 col-md-12 mt-4 mt-lg-0">
+                    <div class="d-flex flex-column gap-2">
+                        <button onclick="openUpgradeModal('basic', '{{ starterDisc }}')" class="btn hover-lift" style="background:white;color:#1e3a6e;text-align:left;border-radius:16px;padding:16px 20px;border:none;box-shadow:0 4px 15px rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:space-between;">
+                            <div>
+                                <div style="font-size:14px;opacity:0.8;font-weight:800;margin-bottom:2px;letter-spacing:0.5px;text-transform:uppercase;">⭐ Starter</div>
+                                <div style="font-size:1.25rem;font-weight:800;line-height:1;">
+                                    ₹{{ starterDisc|floatformat:0 }}
+                                    {% if discountPct > 0 %}<span style="font-size:13px;text-decoration:line-through;opacity:.5;font-weight:500;margin-left:6px;">₹{{ starterFull|floatformat:0 }}</span>{% endif %}
+                                </div>
+                            </div>
+                            <div style="background:rgba(30,58,110,0.1);height:36px;width:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                                <i class="fas fa-chevron-right" style="color:#1e3a6e;"></i>
+                            </div>
+                        </button>
+                        <button onclick="openUpgradeModal('professional', '{{ profDisc }}')" class="btn hover-lift" style="background:linear-gradient(135deg,#10b981,#059669);color:white;text-align:left;border-radius:16px;padding:16px 20px;border:none;box-shadow:0 4px 15px rgba(16,185,129,0.3);display:flex;align-items:center;justify-content:space-between;">
+                            <div>
+                                <div style="font-size:14px;opacity:0.9;font-weight:800;margin-bottom:2px;letter-spacing:0.5px;text-transform:uppercase;">💎 Professional</div>
+                                <div style="font-size:1.25rem;font-weight:800;line-height:1;">
+                                    ₹{{ profDisc|floatformat:0 }}
+                                    {% if discountPct > 0 %}<span style="font-size:13px;text-decoration:line-through;opacity:.6;font-weight:500;margin-left:6px;">₹{{ profFull|floatformat:0 }}</span>{% endif %}
+                                </div>
+                            </div>
+                            <div style="background:rgba(255,255,255,0.2);height:36px;width:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                                <i class="fas fa-chevron-right" style="color:white;"></i>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# UPGRADE PAYMENT MODAL #}
+        <div class="modal fade" id="upgradeModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow" style="border-radius:16px;overflow:hidden;">
+                    <div class="modal-header" style="background:linear-gradient(135deg,#1e3a6e,#1d7d5d);color:white;border:0;">
+                        <h5 class="modal-title fw-bold"><i class="fas fa-crown me-2"></i>Confirm Plan Upgrade</h5>
+                        <button type="button" class="btn text-white p-0 m-0" data-bs-dismiss="modal" data-dismiss="modal" onclick="closeUpgradeModal()" aria-label="Close" style="background:transparent;border:none;box-shadow:none;">
+                            <i class="fas fa-times fs-4"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div id="upgradeModalContent" class="text-center">
+                            <div class="spinner-border text-primary" role="status"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Tab Navigation Bar -->
+        <div class="dashboard-nav-tabs-wrapper mb-4 px-2">
+            <ul class="nav dashboard-main-tabs">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#">Overview</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="far fa-user mr-2"></i>My Profile</a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Overview Section Grid -->
+        <div id="overview-content">
+            <div class="row px-2">
+                <!-- Performance Card -->
+                <div class="col-lg-4 mb-4">
+                    <div class="card premium-dashboard-card h-100">
+                        <div class="card-body p-4">
+                            <h5 class="card-section-title mb-4">Performance Overview</h5>
+                            
+                            <div class="performance-item mb-4">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="perf-label">Lead Conversion Rate</span>
+                                    <span class="perf-value">{{ dashboardStats.conversionRate }}%</span>
+                                </div>
+                                <div class="progress perf-progress">
+                                    <div class="progress-bar bg-navy" role="progressbar" style="width: {{ dashboardStats.conversionRate }}%"></div>
+                                </div>
+                            </div>
+    
+                            <div class="performance-item mb-4 pb-2 border-bottom">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="perf-label">Monthly Target</span>
+                                    <span class="perf-value">{{ dashboardStats.monthlyTarget }}%</span>
+                                </div>
+                                <div class="progress perf-progress">
+                                    <div class="progress-bar bg-navy" role="progressbar" style="width: {{ dashboardStats.monthlyTarget }}%"></div>
+                                </div>
+                            </div>
+    
+                            <div class="d-flex justify-content-between mb-3 pt-2 stats-item">
+                                <span class="stats-label">Total Page Views</span>
+                                <span class="stats-value">{{ dashboardStats.totalPageViews }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between stats-item">
+                                <span class="stats-label">Contact Requests</span>
+                                <span class="stats-value">{{ dashboardStats.contactRequests }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    
+                <!-- Lead Stats Grid Card -->
+                <div class="col-lg-4 mb-4">
+                    <div class="card premium-dashboard-card h-100">
+                        <div class="card-body p-4">
+                            <h5 class="card-section-title mb-4">Lead Stats</h5>
+                            <div class="row lead-stats-grid">
+                                <div class="col-6 mb-3">
+                                    <div class="mini-stat-box box-blue">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <div class="stat-icon-wrap"><i class="fas fa-user-plus"></i></div>
+                                            <span class="mini-bubble">{{ dashboardStats.monthlyLeads }}</span>
+                                        </div>
+                                        <div class="mini-stat-big-num">{{ dashboardStats.newLeads }}</div>
+                                        <div class="mini-stat-label">New Leads</div>
+                                    </div>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <div class="mini-stat-box box-green">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <div class="stat-icon-wrap"><i class="fas fa-users"></i></div>
+                                            <span class="mini-bubble">{{ dashboardStats.contactedLeads }}</span>
+                                        </div>
+                                        <div class="mini-stat-big-num">{{ dashboardStats.contactedLeads }}</div>
+                                        <div class="mini-stat-label">Contacted</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="mini-stat-box box-teal">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <div class="stat-icon-wrap"><i class="fas fa-wave-square"></i></div>
+                                            <span class="mini-bubble">{{ dashboardStats.followUpLeads }}</span>
+                                        </div>
+                                        <div class="mini-stat-big-num">{{ dashboardStats.followUpLeads }}</div>
+                                        <div class="mini-stat-label">Follow-up</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="mini-stat-box box-yellow">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <div class="stat-icon-wrap"><i class="fas fa-star"></i></div>
+                                            <span class="mini-bubble">{{ dashboardStats.closedLeads }}</span>
+                                        </div>
+                                        <div class="mini-stat-big-num">{{ dashboardStats.closedLeads }}</div>
+                                        <div class="mini-stat-label">Closed</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    
+                <!-- Sales Insights / Empty State -->
+                <div class="col-lg-4 mb-4">
+                    <div class="card premium-dashboard-card h-100">
+                        <div class="card-body p-4 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5 class="card-section-title mb-0">Sales Insights</h5>
+                                <i class="fas fa-chart-line text-muted opacity-50"></i>
+                            </div>
+                            
+                            <div class="row mb-5 text-center">
+                                <div class="col-4">
+                                    <div class="insight-label mb-1">Total Leads</div>
+                                    <div class="insight-value">{{ dashboardStats.totalLeads }}</div>
+                                </div>
+                                <div class="col-4 border-left">
+                                    <div class="insight-label mb-1">Active</div>
+                                    <div class="insight-value">{{ dashboardStats.activeLeads }}</div>
+                                </div>
+                                <div class="col-4 border-left">
+                                    <div class="insight-label mb-1">Closed</div>
+                                    <div class="insight-value">{{ dashboardStats.closedLeads }}</div>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3 text-center">
+                                <div class="col-12">
+                                    <div class="insight-label mb-1">Monthly Visits</div>
+                                    <div class="insight-value">{{ dashboardStats.monthlyVisits }}</div>
+                                </div>
+                            </div>
+    
+                            <div class="spacer flex-grow-1"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Recent Leads List -->
+            <div class="px-2 mt-2 pb-5">
+                <div class="card premium-dashboard-card">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h5 class="card-section-title mb-1">Recent Leads</h5>
+                                <p class="text-muted small mb-0">Your latest potential clients</p>
+                            </div>
+                            <button class="btn btn-view-all" disabled>View All Leads</button>
+                        </div>
+
+                        {% if recentLeads %}
+                            <div class="table-responsive">
+                                <table class="table table-borderless mb-0">
+                                    <thead>
+                                        <tr style="color:#64748b; font-size:13px;">
+                                            <th>Name</th>
+                                            <th>Contact</th>
+                                            <th>Pincode</th>
+                                            <th>Requirement</th>
+                                            <th>Source</th>
+                                            <th>Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for lead in recentLeads %}
+                                            <tr>
+                                                <td>{{ lead.customer_name|default:'Guest User' }}</td>
+                                                <td>
+                                                    <div>{{ lead.customer_mobile|default:'-' }}</div>
+                                                    <small class="text-muted">{{ lead.customer_email|default:'-' }}</small>
+                                                </td>
+                                                <td>{{ lead.customer_pincode|default:'-' }}</td>
+                                                <td>{{ lead.enquiry_requirements|default:'-' }}</td>
+                                                <td style="text-transform: capitalize;">{{ lead.interaction_type }}</td>
+                                                <td>{{ lead.created_at|timesince }} ago</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="empty-list-display text-center py-5">
+                                <div class="empty-icon-wrap mb-4">
+                                    <i class="far fa-folder-open fa-3x"></i>
+                                </div>
+                                <p class="empty-msg-text">No leads found. Start adding leads to see them here.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Referral Rewards CTA Card -->
+            {% if showReferral %}
+            <div class="px-2 mt-2 pb-4">
+                <div style="
+                    background: linear-gradient(135deg, #4c1d95 0%, #1e3a8a 100%);
+                    border-radius: 20px;
+                    padding: 28px 32px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 24px;
+                    flex-wrap: wrap;
+                    box-shadow: 0 8px 32px rgba(76,29,149,0.25);
+                    position: relative;
+                    overflow: hidden;
+                ">
+                    {# Decorative circle #}
+                    <div style="position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,0.06);"></div>
+
+                    <div style="position:relative;z-index:2;">
+                        <div style="display:inline-block;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:50rem;padding:3px 14px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;">🎁 Referral Program</div>
+                        <h5 style="color:#fff;font-weight:800;font-size:1.2rem;margin-bottom:6px;">Earn Rewards for Every Agent You Invite!</h5>
+                        <p style="color:rgba(255,255,255,0.8);font-size:13.5px;margin-bottom:0;line-height:1.5;">Refer colleagues and unlock discounts up to <strong style="color:#fde68a;">100% OFF</strong> — even get the Pro Plan for ₹1!</p>
+                    </div>
+
+                    <div style="position:relative;z-index:2;flex-shrink:0;">
+                        <a href="{% url 'agents:agent_referral' %}" style="
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 8px;
+                            background: #fff;
+                            color: #4c1d95;
+                            font-weight: 800;
+                            font-size: 14px;
+                            border-radius: 14px;
+                            padding: 12px 24px;
+                            text-decoration: none;
+                            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+                            transition: transform 0.2s, box-shadow 0.2s;
+                        " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.25)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(0,0,0,0.2)'">
+                            <i class="fas fa-share-nodes"></i> View My Referrals
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- My Profile Section -->
+        <div id="profile-content" style="display: none;">
+            <!-- Profile Completion Card -->
+            <div class="card premium-dashboard-card mb-4 mx-2">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="card-section-title mb-0">Profile Completion <span class="badge badge-warning text-white rounded-pill ml-2" style="background-color: #f59e0b; font-size: 11px; padding: 4px 10px;">{{ completion }}%</span></h5>
+                        <a href="{% url 'agents:agent_edit_profile' %}" class="btn btn-add-lead-top"><i class="fas fa-edit mr-2"></i>Edit Profile</a>
+                    </div>
+                    <p class="text-muted small mb-3">Complete your profile to improve visibility and receive more leads</p>
+                    
+                    <div class="d-flex justify-content-between mb-1 small text-muted font-weight-bold">
+                        <span>Overall Progress</span>
+                        <span>{{ completion }}%</span>
+                    </div>
+                    <div class="progress mb-4" style="height: 10px; border-radius: 10px; background-color: #f1f5f9;">
+                        <div class="progress-bar" role="progressbar" style="width: {{ completion }}%; background-color: #1a6d6d; border-radius: 10px;"></div>
+                    </div>
+
+                    <div class="row">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Your Profile Information Card -->
+            <div class="card premium-dashboard-card mx-2 mb-4">
+                <div class="card-body p-4">
+                    <h5 class="card-section-title mb-1">Your Profile Information</h5>
+                    <p class="text-muted small mb-4">Information visible to potential clients</p>
+
+                    <div class="row">
+                        <div class="col-lg-6 mb-4 mb-lg-0 border-right-lg">
+                            <div class="d-flex align-items-start mb-4">
+                                <div class="agent-avatar-circle mr-3" style="width: 80px; height: 80px; font-size: 32px;">
+                                    {% if profile.profile_photo_path %}
+                                        <img
+                                            src="{{ profile.profile_photo_url }}"
+                                            alt="{{ display_name }}"
+                                            style="width:100%;height:100%;object-fit:cover;border-radius:50%;"
+                                            onerror="this.style.display='none'; if (this.nextElementSibling) { this.nextElementSibling.style.display='flex'; }"
+                                        >
+                                        <span class="avatar-letter" style="display:none;">{{ display_initial }}</span>
+                                    {% else %}
+                                        <span class="avatar-letter">{{ display_initial }}</span>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <h5 class="font-weight-bold mb-1">{{ display_name }}</h5>
+                                    <p class="text-muted small mb-0">{% if agent.experience_range %}{{ agent.experience_range }} Years Exp.{% else %}Experience not set{% endif %}</p>
+                                    <p class="text-muted small mb-0">
+                                        {% if agent.serviceableCities.exists %}
+                                            {{ agent.serviceableCities.first.name }}
+                                            {% with city_count=agent.serviceableCities.count|add:"-1" %}
+                                                {% if city_count > 0 %} +{{ city_count }} more{% endif %}
+                                            {% endwith %}
+                                        {% else %}
+                                            Location not set
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="contact-info mb-4">
+                                <div class="small font-weight-bold mb-2">Contact</div>
+                                <div class="d-flex align-items-center mb-2 text-muted small">
+                                    <i class="far fa-envelope mr-3" style="width: 16px;"></i> {{ agent.email }}
+                                </div>
+                                <div class="d-flex align-items-center text-muted small">
+                                    <i class="fas fa-mobile-alt mr-3" style="width: 16px;"></i> {{ agent.mobile|default:'Not set' }}
+                                </div>
+                            </div>
+
+                            <div class="languages-info">
+                                <div class="small font-weight-bold mb-2">Languages</div>
+                                <div>
+                                    {% if profile.languages %}
+                                        {% for lang in profile.languages.split|default:profile.languages %}
+                                            <span class="badge badge-primary px-3 py-1 rounded-pill mb-1 mr-1" style="background-color: #1a365d;">{{ lang|title }}</span>
+                                        {% endfor %}
+                                    {% else %}
+                                        <span class="text-muted small">Not set</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 pl-lg-4">
+                             <div class="mb-4">
+                                <div class="small font-weight-bold mb-1">Insurance Segments</div>
+                                <div>
+                                    {% if agent.insuranceSegments.exists %}
+                                        {% for seg in agent.ordered_insurance_segments %}
+                                            <span class="badge badge-primary px-3 py-1 rounded-pill mb-1 mr-1" style="background-color: #1a365d;">{% if seg == 'sme' %}SME{% else %}{{ seg|capfirst }}{% endif %}</span>
+                                        {% endfor %}
+                                    {% else %}
+                                        <span class="text-muted small">Not selected</span>
+                                    {% endif %}
+                                </div>
+                             </div>
+
+                             <div class="mb-4">
+                                <div class="small font-weight-bold mb-1">Serviceable Cities</div>
+                                <div class="text-muted small">
+                                    {% if agent.serviceableCities.exists %}
+                                        {% for city in agent.serviceableCities.all|slice:":5" %}{{ city.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                                        {% if agent.serviceableCities.count > 5 %}...{% endif %}
+                                    {% else %}
+                                        Not set
+                                    {% endif %}
+                                </div>
+                             </div>
+
+                             <div class="mb-0">
+                                <div class="small font-weight-bold mb-1">Company/Agency</div>
+                                <div class="text-muted small">{{ profile.agency_name|default:'Not set' }}</div>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Card Preview Section -->
+            <div class="card premium-dashboard-card mx-2 mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="card-section-title mb-0">Live Profile Card Preview</h5>
+                        <span class="badge badge-pill badge-light border text-muted px-3 py-1" style="font-size: 11px;">Preview: How users see you in search results</span>
+                    </div>
+                    <div class="row justify-content-center">
+                        <div class="col-md-10 col-lg-8">
+                             {% include 'partials/agent-card.html' with agent=agent profile=profile %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+{% endwith %}
+{% endwith %}
+
+<!-- Ranking Guide Modal -->
+<div class="modal fade" id="rankingGuideModal" tabindex="-1" role="dialog" aria-labelledby="rankingGuideModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+            <div class="modal-header p-4 border-0" style="background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%); color: white;">
+                <h5 class="modal-title font-weight-bold d-flex align-items-center" id="rankingGuideModalLabel" style="font-size: 20px;">
+                    <i class="fas fa-circle-info mr-3 text-warning"></i> Algorithmic Rank Boost Guide
+                </h5>
+                <button type="button" class="close text-white opacity-80 hover-opacity-100" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close" style="font-size: 28px; background: none; border: none; outline: none; margin-top: -10px;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-0">
+                <div style="max-height: 65vh; overflow-y: auto; padding: 28px;">
+                    <p class="text-muted mb-4" style="font-size: 15px; line-height: 1.6;">Want to guarantee you stay at the very top of the search results? Our <strong>Smart Rank Algorithm</strong> constantly calculates a dynamic score for your profile. Follow these rules to maximize your points and secure the #1 spot!</p>
+                    
+                    <div class="mb-4 pb-3 border-bottom">
+                        <h6 class="font-weight-bold text-dark mb-2" style="font-size: 16px;"><i class="fas fa-clock text-info mr-2 text-center" style="width: 20px;"></i> 1. The "Fast Responder" Bonus (Up to 50 Pts)</h6>
+                        <p class="small text-muted mb-2">Customers prefer active agents. We heavily reward agents who log in to their dashboard frequently!</p>
+                        <ul class="small mb-0 text-dark pl-4" style="line-height: 1.7;">
+                            <li><strong>Logged in within the last 3 days:</strong> +50 Points 🚀</li>
+                            <li><strong>Logged in within the last 2 weeks:</strong> +25 Points</li>
+                            <li><strong>Inactive for over 30 days:</strong> 0 Points 📉 (Your rank will drop severely)</li>
+                        </ul>
+                    </div>
+
+                    <div class="mb-4 pb-3 border-bottom">
+                        <h6 class="font-weight-bold text-dark mb-2" style="font-size: 16px;"><i class="fas fa-user-check text-success mr-2 text-center" style="width: 20px;"></i> 2. Profile Completion Bonus (Up to 30 Pts)</h6>
+                        <p class="small text-muted mb-2">You gain an automatic <strong>+5 Points</strong> for every single one of the following you fill out in your settings:</p>
+                        <div class="d-flex flex-wrap gap-2 small text-dark mt-2">
+                            <span class="badge badge-light border border-secondary mr-2 mb-2 p-2 px-3">Profile Photo</span>
+                            <span class="badge badge-light border border-secondary mr-2 mb-2 p-2 px-3">Office Address</span>
+                            <span class="badge badge-light border border-secondary mr-2 mb-2 p-2 px-3">Experience Years</span>
+                            <span class="badge badge-light border border-secondary mr-2 mb-2 p-2 px-3">WhatsApp Number</span>
+                            <span class="badge badge-light border border-secondary mr-2 mb-2 p-2 px-3">License Number</span>
+                            <span class="badge badge-light border border-secondary mb-2 p-2 px-3">Languages</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4 pb-3 border-bottom">
+                        <h6 class="font-weight-bold text-dark mb-2" style="font-size: 16px;"><i class="fas fa-star text-warning mr-2 text-center" style="width: 20px;"></i> 3. Customer Review Score (Up to 10 Pts)</h6>
+                        <p class="small text-muted mb-0">If you maintain an <strong>Average Rating of 4.5 Stars or Higher</strong> from verified customers, you receive an instantaneous algorithmic boost over peers who have poor ratings.</p>
+                    </div>
+
+                    <div class="mb-4 pb-3 border-bottom">
+                        <h6 class="font-weight-bold text-dark mb-2" style="font-size: 16px;"><i class="fas fa-chart-bar text-primary mr-2 text-center" style="width: 20px;"></i> 4. Performance Base Score (Up to 60 Pts)</h6>
+                        <p class="small text-muted mb-2">Automated ranking points are naturally distributed based on your career volume:</p>
+                        <ul class="small mb-0 text-dark pl-4" style="line-height: 1.7;">
+                            <li><strong>Experience Years:</strong> Up to 20 Points</li>
+                            <li><strong>Total Client Base:</strong> Up to 20 Points</li>
+                            <li><strong>Claims Processed:</strong> Up to 20 Points</li>
+                        </ul>
+                    </div>
+
+                    <div class="mb-4 pb-3 border-bottom">
+                        <h6 class="font-weight-bold text-dark mb-2" style="font-size: 16px;"><i class="fas fa-medal text-danger mr-2 text-center" style="width: 20px;"></i> 5. Official Badges (Up to 15 Pts)</h6>
+                        <p class="small text-muted mb-0">Earning official platform Badges immediately signals authority to the algorithm and explicitly adds an instant flat <strong>+15 Points</strong> to your total search visibility score.</p>
+                    </div>
+
+                    <div>
+                        <h6 class="font-weight-bold text-dark mb-2" style="font-size: 16px;"><i class="fas fa-bullseye text-secondary mr-2 text-center" style="width: 20px;"></i> 6. The Perfect Match Multiplier (Up to 30 Pts)</h6>
+                        <p class="small text-muted mb-0">When a user specifically searches for an Insurance Type, agents who explicitly list that exact segment in their profile receive an immense <strong>+30 Point Multiplier</strong>, ensuring they climb directly to the top specifically for that customer!</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 p-4 d-flex justify-content-center" style="background: #f8fafc;">
+                <button type="button" class="btn btn-secondary font-weight-bold px-5" data-bs-dismiss="modal" data-dismiss="modal" style="border-radius: 8px; background-color: #cbd5e1; border: none; color: #334155;">Got It, Thanks!</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+<script>
+    (function() {
+        const fcmConfig = {
+            apiKey: "{{ fcm_api_key }}",
+            authDomain: "{{ fcm_auth_domain }}",
+            projectId: "{{ fcm_project_id }}",
+            storageBucket: "{{ fcm_storage_bucket }}",
+            messagingSenderId: "{{ fcm_messaging_sender_id }}",
+            appId: "{{ fcm_app_id }}"
+        };
+        const vapidKey = "{{ fcm_vapid_key }}";
+
+        if (!fcmConfig.apiKey || !vapidKey || !('serviceWorker' in navigator)) {
+            return;
+        }
+
+        firebase.initializeApp(fcmConfig);
+        const messaging = firebase.messaging();
+
+        function sendTokenToServer(token) {
+            return fetch("{% url 'agents:agent_push_token' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': "{{ csrf_token }}"
+                },
+                body: JSON.stringify({
+                    token: token,
+                    platform: 'web'
+                })
+            });
+        }
+
+        function requestPermissionAndToken() {
+            Notification.requestPermission().then((permission) => {
+                if (permission !== 'granted') {
+                    return;
+                }
+
+                navigator.serviceWorker.ready.then((registration) => {
+                    messaging.getToken({
+                        vapidKey: vapidKey,
+                        serviceWorkerRegistration: registration
+                    }).then((currentToken) => {
+                        if (currentToken) {
+                            sendTokenToServer(currentToken);
+                        }
+                    });
+                });
+            });
+        }
+
+        window.addEventListener('load', requestPermissionAndToken);
+    })();
+</script>
+
+<script>
+    // Initialize dashboard tabs
+    (function() {
+        
+        document.querySelectorAll('.padosi-lightbox').forEach(el => el.remove());
+        
+        let tabInitInProgress = false;
+
+        function initializeDashboardTabs() {
+            if (tabInitInProgress) return;
+            tabInitInProgress = true;
+
+            const dashboardTabs = document.querySelectorAll('.dashboard-main-tabs .nav-link');
+            const overviewContent = document.getElementById('overview-content');
+            const profileContent = document.getElementById('profile-content');
+            const viewProfileBtn = document.querySelector('.btn-profile-view');
+
+            if (!dashboardTabs.length || !overviewContent || !profileContent) {
+                // If elements aren't ready, try again shortly
+                tabInitInProgress = false;
+                setTimeout(initializeDashboardTabs, 100);
+                return;
+            }
+
+            const overviewLink = dashboardTabs[0];
+            const profileLink = dashboardTabs[1];
+
+            function setActiveState(activeId) {
+                // Remove active class from all tabs
+                dashboardTabs.forEach(link => link.classList.remove('active'));
+                
+                if (activeId === 'profile') {
+                    if(profileLink) profileLink.classList.add('active');
+                    if(overviewContent) overviewContent.style.display = 'none';
+                    if(profileContent) profileContent.style.display = 'block';
+                } else {
+                    // Default to overview
+                    if(overviewLink) overviewLink.classList.add('active');
+                    if(overviewContent) overviewContent.style.display = 'block';
+                    if(profileContent) profileContent.style.display = 'none';
+                }
+            }
+
+            overviewLink.onclick = function(e) {
+                e.preventDefault();
+                setActiveState('overview');
+            };
+
+            if (profileLink) {
+                profileLink.onclick = function(e) {
+                    e.preventDefault();
+                    setActiveState('profile');
+                };
+            }
+
+            // Force Overview by default on load as requested
+            setActiveState('overview');
+
+            tabInitInProgress = false;
+            
+            // Safety: ensure loader mask is hidden
+            if (typeof $ !== 'undefined') {
+                $('.loader-mask').fadeOut();
+            }
+            
+            console.log('Dashboard tabs initialized (Default: Overview)');
+        }
+
+        // Run on load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeDashboardTabs);
+        } else {
+            initializeDashboardTabs();
+        }
+
+        // Handle Back/Forward Cache
+        window.addEventListener('pageshow', function(event) {
+            initializeDashboardTabs();
+        });
+    })();
+
+    // ──────── FREE TRIAL UPGRADE FLOW ────────────────────────
+    function openUpgradeModal(planType, planAmount) {
+        const planNames = { basic: "Starter's Plan", professional: "Professional's Plan" };
+        const content = document.getElementById('upgradeModalContent');
+
+        const discountBadge = planAmount < (planType === 'basic' ? {{ starterFull|default:2359 }} : {{ profFull|default:8258 }})
+            ? `<span style="background:#10b981;color:white;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;" class="mb-2 d-inline-block">{{ discountPct|default:0 }}% OFF Applied</span>`
+            : '';
+
+        content.innerHTML = `
+            <div style="padding:8px 0;">
+                ${discountBadge}
+                <div class="fw-bold fs-5 mb-1">${planNames[planType]}</div>
+                <div class="text-muted mb-3">Full-year access with complete profile visibility</div>
+                <div style="font-size:2rem;font-weight:800;color:#1e3a6e;">₹${Number(planAmount).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</div>
+                <small class="text-muted d-block mb-4">+ 18% GST | Paid via Razorpay</small>
+                <button onclick="initiateUpgradePayment('${planType}', ${planAmount})" class="btn btn-lg w-100 fw-bold text-white" style="background:linear-gradient(135deg,#1e3a6e,#1d7d5d);border-radius:10px;border:0;">
+                    <i class="fas fa-lock me-2"></i> Pay Securely & Upgrade
+                </button>
+                <button type="button" data-bs-dismiss="modal" data-dismiss="modal" onclick="closeUpgradeModal()" class="btn btn-outline-secondary w-100 mt-2" style="border-radius:10px;font-weight:600;">Cancel</button>
+            </div>
+        `;
+
+        if (typeof $ !== 'undefined' && $.fn.modal) {
+            $('#upgradeModal').modal('show');
+        } else if (typeof bootstrap !== 'undefined') {
+            const modal = new bootstrap.Modal(document.getElementById('upgradeModal'));
+            modal.show();
+        }
+    }
+
+    function closeUpgradeModal() {
+        if(typeof $ !== 'undefined' && $.fn.modal) {
+            $('#upgradeModal').modal('hide');
+        }
+        try {
+            const el = document.getElementById('upgradeModal');
+            if(typeof bootstrap !== 'undefined') {
+                const modalParams = bootstrap.Modal.getInstance(el);
+                if(modalParams) modalParams.hide();
+            }
+        } catch(e) {}
+    }
+
+    function initiateUpgradePayment(planType, planAmount) {
+        const btn = event.currentTarget;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Please wait...';
+
+        fetch('{% url "agents:agent_upgrade_plan" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ plan_type: planType })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) {
+                alert(data.message || 'Could not initiate payment. Please try again.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-lock me-2"></i> Pay Securely & Upgrade';
+                return;
+            }
+
+            if (!data.order_id) {
+                alert('Payment order creation failed. Please contact support.');
+                btn.disabled = false;
+                return;
+            }
+
+            // Launch Razorpay
+            const options = {
+                key:         data.key,
+                amount:      data.amount,
+                currency:    'INR',
+                name:        'PadosiAgent',
+                description: 'Plan Upgrade — ' + (planType === 'basic' ? "Starter's Plan" : "Professional's Plan"),
+                order_id:    data.order_id,
+                prefill: {
+                    name:  '{{ agent.fullname }}',
+                    email: '{{ agent.email }}',
+                    contact: '{{ agent.mobile }}'
+                },
+                theme: { color: '#1d7d5d' },
+                modal: { ondismiss: function() { btn.disabled = false; btn.innerHTML = '<i class="fas fa-lock me-2"></i> Pay Securely & Upgrade'; } },
+                handler: function(response) {
+                    // Send confirmation to server
+                    fetch('{% url "agents:payment_success" %}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                        body: JSON.stringify({
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_order_id:   response.razorpay_order_id,
+                            razorpay_signature:  response.razorpay_signature,
+                            agent_id:            data.agent_id,
+                            plan_type:           planType,
+                        })
+                    })
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.success) {
+                            document.getElementById('upgradeModalContent').innerHTML = `
+                                <div class="py-4"><div class="text-success mb-3" style="font-size:3rem;">✅</div>
+                                <h5 class="fw-bold">Upgrade Successful!</h5>
+                                <p class="text-muted">Your plan has been upgraded. Refreshing your dashboard...</p></div>`;
+                            setTimeout(() => window.location.reload(), 2000);
+                        } else {
+                            alert('Payment received but verification failed. Please contact support.');
+                        }
+                    });
+                }
+            };
+
+            if (typeof Razorpay === 'undefined') {
+                // Load Razorpay SDK dynamically
+                const script = document.createElement('script');
+                script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                script.onload = () => new Razorpay(options).open();
+                document.head.appendChild(script);
+            } else {
+                new Razorpay(options).open();
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Network error. Please try again.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-lock me-2"></i> Pay Securely & Upgrade';
+        });
+    }
+</script>
+{% endblock %}

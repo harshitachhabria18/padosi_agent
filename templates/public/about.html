@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ about.banner_title|default:"About Us" }}{% endblock %}
+
+{% block content %}
+<div class="sub_banner position-relative">
+     <section class="sub_banner_con sub-about-banner position-relative">
+            <div class="container position-relative">
+                <div class="row">
+                    <div class="col-xl-8 col-lg-9 col-12 mx-auto">
+                        <div class="sub_banner_content" >
+                            <h1 class="text-white">{{ about.banner_title|default:"About Us" }}</h1>
+                            <p class="text-white text-size-18">{{ about.banner_subtitle|default:"Connecting you with trusted insurance agents in your neighborhood" }}</p>                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+</div>
+<!-- Who We Are -->
+<section class="aboutpage-con position-relative">
+    <figure class="about-rightimage mb-0">
+        <img src="{% static 'img/logo-icon.png' %}" alt="image" class="img-fluid">
+    </figure>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-7 col-md-12 col-sm-12 col-12 order-lg-1 order-2 text-lg-left text-center">
+                <div class="about_wrapper position-relative" >
+                    <figure class="about-image1 image mb-0">
+                        <img src="{% static 'img/aboutpage-image1.jpg' %}" alt="image" class="img-fluid">
+                    </figure>
+                    <figure class="about-image2 image mb-0">
+                        <img src="{% static 'img/aboutpage-image2.jpg' %}" alt="image" class="img-fluid">
+                    </figure>
+                </div>
+            </div>
+            <div class="col-lg-5 col-md-12 col-sm-12 col-12 order-lg-2 order-1">
+                <div class="about_content" >
+                    <h2>Who We Are</h2>
+                    <div class="text text-size-16">
+                        {{ about.who_we_are|default:"<strong><span style='color: #18529d;'>Padosi</span><span style='color: #0f5634;'>Agent</span></strong> is a digital-first platform built to simplify how people connect with trusted insurance professionals in their locality."|safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Why We Exist -->
+<section class="why-exist-con position-relative py-5" style="background: #f8f9fa;">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="about_content text-center" >
+                    <h2>Why We Exist</h2>
+                    <div class="text text-size-16">{{ about.why_we_exist|default:"The insurance ecosystem often faces three common challenges:"|safe }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="service-box text-center p-4 h-100 shadow-sm bg-white rounded">
+                    <i class="fa-solid fa-user-xmark fs-2 mb-3 text-primary"></i>
+                    <p class="text-size-16">Customers struggle to find reliable and accessible agents nearby</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="service-box text-center p-4 h-100 shadow-sm bg-white rounded">
+                    <i class="fa-solid fa-eye-slash fs-2 mb-3 text-primary"></i>
+                    <p class="text-size-16">Good agents lack structured digital visibility</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mb-4 mx-auto">
+                <div class="service-box text-center p-4 h-100 shadow-sm bg-white rounded">
+                    <i class="fa-solid fa-chart-line fs-2 mb-3 text-primary"></i>
+                    <p class="text-size-16">Service quality varies and is difficult to evaluate beforehand</p>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-lg-12 text-center">
+                <p class="text text-size-16"><strong><span style="color: #18529d;">Padosi</span><span style="color: #0f5634;">Agent</span></strong> is designed to address these challenges by creating a verified, structured, and technology-enabled ecosystem that benefits both customers and agents.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- What We Do -->
+<section class="what-we-do-con position-relative py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <div class="about_content" >
+                    <h2>What We Do</h2>
+                    <p class="text-size-16 mb-4">We provide a platform where:</p>
+                    <ul class="list-unstyled mb-4">
+                        <li class="mb-3 d-flex align-items-baseline">
+                            <i class="fa-solid fa-circle-check text-success mr-2"></i>
+                            <span>Customers can discover agents based on location and service segments</span>
+                        </li>
+                        <li class="mb-3 d-flex align-items-baseline">
+                            <i class="fa-solid fa-circle-check text-success mr-2"></i>
+                            <span>Agents can showcase expertise across life, health, motor, and general insurance</span>
+                        </li>
+                        <li class="mb-3 d-flex align-items-baseline">
+                            <i class="fa-solid fa-circle-check text-success mr-2"></i>
+                            <span>Profiles reflect transparency through structured information</span>
+                        </li>
+                        <li class="mb-3 d-flex align-items-baseline">
+                            <i class="fa-solid fa-circle-check text-success mr-2"></i>
+                            <span>Service expectations are clearly defined</span>
+                        </li>
+                    </ul>
+                    <div class="text text-size-16">{{ about.what_we_do|default:"We focus on empowering agents with digital presence."|safe }}</div>
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <img src="{% static 'img/aboutpage-image1.jpg' %}" alt="What We Do" class="img-fluid rounded shadow" style="max-height: 400px; width: 100%; object-fit: cover;">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Vision & Mission -->
+<section class="about-page benefit-con aboutbenefit-con position-relative py-5" style="background: #fcfdfe;">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-lg-10 mx-auto">
+                <div class="benefit_content mb-5" >
+                    <h2 class="mb-3">Our Vision</h2>
+                    <div class="text text-size-18 px-lg-5">{{ about.vision|default:"To build India’s most trusted hyperlocal insurance discovery and service platform."|safe }}</div>
+                </div>
+                <div class="benefit_content" >
+                    <h2 class="mb-4">Our Mission</h2>
+                    <ul class="list-unstyled d-inline-block text-left mx-auto">
+                        <li class="mb-3 d-flex align-items-center">
+                            <i class="fa-solid fa-circle-dot text-primary mr-3"></i>
+                            <span class="text-size-18">{{ about.mission|default:"Digitally empower insurance agents."|safe }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Core Values -->
+<section class="service-con about-service position-relative py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-xl-8 col-lg-10 col-12 mx-auto">
+                <div class="service_content text-center" >
+                    <h2>Our Core Values</h2>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-4" >
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="service-box h-100 shadow-sm border-0">
+                    <figure class="icon">
+                       <i class="fa-solid fa-handshake text-primary fs-2"></i>
+                    </figure>
+                    <h4>Trust First</h4>
+                    <p class="text-size-16">Insurance is built on credibility. We prioritize ethical practices and transparent representation.</p>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="service-box h-100 shadow-sm border-0">
+                    <figure class="icon">
+                       <i class="fa-solid fa-location-dot text-primary fs-2"></i>
+                    </figure>
+                    <h4>Local Connect</h4>
+                    <p class="text-size-16">“Padosi” means neighbour — we believe service is strongest when it’s local and accessible.</p>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="service-box h-100 shadow-sm border-0">
+                    <figure class="icon">
+                       <i class="fa-solid fa-microchip text-primary fs-2"></i>
+                    </figure>
+                    <h4>Empowerment Through Technology</h4>
+                    <p class="text-size-16">We use digital tools to help agents grow and customers choose wisely.</p>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="service-box h-100 shadow-sm border-0">
+                    <figure class="icon">
+                       <i class="fa-solid fa-headset text-primary fs-2"></i>
+                    </figure>
+                    <h4>Service Commitment</h4>
+                    <p class="text-size-16">Insurance is not just selling; it’s long-term service and support.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- For Seekers & Agents -->
+<section class="seekers-agents-con position-relative py-5" style="background: #f8f9fa;">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="about_content p-4 bg-white rounded shadow-sm h-100" >
+                    <h3>For Insurance Seekers</h3>
+                    <p class="text-size-16">If you are looking to:</p>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fa-solid fa-caret-right text-primary me-2"></i> Buy a new insurance policy</li>
+                        <li class="mb-2"><i class="fa-solid fa-caret-right text-primary me-2"></i> Review your existing coverage</li>
+                        <li class="mb-2"><i class="fa-solid fa-caret-right text-primary me-2"></i> Seek claim assistance</li>
+                        <li class="mb-2"><i class="fa-solid fa-caret-right text-primary me-2"></i> Get professional guidance</li>
+                    </ul>
+                    <p class="text-size-16 mt-3"><strong><span style="color: #18529d;">Padosi</span><span style="color: #0f5634;">Agent</span></strong> helps you connect with a suitable advisor in your area.</p>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="about_content p-4 bg-white rounded shadow-sm h-100" >
+                    <h3>For Insurance Agents</h3>
+                    <p class="text-size-16">If you are a licensed insurance professional looking to:</p>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fa-solid fa-caret-right text-primary me-2"></i> Increase digital visibility</li>
+                        <li class="mb-2"><i class="fa-solid fa-caret-right text-primary me-2"></i> Connect with customers actively searching for insurance solutions</li>
+                        <li class="mb-2"><i class="fa-solid fa-caret-right text-primary me-2"></i> Build structured credibility</li>
+                        <li class="mb-2"><i class="fa-solid fa-caret-right text-primary me-2"></i> Strengthen your personal brand</li>
+                    </ul>
+                    <p class="text-size-16 mt-3"><strong><span style="color: #18529d;">Padosi</span><span style="color: #0f5634;">Agent</span></strong> provides a platform to showcase your expertise and grow responsibly.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Our Commitment -->
+<section class="commitment-con position-relative py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-10 mx-auto text-center">
+                <div class="about_content" >
+                    <h2>Our Commitment</h2>
+                    <div class="text text-size-18">{{ about.commitment|default:"PadosiAgent does not replace insurers, brokers, or regulatory authorities."|safe }}</div>
+                    <div class="mt-5 p-4 bg-white rounded shadow text-center border-top border-primary" style="border-top-width: 4px !important;">
+                        <h4 class="text-dark mb-3">If you believe insurance is not just a product but a responsibility</h4>
+                        <h3 class="mb-0">Welcome to <span style="color: #18529d;">Padosi</span><span style="color: #0f5634;">Agent</span>.</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

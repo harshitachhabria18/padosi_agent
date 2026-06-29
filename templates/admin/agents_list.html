@@ -1,0 +1,141 @@
+{% extends 'admin/layout.html' %}
+{% load static %}
+
+{% block title %}Agents — PadosiAgent Admin{% endblock %}
+{% block breadcrumb %}User Management &rsaquo; Agents{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h5 class="fw-bold mb-1">All Agents</h5>
+        <span class="text-muted" style="font-size: 13px;">Manage registered insurance agents</span>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 rounded-3 mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-2 align-items-center">
+            <div class="col-md-6">
+                <input type="text" name="search" class="form-control form-control-sm" placeholder="Search by name, email, mobile, or pincode..." value="{{ search }}">
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-sm btn-primary"><i class="fa-solid fa-search me-1"></i> Search</button>
+                {% if search %}
+                <a href="{% url 'admin_panel:agent_list' %}" class="btn btn-sm btn-outline-secondary ms-1"><i class="fa-solid fa-times"></i> Clear</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 rounded-3">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Mobile</th>
+                    <th>Pincode</th>
+                    <th>Status</th>
+                    <th>Plan</th>
+                    <th>Reviews</th>
+                    <th>Badges</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for agent in agents %}
+                <tr>
+                    <td class="fw-semibold">{{ agent.id }}</td>
+                    <td>
+                        <a href="/admin/agents/manage/{{ agent.id }}/" class="text-decoration-none fw-semibold" style="color: var(--primary);">
+                            {{ agent.fullname }}
+                        </a>
+                    </td>
+                    <td>{{ agent.email }}</td>
+                    <td>{{ agent.mobile }}</td>
+                    <td>{{ agent.agent_pincode|default:'--' }}</td>
+                    <td>
+                        {% if agent.status == 'active' %}
+                            <span class="badge bg-success">Active</span>
+                        {% elif agent.status == 'incomplete' %}
+                            <span class="badge bg-warning text-dark">Incomplete</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ agent.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% with sub=agent.subscriptions.all|first %}
+                            {% if sub %}
+                                <span class="badge bg-info text-dark">{{ sub.selected_plan|truncatechars:20 }}</span>
+                            {% else %}
+                                <span class="text-muted">--</span>
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+                    <td>
+                        <span class="badge bg-secondary">{{ agent._total_reviews }}</span>
+                    </td>
+                    <td>
+                        {% if agent._badges %}
+                            {% for b in agent._badges %}
+                                <span class="badge bg-primary me-1">{{ b }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="text-muted">--</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <a href="/admin/agents/manage/{{ agent.id }}/" class="btn btn-sm btn-outline-primary" title="Manage">
+                                <i class="fa-solid fa-eye"></i>
+                            </a>
+                            <a href="/admin/agents/{{ agent.id }}/edit-full-profile/" class="btn btn-sm btn-outline-secondary" title="Edit Profile">
+                                <i class="fa-solid fa-pen"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10" class="text-center py-5">
+                        <i class="fa-solid fa-users-slash fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">No agents found.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if agents.paginator.num_pages > 1 %}
+    <div class="card-footer bg-white border-0">
+        <nav>
+            <ul class="pagination pagination-sm justify-content-center mb-0">
+                {% if agents.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ agents.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">Previous</a>
+                </li>
+                {% endif %}
+                {% for i in agents.paginator.page_range %}
+                    {% if i == agents.number %}
+                    <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                    {% elif i >= agents.number|add:'-3' and i <= agents.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ i }}{% if search %}&search={{ search }}{% endif %}">{{ i }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                {% if agents.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ agents.next_page_number }}{% if search %}&search={{ search }}{% endif %}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

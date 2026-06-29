@@ -1,0 +1,472 @@
+{% extends "admin/layout.html" %}
+{% load static %}
+
+{% block title %}Finance & Accounts — PadosiAgent Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Finance Dashboard ──────────────────────────────────────────────── */
+.fin-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 22px 24px;
+    transition: box-shadow 0.2s;
+}
+.fin-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.08); }
+.fin-kpi-val  { font-size: 30px; font-weight: 900; line-height: 1; letter-spacing: -1px; }
+.fin-kpi-lbl  { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin-top: 6px; }
+.fin-kpi-sub  { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+.fin-icon     { width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+.section-head { font-size: 14px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.plan-pill    { padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; }
+.progress-bar-wrap { height: 6px; background: var(--border-color); border-radius: 100px; overflow: hidden; margin-top: 4px; }
+.progress-bar-fill { height: 100%; border-radius: 100px; transition: width .6s ease; }
+.filter-btn   { padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-muted); cursor: pointer; transition: all .15s; text-decoration: none; }
+.filter-btn.active, .filter-btn:hover { background: #2563eb; color: #fff; border-color: #2563eb; }
+.badge-completed { background: #dcfce7; color: #15803d; }
+.badge-pending   { background: #fef9c3; color: #b45309; }
+.badge-failed    { background: #fee2e2; color: #b91c1c; }
+.alert-overdue   { background: #fff1f2; border-left: 4px solid #ef4444; border-radius: 0 8px 8px 0; padding: 10px 14px; }
+.alert-renewal   { background: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 0 8px 8px 0; padding: 10px 14px; }
+.txn-row:hover   { background: var(--bg-table-header); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ── Page Header ──────────────────────────────────────────────────────────── #}
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <h5 class="fw-bold mb-1">🏦 Finance &amp; Accounts</h5>
+        <span style="font-size:13px;color:var(--text-muted);">Real-time financial overview · All amounts from completed payments</span>
+    </div>
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+        <a href="?period=all"     class="filter-btn {% if period == 'all' %}active{% endif %}">All Time</a>
+        <a href="?period=year"    class="filter-btn {% if period == 'year' %}active{% endif %}">This Year</a>
+        <a href="?period=quarter" class="filter-btn {% if period == 'quarter' %}active{% endif %}">This Quarter</a>
+        <a href="?period=month"   class="filter-btn {% if period == 'month' %}active{% endif %}">This Month</a>
+        <a href="{% url 'admin_panel:export_subscriptions' %}" class="btn btn-sm btn-outline-secondary ms-1">
+            <i class="fa-solid fa-download me-1"></i>Export
+        </a>
+    </div>
+</div>
+
+{# ── Row 1: KPI Cards ─────────────────────────────────────────────────────── #}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+        <div class="fin-card d-flex align-items-center gap-3">
+            <div class="fin-icon" style="background:#dcfce7;"><i class="fa-solid fa-indian-rupee-sign" style="color:#16a34a;"></i></div>
+            <div>
+                <div class="fin-kpi-val" style="color:#16a34a;">₹{{ total_collected|floatformat:0 }}</div>
+                <div class="fin-kpi-lbl">Total Collected</div>
+                <div class="fin-kpi-sub">{{ txn_completed }} payments</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="fin-card d-flex align-items-center gap-3">
+            <div class="fin-icon" style="background:#fef9c3;"><i class="fa-solid fa-clock" style="color:#d97706;"></i></div>
+            <div>
+                <div class="fin-kpi-val" style="color:#d97706;">₹{{ total_pending|floatformat:0 }}</div>
+                <div class="fin-kpi-lbl">Pending / Uncleared</div>
+                <div class="fin-kpi-sub">{{ txn_pending }} transactions</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="fin-card d-flex align-items-center gap-3">
+            <div class="fin-icon" style="background:#fee2e2;"><i class="fa-solid fa-circle-xmark" style="color:#dc2626;"></i></div>
+            <div>
+                <div class="fin-kpi-val" style="color:#dc2626;">₹{{ total_failed|floatformat:0 }}</div>
+                <div class="fin-kpi-lbl">Failed / Lost</div>
+                <div class="fin-kpi-sub">{{ txn_failed }} failures</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="fin-card d-flex align-items-center gap-3">
+            <div class="fin-icon" style="background:#ede9fe;"><i class="fa-solid fa-chart-pie" style="color:#7c3aed;"></i></div>
+            <div>
+                <div class="fin-kpi-val" style="color:#7c3aed;">{{ collection_rate }}%</div>
+                <div class="fin-kpi-lbl">Collection Rate</div>
+                <div class="fin-kpi-sub">₹{{ total_attempted|floatformat:0 }} attempted</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── MRR / ARR Gradient Banner ────────────────────────────────────────────── #}
+<div class="fin-card mb-4" style="background:linear-gradient(135deg,#1e40af,#6d28d9);border:none;color:#fff;">
+    <div class="row align-items-center g-3">
+        <div class="col-sm-4">
+            <div style="font-size:11px;opacity:.7;font-weight:600;text-transform:uppercase;letter-spacing:.07em;">Monthly Recurring Revenue</div>
+            <div style="font-size:38px;font-weight:900;letter-spacing:-2px;">₹{{ mrr }}</div>
+            <div style="font-size:12px;opacity:.65;">Based on active subscription amounts</div>
+        </div>
+        <div class="col-sm-4 text-sm-center" style="border-left:1px solid rgba(255,255,255,.2);border-right:1px solid rgba(255,255,255,.2);padding:0 20px;">
+            <div style="font-size:11px;opacity:.7;font-weight:600;text-transform:uppercase;letter-spacing:.07em;">Annual Run Rate (ARR)</div>
+            <div style="font-size:28px;font-weight:800;">₹{{ arr }}</div>
+            <div style="font-size:12px;opacity:.65;">MRR × 12</div>
+        </div>
+        <div class="col-sm-4 text-sm-end">
+            <div style="font-size:11px;opacity:.7;font-weight:600;text-transform:uppercase;letter-spacing:.07em;">Renewals Due (30 days)</div>
+            <div style="font-size:28px;font-weight:800;">{{ renewals_due|length }}</div>
+            <div style="font-size:12px;opacity:.65;">₹{{ renewals_total_amount|floatformat:0 }} expected</div>
+        </div>
+    </div>
+</div>
+
+{# ── Row 2: Chart + Plan Breakdown ────────────────────────────────────────── #}
+<div class="row g-4 mb-4">
+    {# Monthly Cashflow Chart #}
+    <div class="col-lg-8">
+        <div class="fin-card h-100">
+            <div class="section-head"><i class="fa-solid fa-chart-bar text-primary"></i>Monthly Cash Flow (Last 12 Months)</div>
+            <canvas id="cashflowChart" height="120"></canvas>
+        </div>
+    </div>
+
+    {# Plan P&L Summary #}
+    <div class="col-lg-4">
+        <div class="fin-card h-100">
+            <div class="section-head"><i class="fa-solid fa-tags text-primary"></i>Plan P&amp;L Summary</div>
+            {% if plan_breakdown %}
+                {% for plan in plan_breakdown %}
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <div>
+                            <div style="font-size:13px;font-weight:600;">{{ plan.selected_plan|default:"—" }}</div>
+                            <div style="font-size:11px;color:var(--text-muted);">{{ plan.successful }}/{{ plan.total_transactions }} successful</div>
+                        </div>
+                        <div class="text-end">
+                            <div style="font-size:14px;font-weight:800;color:{{ plan.color }};">₹{{ plan.collected|floatformat:0 }}</div>
+                            <div style="font-size:10px;color:var(--text-muted);">of ₹{{ plan.total_value|floatformat:0 }}</div>
+                        </div>
+                    </div>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-bar-fill" style="width:{{ plan.collection_rate }}%;background:{{ plan.color }};"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-1" style="font-size:10px;color:var(--text-muted);">
+                        <span>{{ plan.collection_rate }}% collected</span>
+                        <span class="text-danger">₹{{ plan.failed_amount|floatformat:0 }} lost</span>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center text-muted py-4" style="font-size:13px;">No plan data yet.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{# ── Row 3: Overdue + Renewals ─────────────────────────────────────────────── #}
+<div class="row g-4 mb-4">
+    {# Overdue & Failed Payments #}
+    <div class="col-lg-6">
+        <div class="fin-card">
+            <div class="section-head"><i class="fa-solid fa-triangle-exclamation text-danger"></i>Overdue &amp; Failed Payments</div>
+            {% if not overdue_payments %}
+                <div class="text-center text-muted py-4" style="font-size:13px;">
+                    <i class="fa-solid fa-check-circle fa-2x mb-2 d-block text-success opacity-50"></i>No overdue payments
+                </div>
+            {% else %}
+            <div style="max-height:320px;overflow-y:auto;">
+                {% for ov in overdue_payments %}
+                <div class="alert-overdue mb-2" id="overdue-row-{{ ov.id }}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div style="font-size:13px;font-weight:600;">{{ ov.display_name }}</div>
+                            <div style="font-size:11px;color:#6b7280;">{{ ov.selected_plan }}</div>
+                            <div style="font-size:11px;color:#6b7280;">📞 {{ ov.mobile|default:ov.email }}</div>
+                        </div>
+                        <div class="text-end">
+                            <div style="font-size:15px;font-weight:800;color:#dc2626;">₹{{ ov.registration_amount|floatformat:0 }}</div>
+                            <span class="badge badge-{{ ov.payment_status }} d-block mt-1" id="badge-{{ ov.id }}">{{ ov.payment_status|title }}</span>
+                            <div style="font-size:10px;color:#9ca3af;">{{ ov.days_old }}d ago</div>
+                        </div>
+                    </div>
+                    <div class="mt-2 d-flex gap-1">
+                        <button onclick="markPayment({{ ov.id }}, 'completed', this)"
+                                class="btn btn-xs" style="font-size:11px;padding:3px 10px;background:#dcfce7;color:#15803d;border:1px solid #bbf7d0;">
+                            ✓ Mark Paid
+                        </button>
+                        <button onclick="markPayment({{ ov.id }}, 'failed', this)"
+                                class="btn btn-xs" style="font-size:11px;padding:3px 10px;background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;">
+                            ✗ Mark Failed
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Upcoming Renewals #}
+    <div class="col-lg-6">
+        <div class="fin-card">
+            <div class="section-head"><i class="fa-solid fa-calendar-check text-warning"></i>Renewals Due (Next 30 Days)</div>
+            {% if not renewals_due %}
+                <div class="text-center text-muted py-4" style="font-size:13px;">
+                    <i class="fa-solid fa-calendar fa-2x mb-2 d-block opacity-25"></i>No renewals in next 30 days
+                </div>
+            {% else %}
+            <div style="max-height:320px;overflow-y:auto;">
+                {% for r in renewals_due %}
+                <div class="alert-renewal mb-2">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div style="font-size:13px;font-weight:600;">{{ r.display_name }}</div>
+                            <div style="font-size:11px;color:#6b7280;">{{ r.selected_plan }}</div>
+                            <div style="font-size:11px;color:#6b7280;">📧 {{ r.email }}</div>
+                        </div>
+                        <div class="text-end">
+                            <div style="font-size:15px;font-weight:800;color:#d97706;">₹{{ r.registration_amount|floatformat:0 }}</div>
+                            <div style="font-size:11px;color:#6b7280;margin-top:2px;">{{ r.expires_fmt }}</div>
+                            {% if r.urgent %}
+                                <span class="badge" style="background:#fee2e2;color:#b91c1c;font-size:10px;">{{ r.days_left }}d left</span>
+                            {% else %}
+                                <span class="badge" style="background:#fef9c3;color:#92400e;font-size:10px;">{{ r.days_left }}d left</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{# ── All Transactions Table ───────────────────────────────────────────────── #}
+<div class="fin-card">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div class="section-head mb-0"><i class="fa-solid fa-list-ul text-primary"></i>All Transactions</div>
+        <div class="d-flex gap-2 align-items-center">
+            <input type="text" id="txnSearch" placeholder="Search agent, plan…"
+                   class="form-control form-control-sm" style="width:200px;font-size:12px;">
+            <select id="txnStatusFilter" class="form-select form-select-sm" style="width:130px;font-size:12px;">
+                <option value="">All Status</option>
+                <option value="completed">Completed</option>
+                <option value="pending">Pending</option>
+                <option value="failed">Failed</option>
+            </select>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table align-middle mb-0" style="font-size:13px;">
+            <thead>
+                <tr style="background:var(--bg-table-header);">
+                    <th style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);padding:10px 12px;border-bottom:1px solid var(--border-color);">#</th>
+                    <th style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);padding:10px 12px;border-bottom:1px solid var(--border-color);">Agent</th>
+                    <th style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);padding:10px 12px;border-bottom:1px solid var(--border-color);">Plan</th>
+                    <th style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);padding:10px 12px;border-bottom:1px solid var(--border-color);">Amount</th>
+                    <th style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);padding:10px 12px;border-bottom:1px solid var(--border-color);">Status</th>
+                    <th style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);padding:10px 12px;border-bottom:1px solid var(--border-color);">Expires</th>
+                    <th style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);padding:10px 12px;border-bottom:1px solid var(--border-color);">Date</th>
+                    <th style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);padding:10px 12px;border-bottom:1px solid var(--border-color);">Action</th>
+                </tr>
+            </thead>
+            <tbody id="txnBody">
+                {% for t in recent_txns %}
+                <tr class="txn-row"
+                    data-search="{{ t.search_str }}"
+                    data-status="{{ t.payment_status }}"
+                    id="txn-row-{{ t.id }}">
+                    <td style="padding:10px 12px;border-bottom:1px solid var(--border-light);color:var(--text-muted);">{{ t.id }}</td>
+                    <td style="padding:10px 12px;border-bottom:1px solid var(--border-light);">
+                        <div class="fw-semibold">{{ t.display_name }}</div>
+                        <div style="font-size:11px;color:var(--text-muted);">{{ t.email }}</div>
+                    </td>
+                    <td style="padding:10px 12px;border-bottom:1px solid var(--border-light);">
+                        <span class="plan-pill" style="background:{{ t.plan_bg }};color:{{ t.plan_color }};">
+                            {{ t.selected_plan|default:"—" }}
+                        </span>
+                    </td>
+                    <td style="padding:10px 12px;border-bottom:1px solid var(--border-light);font-weight:700;">
+                        ₹{{ t.registration_amount|floatformat:0 }}
+                    </td>
+                    <td style="padding:10px 12px;border-bottom:1px solid var(--border-light);">
+                        <span class="badge badge-{{ t.payment_status }}"
+                              style="font-size:11px;padding:4px 10px;border-radius:8px;"
+                              id="txn-badge-{{ t.id }}">
+                            {{ t.payment_status|title }}
+                        </span>
+                    </td>
+                    <td style="padding:10px 12px;border-bottom:1px solid var(--border-light);font-size:12px;color:var(--text-muted);">
+                        {{ t.expires_fmt }}
+                    </td>
+                    <td style="padding:10px 12px;border-bottom:1px solid var(--border-light);font-size:12px;color:var(--text-muted);">
+                        {{ t.created_fmt }}<br>
+                        <span style="font-size:10px;">{{ t.time_ago }}</span>
+                    </td>
+                    <td style="padding:10px 12px;border-bottom:1px solid var(--border-light);">
+                        {% if t.payment_status != 'completed' %}
+                        <button onclick="markPayment({{ t.id }}, 'completed', this, true)"
+                                class="btn btn-xs" style="font-size:11px;padding:3px 10px;background:#dcfce7;color:#15803d;border:1px solid #bbf7d0;">
+                            ✓ Paid
+                        </button>
+                        {% else %}
+                        <span id="txn-action-{{ t.id }}" style="font-size:11px;color:#16a34a;font-weight:600;">✓ Settled</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" class="text-center py-5 text-muted">No transactions found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# ── Toast Notification ───────────────────────────────────────────────────── #}
+<div id="finToast" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:9999;display:none;">
+    <div class="toast show align-items-center border-0" id="finToastInner">
+        <div class="d-flex">
+            <div class="toast-body fw-semibold" id="finToastMsg">Payment updated.</div>
+            <button type="button" class="btn-close me-2 m-auto" onclick="document.getElementById('finToast').style.display='none'"></button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const CSRF_TOKEN = '{{ csrf_token }}';
+const MARK_URL   = '{% url "admin_panel:finance_mark_payment" %}';
+
+// ── Cashflow Chart ──────────────────────────────────────────────────────────
+const cfCtx = document.getElementById('cashflowChart').getContext('2d');
+new Chart(cfCtx, {
+    type: 'bar',
+    data: {
+        labels:   {{ cashflow_labels|safe }},
+        datasets: [
+            {
+                label: 'Collected (₹)',
+                data:  {{ cashflow_collected|safe }},
+                backgroundColor: 'rgba(22,163,74,0.85)',
+                borderRadius: 5,
+            },
+            {
+                label: 'Pending (₹)',
+                data:  {{ cashflow_pending|safe }},
+                backgroundColor: 'rgba(217,119,6,0.75)',
+                borderRadius: 5,
+            },
+            {
+                label: 'Failed (₹)',
+                data:  {{ cashflow_failed|safe }},
+                backgroundColor: 'rgba(220,38,38,0.6)',
+                borderRadius: 5,
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'top', labels: { font: { size: 12 } } },
+            tooltip: {
+                mode: 'index',
+                callbacks: { label: ctx => '₹' + ctx.parsed.y.toLocaleString('en-IN') }
+            }
+        },
+        scales: {
+            x: { stacked: true, grid: { display: false } },
+            y: {
+                stacked: true, beginAtZero: true,
+                ticks: { callback: v => '₹' + (v >= 1000 ? Math.round(v/1000)+'k' : v) },
+                grid: { color: 'rgba(0,0,0,0.04)' }
+            }
+        }
+    }
+});
+
+// ── Client-side Table Filter ────────────────────────────────────────────────
+const txnSearch = document.getElementById('txnSearch');
+const txnStatus = document.getElementById('txnStatusFilter');
+function filterTxns() {
+    const q  = txnSearch.value.toLowerCase();
+    const st = txnStatus.value;
+    document.querySelectorAll('#txnBody tr').forEach(row => {
+        const ms = !q  || (row.dataset.search || '').includes(q);
+        const mf = !st || (row.dataset.status || '') === st;
+        row.style.display = ms && mf ? '' : 'none';
+    });
+}
+txnSearch.addEventListener('input',  filterTxns);
+txnStatus.addEventListener('change', filterTxns);
+
+// ── AJAX Mark Payment ───────────────────────────────────────────────────────
+function markPayment(subId, newStatus, btn, isTableRow = false) {
+    btn.disabled = true;
+    btn.textContent = '…';
+
+    fetch(MARK_URL, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken':     CSRF_TOKEN,
+            'X-Requested-With':'XMLHttpRequest',
+            'Content-Type':    'application/x-www-form-urlencoded',
+        },
+        body: `subscription_id=${subId}&status=${newStatus}`
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            // Update status badge — overdue panel
+            const badge = document.getElementById('badge-' + subId);
+            if (badge) {
+                badge.className = 'badge badge-' + newStatus + ' d-block mt-1';
+                badge.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+            }
+            // Update badge in transaction table
+            const txnBadge = document.getElementById('txn-badge-' + subId);
+            if (txnBadge) {
+                txnBadge.className = 'badge badge-' + newStatus;
+                txnBadge.style.cssText = 'font-size:11px;padding:4px 10px;border-radius:8px;';
+                txnBadge.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+                // Update data-status for filter
+                const row = document.getElementById('txn-row-' + subId);
+                if (row) row.dataset.status = newStatus;
+            }
+            // Replace action button with ✓ Settled if marked completed
+            if (newStatus === 'completed') {
+                if (isTableRow) {
+                    btn.outerHTML = '<span style="font-size:11px;color:#16a34a;font-weight:600;">✓ Settled</span>';
+                } else {
+                    btn.closest('.alert-overdue').style.opacity = '0.5';
+                    btn.outerHTML = '<span style="font-size:11px;color:#16a34a;font-weight:600;">✓ Paid</span>';
+                }
+            } else {
+                btn.disabled = false;
+                btn.textContent = newStatus === 'failed' ? '✗ Mark Failed' : '✓ Mark Paid';
+            }
+            showToast('Payment #' + subId + ' marked as ' + newStatus + '.', 'success');
+        } else {
+            btn.disabled = false;
+            btn.textContent = '✗ Error';
+            showToast('Error: ' + (data.message || 'Unknown'), 'danger');
+        }
+    })
+    .catch(() => {
+        btn.disabled = false;
+        btn.textContent = '✗ Failed';
+        showToast('Network error. Please try again.', 'danger');
+    });
+}
+
+function showToast(msg, type) {
+    const toast = document.getElementById('finToast');
+    const inner = document.getElementById('finToastInner');
+    const msgEl = document.getElementById('finToastMsg');
+    msgEl.textContent = msg;
+    inner.className = `toast show align-items-center text-bg-${type} border-0`;
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 3500);
+}
+</script>
+{% endblock %}
