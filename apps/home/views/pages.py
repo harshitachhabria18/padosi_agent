@@ -293,33 +293,57 @@ def home(request):
                 'image': f"https://ui-avatars.com/api/?name={r.get('name', 'User')}&background=0d9488&color=fff&bold=true"
             })
     else:
-        # Fallback to static reviews list until AgentReview is fully migrated
-        reviews = [
-            {
-                'name': 'Sneha Patel',
-                'service': 'Client of Rajesh Kumar',
-                'agent_url': None,
-                'rating': 5.0,
-                'comment': 'Found my perfect health insurance through my PadosiAgent. They were professional and explained everything clearly.',
-                'image': 'https://ui-avatars.com/api/?name=Sneha+Patel&background=0d9488&color=fff&bold=true'
-            },
-            {
-                'name': 'Rahul Verma',
-                'service': 'Client of Vikram Singh',
-                'agent_url': None,
-                'rating': 4.5,
-                'comment': 'My claim was rejected initially, but my PadosiAgent helped me get it approved. Highly recommended!',
-                'image': 'https://ui-avatars.com/api/?name=Rahul+Verma&background=0d9488&color=fff&bold=true'
-            },
-            {
-                'name': 'Anjali Desai',
-                'service': 'Client of Priya Sharma',
-                'agent_url': None,
-                'rating': 4.0,
-                'comment': 'Got my policy reviewed and discovered I was overpaying. Saved ₹15,000 annually. Thank you!',
-                'image': 'https://ui-avatars.com/api/?name=Anjali+Desai&background=0d9488&color=fff&bold=true'
-            }
-        ]
+        # Fetch actual approved reviews from the database (agent_reviews table)
+        from apps.agents.models import AgentReview
+        db_reviews = AgentReview.objects.filter(is_approved=True).select_related('agent', 'agent__profile').order_by('-created_at')[:100]
+        
+        agent_counts = {}
+        final_reviews = []
+        backfill_reviews = []
+        
+        for rev in db_reviews:
+            agent_id = rev.agent_id
+            if agent_id:
+                if agent_id not in agent_counts:
+                    agent_counts[agent_id] = 0
+                if agent_counts[agent_id] < 3:
+                    final_reviews.append(rev)
+                    agent_counts[agent_id] += 1
+                else:
+                    backfill_reviews.append(rev)
+            else:
+                final_reviews.append(rev)
+                
+        if len(final_reviews) < 10 and backfill_reviews:
+            needed = 10 - len(final_reviews)
+            final_reviews.extend(backfill_reviews[:needed])
+            
+        final_reviews = final_reviews[:10]
+        
+        reviews = []
+        for rev in final_reviews:
+            agent_name = rev.agent.fullname if rev.agent else None
+            agent_slug = None
+            agent_photo = None
+            
+            if rev.agent:
+                try:
+                    profile = rev.agent.profile
+                    agent_slug = profile.slug
+                    agent_photo = profile.profile_photo_url
+                except Exception:
+                    pass
+            
+            avatar_url = agent_photo if (agent_photo and 'avatar-icon.jpg' not in agent_photo) else f"https://ui-avatars.com/api/?name={rev.reviewer_name or 'User'}&background=0d9488&color=fff&bold=true"
+            
+            reviews.append({
+                'name': rev.reviewer_name or 'User',
+                'service': f"Client of {agent_name}" if agent_name else "Verified Client",
+                'agent_url': f"/profile/{agent_slug}/" if agent_slug else None,
+                'rating': float(rev.rating),
+                'comment': rev.review or '',
+                'image': avatar_url
+            })
 
     # Zip trust cards with indexes to allow colored borders easily in DTL
     why_cards = homepage_content.get('why_choose', {}).get('cards', [])
