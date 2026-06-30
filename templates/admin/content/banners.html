@@ -1,0 +1,207 @@
+{% extends 'admin/layout.html' %}
+
+{% block title %}Banner Slides — PadosiAgent Admin{% endblock %}
+{% block breadcrumb %}Content Control › Banner Slides{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="m-0 fw-bold">Homepage Banner Slider</h4>
+        <p class="text-muted mb-0" style="font-size:13px;">Manage the hero slider on the homepage. Drag to reorder. Toggle to show/hide individual slides.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/" target="_blank" class="btn btn-sm btn-outline-secondary">
+            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> View Site
+        </a>
+        <button type="button" class="btn btn-outline-primary btn-sm" id="addSlideBtn">
+            <i class="fa-solid fa-plus me-1"></i> Add Slide
+        </button>
+        <button type="submit" form="banner-form" class="btn btn-primary btn-sm px-4">
+            <i class="fa-solid fa-save me-1"></i> Save All Slides
+        </button>
+    </div>
+</div>
+
+<form method="POST" action="{% url 'admin_panel:content_banners_update' %}" id="banner-form">
+    {% csrf_token %}
+
+    <div id="slides-container">
+        {% for slide in banners %}
+        <div class="card mb-3 slide-card" data-index="{{ forloop.counter0 }}" style="border-left: 4px solid {% if slide.visible|default_if_none:True %}#10b981{% else %}#f59e0b{% endif %}; transition: border-color 0.3s;">
+            <div class="card-header py-2 d-flex justify-content-between align-items-center" style="cursor:grab;">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="fa-solid fa-grip-vertical text-muted" style="cursor:grab;"></i>
+                    <span class="badge {% if slide.visible|default_if_none:True %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                        Slide {{ forloop.counter }}
+                    </span>
+                    <span class="fw-semibold" style="font-size: 14px;">{{ slide.title|default:'Untitled Slide' }}</span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input visibility-toggle" type="checkbox"
+                            name="visible[{{ forloop.counter0 }}]" value="1" id="vis{{ forloop.counter0 }}"
+                            {% if slide.visible|default_if_none:True %}checked{% endif %}>
+                        <label class="form-check-label" for="vis{{ forloop.counter0 }}" style="font-size:12px;">Visible</label>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-light border toggle-slide-body" title="Collapse/Expand">
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-light border text-danger remove-slide-btn" title="Remove Slide">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body slide-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold" style="font-size:13px;">Slide Title <span class="text-danger">*</span></label>
+                        <input type="text" name="title[]" value="{{ slide.title|default:'' }}" class="form-control" required placeholder="e.g. Buy/Port/Renew Insurance">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold" style="font-size:13px;">Subtitle</label>
+                        <input type="text" name="subtitle[]" value="{{ slide.subtitle|default:'' }}" class="form-control" placeholder="Supporting text under the title">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold" style="font-size:13px;">CTA Button Text</label>
+                        <input type="text" name="cta_text[]" value="{{ slide.cta_text|default:'' }}" class="form-control" placeholder="e.g. Find Your PadosiAgent">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold" style="font-size:13px;">CTA Button Link / URL</label>
+                        <input type="text" name="cta_link[]" value="{{ slide.cta_link|default:'' }}" class="form-control" placeholder="/find-agents?ServiceType=New%20Policy">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold" style="font-size:13px;">Background CSS Class</label>
+                        <input type="text" name="bg_class[]" value="{{ slide.bg_class|default:'' }}" class="form-control" placeholder="e.g. banner-new-policy">
+                        <small class="text-muted">CSS class applied to the slide background. Defined in your frontend CSS.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="d-flex justify-content-between mt-2 mb-5">
+        <button type="button" class="btn btn-outline-secondary" id="addSlideBtn2">
+            <i class="fa-solid fa-plus me-1"></i> Add New Slide
+        </button>
+        <button type="submit" class="btn btn-primary px-5">
+            <i class="fa-solid fa-save me-2"></i> Save All Slides
+        </button>
+    </div>
+</form>
+
+<!-- Slide Info Card -->
+<div class="card border-0" style="background: linear-gradient(135deg,#eff6ff,#f0fdf4); border-radius:12px;">
+    <div class="card-body py-3 px-4">
+        <div class="d-flex align-items-start gap-3">
+            <i class="fa-solid fa-circle-info fa-lg text-primary mt-1"></i>
+            <div>
+                <div class="fw-bold mb-1" style="font-size: 14px;">How Banner Slides Work</div>
+                <ul class="mb-0 text-muted" style="font-size: 13px; padding-left: 16px;">
+                    <li>Each slide has a <strong>Title</strong>, <strong>Subtitle</strong>, a <strong>Call-to-Action button</strong>, and a <strong>Background CSS Class</strong>.</li>
+                    <li>The <strong>Background CSS Class</strong> maps to a CSS class in your frontend stylesheet (e.g., <code>banner-new-policy</code>).</li>
+                    <li>Hidden slides are stored but not shown on the homepage.</li>
+                    <li>Changes take effect immediately after saving.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New slide template -->
+<template id="slideTemplate">
+    <div class="card mb-3 slide-card" style="border-left: 4px solid #6366f1;">
+        <div class="card-header py-2 d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <i class="fa-solid fa-grip-vertical text-muted" style="cursor:grab;"></i>
+                <span class="badge bg-info">New Slide</span>
+                <span class="fw-semibold" style="font-size:14px;">Untitled Slide</span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="form-check form-switch mb-0">
+                    <input class="form-check-input visibility-toggle" type="checkbox" name="visible[__INDEX__]" value="1" checked>
+                    <label class="form-check-label" style="font-size:12px;">Visible</label>
+                </div>
+                <button type="button" class="btn btn-sm btn-light border toggle-slide-body"><i class="fa-solid fa-chevron-down"></i></button>
+                <button type="button" class="btn btn-sm btn-light border text-danger remove-slide-btn"><i class="fa-solid fa-trash"></i></button>
+            </div>
+        </div>
+        <div class="card-body slide-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" style="font-size:13px;">Slide Title <span class="text-danger">*</span></label>
+                    <input type="text" name="title[]" class="form-control" required placeholder="e.g. Buy/Port/Renew Insurance">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" style="font-size:13px;">Subtitle</label>
+                    <input type="text" name="subtitle[]" class="form-control" placeholder="Supporting text under the title">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold" style="font-size:13px;">CTA Button Text</label>
+                    <input type="text" name="cta_text[]" class="form-control" placeholder="e.g. Find Your PadosiAgent">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold" style="font-size:13px;">CTA Link / URL</label>
+                    <input type="text" name="cta_link[]" class="form-control" placeholder="/find-agents?ServiceType=...">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold" style="font-size:13px;">Background CSS Class</label>
+                    <input type="text" name="bg_class[]" class="form-control" placeholder="banner-custom">
+                    <small class="text-muted">CSS class applied to the slide background.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var slideIndex = {{ banners|length }};
+
+function addSlide() {
+    var html = document.getElementById('slideTemplate').innerHTML.replace(/__INDEX__/g, slideIndex);
+    var wrapper = document.createElement('div');
+    wrapper.innerHTML = html;
+    document.getElementById('slides-container').appendChild(wrapper.firstElementChild);
+    slideIndex++;
+    updateSlideNumbers();
+}
+
+$('#addSlideBtn, #addSlideBtn2').on('click', addSlide);
+
+$(document).on('click', '.remove-slide-btn', function() {
+    $(this).closest('.slide-card').fadeOut(200, function() {
+        $(this).remove();
+        updateSlideNumbers();
+    });
+});
+
+$(document).on('click', '.toggle-slide-body', function() {
+    var body = $(this).closest('.card').find('.slide-body');
+    body.toggle(200);
+    $(this).find('i').toggleClass('fa-chevron-down fa-chevron-up');
+});
+
+$(document).on('change', '.visibility-toggle', function() {
+    var card = $(this).closest('.slide-card');
+    card.css('border-left-color', this.checked ? '#10b981' : '#f59e0b');
+});
+
+// Live title update
+$(document).on('input', 'input[name="title[]"]', function() {
+    var card = $(this).closest('.slide-card');
+    var text = this.value || 'Untitled Slide';
+    card.find('.card-header .fw-semibold').text(text);
+});
+
+function updateSlideNumbers() {
+    $('.slide-card').each(function(i) {
+        $(this).find('.badge').not('.bg-info').text('Slide ' + (i + 1));
+        // Update input names for indices to keep visibility state aligned
+        var toggle = $(this).find('.visibility-toggle');
+        toggle.attr('name', 'visible[' + i + ']');
+    });
+}
+</script>
+{% endblock %}

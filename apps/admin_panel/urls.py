@@ -67,6 +67,14 @@ urlpatterns = [
     path('content/contact/',         content.contact,        name='content_contact'),
     path('content/contact/update/',  content.update_contact, name='content_contact_update'),
 
+    # Banners
+    path('content/banners/',         content.banners,        name='content_banners'),
+    path('content/banners/update/',  content.update_banners, name='content_banners_update'),
+
+    # Plans & Pricing
+    path('content/plans/',           content.plans,          name='content_plans'),
+    path('content/plans/update/',    content.update_plans,   name='content_plans_update'),
+
     # Settings & Homepage Editor
     path('settings/general/',         settings.general,             name='settings_general'),
     path('settings/seo/',             settings.seo,                 name='settings_seo'),

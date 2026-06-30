@@ -178,3 +178,128 @@ def update_contact(request):
         return redirect('admin_panel:content_contact')
 
     return redirect('admin_panel:content_contact')
+
+
+# ─── BANNERS ─────────────────────────────────────────────────────────────────
+
+@admin_login_required
+def banners(request):
+    """Admin Banner Slides manager — list all slides."""
+    default_banners = [
+        {
+            'title': 'Buy/Port/Renew Insurance',
+            'subtitle': 'Find your trusted local PadosiAgent',
+            'cta_text': 'Find Your PadosiAgent',
+            'cta_link': '/find-agents?ServiceType=New%20Policy&openFilter=1',
+            'bg_class': 'banner-new-policy',
+            'visible': True
+        },
+        {
+            'title': 'Claim Assistance',
+            'subtitle': 'Need help with your insurance claim?',
+            'cta_text': 'Find Claims Expert',
+            'cta_link': '/find-agents?ServiceType=Claim%20Assistance&openFilter=1',
+            'bg_class': 'banner-claim-assistance',
+            'visible': True
+        },
+        {
+            'title': 'Review My Policy',
+            'subtitle': "Unsure if you're covered?",
+            'cta_text': 'Find Insurance Expert',
+            'cta_link': '/find-agents?ServiceType=Policy%20Review&openFilter=1',
+            'bg_class': 'banner-policy-review',
+            'visible': True
+        },
+    ]
+    banners_list = SiteSetting.get_value('homepage_banners', default_banners)
+    return render(request, 'admin/content/banners.html', {'banners': banners_list})
+
+
+@admin_login_required
+def update_banners(request):
+    """Save all banner slides to site_settings."""
+    if request.method == 'POST':
+        titles = request.POST.getlist('title[]')
+        subtitles = request.POST.getlist('subtitle[]')
+        cta_texts = request.POST.getlist('cta_text[]')
+        cta_links = request.POST.getlist('cta_link[]')
+        bg_classes = request.POST.getlist('bg_class[]')
+        
+        banners_list = []
+        for i, title in enumerate(titles):
+            # Resolve visibility: checkbox checks are sent as input visible[index]
+            visible_key = f'visible[{i}]'
+            is_visible = request.POST.get(visible_key) == '1'
+            banners_list.append({
+                'title': title,
+                'subtitle': subtitles[i] if i < len(subtitles) else '',
+                'cta_text': cta_texts[i] if i < len(cta_texts) else '',
+                'cta_link': cta_links[i] if i < len(cta_links) else '',
+                'bg_class': bg_classes[i] if i < len(bg_classes) else '',
+                'visible': is_visible,
+            })
+            
+        SiteSetting.set_value('homepage_banners', banners_list, 'homepage')
+        AdminActivityLog.log('Update banner slides', 'SiteSetting', request=request)
+        messages.success(request, 'Banner slides updated successfully.')
+        return redirect('admin_panel:content_banners')
+
+    return redirect('admin_panel:content_banners')
+
+
+# ─── PLANS ───────────────────────────────────────────────────────────────────
+
+@admin_login_required
+def plans(request):
+    """Admin Plans & Pricing manager — list plan config details."""
+    default_pricing = {
+        'starter': {
+            'name': "Starter's Plan",
+            'full_price': 2359,
+            'promo_price': 589,
+            'description': 'Perfect for New Agents',
+            'badge': 'STANDARD',
+        },
+        'professional': {
+            'name': "Professional's Plan",
+            'full_price': 8258,
+            'promo_price': 2359,
+            'description': 'For Established Professionals',
+            'badge': 'RECOMMENDED',
+        },
+        'promo_discount_label': 'Partner Promo Applied! Once in a lifetime offer!',
+        'standard_label': 'Get started with our standard partner plans',
+    }
+    pricing_data = SiteSetting.get_value('pricing_config', default_pricing)
+    return render(request, 'admin/content/plans.html', {'pricing': pricing_data})
+
+
+@admin_login_required
+def update_plans(request):
+    """Save updated pricing config configuration to site_settings."""
+    if request.method == 'POST':
+        pricing = {
+            'starter': {
+                'name': request.POST.get('starter_name', "Starter's Plan"),
+                'full_price': int(request.POST.get('starter_full_price', 2359)),
+                'promo_price': int(request.POST.get('starter_promo_price', 589)),
+                'description': request.POST.get('starter_description', 'Perfect for New Agents'),
+                'badge': request.POST.get('starter_badge', 'STANDARD'),
+            },
+            'professional': {
+                'name': request.POST.get('professional_name', "Professional's Plan"),
+                'full_price': int(request.POST.get('professional_full_price', 8258)),
+                'promo_price': int(request.POST.get('professional_promo_price', 2359)),
+                'description': request.POST.get('professional_description', 'For Established Professionals'),
+                'badge': request.POST.get('professional_badge', 'RECOMMENDED'),
+            },
+            'promo_discount_label': request.POST.get('promo_discount_label', 'Partner Promo Applied! Once in a lifetime offer!'),
+            'standard_label': request.POST.get('standard_label', 'Get started with our standard partner plans'),
+        }
+        
+        SiteSetting.set_value('pricing_config', pricing, 'pricing')
+        AdminActivityLog.log('Update agent pricing plans', 'SiteSetting', request=request)
+        messages.success(request, 'Pricing updated successfully.')
+        return redirect('admin_panel:content_plans')
+
+    return redirect('admin_panel:content_plans')
