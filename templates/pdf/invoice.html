@@ -19,6 +19,9 @@
 
         @page {
             margin: 0.5cm;
+            {% if invoice.payment_status|lower == 'paid' %}
+            background-image: url('{% static "img/paid_watermark_bg.png" %}');
+            {% endif %}
         }
 
         body {
@@ -230,29 +233,12 @@
         .clear {
             clear: both;
         }
-
-        /* Status Stamp */
-        .stamp-container { 
-            position: absolute; 
-            top: 155px; 
-            right: 44px; 
-            width: 130px; 
-            height: auto; 
-            z-index: 100;
-        }
     </style>
 </head>
 
 <body>
 
     <div style="position:relative;">
-        {% if invoice.payment_status|lower == 'paid' %}
-        <div class="stamp-container">
-            {% load static %}
-            <img src="{% static 'img/paid_watermark_stamp.png' %}" style="width: 100%; height: auto;">
-        </div>
-        {% endif %}
-
     <table class="invoice-header">
         <tr>
             <td style="width: 50%;">
