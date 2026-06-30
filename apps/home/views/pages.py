@@ -481,6 +481,7 @@ def home(request):
         'chart_data': chart_data,
         'formatted_heading': formatted_heading,
         'slides_count': len(facts),
+        'hide_header': True,
     })
 
 
