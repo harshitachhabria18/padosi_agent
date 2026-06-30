@@ -186,19 +186,20 @@ class InvoiceService:
             # Prepare context for the template
             half_gst = round(float(invoice.gst_amount) / 2, 2)
             
-            plan_desc = "PadosiAgent Subscription – "
             if invoice.plan_type == 'free_trial':
-                plan_desc += "30 Day Trial"
-            elif invoice.plan_type == 'basic':
-                plan_desc += "1 Year Starter"
+                plan_desc = "Trial listing on PadosiAgent platform"
             else:
-                plan_desc += "1 Year Professional"
+                plan_desc = "Annual listing on PadosiAgent platform"
+
+            item_name = invoice.plan_name
+            if item_name and not item_name.startswith("Agent Subscription Fee"):
+                item_name = f"Agent Subscription Fee ({item_name})"
 
             context = {
                 'invoice': invoice,
                 'items': [
                     {
-                        'name': invoice.plan_name,
+                        'name': item_name,
                         'description': plan_desc,
                         'amount': invoice.base_amount,
                     }

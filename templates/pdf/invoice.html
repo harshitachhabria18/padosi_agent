@@ -19,9 +19,6 @@
 
         @page {
             margin: 0.5cm;
-            {% if invoice.payment_status|lower == 'paid' %}
-            background-image: url('{% static "img/paid_watermark_bg.png" %}');
-            {% endif %}
         }
 
         body {
@@ -60,7 +57,7 @@
         }
 
         .company-details strong {
-            font-size: 20px;
+            font-size: 18px;
             color: #18529d;
             display: block;
             margin-bottom: 5px;
@@ -139,7 +136,7 @@
             color: #18529d;
             font-weight: bold;
             text-align: left;
-            padding: 12px 15px;
+            padding: 10px 12px;
             font-size: 13px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -188,11 +185,11 @@
         }
 
         .total-amount {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: bold;
             color: #18529d;
             background-color: #f0f5fc;
-            padding: 10px 15px;
+            padding: 8px 12px;
             border-radius: 6px;
             display: inline-block;
             white-space: nowrap;
@@ -265,6 +262,12 @@
                 <p>{{ invoice.agent_email|default:'agent@example.com' }}</p>
                 {% if invoice.agent_mobile %}
                 <p>+91 {{ invoice.agent_mobile }}</p>
+                {% endif %}
+                {% if invoice.agent_address %}
+                <p>{{ invoice.agent_address }}</p>
+                {% endif %}
+                {% if invoice.agent_state %}
+                <p>{{ invoice.agent_state }}</p>
                 {% endif %}
             </td>
             <td class="invoice-meta">
@@ -357,7 +360,11 @@
 
             <tr>
                 <td colspan="2" class="text-right" style="font-size: 10px; color: #999; padding: 4px 15px;">
-                    *Inclusive of GST ₹{{ invoice.gst_amount|floatformat:2 }}
+                    {% if not is_gujarat %}
+                    *Inclusive of IGST ₹{{ invoice.gst_amount|floatformat:2 }}
+                    {% else %}
+                    *Inclusive of CGST ₹{{ half_gst|floatformat:2 }} + SGST ₹{{ half_gst|floatformat:2 }}
+                    {% endif %}
                 </td>
             </tr>
 
