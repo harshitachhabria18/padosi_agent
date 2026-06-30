@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -6,12 +7,22 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>{{ invoice.invoice_number|default:'Invoice' }}</title>
     <style>
+        @font-face {
+            font-family: 'Arial';
+            src: url('{% static "fonts/arial.ttf" %}');
+        }
+        @font-face {
+            font-family: 'Arial';
+            src: url('{% static "fonts/arialbd.ttf" %}');
+            font-weight: bold;
+        }
+
         @page {
             margin: 0.5cm;
         }
 
         body {
-            font-family: 'DejaVu Sans', sans-serif;
+            font-family: 'Arial', sans-serif;
             color: #2a2a2a;
             margin: 0;
             padding: 10px 20px;
@@ -22,10 +33,12 @@
         table {
             width: 100%;
             border-collapse: collapse;
+            font-family: 'Arial', sans-serif;
         }
 
         td, th {
             vertical-align: top;
+            font-family: 'Arial', sans-serif;
         }
 
         .invoice-header {
@@ -131,7 +144,7 @@
         }
 
         .invoice-table td {
-            padding: 8px 12px;
+            padding: 10px 15px;
             border-bottom: 1px solid #e5e5e5;
             color: #2a2a2a;
         }
@@ -217,10 +230,28 @@
         .clear {
             clear: both;
         }
+
+        /* Status Stamp */
+        .stamp-container { 
+            position: absolute; 
+            top: 155px; 
+            right: 44px; 
+            width: 130px; 
+            height: auto; 
+            z-index: 100;
+        }
     </style>
 </head>
 
 <body>
+
+    <div style="position:relative;">
+        {% if invoice.payment_status|lower == 'paid' %}
+        <div class="stamp-container">
+            {% load static %}
+            <img src="{% static 'img/paid_watermark_stamp.png' %}" style="width: 100%; height: auto;">
+        </div>
+        {% endif %}
 
     <table class="invoice-header">
         <tr>
@@ -288,9 +319,12 @@
                     {% if item.description %}
                     <p class="item-desc">{{ item.description }}</p>
                     {% endif %}
+                    {% if invoice.promo_code %}
+                    <p style="font-size:12px; color:#059669; font-weight:bold; margin-top:5px;">• Promo Applied: {{ invoice.promo_code }}</p>
+                    {% endif %}
                 </td>
-                <td class="text-right">&#8377;{{ item.amount|floatformat:2 }}</td>
-                <td class="text-right">&#8377;{{ item.amount|floatformat:2 }}</td>
+                <td class="text-right">₹{{ item.amount|floatformat:2 }}</td>
+                <td class="text-right">₹{{ item.amount|floatformat:2 }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -301,22 +335,22 @@
 
             <tr>
                 <td class="text-right" style="color: #6a6a6a; padding: 8px 15px;">Base Amount:</td>
-                <td class="text-right" style="width: 130px; padding: 8px 15px;">&#8377;{{ invoice.base_amount|floatformat:2 }}</td>
+                <td class="text-right" style="width: 130px; padding: 8px 15px;">₹{{ invoice.base_amount|floatformat:2 }}</td>
             </tr>
 
-            {% if is_gujarat %}
+            {% if not is_gujarat %}
             <tr>
                 <td class="text-right" style="color: #6a6a6a; padding: 8px 15px;">GST @ 18% (IGST):</td>
-                <td class="text-right" style="padding: 8px 15px;">&#8377;{{ invoice.gst_amount|floatformat:2 }}</td>
+                <td class="text-right" style="padding: 8px 15px;">₹{{ invoice.gst_amount|floatformat:2 }}</td>
             </tr>
             {% else %}
             <tr>
                 <td class="text-right" style="color: #6a6a6a; padding: 8px 15px;">CGST @ 9%:</td>
-                <td class="text-right" style="padding: 8px 15px;">&#8377;{{ half_gst|floatformat:2 }}</td>
+                <td class="text-right" style="padding: 8px 15px;">₹{{ half_gst|floatformat:2 }}</td>
             </tr>
             <tr>
                 <td class="text-right" style="color: #6a6a6a; padding: 8px 15px;">SGST @ 9%:</td>
-                <td class="text-right" style="padding: 8px 15px;">&#8377;{{ half_gst|floatformat:2 }}</td>
+                <td class="text-right" style="padding: 8px 15px;">₹{{ half_gst|floatformat:2 }}</td>
             </tr>
             {% endif %}
 
@@ -331,17 +365,13 @@
                     style="font-weight: bold; font-size: 16px; padding: 12px 15px 8px; color: #1a1a1a;">Total Amount:
                 </td>
                 <td class="text-right" style="padding: 12px 15px 8px;">
-                    <span class="total-amount">&#8377;{{ invoice.total_amount|floatformat:2 }}</span>
+                    <span class="total-amount">₹{{ invoice.total_amount|floatformat:2 }}</span>
                 </td>
             </tr>
 
             <tr>
                 <td colspan="2" class="text-right" style="font-size: 10px; color: #999; padding: 4px 15px;">
-                    {% if is_gujarat %}
-                    *Inclusive of IGST &#8377;{{ invoice.gst_amount|floatformat:2 }}
-                    {% else %}
-                    *Inclusive of CGST &#8377;{{ half_gst|floatformat:2 }} + SGST &#8377;{{ half_gst|floatformat:2 }}
-                    {% endif %}
+                    *Inclusive of GST ₹{{ invoice.gst_amount|floatformat:2 }}
                 </td>
             </tr>
 
@@ -356,6 +386,7 @@
         <p class="footer-branding">
             Powered by <strong>PadosiAgent ServTech Pvt Ltd</strong>
         </p>
+    </div>
     </div>
 
 </body>

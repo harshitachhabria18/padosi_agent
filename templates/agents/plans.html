@@ -799,12 +799,6 @@
             <button id="confirmPaymentBtn" onclick="confirmPayment()" class="btn-pay">
                 <i class="fa-solid fa-lock"></i> Proceed to Secure Payment <i class="fa-solid fa-arrow-right ms-2"></i>
             </button>
-            {% if is_test_mode %}
-            <div class="alert alert-warning mt-3 p-3 text-start" style="border-radius: 12px; font-size: 13px; border-left: 4px solid #f59e0b; background: #fffbeb; color: #78350f;">
-                <i class="fa-solid fa-circle-exclamation me-1" style="color: #d97706;"></i>
-                <strong>Test Mode Warning:</strong> Real UPI apps (like GPay/PhonePe) will show an "incorrect beneficiary details" error if you scan this QR code. To test, use the "Simulate Success" or "Success" button inside the Razorpay modal.
-            </div>
-            {% endif %}
         </div>
 
     </div>
@@ -815,7 +809,6 @@
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
     var isUpgradeFlow = {{ is_upgrade_flow|yesno:"true,false" }};
-    var isTestMode = {{ is_test_mode|yesno:"true,false" }};
     var trialBase = {{ trial_base_price }};
     var trialTotal = {{ trial_final }};
 
@@ -852,21 +845,11 @@
     }
 
     function showLoadingPopup(title, message) {
-        let warningHtml = '';
-        if (isTestMode) {
-            warningHtml = `
-                <div class="alert alert-warning text-start p-2 mb-3" style="font-size: 12px; border-radius: 8px; border-left: 3px solid #f59e0b; background: #fffbeb; color: #78350f; font-family: sans-serif;">
-                    <i class="fa-solid fa-circle-exclamation me-1" style="color: #d97706;"></i>
-                    <strong>Test VPA Warning:</strong> UPI QR code scanning is disabled in sandbox. Please use test payment buttons inside the Razorpay modal.
-                </div>
-            `;
-        }
         Swal.fire({
             title: title,
             html: `
                 <div class="text-center">
                     <p class="mb-3">${message}</p>
-                    ${warningHtml}
                     <div class="text-danger fw-bold" style="font-size: 14px;">
                         <i class="fa-solid fa-triangle-exclamation"></i> PLEASE DO NOT CLICK THE BACK BUTTON OR CLOSE WINDOW
                     </div>
@@ -912,22 +895,8 @@
 
             const data = await response.json();
             if (data.success) {
-                if (data.test_payment && !data.order_id) {
-                    showLoadingPopup('Verifying Payment', 'We have received your payment. Please wait while we verify the transaction and set up your agent account...');
-                    setTimeout(() => {
-                        hideLoadingPopup();
-                        Swal.fire({
-                            title: 'Success',
-                            text: data.message || 'Registration completed successfully.',
-                            icon: 'success',
-                            allowOutsideClick: false,
-                            allowEscapeKey: false,
-                            showConfirmButton: false,
-                            timer: 2000
-                        }).then(() => {
-                            window.location.href = data.redirect_url || '/';
-                        });
-                    }, 2000);
+                if (!data.order_id && data.redirect_url) {
+                    window.location.href = data.redirect_url;
                 } else {
                     const options = {
                         "key": data.key,
@@ -939,7 +908,12 @@
                         "order_id": data.order_id,
                         "handler": function (response) { handlePaymentSuccess(response, data.agent_id, selectedPlan); },
                         "prefill": { "name": data.name, "email": data.email, "contact": data.mobile },
-                        "theme": { "color": "#273C8E" }
+                        "theme": { "color": "#273C8E" },
+                        "modal": {
+                            "ondismiss": function () {
+                                handlePaymentFailure(data.agent_id);
+                            }
+                        }
                     };
                     const rzp = new Razorpay(options);
                     rzp.open();
@@ -956,15 +930,6 @@
     }
 
     async function handlePaymentSuccess(paymentResponse, agentId, plan) {
-        console.log("razorpay_payment_id:", paymentResponse.razorpay_payment_id);
-        console.log("razorpay_order_id:", paymentResponse.razorpay_order_id);
-        console.log("razorpay_signature:", paymentResponse.razorpay_signature);
-
-        alert("Razorpay Success Callback Triggered!\n\n" +
-              "razorpay_payment_id: " + paymentResponse.razorpay_payment_id + "\n" +
-              "razorpay_order_id: " + paymentResponse.razorpay_order_id + "\n" +
-              "razorpay_signature: " + paymentResponse.razorpay_signature);
-
         showLoadingPopup('Verifying Payment', 'We have received your payment. Please wait while we verify the transaction and set up your agent account...');
         try {
             const response = await fetch('{% url "agents:payment_success" %}', {

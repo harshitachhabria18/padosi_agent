@@ -27,11 +27,17 @@ def link_callback(uri, rel):
     """
     Convert HTML URIs to absolute system paths so xhtml2pdf can access those resources.
     """
-    # Use settings.STATIC_URL and settings.MEDIA_URL
-    if uri.startswith(settings.MEDIA_URL):
-        path = os.path.join(settings.MEDIA_ROOT, uri.replace(settings.MEDIA_URL, ""))
-    elif uri.startswith(settings.STATIC_URL):
-        path = os.path.join(settings.STATIC_ROOT or (settings.BASE_DIR / "static"), uri.replace(settings.STATIC_URL, ""))
+    static_url = settings.STATIC_URL.strip("/")
+    media_url = settings.MEDIA_URL.strip("/")
+    clean_uri = uri.lstrip("/")
+
+    if clean_uri.startswith(media_url):
+        relative_path = clean_uri.replace(media_url, "").lstrip("/")
+        path = os.path.join(settings.MEDIA_ROOT, relative_path)
+    elif clean_uri.startswith(static_url):
+        relative_path = clean_uri.replace(static_url, "").lstrip("/")
+        static_dir = settings.STATIC_ROOT or (settings.BASE_DIR / "static")
+        path = os.path.join(static_dir, relative_path)
     else:
         path = uri
 
@@ -39,7 +45,10 @@ def link_callback(uri, rel):
     if not os.path.isfile(path):
         # Fallback search under STATICFILES_DIRS
         for static_dir in getattr(settings, "STATICFILES_DIRS", []):
-            candidate = os.path.join(static_dir, uri.replace(settings.STATIC_URL, ""))
+            relative_path = clean_uri
+            if clean_uri.startswith(static_url):
+                relative_path = clean_uri.replace(static_url, "").lstrip("/")
+            candidate = os.path.join(static_dir, relative_path)
             if os.path.isfile(candidate):
                 return candidate
         return uri
@@ -175,16 +184,22 @@ class InvoiceService:
         """
         try:
             # Prepare context for the template
-            # (Note: we map attributes manually to match the template's Laravel properties structure if needed,
-            # but template has been configured for Django templates or Laravel Blade-like expressions.
-            # Let's pass the invoice object itself, or dict context.)
             half_gst = round(float(invoice.gst_amount) / 2, 2)
+            
+            plan_desc = "PadosiAgent Subscription – "
+            if invoice.plan_type == 'free_trial':
+                plan_desc += "30 Day Trial"
+            elif invoice.plan_type == 'basic':
+                plan_desc += "1 Year Starter"
+            else:
+                plan_desc += "1 Year Professional"
+
             context = {
                 'invoice': invoice,
                 'items': [
                     {
-                        'name': f"Agent Subscription Fee ({invoice.plan_name})",
-                        'description': "Annual listing on PadosiAgent platform",
+                        'name': invoice.plan_name,
+                        'description': plan_desc,
                         'amount': invoice.base_amount,
                     }
                 ],
@@ -205,9 +220,46 @@ class InvoiceService:
             full_path = os.path.join(target_dir, filename)
             relative_path = os.path.join('invoices', sub_folder, filename).replace('\\', '/')
 
-            # Convert HTML to PDF using Pisa (xhtml2pdf)
-            with open(full_path, "w+b") as result_file:
-                pisa_status = pisa.CreatePDF(html_string, dest=result_file, link_callback=link_callback)
+            # Temporary monkey-patch for xhtml2pdf Windows file-lock bug on NamedTemporaryFile
+            import tempfile
+            original_named_temp_file = tempfile.NamedTemporaryFile
+
+            class ClosedNamedTemporaryFile:
+                def __init__(self, *args, **kwargs):
+                    kwargs['delete'] = False
+                    self._file = original_named_temp_file(*args, **kwargs)
+                    self.name = self._file.name
+                    self._closed = False
+
+                def write(self, data):
+                    if not self._closed:
+                        self._file.write(data)
+
+                def flush(self):
+                    if not self._closed:
+                        self._file.flush()
+                        self._file.close()
+                        self._closed = True
+
+                def close(self):
+                    pass
+
+                def __del__(self):
+                    try:
+                        if os.path.exists(self.name):
+                            os.remove(self.name)
+                    except Exception:
+                        pass
+
+            tempfile.NamedTemporaryFile = ClosedNamedTemporaryFile
+
+            try:
+                # Convert HTML to PDF using Pisa (xhtml2pdf)
+                with open(full_path, "w+b") as result_file:
+                    pisa_status = pisa.CreatePDF(html_string, dest=result_file, link_callback=link_callback, encoding='utf-8')
+            finally:
+                # Restore original tempfile behavior
+                tempfile.NamedTemporaryFile = original_named_temp_file
 
             if pisa_status.err:
                 logger.error(f"[InvoiceService] PDF rendering failed for {invoice.invoice_number}")

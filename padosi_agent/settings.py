@@ -153,8 +153,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # All values read from .env (dev) or environment variables (production).
 # BREVO_API_KEY: your Brevo API key from https://app.brevo.com/settings/keys/api
 BREVO_API_KEY       = os.environ.get('BREVO_API_KEY', '')       # Required for email
-BREVO_FROM_EMAIL    = os.environ.get('BREVO_FROM_EMAIL', 'noreply@padosiagent.com')
-BREVO_FROM_NAME     = os.environ.get('BREVO_FROM_NAME', 'PadosiAgent')
+BREVO_FROM_EMAIL    = os.environ.get('BREVO_FROM_EMAIL', os.environ.get('MAIL_FROM_ADDRESS', 'noreply@padosiagent.com'))
+BREVO_FROM_NAME     = os.environ.get('BREVO_FROM_NAME', os.environ.get('MAIL_FROM_NAME', 'PadosiAgent'))
 # BREVO_OTP_FALLBACK: if True, allow registration to proceed even if email fails
 # Set to False in production to strictly require email delivery.
 BREVO_OTP_FALLBACK  = os.environ.get('BREVO_OTP_FALLBACK', 'true').lower() in ('true', '1', 'yes')

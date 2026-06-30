@@ -17,6 +17,7 @@ Usage:
     email_service.send_generic('to@example.com', 'Name', 'Subject', '<html>...</html>')
 """
 
+import os
 import logging
 import time
 
@@ -246,6 +247,15 @@ class BrevoEmailService:
         html = _build_welcome_html(to_name, to_email, temp_password, plan_name)
         subject = "Welcome to PadosiAgent — Your Account is Ready!"
         return self.send_generic(to_email, to_name, subject, html, attachment_path)
+
+    def send_password_reset(self, to_email: str, to_name: str, reset_url: str, expiry_minutes: str = "60", role_name: str = "Agent") -> bool:
+        """
+        Send a branded password reset email with reset link and expiry time.
+        Matches PHP BrevoMailService::sendPasswordReset.
+        """
+        html = _build_password_reset_html(to_name, reset_url, expiry_minutes, role_name)
+        subject = "PadosiAgent – Reset Your Password"
+        return self.send_generic(to_email, to_name, subject, html)
 
 
     def send_test(self, to_email: str) -> dict:
@@ -552,6 +562,71 @@ def _build_test_html(to_email: str) -> str:
             <p style="color:#9ca3af;font-size:12px;margin:0;">
               © 2024 PadosiAgent · Automated Test · Do not reply
             </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"""
+
+
+def _build_password_reset_html(to_name: str, reset_url: str, expiry_minutes: str = "60", role_name: str = "Agent") -> str:
+    """Render the branded password reset email HTML matching PHP template."""
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Your Password</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f6f9;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:30px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);max-width:600px;width:100%;">
+        <!-- Header -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#273C8E,#1a2a63);padding:28px 40px;text-align:center;">
+            <h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:700;">PadosiAgent</h1>
+          </td>
+        </tr>
+        <!-- Body -->
+        <tr>
+          <td style="padding:40px 40px 30px;">
+            <h2 style="color:#1a2a63;font-size:20px;margin:0 0 16px;">Hello {to_name}!</h2>
+            <p style="color:#4b5563;font-size:15px;line-height:1.7;margin:0 0 16px;">
+              We received a request to reset the password for your <strong>{role_name}</strong> account on PadosiAgent.
+            </p>
+            <p style="color:#4b5563;font-size:15px;line-height:1.7;margin:0 0 30px;">
+              Click the button below to reset your password. This link will expire in <strong>{expiry_minutes} minutes</strong>.
+            </p>
+            <!-- CTA Button -->
+            <table cellpadding="0" cellspacing="0" width="100%">
+              <tr>
+                <td align="center" style="padding:0 0 30px;">
+                  <a href="{reset_url}"
+                     style="display:inline-block;background:linear-gradient(135deg,#273C8E,#1a2a63);color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:8px;font-size:16px;font-weight:600;letter-spacing:0.3px;">
+                    Reset My Password
+                  </a>
+                </td>
+              </tr>
+            </table>
+            <p style="color:#6b7280;font-size:13px;line-height:1.6;margin:0 0 16px;">
+              If the button doesn't work, copy and paste this link into your browser:
+            </p>
+            <p style="background:#f3f4f6;border-radius:6px;padding:12px 16px;word-break:break-all;font-size:12px;color:#374151;margin:0 0 24px;">
+              {reset_url}
+            </p>
+            <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 24px;">
+            <p style="color:#9ca3af;font-size:13px;line-height:1.6;margin:0;">
+              If you did not request a password reset, no action is needed — your account is safe.
+            </p>
+          </td>
+        </tr>
+        <!-- Footer -->
+        <tr>
+          <td style="background:#f9fafb;padding:20px 40px;text-align:center;border-top:1px solid #e5e7eb;">
+            <p style="color:#9ca3af;font-size:12px;margin:0;">— The PadosiAgent Team &nbsp;|&nbsp; <a href="https://padosiagent.com" style="color:#273C8E;text-decoration:none;">padosiagent.com</a></p>
           </td>
         </tr>
       </table>

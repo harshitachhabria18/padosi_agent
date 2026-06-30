@@ -96,6 +96,11 @@ def _get_registration_context(request):
 @require_http_methods(["GET"])
 def agent_registration(request):
     """Render the registration page. Shows OTP, Step 1, or Step 2 based on session."""
+    if request.user.is_authenticated:
+        from apps.agents.models import Agent
+        if Agent.objects.filter(user=request.user).exists() or request.user.is_staff or request.user.is_superuser:
+            return redirect('agents:agent_dashboard')
+
     context = _get_registration_context(request)
     return render(request, 'agents/registration.html', context)
 
@@ -112,6 +117,14 @@ def send_otp(request):
 
     if not email or '@' not in email:
         return JsonResponse({'success': False, 'message': 'Please enter a valid email address.'}, status=400)
+
+    from django.contrib.auth.models import User
+    from apps.agents.models import Agent
+    if User.objects.filter(email=email).exists() or Agent.objects.filter(email=email).exclude(status='incomplete').exists():
+        return JsonResponse({
+            'success': False,
+            'message': 'This email is already associated with an active Agent account. Please login to access your dashboard.'
+        }, status=422)
 
     otp = _generate_otp()
 
@@ -199,6 +212,14 @@ def register_step1(request):
         errors.append('Full name is required.')
     if not email or '@' not in email:
         errors.append('Please enter a valid email address.')
+
+    from django.contrib.auth.models import User
+    from apps.agents.models import Agent
+    if User.objects.filter(email=email).exists() or Agent.objects.filter(email=email).exclude(status='incomplete').exists():
+        return JsonResponse({
+            'success': False,
+            'message': 'This email is already associated with an active Agent account. Please login to access your dashboard.'
+        }, status=422)
     if not mobile or len(mobile) != 10 or not mobile.isdigit():
         errors.append('Please enter a valid 10-digit mobile number.')
     if not agent_pincode or len(agent_pincode) != 6 or not agent_pincode.isdigit():
@@ -298,6 +319,11 @@ def register_step2(request):
 
 def chooseplan(request):
     """Render the plan selection page."""
+    if request.user.is_authenticated:
+        from apps.agents.models import Agent
+        if Agent.objects.filter(user=request.user).exists() or request.user.is_staff or request.user.is_superuser:
+            return redirect('agents:agent_dashboard')
+
     draft_id = request.session.get('current_draft_id')
     if not draft_id:
         return redirect('agents:agent_registration')
@@ -399,14 +425,8 @@ def chooseplan(request):
 
     trial_gst = round(trial_base_price * 0.18, 2)
 
-    from django.conf import settings
-    # is_test_mode = not settings.RAZORPAY_KEY or settings.RAZORPAY_KEY.startswith('rzp_test')
-    is_test_mode = False
-    print(is_test_mode)
-
     context = {
         'draft': draft,
-        'is_test_mode': is_test_mode,
         'pricing_config': pricing_config,
         'trial_config': trial_config,
         'trial_active': trial_active,
@@ -637,7 +657,6 @@ def agent_register_complete(request):
     
     razorpay_order_id = None
     amount_paise = int(round(total_amount * 100))
-    is_test_key = not settings.RAZORPAY_KEY or settings.RAZORPAY_KEY.startswith('rzp_test')
     
     if settings.RAZORPAY_KEY and settings.RAZORPAY_SECRET and amount_paise > 0:
         try:
@@ -653,15 +672,32 @@ def agent_register_complete(request):
         except Exception as e:
             logger.error(f"Razorpay Order Creation Failed: {str(e)}")
 
-    # Strict Production Guard: If live key is active and order creation fails, prevent bypass
-    if not is_test_key and not razorpay_order_id and amount_paise > 0:
+    # Strict Production Guard: If order creation fails for a paid plan, prevent bypass
+    if not razorpay_order_id and amount_paise > 0:
         return JsonResponse({
             'success': False,
             'message': 'Payment system error. Unable to initialize Razorpay transaction. Please try again later.'
         }, status=500)
 
     from django.db import transaction
-    from apps.agents.models import AgentSubscription
+    from apps.agents.models import Agent, AgentSubscription
+
+    # Duplicate payment guard: check if agent already has a completed subscription for this plan
+    existing_agent = Agent.objects.filter(email=draft.email).first()
+    if existing_agent:
+        already_paid = AgentSubscription.objects.filter(
+            agent=existing_agent,
+            payment_status='completed',
+            selected_plan=plan_name or plan_type,
+        ).first()
+        if already_paid:
+            from django.urls import reverse
+            return JsonResponse({
+                'success': True,
+                'already_completed': True,
+                'agent_id': existing_agent.id,
+                'redirect_url': reverse('agents:agent_dashboard'),
+            })
 
     try:
         with transaction.atomic():
@@ -694,8 +730,8 @@ def agent_register_complete(request):
                 }
             )
 
-            # If test mode (empty key/secret) OR 0 amount: complete instantly
-            if not settings.RAZORPAY_KEY or not settings.RAZORPAY_SECRET or settings.RAZORPAY_KEY == 'your_razorpay_key_here' or settings.RAZORPAY_SECRET == 'your_razorpay_secret_here' or amount_paise == 0:
+            # If 0 amount: complete instantly
+            if amount_paise == 0:
                 subscription.payment_status = 'completed'
                 subscription.status = 'active'
                 subscription.starts_at = timezone.now()
@@ -783,7 +819,6 @@ def agent_register_complete(request):
                 from django.urls import reverse
                 return JsonResponse({
                     'success': True,
-                    'test_payment': True,
                     'message': 'Registration completed successfully! Welcome to PadosiAgent.',
                     'redirect_url': reverse('agents:agent_dashboard'),
                 })
@@ -803,7 +838,6 @@ def agent_register_complete(request):
         'name': agent.fullname,
         'email': agent.email,
         'mobile': agent.mobile,
-        'test_payment': is_test_key,
     })
 
 
@@ -832,56 +866,61 @@ def payment_success(request):
     from apps.admin_panel.models.referral_code import ReferralCode
     from apps.admin_panel.models.referral_usage import ReferralUsage
 
-    # Verify signature securely and fetch payment details for anti-tampering amount validation
-    is_dummy_keys = (
-        not settings.RAZORPAY_KEY 
-        or not settings.RAZORPAY_SECRET 
-        or settings.RAZORPAY_KEY == 'your_razorpay_key_here' 
-        or settings.RAZORPAY_SECRET == 'your_razorpay_secret_here'
-    )
-
-    print(razorpay_payment_id, razorpay_order_id, razorpay_signature)
-    if not is_dummy_keys:
-        if not razorpay_signature:
-            return JsonResponse({'success': False, 'message': 'Payment signature is missing. Cannot verify transaction.'}, status=400)
-
-        try:
-            client = razorpay.Client(auth=(settings.RAZORPAY_KEY, settings.RAZORPAY_SECRET))
-            
-            # 1. Verify Payment Signature
-            client.utility.verify_payment_signature({
-                'razorpay_order_id': razorpay_order_id,
-                'razorpay_payment_id': razorpay_payment_id,
-                'razorpay_signature': razorpay_signature
+    # Idempotency guard: if subscription for this order is already completed, return success
+    if razorpay_order_id:
+        existing_sub = AgentSubscription.objects.filter(
+            razorpay_order_id=razorpay_order_id,
+            payment_status='completed'
+        ).first()
+        if existing_sub:
+            from django.urls import reverse
+            return JsonResponse({
+                'success': True,
+                'message': 'Payment already processed successfully.',
+                'redirect_url': reverse('agents:agent_dashboard'),
             })
-            
-            # 2. Fetch Payment Entity from Razorpay API
-            payment_info = client.payment.fetch(razorpay_payment_id)
-            payment_status = payment_info.get('status')
-            paid_amount_paise = payment_info.get('amount')
-            
-            if payment_status not in ('authorized', 'captured'):
-                logger.error(f"Razorpay Payment {razorpay_payment_id} status is {payment_status} — rejecting activation.")
-                return JsonResponse({'success': False, 'message': 'Payment is not completed.'}, status=400)
 
-            # 3. Retrieve Subscription to Verify Price
-            subscription = AgentSubscription.objects.filter(razorpay_order_id=razorpay_order_id).first()
-            if not subscription:
-                logger.error(f"No subscription found matching Razorpay Order {razorpay_order_id}")
-                return JsonResponse({'success': False, 'message': 'Invalid transaction ID.'}, status=400)
+    # Verify signature securely and fetch payment details for anti-tampering amount validation
+    if not razorpay_signature:
+        return JsonResponse({'success': False, 'message': 'Payment signature is missing. Cannot verify transaction.'}, status=400)
 
-            expected_amount_paise = int(round(subscription.registration_amount * 100))
-            if paid_amount_paise != expected_amount_paise:
-                logger.critical(
-                    f"POTENTIAL PRICE TAMPERING DETECTED! "
-                    f"Agent ID: {agent_id}, Paid: {paid_amount_paise} paise, Expected: {expected_amount_paise} paise. "
-                    f"Razorpay Payment ID: {razorpay_payment_id}"
-                )
-                return JsonResponse({'success': False, 'message': 'Payment validation failed: Amount mismatch.'}, status=400)
+    try:
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY, settings.RAZORPAY_SECRET))
 
-        except Exception as e:
-            logger.error(f"Razorpay Signature/Amount Verification Failed: {str(e)}")
-            return JsonResponse({'success': False, 'message': f'Security verification failed: {str(e)}'}, status=400)
+        # 1. Verify Payment Signature
+        client.utility.verify_payment_signature({
+            'razorpay_order_id': razorpay_order_id,
+            'razorpay_payment_id': razorpay_payment_id,
+            'razorpay_signature': razorpay_signature
+        })
+
+        # 2. Fetch Payment Entity from Razorpay API
+        payment_info = client.payment.fetch(razorpay_payment_id)
+        payment_status = payment_info.get('status')
+        paid_amount_paise = payment_info.get('amount')
+
+        if payment_status not in ('authorized', 'captured'):
+            logger.error(f"Razorpay Payment {razorpay_payment_id} status is {payment_status} — rejecting activation.")
+            return JsonResponse({'success': False, 'message': 'Payment is not completed.'}, status=400)
+
+        # 3. Retrieve Subscription to Verify Price
+        subscription = AgentSubscription.objects.filter(razorpay_order_id=razorpay_order_id).first()
+        if not subscription:
+            logger.error(f"No subscription found matching Razorpay Order {razorpay_order_id}")
+            return JsonResponse({'success': False, 'message': 'Invalid transaction ID.'}, status=400)
+
+        expected_amount_paise = int(round(subscription.registration_amount * 100))
+        if paid_amount_paise != expected_amount_paise:
+            logger.critical(
+                f"POTENTIAL PRICE TAMPERING DETECTED! "
+                f"Agent ID: {agent_id}, Paid: {paid_amount_paise} paise, Expected: {expected_amount_paise} paise. "
+                f"Razorpay Payment ID: {razorpay_payment_id}"
+            )
+            return JsonResponse({'success': False, 'message': 'Payment validation failed: Amount mismatch.'}, status=400)
+
+    except Exception as e:
+        logger.error(f"Razorpay Signature/Amount Verification Failed: {str(e)}")
+        return JsonResponse({'success': False, 'message': f'Security verification failed: {str(e)}'}, status=400)
 
     from django.db import transaction
 
@@ -919,8 +958,8 @@ def payment_success(request):
 
             subscription.payment_status = 'completed'
             subscription.status = 'active'
-            subscription.razorpay_payment_id = razorpay_payment_id or 'mock_payment_id'
-            subscription.razorpay_signature = razorpay_signature or 'mock_signature'
+            subscription.razorpay_payment_id = razorpay_payment_id
+            subscription.razorpay_signature = razorpay_signature
             subscription.starts_at = timezone.now()
             subscription.expires_at = sub_expiry
             subscription.save()

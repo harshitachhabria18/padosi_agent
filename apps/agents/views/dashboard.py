@@ -1277,7 +1277,6 @@ def agent_upgrade_plan(request):
         
         razorpay_order_id = None
         amount_paise = int(round(total_amount * 100))
-        is_test_key = bool(settings.RAZORPAY_KEY and settings.RAZORPAY_KEY.startswith('rzp_test'))
         
         if settings.RAZORPAY_KEY and settings.RAZORPAY_SECRET and amount_paise > 0:
             try:
@@ -1310,8 +1309,8 @@ def agent_upgrade_plan(request):
         agent.status = 'pending_payment'
         agent.save()
 
-        # If test mode & no key OR 0 amount, complete instantly
-        if (not settings.RAZORPAY_KEY or not settings.RAZORPAY_SECRET or amount_paise == 0) and is_test_key:
+        # If 0 amount, complete instantly
+        if amount_paise == 0:
             subscription.payment_status = 'completed'
             subscription.status = 'active'
             subscription.starts_at = timezone.now()
@@ -1373,8 +1372,7 @@ def agent_upgrade_plan(request):
             'name': agent.fullname,
             'email': agent.email,
             'plan_amount': plan_amount,
-            'total_amount': total_amount,
-            'test_payment': is_test_key
+            'total_amount': total_amount
         })
 
     except Exception as e:
