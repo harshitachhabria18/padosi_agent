@@ -466,6 +466,7 @@ def home(request):
     from django.utils.html import escape
     escaped_heading = escape(hero_heading)
     formatted_heading = escaped_heading.replace('{Trusted}', '<span class="pa-heading-trusted">Trusted</span>')
+    formatted_heading = formatted_heading.replace('{Licensed}', '<span class="pa-heading-trusted">Licensed</span>')
     formatted_heading = formatted_heading.replace('{Padosi}', '<span class="pa-heading-highlight">Padosi</span>')
 
     return render(request, 'public/home.html', {

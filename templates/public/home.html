@@ -39,14 +39,14 @@
 
         <div class="dyk-slider-container" id="dyk-slider">
             <div class="dyk-track" id="dyk-track">
-                {% for item in slides_zipped %}
+                {% for item in homepageContent.dyk.slides %}
                 <div class="dyk-slide">
-                    <div class="dyk-card {{ item.fact.accent|default:'accent-rose' }}">
-                        <div class="dyk-icon-wrap {{ item.fact.bg|default:'bg-rose-500' }}">
-                            {% include 'components/hero-icon.html' with name=item.fact.icon|default:'lightbulb' sw='2.2' %}
+                    <div class="dyk-card {{ item.accent|default:'accent-rose' }}">
+                        <div class="dyk-icon-wrap {{ item.bg|default:'bg-rose-500' }}">
+                            {% include 'components/hero-icon.html' with name=item.icon|default:'lightbulb' sw='2.2' %}
                         </div>
-                        <h3 class="dyk-card-title">{{ item.fact.title }}</h3>
-                        <p class="dyk-card-body">{{ item.fact.body }}</p>
+                        <h3 class="dyk-card-title">{{ item.title }}</h3>
+                        <p class="dyk-card-body">{{ item.body }}</p>
                     </div>
                 </div>
                 {% endfor %}
@@ -729,6 +729,15 @@
         } catch (e) {
             console.error("Error in initNewHomepageFeatures:", e);
         }
+    }
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/aos.js' %}"></script>
+<script>
+    if (typeof AOS !== 'undefined') {
+        AOS.init({ duration: 800, once: true, offset: 60 });
     }
 </script>
 {% endblock %}
