@@ -14,4 +14,5 @@ urlpatterns = [
     path('terms/',          pages.terms,          name='terms'),
     path('privacy/',        pages.privacy,        name='privacy'),
     path('api/pincode/fetch/<str:pincode>', pages.pincode_fetch, name='pincode_fetch'),
+    path('<slug:slug>/',     pages.custom_page,    name='custom_page'),
 ]

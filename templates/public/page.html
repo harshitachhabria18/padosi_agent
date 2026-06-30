@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page.meta_title|default:page.title }}{% endblock %}
+
+{% block content %}
+<div class="sub_banner position-relative">
+    <section class="sub_banner_con position-relative py-5" style="background: linear-gradient(135deg, #18529d 0%, #003AAD 100%);">
+        <div class="container position-relative">
+            <div class="row">
+                <div class="col-xl-8 col-lg-10 col-12 mx-auto text-center text-white">
+                    <div class="sub_banner_content">
+                        <h1 class="text-white fw-bold mb-3" style="font-size: 2.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.15);">
+                            {{ page.title }}
+                        </h1>
+                        <p class="opacity-90 mb-0 text-white" style="font-size: 1.1rem;">
+                            Last Updated: {{ page.updated_at|date:"M d, Y" }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<main class="py-5" style="background: #f8fafc; min-height: 400px;">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <div class="bg-white rounded-3 shadow-sm p-4 p-md-5 border" style="border-radius: 16px !important;">
+                    <article class="cms-page-content" style="color: #334155; line-height: 1.8; font-size: 1.05rem;">
+                        {{ page.content|safe }}
+                    </article>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<style>
+    .cms-page-content h1, 
+    .cms-page-content h2, 
+    .cms-page-content h3, 
+    .cms-page-content h4 {
+        color: #0f172a;
+        font-weight: 700;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+    }
+    .cms-page-content h1 { font-size: 2rem; }
+    .cms-page-content h2 { font-size: 1.6rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; }
+    .cms-page-content h3 { font-size: 1.3rem; }
+    .cms-page-content p {
+        margin-bottom: 1.25rem;
+    }
+    .cms-page-content ul, 
+    .cms-page-content ol {
+        margin-bottom: 1.5rem;
+        padding-left: 1.5rem;
+    }
+    .cms-page-content li {
+        margin-bottom: 0.5rem;
+    }
+    .cms-page-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.5rem 0;
+    }
+    .cms-page-content th, 
+    .cms-page-content td {
+        border: 1px solid #e2e8f0;
+        padding: 12px;
+        text-align: left;
+    }
+    .cms-page-content th {
+        background-color: #f8fafc;
+        font-weight: 600;
+    }
+    .cms-page-content blockquote {
+        border-left: 4px solid #003AAD;
+        padding: 12px 20px;
+        background: #f0f7ff;
+        color: #1e3a8a;
+        margin: 1.5rem 0;
+        border-radius: 0 8px 8px 0;
+    }
+</style>
+{% endblock %}

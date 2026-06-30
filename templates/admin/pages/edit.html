@@ -1,0 +1,403 @@
+{% extends 'admin/layout.html' %}
+
+{% block title %}{% if page %}Edit Page — PadosiAgent Admin{% else %}Create New Page — PadosiAgent Admin{% endif %}{% endblock %}
+{% block breadcrumb %}Content Control › {% if page %}Edit Page{% else %}New Page{% endif %}{% endblock %}
+
+{% block content %}
+<form method="POST" action="{% if page %}{% url 'admin_panel:pages_update' page.id %}{% else %}{% url 'admin_panel:pages_store' %}{% endif %}" id="page-form">
+    {% csrf_token %}
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="m-0 fw-bold">{% if page %}Edit Page{% else %}Create New Page{% endif %}</h4>
+            <p class="text-muted mb-0" style="font-size:13px;">
+                {% if page %}Modify the content and settings for this page.{% else %}Fill in the details below to publish a new static page.{% endif %}
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'admin_panel:pages_index' %}" class="btn btn-light border">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to Pages
+            </a>
+            {% if page and page.is_active %}
+            <a href="/{{ page.slug }}/" target="_blank" class="btn btn-outline-secondary">
+                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> View Page
+            </a>
+            {% endif %}
+            <button type="submit" class="btn btn-primary px-4 shadow-sm">
+                <i class="fa-solid fa-cloud-arrow-up me-2"></i>
+                {% if page %}Save Changes{% else %}Publish Page{% endif %}
+            </button>
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="mb-3">
+        {% for message in messages %}
+        {% if message.tags == 'error' %}
+        <div class="alert alert-danger border-0 mb-4" style="border-left: 4px solid #ef4444 !important;">
+            <i class="fa-solid fa-circle-exclamation me-2"></i>
+            <strong>Please fix the following errors:</strong>
+            <ul class="mb-0 mt-1">
+                <li style="font-size:13px;">{{ message }}</li>
+            </ul>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+        <!-- Main Editor Column -->
+        <div class="col-lg-8">
+            <!-- AI Page Builder Guide (Visible in Raw Code mode) -->
+            <div id="ai-guide-box" class="card mb-4 border-primary border-opacity-25 d-none" style="background: linear-gradient(135deg, #eff6ff, #f8fafc); border-radius: 12px;">
+                <div class="card-body py-3 px-4">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="text-primary mt-1">
+                            <i class="fa-solid fa-wand-magic-sparkles fa-xl text-info"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-primary mb-2" style="font-size: 15px;">Claude / Vibe AI Page Builder Guide</div>
+                            <div class="text-muted mb-2" style="font-size: 13px; line-height: 1.5;">
+                                <strong>Vibe or Claude standard response code copy-paste kare. Badhu code auto work thase!</strong>
+                            </div>
+                            <ul class="mb-0 text-muted" style="font-size: 12px; padding-left: 16px; line-height: 1.6;">
+                                <li><strong>Complete HTML Paste Karo:</strong> Make sure pasted code starts with <code>&lt;!DOCTYPE html&gt;</code> and has <code>&lt;head&gt;</code> and <code>&lt;body&gt;</code> tags.</li>
+                                <li><strong>Styling & Tailwind:</strong> Vibe matches Tailwind CSS. Paste standard Tailwind CDN script in your head: <br><code>&lt;script src="https://cdn.tailwindcss.com"&gt;&lt;/script&gt;</code></li>
+                                <li><strong>Interactive Elements:</strong> Any scripts, animations or click actions pasted inside the code will execute fully.</li>
+                                <li><strong>Instant Preview:</strong> Sidebar mathi <strong>Live Preview (Iframe)</strong> button click kari ne page design save karya pehla verify karo!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold"><i class="fa-solid fa-pen-nib me-2 text-primary"></i>Page Content</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Page Title <span class="text-danger">*</span></label>
+                        <input type="text" id="page_title" name="title" class="form-control"
+                            value="{{ page.title|default:'' }}"
+                            placeholder="e.g. Privacy Policy" required>
+                        <small class="text-muted">This is displayed as the page heading and browser tab title.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">URL Slug <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted" style="font-size:13px;">/</span>
+                            <input type="text" id="page_slug" name="slug" class="form-control"
+                                value="{{ page.slug|default:'' }}"
+                                placeholder="privacy-policy" required>
+                        </div>
+                        <small class="text-muted">URL-friendly identifier. Auto-generated from title. Use lowercase letters, numbers, and hyphens only.</small>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold">Page Content (Rich Text Editor) <span class="text-danger">*</span></label>
+                        <textarea name="content" id="editor" rows="20">{{ page.content|default:'' }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Publish Controls -->
+            <div class="card mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold"><i class="fa-solid fa-sliders me-2"></i>Publish Settings</h6>
+                </div>
+                <div class="card-body">
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" name="is_active" value="1"
+                            id="is_active" {% if page is None or page.is_active %}checked{% endif %}>
+                        <label class="form-check-label fw-semibold" for="is_active">Published (Publicly Visible)</label>
+                    </div>
+                    <p class="text-muted mb-3" style="font-size:12px;">When unpublished, the page is saved as a draft and not accessible to visitors.</p>
+                    
+                    <hr class="my-2">
+                    
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" name="is_raw_code" value="1"
+                            id="is_raw_code" {% if page.is_raw_code %}checked{% endif %}>
+                        <label class="form-check-label fw-semibold text-primary" for="is_raw_code">
+                            <i class="fa-solid fa-wand-magic-sparkles me-1 text-info"></i> Raw HTML / AI Code
+                        </label>
+                    </div>
+                    <p class="text-muted mb-3" style="font-size:12px;">Pasted HTML code directly render karva mate checkbox active karo.</p>
+
+                    <hr>
+                    <div class="row g-2 text-center mt-1">
+                        <div class="col-6">
+                            <div class="text-muted" style="font-size: 11px; text-transform:uppercase; letter-spacing:.04em;">Page ID</div>
+                            <div class="fw-bold" style="font-size:15px;">{{ page.id|default:'—' }}</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-muted" style="font-size: 11px; text-transform:uppercase; letter-spacing:.04em;">Created</div>
+                            <div class="fw-bold" style="font-size:13px;">{{ page.created_at|date:"M d, Y"|default:'—' }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3 pt-3 border-top">
+                        <button type="button" class="btn btn-sm btn-outline-primary w-100 mb-2 d-none" id="preview-code-btn">
+                            <i class="fa-solid fa-eye me-1"></i> Live Preview (Iframe)
+                        </button>
+                        {% if page %}
+                        <a href="/{{ page.slug }}/" target="_blank" class="btn btn-sm btn-outline-secondary w-100">
+                            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Preview Live Page
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEO Meta -->
+            <div class="card mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold"><i class="fa-solid fa-magnifying-glass me-2 text-success"></i>SEO Settings</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" style="font-size:13px;">Meta Title</label>
+                        <input type="text" name="meta_title" class="form-control" maxlength="70"
+                            value="{{ page.meta_title|default:'' }}"
+                            placeholder="Leave blank to use Page Title" id="meta_title_input">
+                        <div class="d-flex justify-content-between mt-1">
+                            <small class="text-muted">Shown in search results. Max 70 chars.</small>
+                            <small class="text-muted" id="meta_title_count">0/70</small>
+                        </div>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold" style="font-size:13px;">Meta Description</label>
+                        <textarea name="meta_description" class="form-control" rows="3" maxlength="160"
+                            placeholder="Brief description for search engines..." id="meta_desc_input">{{ page.meta_description|default:'' }}</textarea>
+                        <div class="d-flex justify-content-between mt-1">
+                            <small class="text-muted">Shown under title in search results. Max 160 chars.</small>
+                            <small class="text-muted" id="meta_desc_count">0/160</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danger zone for existing pages -->
+            {% if page %}
+            <div class="card border-danger border-opacity-25">
+                <div class="card-header py-2 border-danger border-opacity-25" style="background:#fff5f5;">
+                    <h6 class="m-0 fw-bold text-danger" style="font-size:13px;"><i class="fa-solid fa-triangle-exclamation me-2"></i>Danger Zone</h6>
+                </div>
+                <div class="card-body py-3">
+                    <p class="text-muted mb-2" style="font-size:12px;">Permanently delete this page. This action cannot be undone.</p>
+                    <button type="button" class="btn btn-sm btn-outline-danger w-100" id="danger-delete-btn">
+                        <i class="fa-solid fa-trash-can me-1"></i> Delete This Page
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</form>
+
+<!-- Live Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 95%; width: 95%; margin: 1.75rem auto;">
+        <div class="modal-content" style="height: 90vh; border-radius: 16px; border: none; overflow: hidden; box-shadow: 0 15px 50px rgba(0,0,0,0.3);">
+            <div class="modal-header py-3 px-4 text-white border-0 d-flex justify-content-between align-items-center" style="background-color: #0f172a !important;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-info fs-5"></i>
+                    <h5 class="modal-title fw-bold m-0 text-white" id="previewModalLabel" style="font-size: 16px; line-height: 1;">
+                        AI Page Live Sandbox Preview
+                    </h5>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="badge bg-secondary px-3 py-2" style="font-size: 11px; background-color: #334155 !important; border-radius: 6px;">Live Sandbox</span>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="modal-body p-0 m-0" style="height: calc(90vh - 60px); background: #ffffff;">
+                <iframe id="preview-iframe" sandbox="allow-scripts allow-modals allow-popups allow-forms allow-same-origin" style="width: 100%; height: 100%; border: none;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+<script>
+let myEditor = null;
+
+function initCKEditor() {
+    if (myEditor) return Promise.resolve(myEditor);
+    
+    return ClassicEditor
+        .create(document.querySelector('#editor'), {
+            toolbar: {
+                items: [
+                    'heading', '|',
+                    'bold', 'italic', 'underline', 'strikethrough', '|',
+                    'link', 'blockQuote', 'insertTable', '|',
+                    'bulletedList', 'numberedList', '|',
+                    'outdent', 'indent', '|',
+                    'undo', 'redo'
+                ]
+            },
+            heading: {
+                options: [
+                    { model: 'paragraph', title: 'Paragraph', class: 'ck-heading_paragraph' },
+                    { model: 'heading1', view: 'h1', title: 'Heading 1', class: 'ck-heading_heading1' },
+                    { model: 'heading2', view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2' },
+                    { model: 'heading3', view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' },
+                ]
+            }
+        })
+        .then(editor => {
+            myEditor = editor;
+            return editor;
+        })
+        .catch(error => console.error(error));
+}
+
+function destroyCKEditor() {
+    if (!myEditor) return Promise.resolve();
+    
+    return myEditor.destroy()
+        .then(() => {
+            myEditor = null;
+        })
+        .catch(error => console.error(error));
+}
+
+// Mode Toggler function
+function toggleEditorMode(isRaw, isInit = false) {
+    const textarea = document.getElementById('editor');
+    const guideBox = document.getElementById('ai-guide-box');
+    const previewBtn = document.getElementById('preview-code-btn');
+
+    if (isRaw) {
+        destroyCKEditor().then(() => {
+            textarea.style.setProperty('display', 'block', 'important');
+            textarea.classList.add('raw-code-editor');
+            guideBox.classList.remove('d-none');
+            if (previewBtn) previewBtn.classList.remove('d-none');
+        });
+    } else {
+        textarea.style.setProperty('display', 'none', 'important');
+        textarea.classList.remove('raw-code-editor');
+        guideBox.classList.add('d-none');
+        if (previewBtn) previewBtn.classList.add('d-none');
+        
+        initCKEditor();
+    }
+}
+
+// Initial setup on load
+const isRawInitial = document.getElementById('is_raw_code').checked;
+toggleEditorMode(isRawInitial, true);
+
+// Bind listener to is_raw_code checkbox
+document.getElementById('is_raw_code').addEventListener('change', function() {
+    toggleEditorMode(this.checked);
+});
+
+// Bind listener to preview-code-btn click
+document.getElementById('preview-code-btn').addEventListener('click', function() {
+    const code = document.getElementById('editor').value;
+    const iframe = document.getElementById('preview-iframe');
+    
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+    iframeDoc.open();
+    iframeDoc.write(code);
+    iframeDoc.close();
+
+    const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+    modal.show();
+});
+
+// Auto-slug generation for NEW pages only
+{% if not page %}
+document.getElementById('page_title').addEventListener('input', function() {
+    const slug = this.value
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9 -]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+    document.getElementById('page_slug').value = slug;
+});
+{% endif %}
+
+// Character counters for SEO fields
+function updateCount(inputId, countId, max) {
+    const el = document.getElementById(inputId);
+    const counter = document.getElementById(countId);
+    if (el && counter) {
+        const len = el.value.length;
+        counter.textContent = len + '/' + max;
+        counter.style.color = len > max * 0.9 ? '#ef4444' : '#94a3b8';
+        el.addEventListener('input', function() {
+            const l = this.value.length;
+            counter.textContent = l + '/' + max;
+            counter.style.color = l > max * 0.9 ? '#ef4444' : '#94a3b8';
+        });
+    }
+}
+updateCount('meta_title_input', 'meta_title_count', 70);
+updateCount('meta_desc_input', 'meta_desc_count', 160);
+
+// Initial count
+document.getElementById('meta_title_count').textContent = (document.getElementById('meta_title_input').value.length) + '/70';
+document.getElementById('meta_desc_count').textContent = (document.getElementById('meta_desc_input').value.length) + '/160';
+
+// Danger Delete script
+{% if page %}
+$('#danger-delete-btn').on('click', function() {
+    Swal.fire({
+        title: 'Delete this page?',
+        text: "This action cannot be undone!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = $('<form>', {
+                action: "{% url 'admin_panel:pages_delete' page.id %}",
+                method: 'POST'
+            }).append($('<input>', {
+                type: 'hidden',
+                name: 'csrfmiddlewaretoken',
+                value: '{{ csrf_token }}'
+            }));
+            $('body').append(form);
+            form.submit();
+        }
+    });
+});
+{% endif %}
+</script>
+<style>
+.ck-editor__editable { min-height: 400px; font-family: 'Plus Jakarta Sans', sans-serif; }
+.ck.ck-editor { border-radius: 8px !important; overflow: hidden; }
+.raw-code-editor {
+    font-family: 'Fira Code', 'Courier New', Courier, monospace !important;
+    background-color: #1e1e1e !important;
+    color: #d4d4d4 !important;
+    line-height: 1.6 !important;
+    padding: 20px !important;
+    border-radius: 12px !important;
+    border: 1px solid #3c3c3c !important;
+    resize: vertical;
+    font-size: 14px !important;
+    min-height: 450px !important;
+    outline: none !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important;
+}
+.raw-code-editor:focus {
+    border-color: var(--primary) !important;
+}
+</style>
+{% endblock %}

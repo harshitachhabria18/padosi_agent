@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import content, settings, auth, dashboard, advanced, agents, reviews, subscriptions, broadcast, contacts, notify, security, pincode, geocoding, export, finance
+from .views import content, settings, auth, dashboard, advanced, agents, reviews, subscriptions, broadcast, contacts, notify, security, pincode, geocoding, export, finance, pages
 
 app_name = 'admin_panel'
 
@@ -74,6 +74,14 @@ urlpatterns = [
     # Plans & Pricing
     path('content/plans/',           content.plans,          name='content_plans'),
     path('content/plans/update/',    content.update_plans,   name='content_plans_update'),
+
+    # Pages & CMS
+    path('pages/',                   pages.index,             name='pages_index'),
+    path('pages/create/',            pages.create,            name='pages_create'),
+    path('pages/store/',             pages.store,             name='pages_store'),
+    path('pages/<int:page_id>/edit/',pages.edit,              name='pages_edit'),
+    path('pages/<int:page_id>/update/',pages.update,          name='pages_update'),
+    path('pages/<int:page_id>/delete/',pages.delete,          name='pages_delete'),
 
     # Settings & Homepage Editor
     path('settings/general/',         settings.general,             name='settings_general'),

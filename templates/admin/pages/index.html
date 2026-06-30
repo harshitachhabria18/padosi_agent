@@ -1,0 +1,186 @@
+{% extends 'admin/layout.html' %}
+
+{% block title %}Pages & CMS — PadosiAgent Admin{% endblock %}
+{% block breadcrumb %}Content Control › Pages & CMS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="m-0 fw-bold">Pages & CMS</h4>
+        <p class="text-muted mb-0" style="font-size: 13px;">Create and manage custom static pages. Each page gets a unique URL slug.</p>
+    </div>
+    <a href="{% url 'admin_panel:pages_create' %}" class="btn btn-primary shadow-sm">
+        <i class="fa-solid fa-file-circle-plus me-2"></i> Create New Page
+    </a>
+</div>
+
+{% if messages %}
+<div class="mb-3">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if pages %}
+<div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th style="width: 40px; padding-left: 20px;">#</th>
+                    <th>Page Title</th>
+                    <th>URL Slug</th>
+                    <th>Status</th>
+                    <th>Last Modified</th>
+                    <th class="text-end" style="padding-right: 20px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for page in pages %}
+                <tr>
+                    <td class="text-muted ps-4" style="font-size: 13px;">#{{ page.id }}</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="fw-semibold">{{ page.title }}</div>
+                            {% if page.is_raw_code %}
+                                <span class="badge bg-info text-white" style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.04em; border-radius: 4px; padding: 2px 6px;">
+                                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i> AI Code
+                                </span>
+                            {% endif %}
+                        </div>
+                        {% if page.meta_description %}
+                            <div class="text-muted" style="font-size: 12px; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                {{ page.meta_description }}
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <code class="text-primary" style="font-size: 13px; background: #f0f4ff; padding: 2px 8px; border-radius: 6px;">/{{ page.slug }}</code>
+                            <a href="/{{ page.slug }}/" target="_blank" class="text-muted" title="View Page" style="font-size: 11px;">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge {% if page.is_active %}bg-success{% else %}bg-secondary{% endif %}"
+                              style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; border-radius: 6px; padding: 4px 8px;">
+                            {% if page.is_active %}Published{% else %}Draft{% endif %}
+                        </span>
+                    </td>
+                    <td style="font-size: 13px; color: #64748b;">
+                        {{ page.updated_at|date:"M d, Y" }}
+                        <div style="font-size: 11px; color: #94a3b8;">{{ page.updated_at|timesince }} ago</div>
+                    </td>
+                    <td class="text-end pe-4">
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="/{{ page.slug }}/" target="_blank" class="btn btn-sm btn-light border" title="View Page">
+                                <i class="fa-solid fa-eye text-muted"></i>
+                            </a>
+                            <a href="{% url 'admin_panel:pages_edit' page.id %}" class="btn btn-sm btn-light border" title="Edit Page">
+                                <i class="fa-solid fa-pen-to-square text-primary"></i>
+                            </a>
+                            <button type="button" class="btn btn-danger btn-sm delete-btn" data-model="page" data-id="{{ page.id }}" title="Delete" style="padding: 4px 8px;"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card border-0 shadow-sm text-center py-5" style="border-radius: 16px;">
+    <div class="py-4">
+        <div style="width:80px;height:80px;border-radius:50%;background:#f0f4ff;display:flex;align-items:center;justify-content:center;margin: 0 auto 20px;">
+            <i class="fa-solid fa-file-lines fa-2x text-primary opacity-50"></i>
+        </div>
+        <h5 class="fw-bold">No Pages Yet</h5>
+        <p class="text-muted mb-4" style="font-size: 14px;">Create custom static pages for your site like Terms, Privacy Policy, etc.</p>
+        <a href="{% url 'admin_panel:pages_create' %}" class="btn btn-primary px-4">
+            <i class="fa-solid fa-file-circle-plus me-2"></i> Create Your First Page
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Info Card -->
+<div class="card border-0 mt-4" style="background: linear-gradient(135deg, #eff6ff, #f0fdf4); border-radius: 12px;">
+    <div class="card-body py-3 px-4">
+        <div class="d-flex align-items-start gap-3">
+            <i class="fa-solid fa-circle-info fa-lg text-primary mt-1"></i>
+            <div>
+                <div class="fw-bold mb-1" style="font-size: 14px;">How Pages & CMS Works</div>
+                <ul class="mb-0 text-muted" style="font-size: 13px; padding-left: 16px;">
+                    <li>Each page has a unique <strong>URL slug</strong> (e.g., <code>/terms</code>, <code>/privacy</code>).</li>
+                    <li>Use the <strong>WYSIWYG editor</strong> to add formatted content — no coding required.</li>
+                    <li><strong>Draft</strong> pages are saved but not publicly accessible.</li>
+                    <li>Set individual <strong>SEO meta title & description</strong> for each page.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).on('click', '.delete-btn', function(e) {
+    e.preventDefault();
+    
+    const button = $(this);
+    const id = button.data('id');
+    const row = button.closest('tr');
+    
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "This action cannot be undone!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+            
+            $.ajax({
+                url: '/admin/pages/' + id + '/delete/',
+                type: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            title: 'Deleted!',
+                            text: response.message,
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                        
+                        row.fadeOut(300, function() {
+                            $(this).remove();
+                            setTimeout(() => {
+                                location.reload();
+                            }, 500);
+                        });
+                    } else {
+                        Swal.fire('Error', response.message || 'Failed to delete page', 'error');
+                        button.prop('disabled', false).html('<i class="fas fa-trash"></i>');
+                    }
+                },
+                error: function(xhr) {
+                    Swal.fire('Error', 'Failed to delete page: ' + (xhr.responseJSON?.message || 'Server error'), 'error');
+                    button.prop('disabled', false).html('<i class="fas fa-trash"></i>');
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}
