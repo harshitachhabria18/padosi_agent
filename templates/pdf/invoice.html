@@ -18,16 +18,19 @@
         }
 
         @page {
-            margin: 0.5cm;
+            margin: 0.4cm;
+            {% if invoice.payment_status|lower == 'paid' %}
+            background-image: url('{% static "img/paid_watermark_bg.png" %}');
+            {% endif %}
         }
 
         body {
             font-family: 'Arial', sans-serif;
             color: #2a2a2a;
             margin: 0;
-            padding: 10px 20px;
+            padding: 5px 15px;
             font-size: 13.5px;
-            line-height: 1.4;
+            line-height: 1.35;
         }
 
         table {
@@ -42,7 +45,7 @@
         }
 
         .invoice-header {
-            margin-bottom: 20px;
+            margin-bottom: 12px;
         }
 
         .company-logo {
@@ -64,13 +67,13 @@
         }
 
         .header-divider {
-            border-top: 2px solid #18529d;
-            margin: 15px 0 20px 0;
+            border-top: 1.5px solid #18529d;
+            margin: 8px 0 12px 0;
             opacity: 0.8;
         }
 
         .invoice-info-section {
-            margin-bottom: 20px;
+            margin-bottom: 12px;
         }
 
         .bill-to h4,
@@ -128,7 +131,7 @@
         }
 
         .invoice-table {
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
         .invoice-table th {
@@ -198,12 +201,12 @@
 
         .invoice-footer {
             clear: both;
-            margin-top: 40px;
-            padding-top: 15px;
+            margin-top: 25px;
+            padding-top: 10px;
             border-top: 1px solid #e5e5e5;
             text-align: center;
             color: #6a6a6a;
-            font-size: 12px;
+            font-size: 11px;
             position: relative;
             bottom: 0;
             width: 100%;
@@ -257,7 +260,7 @@
     <table class="invoice-info-section">
         <tr>
             <td class="bill-to" style="width: 50%;">
-                <h4>Bill To</h4>
+                <h4>BILL TO</h4>
                 <p><strong>{{ invoice.agent_name|default:'Agent Name' }}</strong></p>
                 <p>{{ invoice.agent_email|default:'agent@example.com' }}</p>
                 {% if invoice.agent_mobile %}
@@ -271,7 +274,7 @@
                 {% endif %}
             </td>
             <td class="invoice-meta">
-                <h4>Invoice Details</h4>
+                <h4>INVOICE DETAILS</h4>
                 <p><span class="meta-label">Invoice Number:</span> <span class="meta-value">{{ invoice.invoice_number|default:'INV-2026-0001' }}</span></p>
                 <p><span class="meta-label">Invoice Date:</span> <span class="meta-value">{{ invoice.created_at|date:'d M, Y'|default:'' }}</span></p>
 
@@ -294,9 +297,9 @@
         <thead>
             <tr>
                 <th style="width: 5%;">#</th>
-                <th style="width: 52%;">Service Details</th>
-                <th class="text-right" style="width: 22%;">Base Price (excl. GST)</th>
-                <th class="text-right" style="width: 21%;">Amount</th>
+                <th style="width: 52%;">SERVICE DETAILS</th>
+                <th class="text-right" style="width: 22%;">BASE PRICE<br>(EXCL. GST)</th>
+                <th class="text-right" style="width: 21%;">AMOUNT</th>
             </tr>
         </thead>
         <tbody>
@@ -312,8 +315,8 @@
                     <p style="font-size:12px; color:#059669; font-weight:bold; margin-top:5px;">• Promo Applied: {{ invoice.promo_code }}</p>
                     {% endif %}
                 </td>
-                <td class="text-right">₹{{ item.amount|floatformat:2 }}</td>
-                <td class="text-right">₹{{ item.amount|floatformat:2 }}</td>
+                <td class="text-right">₹ {{ item.amount|floatformat:2 }}</td>
+                <td class="text-right">₹ {{ item.amount|floatformat:2 }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -324,22 +327,22 @@
 
             <tr>
                 <td class="text-right" style="color: #6a6a6a; padding: 8px 15px;">Base Amount:</td>
-                <td class="text-right" style="width: 130px; padding: 8px 15px;">₹{{ invoice.base_amount|floatformat:2 }}</td>
+                <td class="text-right" style="width: 130px; padding: 8px 15px;">₹ {{ invoice.base_amount|floatformat:2 }}</td>
             </tr>
 
             {% if not is_gujarat %}
             <tr>
                 <td class="text-right" style="color: #6a6a6a; padding: 8px 15px;">GST @ 18% (IGST):</td>
-                <td class="text-right" style="padding: 8px 15px;">₹{{ invoice.gst_amount|floatformat:2 }}</td>
+                <td class="text-right" style="padding: 8px 15px;">₹ {{ invoice.gst_amount|floatformat:2 }}</td>
             </tr>
             {% else %}
             <tr>
                 <td class="text-right" style="color: #6a6a6a; padding: 8px 15px;">CGST @ 9%:</td>
-                <td class="text-right" style="padding: 8px 15px;">₹{{ half_gst|floatformat:2 }}</td>
+                <td class="text-right" style="padding: 8px 15px;">₹ {{ half_gst|floatformat:2 }}</td>
             </tr>
             <tr>
                 <td class="text-right" style="color: #6a6a6a; padding: 8px 15px;">SGST @ 9%:</td>
-                <td class="text-right" style="padding: 8px 15px;">₹{{ half_gst|floatformat:2 }}</td>
+                <td class="text-right" style="padding: 8px 15px;">₹ {{ half_gst|floatformat:2 }}</td>
             </tr>
             {% endif %}
 
@@ -351,19 +354,19 @@
 
             <tr class="total-row">
                 <td class="text-right"
-                    style="font-weight: bold; font-size: 16px; padding: 12px 15px 8px; color: #1a1a1a;">Total Amount:
+                    style="font-weight: bold; font-size: 15px; padding: 8px 12px; color: #1a1a1a; line-height: 1.2; vertical-align: middle;">Total<br>Amount:
                 </td>
-                <td class="text-right" style="padding: 12px 15px 8px;">
-                    <span class="total-amount">₹{{ invoice.total_amount|floatformat:2 }}</span>
+                <td class="text-right" style="padding: 8px 12px; vertical-align: middle;">
+                    <span class="total-amount">₹ {{ invoice.total_amount|floatformat:2 }}</span>
                 </td>
             </tr>
 
             <tr>
                 <td colspan="2" class="text-right" style="font-size: 10px; color: #999; padding: 4px 15px;">
                     {% if not is_gujarat %}
-                    *Inclusive of IGST ₹{{ invoice.gst_amount|floatformat:2 }}
+                    *Inclusive of GST ₹ {{ invoice.gst_amount|floatformat:2 }}
                     {% else %}
-                    *Inclusive of CGST ₹{{ half_gst|floatformat:2 }} + SGST ₹{{ half_gst|floatformat:2 }}
+                    *Inclusive of GST ₹ {{ invoice.gst_amount|floatformat:2 }}
                     {% endif %}
                 </td>
             </tr>
