@@ -1,17 +1,46 @@
-{% extends 'base.html' %}
 {% load static %}
-
-{% block title %}{{ homepageContent.hero.headline|default:"Expert & Trusted Insurance Agent in your Padosi" }}{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/owl.carousel.min.css' %}">
-<link rel="stylesheet" href="{% static 'css/owl.theme.default.min.css' %}">
-<link rel="stylesheet" href="{% static 'css/magnific-popup.css' %}">
-<link rel="stylesheet" href="{% static 'css/aos.css' %}">
-{% endblock %}
-
-{% block content %}
-<div class="family_banner_outer home-page-banner position-relative" id="homebanner">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{{ homepageContent.hero.headline|default:"Expert & Trusted Insurance Agent in your Padosi" }}</title>
+    <link rel="icon" href="{% url 'home:favicon' %}" type="image/x-icon">
+    <meta name="description" content="Find trusted & verified insurance experts in your neighbourhood. Connect with your local PadosiAgent.">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    
+    <!-- Outfit Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap and styles -->
+    <link rel="stylesheet" href="{% static 'bootstrap/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/custome.css' %}">
+    <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <link rel="stylesheet" href="{% static 'css/owl.carousel.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/owl.theme.default.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/magnific-popup.css' %}">
+    <link rel="stylesheet" href="{% static 'css/aos.css' %}">
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{% static 'js/jquery-3.7.1.min.js' %}"></script>
+    <script src="{% static 'js/popper.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    
+    <style>
+        body {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="app-content">
+        <div class="family_banner_outer home-page-banner position-relative" id="homebanner">
     {% include 'partials/header.html' %}
     {% include 'components/hero-section.html' %}
 </div>
@@ -732,13 +761,16 @@
         }
     }
 </script>
-{% endblock %}
 
-{% block extra_js %}
-<script src="{% static 'js/aos.js' %}"></script>
-<script>
-    if (typeof AOS !== 'undefined') {
-        AOS.init({ duration: 800, once: true, offset: 60 });
-    }
-</script>
-{% endblock %}
+        {% include 'partials/footer.html' %}
+    </div>
+    
+    <script src="{% static 'js/preloader.js' %}"></script>
+    <script src="{% static 'js/aos.js' %}"></script>
+    <script>
+        if (typeof AOS !== 'undefined') {
+            AOS.init({ duration: 800, once: true, offset: 60 });
+        }
+    </script>
+</body>
+</html>
