@@ -1,14 +1,235 @@
 {% load static %}
+<section class="pa-hero" role="banner">
+  <div class="pa-hero-bg"></div>
+  <div class="pa-blob pa-blob-1"></div>
+  <div class="pa-blob pa-blob-2"></div>
 
-{# ═══════════════════════════════════════════════════════════════════════
-   Hero Section component — self-contained CSS (Django include can't push
-   to blocks, so we embed the style block directly here)
-   ═══════════════════════════════════════════════════════════════════════ #}
+  <div class="pa-container">
+
+    {# ═══ MOBILE LAYOUT (lg:hidden) ═══ #}
+    <div class="pa-mobile-layout">
+
+      {# 1. Trust badges #}
+      <div class="pa-badges-row">
+        {% for badge in trust_badges %}
+          <div class="pa-badge">
+            <div class="pa-badge-icon-box pa-badge-icon-{% if badge.icon == 'check-circle' %}primary{% elif badge.icon == 'shield' %}secondary{% else %}accent{% endif %}">
+              {% include 'components/hero-icon.html' with name=badge.icon sw='2.6' %}
+            </div>
+            <span class="pa-badge-text">{{ badge.label }}</span>
+          </div>
+        {% endfor %}
+      </div>
+
+      {# 2. DidYouKnow slider (no dots, matching React/Laravel) #}
+      <div class="pa-slider-card">
+        <div class="pa-slider-viewport">
+          <div class="pa-slider-track" id="pa-track-mob">
+            {% for item in facts_zipped %}
+              <div class="pa-slide">
+                <div class="pa-slide-inner pa-slide-inner-mob" style="background: {{ item.gradient }};">
+                  <div class="pa-slide-icon-white" style="background: rgba(255,255,255,0.2); color: #fff; box-shadow: {{ item.shadow }};">
+                    {% include 'components/hero-icon.html' with name=item.fact.icon sw='2.4' %}
+                  </div>
+                  {% if item.fact.isChart %}
+                    <h3 class="pa-slide-hero pa-slide-hero-chart">{{ item.fact.hero }}</h3>
+                    <p class="pa-slide-tag pa-slide-tag-chart">{{ item.fact.tag }}</p>
+                    <div class="pa-chart">
+                      {% for d in chart_data %}
+                        <div class="pa-chart-col">
+                          <span class="pa-chart-val">{{ d.rejection }}%</span>
+                          <div class="pa-chart-bar" style="height: {% widthratio d.rejection 1 2 %}px;"></div>
+                          <span class="pa-chart-year">{{ d.year }}</span>
+                        </div>
+                      {% endfor %}
+                    </div>
+                    <p class="pa-chart-footnote">Online sales 15% → 68%</p>
+                  {% else %}
+                    <h3 class="pa-slide-hero">{{ item.fact.hero }}</h3>
+                    <p class="pa-slide-tag">{{ item.fact.tag }}</p>
+                    <p class="pa-slide-body">{{ item.fact.body }}</p>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      {# 3. H1 Heading #}
+      <h1 class="pa-heading">
+        {{ hero_heading_html|safe }}
+      </h1>
+
+      {# 4. Product tiles (4 columns) #}
+      <div style="margin-top: 0.5rem; margin-bottom: 0.75rem;">
+        <h2 style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.2em; color: var(--pa-primary); margin: 0 0 0.25rem; font-family: 'Jost', sans-serif;">
+          {{ claims_card_label }}
+        </h2>
+        <div style="font-size: 10px; font-weight: 500; color: #000; margin: 0; font-family: 'Jost', sans-serif;">
+          Select to Buy New / Port / Renew Insurance
+        </div>
+      </div>
+      <div class="pa-tiles-row">
+        {% for tile in product_tiles %}
+          <a href="{{ tile.url }}" class="pa-tile {{ tile.tileClass }}">
+            <div class="pa-tile-icon-box">
+              {% include 'components/hero-icon.html' with name=tile.icon sw='2.4' %}
+            </div>
+            <span class="pa-tile-label">{{ tile.label }}</span>
+          </a>
+        {% endfor %}
+      </div>
+
+      {# 5. Claims & Audit buttons #}
+      <div class="pa-cta-row">
+        <a href="{{ cta_claim_url }}" class="pa-btn pa-btn-claim">{{ cta_claim_text }}</a>
+        <a href="{{ cta_review_url }}" class="pa-btn pa-btn-review">{{ cta_review_text }}</a>
+      </div>
+
+      {# 6. Stats counters #}
+      <div class="pa-stats-row">
+        {% for s in stats_data %}
+          <a href="/find-agents?openFilter=1" class="pa-stat-btn">
+            <div class="pa-stat" data-target="{{ s.target }}" data-suffix="{{ s.suffix }}" data-large="{% if s.large %}1{% else %}0{% endif %}" data-decimal="{% if s.decimal %}1{% else %}0{% endif %}">
+              <div class="pa-stat-top">
+                <span class="pa-stat-icon">{% include 'components/hero-icon.html' with name=s.icon sw='1.8' %}</span>
+                <span class="pa-stat-num"><span class="pa-stat-counter" id="pa-counter-{{ forloop.counter0 }}">0</span>{{ s.suffix }}</span>
+              </div>
+              <span class="pa-stat-label">{{ s.label }}</span>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+
+    </div>
+
+    {# ═══ DESKTOP LAYOUT — 2-column grid (lg+) ═══ #}
+    <div class="pa-desktop-layout">
+
+      <div class="pa-grid">
+
+        {# ROW 1 LEFT: Trust Badges + Heading + Stats #}
+        <div class="pa-cell pa-cell-r1l">
+          <div class="pa-cell-inner" id="pa-badges">
+            <div class="pa-badges-row">
+              {% for badge in trust_badges %}
+                <div class="pa-badge">
+                  <div class="pa-badge-icon-box pa-badge-icon-{% if badge.icon == 'check-circle' %}primary{% elif badge.icon == 'shield' %}secondary{% else %}accent{% endif %}">
+                    {% include 'components/hero-icon.html' with name=badge.icon sw='2.6' %}
+                  </div>
+                  <span class="pa-badge-text">{{ badge.label }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <h1 class="pa-heading" id="pa-heading">
+            {{ hero_heading_html|safe }}
+          </h1>
+
+          <div class="pa-stats-row" id="pa-stats">
+            {% for s in stats_data %}
+              <a href="/find-agents?openFilter=1" class="pa-stat-btn">
+                <div class="pa-stat" data-target="{{ s.target }}" data-suffix="{{ s.suffix }}" data-large="{% if s.large %}1{% else %}0{% endif %}" data-decimal="{% if s.decimal %}1{% else %}0{% endif %}">
+                  <div class="pa-stat-top">
+                    <span class="pa-stat-icon">{% include 'components/hero-icon.html' with name=s.icon sw='1.8' %}</span>
+                    <span class="pa-stat-num"><span class="pa-stat-counter" id="pa-counter-d-{{ forloop.counter0 }}">0</span>{{ s.suffix }}</span>
+                  </div>
+                  <span class="pa-stat-label">{{ s.label }}</span>
+                </div>
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+
+        {# ROW 1 RIGHT: DidYouKnow (desktop) #}
+        <div class="pa-cell pa-cell-r1r" id="pa-dyk-desktop">
+          <div class="pa-dyk-desktop-inner">
+            <div class="pa-slider-card pa-slider-card-lg">
+              <div class="pa-slider-viewport">
+                <div class="pa-slider-track" id="pa-track-desk">
+                  {% for item in facts_zipped %}
+                    <div class="pa-slide">
+                      <div class="pa-slide-inner pa-slide-inner-desk" style="background: {{ item.gradient }};">
+                        <div class="pa-slide-icon-white pa-slide-icon-box-desk" style="background: rgba(255,255,255,0.2); color: #fff; box-shadow: {{ item.shadow }};">
+                          {% include 'components/hero-icon.html' with name=item.fact.icon sw='2.4' %}
+                        </div>
+                        {% if item.fact.isChart %}
+                          <h3 class="pa-slide-hero pa-slide-hero-chart pa-slide-hero-desk">{{ item.fact.hero }}</h3>
+                          <p class="pa-slide-tag pa-slide-tag-chart pa-slide-tag-desk">{{ item.fact.tag }}</p>
+                          <div class="pa-chart">
+                            {% for d in chart_data %}
+                              <div class="pa-chart-col">
+                                <span class="pa-chart-val">{{ d.rejection }}%</span>
+                                <div class="pa-chart-bar" style="height: {% widthratio d.rejection 1 2 %}px;"></div>
+                                <span class="pa-chart-year">{{ d.year }}</span>
+                              </div>
+                            {% endfor %}
+                          </div>
+                          <p class="pa-chart-footnote">Online sales 15% → 68%</p>
+                        {% else %}
+                          <h3 class="pa-slide-hero pa-slide-hero-desk">{{ item.fact.hero }}</h3>
+                          <p class="pa-slide-tag pa-slide-tag-desk">{{ item.fact.tag }}</p>
+                          <p class="pa-slide-body pa-slide-body-desk">{{ item.fact.body }}</p>
+                        {% endif %}
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {# ROW 2 LEFT: Product subtitle + tiles #}
+        <div class="pa-cell pa-cell-r2l">
+          <div id="pa-subtitle">
+            <h2 class="pa-subtitle" style="margin-bottom: 0.25rem;">
+              {{ claims_card_label }}
+            </h2>
+            <div style="font-size: 15px; font-weight: 500; color: #000; margin-bottom: 12px; font-family: 'Jost', sans-serif;">
+              Select to Buy New / Port / Renew Insurance
+            </div>
+          </div>
+          <div class="pa-tiles-row" id="pa-tiles">
+            {% for tile in product_tiles %}
+              <a href="{{ tile.url }}" class="pa-tile {{ tile.tileClass }}">
+                <div class="pa-tile-icon-box">
+                  {% include 'components/hero-icon.html' with name=tile.icon sw='2.4' %}
+                </div>
+                <span class="pa-tile-label">{{ tile.label }}</span>
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+
+        {# ROW 2 RIGHT: Claims & Audit CTA #}
+        <div class="pa-cell pa-cell-r2r" id="pa-claims">
+          <div class="pa-claims-card">
+            <div>
+              <h3 class="pa-claims-heading">{{ claims_card_heading }}</h3>
+              <p class="pa-claims-text">{{ claims_card_text }}</p>
+            </div>
+            <div class="pa-cta-row">
+              <a href="{{ cta_claim_url }}" class="pa-btn pa-btn-claim">{{ cta_claim_text }}</a>
+              <a href="{{ cta_review_url }}" class="pa-btn pa-btn-review">{{ cta_review_text }}</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700;800&family=Urbanist:wght@400;500;600;700;800;900&display=swap');
 
   :root {
-    --pa-page-top-offset: 104px;
+    --pa-page-top-offset: {{ pageTopOffset|default:104 }}px;
     --pa-primary-h: 168;
     --pa-primary-s: 55%;
     --pa-primary-l: 32%;
@@ -113,6 +334,7 @@
       width: 56rem;
       height: 56rem;
     }
+
     .pa-blob-2 {
       width: 52rem;
       height: 52rem;
@@ -255,6 +477,7 @@
       border-radius: 0.75rem;
       margin-bottom: 1rem;
     }
+
     .pa-slide-icon-white svg {
       height: 1.5rem;
       width: 1.5rem;
@@ -268,6 +491,7 @@
       min-width: 3rem !important;
       margin-bottom: 0.75rem !important;
     }
+
     .pa-slide-icon-box-desk svg {
       height: 1.25rem;
       width: 1.25rem;
@@ -327,10 +551,12 @@
     .pa-slide-hero {
       font-size: 1.25rem;
     }
+
     .pa-slide-tag {
       font-size: 0.875rem;
       margin-bottom: 0.375rem;
     }
+
     .pa-slide-body {
       font-size: 0.875rem;
       line-height: 1.5rem;
@@ -341,9 +567,11 @@
     .pa-slide-hero-desk {
       font-size: 1.125rem;
     }
+
     .pa-slide-tag-desk {
       font-size: 0.75rem;
     }
+
     .pa-slide-body-desk {
       font-size: 0.75rem;
       line-height: 1.25rem;
@@ -354,18 +582,22 @@
     .pa-slide-hero-desk {
       font-size: 1.25rem;
     }
+
     .pa-slide-tag-desk {
       font-size: 0.875rem;
     }
+
     .pa-slide-body-desk {
       font-size: 0.875rem;
       line-height: 1.5rem;
     }
+
     .pa-slide-icon-box-desk {
       height: 3.5rem !important;
       width: 3.5rem !important;
       min-width: 3.5rem !important;
     }
+
     .pa-slide-icon-box-desk svg {
       height: 1.5rem;
       width: 1.5rem;
@@ -619,7 +851,7 @@
   }
 
   .pa-heading-highlight {
-    color: var(--pa-primary);
+    color: var(--pa-secondary);
   }
 
   .pa-heading-trusted {
@@ -649,6 +881,7 @@
 
   .pa-stat-btn:hover {
     transform: translateY(-2px);
+    text-decoration: none;
   }
 
   .pa-stat-btn:active {
@@ -728,7 +961,7 @@
     }
   }
 
-  /* ═══ Subtitle ═══ */
+  /* ═══ Subtitle (hidden on mobile) ═══ */
   .pa-subtitle {
     font-size: 10px;
     font-weight: 600;
@@ -907,7 +1140,7 @@
     }
   }
 
-  /* ═══ Per-tile colors ═══ */
+  /* ═══ Per-tile colors — matching React shadow-lg shadow-{color}200/60 ═══ */
   .pa-tile-rose .pa-tile-icon-box {
     background: hsl(0, 86%, 97%);
     color: hsl(0, 72%, 51%);
@@ -932,7 +1165,7 @@
     box-shadow: 0 10px 15px -3px hsla(255, 100%, 92%, 0.6), 0 4px 6px -4px hsla(255, 100%, 92%, 0.6);
   }
 
-  /* ═══ Claims CTA card ═══ */
+  /* ═══ Claims CTA ═══ */
   .pa-claims-card {
     width: 100%;
     display: flex;
@@ -965,6 +1198,28 @@
   @media (min-width: 1600px) {
     .pa-claims-card {
       padding: 2.5rem;
+    }
+  }
+
+  .pa-claims-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--pa-primary);
+    margin: 0;
+  }
+
+  @media (min-width: 640px) {
+    .pa-claims-label {
+      font-size: 0.75rem;
+      letter-spacing: 0.3em;
+    }
+  }
+
+  @media (min-width: 1400px) {
+    .pa-claims-label {
+      font-size: 0.875rem;
     }
   }
 
@@ -1091,240 +1346,20 @@
   }
 </style>
 
-<section class="pa-hero" role="banner">
-  <div class="pa-hero-bg"></div>
-  <div class="pa-blob pa-blob-1"></div>
-  <div class="pa-blob pa-blob-2"></div>
-
-  <div class="pa-container">
-
-    <!-- MOBILE LAYOUT -->
-    <div class="pa-mobile-layout">
-      <!-- Trust badges -->
-      <div class="pa-badges-row">
-        {% for badge in trust_badges %}
-          <div class="pa-badge">
-            <div class="pa-badge-icon-box pa-badge-icon-{% if badge.icon == 'check-circle' %}primary{% elif badge.icon == 'shield' %}secondary{% else %}accent{% endif %}">
-              {% include 'components/hero-icon.html' with name=badge.icon sw='2.6' %}
-            </div>
-            <span class="pa-badge-text">{{ badge.label }}</span>
-          </div>
-        {% endfor %}
-      </div>
-
-      <!-- DidYouKnow slider -->
-      <div class="pa-slider-card">
-        <div class="pa-slider-viewport">
-          <div class="pa-slider-track" id="pa-track-mob">
-            {% for item in slides_zipped %}
-              <div class="pa-slide">
-                <div class="pa-slide-inner pa-slide-inner-mob" style="background: {{ item.gradient }};">
-                  <div class="pa-slide-icon-white" style="background: rgba(255,255,255,0.2); color:#fff; box-shadow: {{ item.shadow }};">
-                    {% include 'components/hero-icon.html' with name=item.fact.icon sw='2.4' %}
-                  </div>
-                  {% if item.fact.isChart %}
-                    <h3 class="pa-slide-hero pa-slide-hero-chart">{{ item.fact.hero }}</h3>
-                    <p class="pa-slide-tag pa-slide-tag-chart">{{ item.fact.tag }}</p>
-                    <div class="pa-chart">
-                      {% for d in chart_data %}
-                        <div class="pa-chart-col">
-                          <span class="pa-chart-val">{{ d.rejection }}%</span>
-                          <div class="pa-chart-bar" style="height: {% widthratio d.rejection 1 2 %}px;"></div>
-                          <span class="pa-chart-year">{{ d.year }}</span>
-                        </div>
-                      {% endfor %}
-                    </div>
-                    <p class="pa-chart-footnote">Online sales 15% → 68%</p>
-                  {% else %}
-                    <h3 class="pa-slide-hero">{{ item.fact.hero }}</h3>
-                    <p class="pa-slide-tag">{{ item.fact.tag }}</p>
-                    <p class="pa-slide-body">{{ item.fact.body }}</p>
-                  {% endif %}
-                </div>
-              </div>
-            {% endfor %}
-          </div>
-        </div>
-      </div>
-
-      <!-- H1 Heading -->
-      <h1 class="pa-heading">
-        {{ formatted_heading|safe }}
-      </h1>
-
-      <!-- Product tiles title -->
-      <div style="margin-top: 0.5rem; margin-bottom: 0.75rem;">
-        <h2 style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.2em; color: var(--pa-primary); margin: 0 0 0.25rem; font-family: 'Jost', sans-serif;">
-          {{ hero.claims_card_label }}
-        </h2>
-        <div style="font-size: 10px; font-weight: 500; color: #000; margin: 0; font-family: 'Jost', sans-serif;">
-          Select to Buy New / Port / Renew Insurance
-        </div>
-      </div>
-      <div class="pa-tiles-row">
-        {% for tile in product_tiles %}
-          <a href="{{ tile.url }}" class="pa-tile {{ tile.tileClass }}">
-            <div class="pa-tile-icon-box">
-              {% include 'components/hero-icon.html' with name=tile.icon sw='2.4' %}
-            </div>
-            <span class="pa-tile-label">{{ tile.label }}</span>
-          </a>
-        {% endfor %}
-      </div>
-
-      <!-- Claims & Audit buttons -->
-      <div class="pa-cta-row">
-        <a href="{{ hero.cta_claim_url }}" class="pa-btn pa-btn-claim">{{ hero.cta_claim_text }}</a>
-        <a href="{{ hero.cta_review_url }}" class="pa-btn pa-btn-review">{{ hero.cta_review_text }}</a>
-      </div>
-
-      <!-- Stats counters -->
-      <div class="pa-stats-row">
-        {% for s in stats_data %}
-          <a href="/find-agents/?openFilter=1" class="pa-stat-btn text-decoration-none">
-            <div class="pa-stat" data-target="{{ s.target }}" data-suffix="{{ s.suffix }}" data-large="{% if s.large %}1{% else %}0{% endif %}" data-decimal="{% if s.decimal %}1{% else %}0{% endif %}">
-              <div class="pa-stat-top">
-                <span class="pa-stat-icon">{% include 'components/hero-icon.html' with name=s.icon sw='1.8' %}</span>
-                <span class="pa-stat-num"><span class="pa-stat-counter" id="pa-counter-{{ forloop.counter0 }}">0</span>{{ s.suffix }}</span>
-              </div>
-              <span class="pa-stat-label">{{ s.label }}</span>
-            </div>
-          </a>
-        {% endfor %}
-      </div>
-    </div>
-
-    <!-- DESKTOP LAYOUT -->
-    <div class="pa-desktop-layout">
-      <div class="pa-grid">
-        <!-- ROW 1 LEFT -->
-        <div class="pa-cell pa-cell-r1l">
-          <div class="pa-cell-inner" id="pa-badges">
-            <div class="pa-badges-row">
-              {% for badge in trust_badges %}
-                <div class="pa-badge">
-                  <div class="pa-badge-icon-box pa-badge-icon-{% if badge.icon == 'check-circle' %}primary{% elif badge.icon == 'shield' %}secondary{% else %}accent{% endif %}">
-                    {% include 'components/hero-icon.html' with name=badge.icon sw='2.6' %}
-                  </div>
-                  <span class="pa-badge-text">{{ badge.label }}</span>
-                </div>
-              {% endfor %}
-            </div>
-          </div>
-
-          <h1 class="pa-heading" id="pa-heading-desk">
-            {{ formatted_heading|safe }}
-          </h1>
-
-          <div class="pa-stats-row" id="pa-stats-desk">
-            {% for s in stats_data %}
-              <a href="/find-agents/?openFilter=1" class="pa-stat-btn text-decoration-none">
-                <div class="pa-stat" data-target="{{ s.target }}" data-suffix="{{ s.suffix }}" data-large="{% if s.large %}1{% else %}0{% endif %}" data-decimal="{% if s.decimal %}1{% else %}0{% endif %}">
-                  <div class="pa-stat-top">
-                    <span class="pa-stat-icon">{% include 'components/hero-icon.html' with name=s.icon sw='1.8' %}</span>
-                    <span class="pa-stat-num"><span class="pa-stat-counter" id="pa-counter-d-{{ forloop.counter0 }}">0</span>{{ s.suffix }}</span>
-                  </div>
-                  <span class="pa-stat-label">{{ s.label }}</span>
-                </div>
-              </a>
-            {% endfor %}
-          </div>
-        </div>
-
-        <!-- ROW 1 RIGHT -->
-        <div class="pa-cell pa-cell-r1r" id="pa-dyk-desktop">
-          <div class="pa-dyk-desktop-inner">
-            <div class="pa-slider-card pa-slider-card-lg">
-              <div class="pa-slider-viewport">
-                <div class="pa-slider-track" id="pa-track-desk">
-                  {% for item in slides_zipped %}
-                    <div class="pa-slide">
-                      <div class="pa-slide-inner pa-slide-inner-desk" style="background: {{ item.gradient }};">
-                        <div class="pa-slide-icon-white pa-slide-icon-box-desk" style="background: rgba(255,255,255,0.2); color:#fff; box-shadow: {{ item.shadow }};">
-                          {% include 'components/hero-icon.html' with name=item.fact.icon sw='2.4' %}
-                        </div>
-                        {% if item.fact.isChart %}
-                          <h3 class="pa-slide-hero pa-slide-hero-chart pa-slide-hero-desk">{{ item.fact.hero }}</h3>
-                          <p class="pa-slide-tag pa-slide-tag-chart pa-slide-tag-desk">{{ item.fact.tag }}</p>
-                          <div class="pa-chart">
-                            {% for d in chart_data %}
-                              <div class="pa-chart-col">
-                                <span class="pa-chart-val">{{ d.rejection }}%</span>
-                                <div class="pa-chart-bar" style="height: {% widthratio d.rejection 1 2 %}px;"></div>
-                                <span class="pa-chart-year">{{ d.year }}</span>
-                              </div>
-                            {% endfor %}
-                          </div>
-                          <p class="pa-chart-footnote">Online sales 15% → 68%</p>
-                        {% else %}
-                          <h3 class="pa-slide-hero pa-slide-hero-desk">{{ item.fact.hero }}</h3>
-                          <p class="pa-slide-tag pa-slide-tag-desk">{{ item.fact.tag }}</p>
-                          <p class="pa-slide-body pa-slide-body-desk">{{ item.fact.body }}</p>
-                        {% endif %}
-                      </div>
-                    </div>
-                  {% endfor %}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ROW 2 LEFT -->
-        <div class="pa-cell pa-cell-r2l">
-          <div id="pa-subtitle">
-            <h2 class="pa-subtitle" style="margin-bottom: 0.25rem;">
-              {{ hero.claims_card_label }}
-            </h2>
-            <div style="font-size: 15px; font-weight: 500; color: #000; margin-bottom: 12px; font-family: 'Jost', sans-serif;">
-              Select to Buy New / Port / Renew Insurance
-            </div>
-          </div>
-          <div class="pa-tiles-row" id="pa-tiles-desk">
-            {% for tile in product_tiles %}
-              <a href="{{ tile.url }}" class="pa-tile {{ tile.tileClass }}">
-                <div class="pa-tile-icon-box">
-                  {% include 'components/hero-icon.html' with name=tile.icon sw='2.4' %}
-                </div>
-                <span class="pa-tile-label">{{ tile.label }}</span>
-              </a>
-            {% endfor %}
-          </div>
-        </div>
-
-        <!-- ROW 2 RIGHT -->
-        <div class="pa-cell pa-cell-r2r" id="pa-claims">
-          <div class="pa-claims-card">
-            <div>
-              <h3 class="pa-claims-heading">{{ hero.claims_card_heading }}</h3>
-              <p class="pa-claims-text">{{ hero.claims_card_text }}</p>
-            </div>
-            <div class="pa-cta-row">
-              <a href="{{ hero.cta_claim_url }}" class="pa-btn pa-btn-claim">{{ hero.cta_claim_text }}</a>
-              <a href="{{ hero.cta_review_url }}" class="pa-btn pa-btn-review">{{ hero.cta_review_text }}</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</section>
-
 <script>
-  (function() {
-    // ── Fade-in on mount ──
-    setTimeout(function() {
+  (function () {
+    // ─── Fade-in on mount ───
+    setTimeout(function () {
       var items = [
         { id: 'pa-badges', delay: 0 },
-        { id: 'pa-heading-desk', delay: 0.075 },
-        { id: 'pa-stats-desk', delay: 0.075 },
+        { id: 'pa-heading', delay: 0.075 },
+        { id: 'pa-stats', delay: 0.075 },
         { id: 'pa-subtitle', delay: 0.15 },
-        { id: 'pa-tiles-desk', delay: 0.15 },
+        { id: 'pa-tiles', delay: 0.15 },
         { id: 'pa-dyk-desktop', delay: 0.3 },
         { id: 'pa-claims', delay: 0.3 }
       ];
-      items.forEach(function(item) {
+      items.forEach(function (item) {
         var el = document.getElementById(item.id);
         if (!el) return;
         el.style.opacity = '0';
@@ -1332,8 +1367,8 @@
         el.style.transition = 'opacity 0.5s, transform 0.5s';
         el.style.transitionTimingFunction = 'cubic-bezier(0.22, 1, 0.36, 1)';
         el.style.transitionDelay = item.delay + 's';
-        requestAnimationFrame(function() {
-          requestAnimationFrame(function() {
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
             el.style.opacity = '1';
             el.style.transform = 'translateY(0)';
           });
@@ -1341,20 +1376,21 @@
       });
     }, 80);
 
-    // ── Stat Counters (IntersectionObserver) ──
-    (function() {
+    // ─── Animated counters ───
+    (function () {
       var counters = document.querySelectorAll('.pa-stat-counter');
       if (!counters.length) return;
-      var observer = new IntersectionObserver(function(entries) {
-        entries.forEach(function(entry) {
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
           if (!entry.isIntersecting) return;
           var el = entry.target;
           observer.unobserve(el);
           var stat = el.closest('.pa-stat');
           if (!stat) return;
           var target = parseFloat(stat.dataset.target);
-          var isDecimal = stat.dataset.decimal === '1';
+          var suffix = stat.dataset.suffix || '';
           var isLarge = stat.dataset.large === '1';
+          var isDecimal = stat.dataset.decimal === '1';
           var duration = 2500;
           var startTime = null;
 
@@ -1362,13 +1398,14 @@
             if (!startTime) startTime = ts;
             var progress = Math.min((ts - startTime) / duration, 1);
             var eased = 1 - Math.pow(1 - progress, 4);
-            var current = target * eased;
+            var current = 0 + (target - 0) * eased;
             var formatted;
             if (isDecimal) {
               formatted = current.toFixed(1);
             } else {
               var val = Math.floor(current);
-              formatted = isLarge ? val.toLocaleString('en-IN') : String(val);
+              if (isLarge) formatted = val.toLocaleString('en-IN');
+              else formatted = String(val);
             }
             el.textContent = formatted;
             if (progress < 1) requestAnimationFrame(step);
@@ -1376,78 +1413,134 @@
           requestAnimationFrame(step);
         });
       }, { threshold: 0.3 });
-      counters.forEach(function(el) { observer.observe(el); });
+      counters.forEach(function (el) { observer.observe(el); });
     })();
 
-    // ── Slider ──
-    function initSlider(trackId) {
+    // ─── Slider (dots optional) ───
+    function initSlider(trackId, dotsId) {
       var track = document.getElementById(trackId);
-      if (!track) return;
+      if (!track) return null;
       var slides = track.children;
       var count = slides.length;
-      if (count === 0) return;
+      if (count === 0) return null;
+      var dots = dotsId ? document.querySelectorAll('#' + dotsId + ' .pa-dot') : [];
+      var hasDots = dots.length > 0;
       var current = 0;
       var timer = null;
       var DELAY = 6000;
 
-      function goTo(index, noAnim) {
+      // Helpers: set translation by percentage
+      function setTranslateByIndex(index, noTransition) {
         current = ((index % count) + count) % count;
-        track.style.transition = noAnim ? 'none' : 'transform 0.45s ease';
+        if (noTransition) track.style.transition = 'none';
+        else track.style.transition = '';
         track.style.transform = 'translateX(-' + (current * 100) + '%)';
+        if (hasDots) {
+          dots.forEach(function (d, i) {
+            d.classList.remove('active', 'visited');
+            if (i === current) d.classList.add('active');
+            else if (i < current) d.classList.add('visited');
+          });
+        }
       }
 
-      function next() { goTo(current + 1); }
+      function next() { setTranslateByIndex(current + 1); }
       function start() { stop(); timer = setInterval(next, DELAY); }
       function stop() { if (timer) { clearInterval(timer); timer = null; } }
 
+      if (hasDots) {
+        dots.forEach(function (d) {
+          d.addEventListener('click', function () {
+            var idx = parseInt(this.getAttribute('data-slide'), 10);
+            if (!isNaN(idx)) { setTranslateByIndex(idx); start(); }
+          });
+        });
+      }
+
       var viewport = track.closest('.pa-slider-viewport');
       if (viewport) {
+        // stop on mouse enter, restart on leave
         viewport.addEventListener('mouseenter', stop);
         viewport.addEventListener('mouseleave', start);
 
-        // Touch / pointer swipe
-        var isDragging = false, startX = 0, viewportW = 0;
+        // enable pointer dragging (mouse & touch)
+        var isDragging = false;
+        var startX = 0;
+        var baseTranslate = 0; // pixels
+        var viewportWidth = 0;
 
-        viewport.addEventListener('pointerdown', function(e) {
+        function getTranslatePixels() {
+          var style = window.getComputedStyle(track);
+          var matrix = new WebKitCSSMatrix(style.transform);
+          return matrix.m41 || 0;
+        }
+
+        function handlePointerDown(e) {
           isDragging = true;
-          startX = e.clientX;
-          viewportW = viewport.offsetWidth;
+          startX = e.type.indexOf('touch') === 0 ? e.touches[0].clientX : e.clientX;
+          viewportWidth = viewport.offsetWidth || viewport.getBoundingClientRect().width;
+          baseTranslate = -current * viewportWidth;
           track.style.transition = 'none';
           stop();
-          if (e.pointerId != null) viewport.setPointerCapture(e.pointerId);
-        });
-        viewport.addEventListener('pointermove', function(e) {
-          if (!isDragging) return;
-          var delta = e.clientX - startX;
-          track.style.transform = 'translateX(calc(-' + (current * 100) + '% + ' + delta + 'px))';
-        });
-        viewport.addEventListener('pointerup', function(e) {
-          if (!isDragging) return;
-          isDragging = false;
-          var delta = e.clientX - startX;
-          var threshold = Math.max(viewportW * 0.2, 30);
-          if (delta < -threshold) goTo(current + 1);
-          else if (delta > threshold) goTo(current - 1);
-          else goTo(current);
-          start();
-        });
-        viewport.addEventListener('pointercancel', function() {
-          isDragging = false;
-          goTo(current);
-          start();
-        });
-        viewport.style.touchAction = 'pan-y';
-      }
+          if (e.pointerId) viewport.setPointerCapture(e.pointerId);
+        }
 
-      goTo(0, true);
+        function handlePointerMove(e) {
+          if (!isDragging) return;
+          var clientX = e.type.indexOf('touch') === 0 ? (e.touches[0] && e.touches[0].clientX) : e.clientX;
+          if (clientX == null) return;
+          var delta = clientX - startX;
+          track.style.transform = 'translateX(' + (baseTranslate + delta) + 'px)';
+        }
+
+        function handlePointerUp(e) {
+          if (!isDragging) return;
+          isDragging = false;
+          var endX = (e.type.indexOf('touch') === 0 && e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX : e.clientX;
+          var delta = (endX || 0) - startX;
+          var threshold = Math.max(viewportWidth * 0.2, 30);
+
+          if (Math.abs(delta) > threshold) {
+            if (delta < -threshold) {
+              setTranslateByIndex(current + 1);
+            } else if (delta > threshold) {
+              setTranslateByIndex(current - 1);
+            }
+          } else {
+            setTranslateByIndex(current);
+          }
+          track.style.transition = '';
+          start();
+        }
+
+        viewport.addEventListener('pointerdown', function (e) { handlePointerDown(e); });
+        viewport.addEventListener('pointermove', function (e) { handlePointerMove(e); });
+        viewport.addEventListener('pointerup', function (e) { handlePointerUp(e); });
+        viewport.addEventListener('pointercancel', function (e) { handlePointerUp(e); });
+
+        viewport.addEventListener('touchstart', function (e) { handlePointerDown(e); }, { passive: true });
+        viewport.addEventListener('touchmove', function (e) { handlePointerMove(e); }, { passive: true });
+        viewport.addEventListener('touchend', function (e) { handlePointerUp(e); });
+        viewport.addEventListener('touchcancel', function (e) { handlePointerUp(e); });
+
+        viewport.style.touchAction = 'pan-y';
+
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'ArrowLeft') {
+            setTranslateByIndex(current - 1);
+            start();
+          } else if (e.key === 'ArrowRight') {
+            setTranslateByIndex(current + 1);
+            start();
+          }
+        });
+      }
+      setTranslateByIndex(0);
       start();
+      return { show: setTranslateByIndex, restart: function () { setTranslateByIndex(current); start(); } };
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-      initSlider('pa-track-mob');
-      initSlider('pa-track-desk');
-    });
-    initSlider('pa-track-mob');
-    initSlider('pa-track-desk');
+    var mob = initSlider('pa-track-mob', null);
+    var desk = initSlider('pa-track-desk', null);
   })();
 </script>

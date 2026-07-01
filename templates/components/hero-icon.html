@@ -1,59 +1,212 @@
 {% if name == 'check-circle' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+    <polyline points="22 4 12 14.01 9 11.01" />
+</svg>
 {% elif name == 'shield' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+</svg>
 {% elif name == 'trending-up' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+    <polyline points="17 6 23 6 23 12" />
+</svg>
 {% elif name == 'users' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+</svg>
 {% elif name == 'map-pin' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+    <circle cx="12" cy="10" r="3" />
+</svg>
 {% elif name == 'star' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+</svg>
 {% elif name == 'heart' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <path
+        d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+</svg>
 {% elif name == 'car' or name == 'car-front' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <path
+        d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
+    <circle cx="7" cy="17" r="2" />
+    <path d="M9 17h6" />
+    <circle cx="17" cy="17" r="2" />
+</svg>
 {% elif name == 'building-2' %}
-<svg viewBox="-2 -2 28 28" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-2"/><path d="M18 9h2v2h-2Z"/><path d="M10 16h4"/><path d="M10 12h4"/><path d="M10 8h4"/></svg>
+<svg viewBox="-2 -2 28 28" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" />
+    <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-2" />
+    <path d="M18 9h2v2h-2Z" />
+    <path d="M10 16h4" />
+    <path d="M10 12h4" />
+    <path d="M10 8h4" />
+</svg>
 {% elif name == 'shield-check' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    <path d="m9 12 2 2 4-4" />
+</svg>
 {% elif name == 'search' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <circle cx="11" cy="11" r="8" />
+    <path d="m21 21-4.3-4.3" />
+</svg>
 {% elif name == 'badge-percent' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 1 0 0-6.76Z"/><path d="m15 9-6 6"/><path d="M9 9h.01"/><path d="M15 15h.01"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <path
+        d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 1 0 0-6.76Z" />
+    <path d="m15 9-6 6" />
+    <path d="M9 9h.01" />
+    <path d="M15 15h.01" />
+</svg>
 {% elif name == 'lightbulb' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+    <path d="M9 18h6" />
+    <path d="M10 22h4" />
+</svg>
 {% elif name == 'indian-rupee' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12"/><path d="M6 8h12"/><path d="m6 13 8.5 8"/><path d="M6 13h3"/><path d="M9 13c6.667 0 6.667-10 0-10"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <path d="M6 3h12" />
+    <path d="M6 8h12" />
+    <path d="m6 13 8.5 8" />
+    <path d="M6 13h3" />
+    <path d="M9 13c6.667 0 6.667-10 0-10" />
+</svg>
 {% elif name == 'clock' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
+</svg>
 {% elif name == 'heart-pulse' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l1.5-3.5L13 16l1.5-4h4.28"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <path
+        d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+    <path d="M3.22 12H9.5l1.5-3.5L13 16l1.5-4h4.28" />
+</svg>
 {% elif name == 'bike' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="17.5" r="2.5"/><path d="M15 6h1a2 2 0 0 1 2 2v2"/><path d="M12 17.5V14H8.5L5.5 9.5H2"/><path d="m18.5 17.5-3.5-6h-3"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <circle cx="5.5" cy="17.5" r="2.5" />
+    <circle cx="18.5" cy="17.5" r="2.5" />
+    <path d="M15 6h1a2 2 0 0 1 2 2v2" />
+    <path d="M12 17.5V14H8.5L5.5 9.5H2" />
+    <path d="m18.5 17.5-3.5-6h-3" />
+</svg>
 {% elif name == 'alert-triangle' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+    <line x1="12" y1="9" x2="12" y2="13" />
+    <line x1="12" y1="17" x2="12.01" y2="17" />
+</svg>
 {% elif name == 'user-check' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <polyline points="16 11 18 13 22 9" />
+</svg>
 {% elif name == 'bar-chart-3' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-7"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <path d="M3 3v18h18" />
+    <path d="M18 17V9" />
+    <path d="M13 17V5" />
+    <path d="M8 17v-7" />
+</svg>
 {% elif name == 'landmark' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="22" x2="22" y2="22"/><line x1="8" y1="14" x2="8" y2="18"/><line x1="12" y1="14" x2="12" y2="18"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M3 14h18V9L12 2 3 9v5Z"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <line x1="2" y1="22" x2="22" y2="22" />
+    <line x1="8" y1="14" x2="8" y2="18" />
+    <line x1="12" y1="14" x2="12" y2="18" />
+    <line x1="16" y1="14" x2="16" y2="18" />
+    <path d="M3 14h18V9L12 2 3 9v5Z" />
+</svg>
 {% elif name == 'piggy-bank' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><path d="M19 5c-1.5 0-2.8 1.4-3 3-1-.6-2.2-1-3.5-1A6.5 6.5 0 0 0 6 13.5c0 .3.1.5.1.8L3 17.5l2 2 2.7-2.7c.3.1.5.2.8.2H19c2.8 0 5-2.2 5-5s-2.2-5-5-5Z"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <path
+        d="M19 5c-1.5 0-2.8 1.4-3 3-1-.6-2.2-1-3.5-1A6.5 6.5 0 0 0 6 13.5c0 .3.1.5.1.8L3 17.5l2 2 2.7-2.7c.3.1.5.2.8.2H19c2.8 0 5-2.2 5-5s-2.2-5-5-5Z" />
+</svg>
 {% elif name == 'truck' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="10" x="2" y="6" rx="2"/><path d="M22 10V6a2 2 0 0 0-2-2h-2v6"/><circle cx="7.5" cy="18.5" r="2.5"/><circle cx="16.5" cy="18.5" r="2.5"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <rect width="16" height="10" x="2" y="6" rx="2" />
+    <path d="M22 10V6a2 2 0 0 0-2-2h-2v6" />
+    <circle cx="7.5" cy="18.5" r="2.5" />
+    <circle cx="16.5" cy="18.5" r="2.5" />
+</svg>
 {% elif name == 'flame' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <path
+        d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+</svg>
 {% elif name == 'lock' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+</svg>
 {% elif name == 'scale' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.7.7-1.7 1-3 1s-2.3-.3-3-1z"/><path d="m2 16 3-8 3 8c-.7.7-1.7 1-3 1s-2.3-.3-3-1z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h18"/></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <path d="m16 16 3-8 3 8c-.7.7-1.7 1-3 1s-2.3-.3-3-1z" />
+    <path d="m2 16 3-8 3 8c-.7.7-1.7 1-3 1s-2.3-.3-3-1z" />
+    <path d="M7 21h10" />
+    <path d="M12 3v18" />
+    <path d="M3 7h18" />
+</svg>
 {% elif name == 'git-compare' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="3"></circle><path d="M13 6h3a2 2 0 0 1 2 2v7"></path><path d="M11 18H8a2 2 0 0 1-2-2V9"></path></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <circle cx="18" cy="18" r="3"></circle>
+    <circle cx="6" cy="6" r="3"></circle>
+    <path d="M13 6h3a2 2 0 0 1 2 2v7"></path>
+    <path d="M11 18H8a2 2 0 0 1-2-2V9"></path>
+</svg>
 {% elif name == 'message-square' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"></path></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <path
+        d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z">
+    </path>
+</svg>
 {% elif name == 'hand-heart' %}
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round" stroke-linejoin="round"><path d="M11 14h2a2 2 0 0 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 16"></path><path d="m14.45 13.39 5.05-4.694C20.196 8 21 6.85 21 5.75a2.75 2.75 0 0 0-4.797-1.837.276.276 0 0 1-.406 0A2.75 2.75 0 0 0 11 5.75c0 1.2.802 2.248 1.5 2.946L16 11.95"></path><path d="m2 15 6 6"></path><path d="m7 20 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a1 1 0 0 0-2.75-2.91"></path></svg>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ sw|default:'2' }}" stroke-linecap="round"
+    stroke-linejoin="round">
+    <path d="M11 14h2a2 2 0 0 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 16"></path>
+    <path
+        d="m14.45 13.39 5.05-4.694C20.196 8 21 6.85 21 5.75a2.75 2.75 0 0 0-4.797-1.837.276.276 0 0 1-.406 0A2.75 2.75 0 0 0 11 5.75c0 1.2.802 2.248 1.5 2.946L16 11.95">
+    </path>
+    <path d="m2 15 6 6"></path>
+    <path d="m7 20 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a1 1 0 0 0-2.75-2.91"></path>
+</svg>
 {% endif %}

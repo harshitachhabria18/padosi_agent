@@ -270,13 +270,6 @@ def home(request):
     if not homepage_content.get('works', {}).get('steps'):
         homepage_content.setdefault('works', {})['steps'] = default_steps
 
-    try:
-        import os
-        with open(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'tmp_homepage_content.json'), 'w') as temp_f:
-            json.dump(homepage_content, temp_f, default=str, indent=4)
-    except Exception as temp_e:
-        logger.error("Failed to write temp config: %s", temp_e)
-
     # Testimonials list helper
     use_custom = homepage_content.get('testimonials', {}).get('use_custom', False)
     custom_list = homepage_content.get('testimonials', {}).get('custom_list', [])
@@ -293,57 +286,67 @@ def home(request):
                 'image': f"https://ui-avatars.com/api/?name={r.get('name', 'User')}&background=0d9488&color=fff&bold=true"
             })
     else:
-        # Fetch actual approved reviews from the database (agent_reviews table)
-        from apps.agents.models import AgentReview
-        db_reviews = AgentReview.objects.filter(is_approved=True).select_related('agent', 'agent__profile').order_by('-created_at')[:100]
-        
-        agent_counts = {}
-        final_reviews = []
-        backfill_reviews = []
-        
-        for rev in db_reviews:
-            agent_id = rev.agent_id
-            if agent_id:
-                if agent_id not in agent_counts:
-                    agent_counts[agent_id] = 0
-                if agent_counts[agent_id] < 3:
-                    final_reviews.append(rev)
-                    agent_counts[agent_id] += 1
+        reviews = cache.get('homepage_reviews')
+        if reviews is None:
+            from apps.agents.models import AgentReview
+            db_reviews = AgentReview.objects.filter(is_approved=True).select_related('agent', 'agent__profile').order_by('-created_at')[:100]
+
+            agent_counts = {}
+            final_reviews = []
+            backfill_reviews = []
+
+            for rev in db_reviews:
+                agent_id = rev.agent_id
+                if agent_id:
+                    if agent_id not in agent_counts:
+                        agent_counts[agent_id] = 0
+                    if agent_counts[agent_id] < 3:
+                        final_reviews.append(rev)
+                        agent_counts[agent_id] += 1
+                    else:
+                        backfill_reviews.append(rev)
                 else:
-                    backfill_reviews.append(rev)
-            else:
-                final_reviews.append(rev)
-                
-        if len(final_reviews) < 10 and backfill_reviews:
-            needed = 10 - len(final_reviews)
-            final_reviews.extend(backfill_reviews[:needed])
-            
-        final_reviews = final_reviews[:10]
-        
-        reviews = []
-        for rev in final_reviews:
-            agent_name = rev.agent.fullname if rev.agent else None
-            agent_slug = None
-            agent_photo = None
-            
-            if rev.agent:
-                try:
-                    profile = rev.agent.profile
-                    agent_slug = profile.slug
-                    agent_photo = profile.profile_photo_url
-                except Exception:
-                    pass
-            
-            avatar_url = agent_photo if (agent_photo and 'avatar-icon.jpg' not in agent_photo) else f"https://ui-avatars.com/api/?name={rev.reviewer_name or 'User'}&background=0d9488&color=fff&bold=true"
-            
-            reviews.append({
-                'name': rev.reviewer_name or 'User',
-                'service': f"Client of {agent_name}" if agent_name else "Verified Client",
-                'agent_url': f"/profile/{agent_slug}/" if agent_slug else None,
-                'rating': float(rev.rating),
-                'comment': rev.review or '',
-                'image': avatar_url
-            })
+                    final_reviews.append(rev)
+
+            if len(final_reviews) < 10 and backfill_reviews:
+                needed = 10 - len(final_reviews)
+                final_reviews.extend(backfill_reviews[:needed])
+
+            final_reviews = final_reviews[:10]
+
+            reviews = []
+            for rev in final_reviews:
+                agent_name = rev.agent.fullname if rev.agent else None
+                agent_slug = None
+                agent_photo = None
+
+                if rev.agent:
+                    try:
+                        profile = rev.agent.profile
+                        agent_slug = profile.slug
+                        agent_photo = profile.profile_photo_url
+                    except Exception:
+                        pass
+
+                avatar_url = agent_photo if (agent_photo and 'avatar-icon.jpg' not in agent_photo) else f"https://ui-avatars.com/api/?name={rev.reviewer_name or 'User'}&background=0d9488&color=fff&bold=true"
+
+                reviews.append({
+                    'name': rev.reviewer_name or 'User',
+                    'service': f"Client of {agent_name}" if agent_name else "Verified Client",
+                    'agent_url': f"/profile/{agent_slug}/" if agent_slug else None,
+                    'rating': float(rev.rating),
+                    'comment': rev.review or '',
+                    'image': avatar_url
+                })
+
+            if not reviews:
+                reviews = [
+                    {'name': 'Sneha Patel', 'service': 'Client of Rajesh Kumar', 'agent_url': None, 'rating': 5.0, 'comment': 'Found my perfect health insurance through my PadosiAgent. They were professional and explained everything clearly.', 'image': 'https://ui-avatars.com/api/?name=Sneha+Patel&background=0d9488&color=fff&bold=true'},
+                    {'name': 'Rahul Verma', 'service': 'Client of Vikram Singh', 'agent_url': None, 'rating': 4.5, 'comment': 'My claim was rejected initially, but my PadosiAgent helped me get it approved. Highly recommended!', 'image': 'https://ui-avatars.com/api/?name=Rahul+Verma&background=0d9488&color=fff&bold=true'},
+                    {'name': 'Anjali Desai', 'service': 'Client of Priya Sharma', 'agent_url': None, 'rating': 4.0, 'comment': 'Got my policy reviewed and discovered I was overpaying. Saved ₹15,000 annually. Thank you!', 'image': 'https://ui-avatars.com/api/?name=Anjali+Desai&background=0d9488&color=fff&bold=true'},
+                ]
+
+            cache.set('homepage_reviews', reviews, 1800)
 
     # Zip trust cards with indexes to allow colored borders easily in DTL
     why_cards = homepage_content.get('why_choose', {}).get('cards', [])
@@ -364,13 +367,13 @@ def home(request):
             'index': idx
         })
 
-    # Prepare Hero data exactly matching Laravel's merges
+    # 1. Load Hero Section defaults and database overrides
     hero_defaults = {
         'heading': 'Find a {Trusted} Insurance Expert in your {Padosi}',
         'trust_badges': [
             {'icon': 'check-circle', 'label': 'Licensed'},
-            {'icon': 'shield',       'label': 'No Spam Calls'},
-            {'icon': 'trending-up',  'label': 'Zero Platform Fee'},
+            {'icon': 'shield', 'label': 'No Spam Calls'},
+            {'icon': 'trending-up', 'label': 'Zero Platform Fee'},
         ],
         'stats': [
             {'label': 'Expert Agents', 'target': 1000, 'suffix': '+', 'icon': 'users', 'large': True, 'decimal': False},
@@ -385,7 +388,7 @@ def home(request):
             {'label': 'Business Insurance', 'icon': 'building-2', 'url': '/find-agents?ServiceType=New+Policy&InsuranceType=SME+Insurance&openFilter=1', 'tileClass': 'pa-tile-violet'},
         ],
         'slides': [
-            {'icon': 'indian-rupee', 'hero': '₹25,00,000 Cr', 'tag': 'Unclaimed Insurance', 'body': "Most families miss out because they don't have an agent.", 'isChart': False},
+            {'icon': 'indian-rupee', 'hero': '₹25,000 Cr', 'tag': 'Unclaimed Insurance', 'body': "Most families miss out because they don't have an agent.", 'isChart': False},
             {'icon': 'users', 'hero': 'Agent > Chatbot', 'tag': 'Real Support Matters', 'body': 'Cheap product or hassle-free service? Agents deliver both.', 'isChart': False},
             {'icon': 'trending-up', 'hero': 'Claim Rejections +34%', 'tag': 'As Online Sales Grow', 'body': '', 'isChart': True},
             {'icon': 'badge-percent', 'hero': 'Save 20-40%', 'tag': 'Better Premiums', 'body': "Agents find coverage algorithms can't.", 'isChart': False},
@@ -402,34 +405,21 @@ def home(request):
         'claims_card_text': 'Easy local guidance from verified agents, with real advisor stories and trusted help just a few minutes away.',
     }
 
-    hero_db = SiteSetting.get_value('hero_section', {})
-    hero = {**hero_defaults, **(hero_db if isinstance(hero_db, dict) else {})}
+    hero_section_db = SiteSetting.get_value('hero_section', {})
+    hero_data = {**hero_defaults, **(hero_section_db if isinstance(hero_section_db, dict) else {})}
 
-    trust_badges = hero.get('trust_badges') or hero_defaults['trust_badges']
-    stats_data = hero.get('stats') or hero_defaults['stats']
-    product_tiles = hero.get('tiles') or hero_defaults['tiles']
-    facts = hero.get('slides') or hero_defaults['slides']
-
-    # Normalize stat counters
+    stats_data = hero_data.get('stats', hero_defaults['stats'])
     for s in stats_data:
-        s['large'] = str(s.get('large', False)).lower() in ('true', '1')
-        s['decimal'] = str(s.get('decimal', False)).lower() in ('true', '1')
+        s['large'] = str(s.get('large', '')).lower() in ('true', '1')
+        s['decimal'] = str(s.get('decimal', '')).lower() in ('true', '1')
         try:
             s['target'] = float(s.get('target', 0))
         except (ValueError, TypeError):
             s['target'] = 0.0
 
+    facts = hero_data.get('slides', hero_defaults['slides'])
     for f in facts:
-        f['isChart'] = str(f.get('isChart', False)).lower() in ('true', '1')
-
-    # Chart details
-    chart_data = [
-        {'year': '2020', 'rejection': 12},
-        {'year': '2021', 'rejection': 16},
-        {'year': '2022', 'rejection': 21},
-        {'year': '2023', 'rejection': 27},
-        {'year': '2024', 'rejection': 34},
-    ]
+        f['isChart'] = str(f.get('isChart', '')).lower() in ('true', '1')
 
     slide_gradients = [
         'linear-gradient(135deg, hsla(var(--pa-primary-h), var(--pa-primary-s), var(--pa-primary-l), 0.25), hsla(var(--pa-primary-h), var(--pa-primary-s), var(--pa-primary-l), 0.1), hsla(var(--pa-primary-h), var(--pa-primary-s), var(--pa-primary-l), 0.05))',
@@ -440,7 +430,6 @@ def home(request):
         'linear-gradient(135deg, hsla(160, 84%, 39%, 0.25), hsla(160, 84%, 39%, 0.1), hsla(160, 84%, 39%, 0.05))',
         'linear-gradient(135deg, hsla(262, 83%, 58%, 0.25), hsla(262, 83%, 58%, 0.1), hsla(262, 83%, 58%, 0.05))',
     ]
-
     slide_icon_shadows = [
         '0 10px 15px -3px hsla(var(--pa-primary-h), var(--pa-primary-s), var(--pa-primary-l), 0.2), 0 4px 6px -4px hsla(var(--pa-primary-h), var(--pa-primary-s), var(--pa-primary-l), 0.2)',
         '0 10px 15px -3px hsla(var(--pa-secondary-h), var(--pa-secondary-s), var(--pa-secondary-l), 0.2), 0 4px 6px -4px hsla(var(--pa-secondary-h), var(--pa-secondary-s), var(--pa-secondary-l), 0.2)',
@@ -451,37 +440,64 @@ def home(request):
         '0 10px 15px -3px hsla(262, 83%, 58%, 0.2), 0 4px 6px -4px hsla(262, 83%, 58%, 0.2)',
     ]
 
-    # Zip fact details with gradient backgrounds and Shadows for clean loop rendering
-    slides_zipped = []
-    for idx, f in enumerate(facts):
-        slides_zipped.append({
-            'fact': f,
+    facts_zipped = []
+    for idx, fact in enumerate(facts):
+        facts_zipped.append({
+            'fact': fact,
             'gradient': slide_gradients[idx % len(slide_gradients)],
             'shadow': slide_icon_shadows[idx % len(slide_icon_shadows)],
             'index': idx
         })
 
-    # Heading tag replacement
-    hero_heading = hero.get('heading') or hero_defaults['heading']
-    from django.utils.html import escape
-    escaped_heading = escape(hero_heading)
-    formatted_heading = escaped_heading.replace('{Trusted}', '<span class="pa-heading-trusted">Trusted</span>')
-    formatted_heading = formatted_heading.replace('{Licensed}', '<span class="pa-heading-trusted">Licensed</span>')
-    formatted_heading = formatted_heading.replace('{Padosi}', '<span class="pa-heading-highlight">Padosi</span>')
+    # 2. Build and zip dyk slides
+    dyk_slides = homepage_content.get('dyk', {}).get('slides', [])
+    slides_zipped = []
+    for idx, slide in enumerate(dyk_slides):
+        slides_zipped.append({
+            'fact': slide,
+            'index': idx
+        })
+
+    # 3. Static chart data for hero section chart slide
+    chart_data = [
+        {'year': '2020', 'rejection': 12},
+        {'year': '2021', 'rejection': 16},
+        {'year': '2022', 'rejection': 21},
+        {'year': '2023', 'rejection': 27},
+        {'year': '2024', 'rejection': 34},
+    ]
+
+    raw_heading = hero_data.get('heading', hero_defaults['heading'])
+    def replace_brace(match):
+        word = match.group(1)
+        if word.lower() == 'padosi':
+            return f'<span class="pa-heading-highlight">{word}</span>'
+        else:
+            return f'<span class="pa-heading-trusted">{word}</span>'
+    hero_heading_html = re.sub(r'\{([^{}]+)\}', replace_brace, raw_heading)
 
     return render(request, 'public/home.html', {
         'homepageContent': homepage_content,
         'why_cards_zipped': why_cards_zipped,
         'reviews_json': json.dumps(reviews),
-        'hero': hero,
-        'trust_badges': trust_badges,
+        'hide_header': True,
+        # Hero Section specific values
+        'hero_data': hero_data,
+        'trust_badges': hero_data.get('trust_badges', hero_defaults['trust_badges']),
         'stats_data': stats_data,
-        'product_tiles': product_tiles,
+        'product_tiles': hero_data.get('tiles', hero_defaults['tiles']),
+        'facts_zipped': facts_zipped,
         'slides_zipped': slides_zipped,
         'chart_data': chart_data,
-        'formatted_heading': formatted_heading,
-        'slides_count': len(facts),
-        'hide_header': True,
+        'hero_heading': hero_data.get('heading', hero_defaults['heading']),
+        'hero_heading_html': hero_heading_html,
+        'cta_claim_text': hero_data.get('cta_claim_text', hero_defaults['cta_claim_text']),
+        'cta_claim_url': hero_data.get('cta_claim_url', hero_defaults['cta_claim_url']),
+        'cta_review_text': hero_data.get('cta_review_text', hero_defaults['cta_review_text']),
+        'cta_review_url': hero_data.get('cta_review_url', hero_defaults['cta_review_url']),
+        'claims_card_label': hero_data.get('claims_card_label', hero_defaults['claims_card_label']),
+        'claims_card_heading': hero_data.get('claims_card_heading', hero_defaults['claims_card_heading']),
+        'claims_card_text': hero_data.get('claims_card_text', hero_defaults['claims_card_text']),
     })
 
 

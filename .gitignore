@@ -7,4 +7,5 @@ db.sqlite3
 .vscode/
 staticfiles/
 media/
+cache/
 scratch/

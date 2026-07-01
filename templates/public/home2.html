@@ -1,19 +1,14 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ homepageContent.hero.headline|default:"Expert & Trusted Insurance Agent in your Padosi" }}{% endblock %}
+{% block title %}{{ homepageContent.hero.headline|default:"Expert & Trusted Insurance Agent in your Padosi" }}{%
+endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/owl.carousel.min.css' %}">
 <link rel="stylesheet" href="{% static 'css/owl.theme.default.min.css' %}">
 <link rel="stylesheet" href="{% static 'css/magnific-popup.css' %}">
 <link rel="stylesheet" href="{% static 'css/aos.css' %}">
-<style>
-    .header {
-        background: transparent !important;
-        box-shadow: none !important;
-    }
-</style>
 {% endblock %}
 
 {% block content %}
@@ -23,7 +18,7 @@
 
 <!-- Did You Know? Section -->
 {% if homepageContent.dyk.visible %}
-<section class="dyk-section py-5 bg-transparent" data-aos="fade-up">
+<section class="dyk-section py-5 bg-transparent">
     <div class="container">
         <div class="d-flex align-items-end justify-content-between mb-4 mb-sm-5">
             <div>
@@ -64,7 +59,8 @@
                 <div class="dyk-slide">
                     <div class="dyk-card {{ item.fact.accent|default:'accent-rose' }}">
                         <div class="dyk-icon-wrap {{ item.fact.bg|default:'bg-rose-500' }}">
-                            {% include 'components/hero-icon.html' with name=item.fact.icon|default:'lightbulb' sw='2.2' %}
+                            {% include 'components/hero-icon.html' with name=item.fact.icon|default:'lightbulb' sw='2.2'
+                            %}
                         </div>
                         <h3 class="dyk-card-title">{{ item.fact.title }}</h3>
                         <p class="dyk-card-body">{{ item.fact.body }}</p>
@@ -81,7 +77,7 @@
 
 <!-- Quick Picks Section -->
 {% if homepageContent.quickpicks.visible %}
-<section class="quick-picks-section py-4 bg-transparent" data-aos="fade-up">
+<section class="quick-picks-section py-4 bg-transparent">
     <div class="qp-container">
         <div class="d-flex align-items-end justify-content-between mb-4 mb-sm-5">
             <div>
@@ -101,7 +97,8 @@
                 <a href="{{ qpItem.url|default:'#' }}" class="qp-btn">
                     {% if qpItem.badge %}
                     <span class="qp-badge-pill"
-                        style="background-color:{{ qpItem.badge_bg|default:'#ffe4e6' }};color:{{ qpItem.badge_color|default:'#be123c' }};">{{ qpItem.badge }}</span>
+                        style="background-color:{{ qpItem.badge_bg|default:'#ffe4e6' }};color:{{ qpItem.badge_color|default:'#be123c' }};">{{
+                        qpItem.badge }}</span>
                     {% endif %}
                     <div class="qp-icon-box" style="background-color:{{ qpItem.icon_bg|default:'#fff1f2' }};">
                         <span
@@ -137,10 +134,12 @@
                         <div class="pb-decoration-circle-1"></div>
                         <div class="pb-decoration-circle-2"></div>
                         <div class="pb-decoration-dots"></div>
-                        <p class="section-subtitle-small">{{ homepageContent.why_choose.label|default:"Why PadosiAgent" }}</p>
+                        <p class="section-subtitle-small">{{ homepageContent.why_choose.label|default:"Why PadosiAgent"
+                            }}</p>
 
                         <h2 class="why-choose-pb-title">
-                            {% if homepageContent.why_choose.title == "What makes PadosiAgent one of India's most trusted ways to buy insurance?" %}
+                            {% if homepageContent.why_choose.title == "What makes PadosiAgent one of India's most
+                            trusted ways to buy insurance?" %}
                             <span class="pb-line"><span class="pb-light">What makes</span></span>
                             <span class="pb-line"><span class="pb-bold">PadosiAgent</span> <span class="pb-light">one
                                     of</span></span>
@@ -178,7 +177,8 @@
                             <div class="pb-card-icon-row">
                                 <div class="pb-card-icon"
                                     style="color: {{ item.accent.color }} !important; width: 22px; height: 22px; display: inline-flex;">
-                                    {% include 'components/hero-icon.html' with name=item.card.icon|default:'shield-check' sw='2.2' %}
+                                    {% include 'components/hero-icon.html' with
+                                    name=item.card.icon|default:'shield-check' sw='2.2' %}
                                 </div>
                             </div>
                             <h3 class="pb-card-title" style="color: {{ item.accent.color }} !important;">
@@ -214,7 +214,8 @@
                         </div>
                         <div class="pb-mobile-icon"
                             style="color: {{ item.accent.color }} !important; width:16px; height:16px; display:inline-flex;">
-                            {% include 'components/hero-icon.html' with name=item.card.icon|default:'shield-check' sw='2.2' %}
+                            {% include 'components/hero-icon.html' with name=item.card.icon|default:'shield-check'
+                            sw='2.2' %}
                         </div>
                     </div>
                     <div>
@@ -246,12 +247,14 @@
 
 <!-- How It Works Section (4 Steps) -->
 {% if homepageContent.works.visible %}
-<section class="how-works-section py-5 bg-transparent overflow-hidden" data-aos="fade-up">
+<section class="how-works-section py-5 bg-transparent overflow-hidden">
     <div class="container">
         <div class="text-center mb-5">
             <p class="section-subtitle-small">{{ homepageContent.works.label|default:"How It Works" }}</p>
-            <h2 class="font-weight-bold mb-2 text-dark" style="font-size:1.75rem; letter-spacing:-0.02em;">{{ homepageContent.works.title|default:"Find My PadosiAgent in 4 Simple Steps" }}</h2>
-            <p class="text-muted" style="font-size:15px;">{{ homepageContent.works.subtitle|default:"From search to service - it takes just minutes for you" }}</p>
+            <h2 class="font-weight-bold mb-2 text-dark" style="font-size:1.75rem; letter-spacing:-0.02em;">{{
+                homepageContent.works.title|default:"Find My PadosiAgent in 4 Simple Steps" }}</h2>
+            <p class="text-muted" style="font-size:15px;">{{ homepageContent.works.subtitle|default:"From search to
+                service - it takes just minutes for you" }}</p>
         </div>
 
         <!-- Desktop View -->
@@ -264,10 +267,12 @@
                             <div class="step-icon-wrap {{ step.accent|default:'accent-primary' }}" data-toggle="tooltip"
                                 data-placement="top" title="{{ step.tooltip }}">
                                 <span style="width: 32px; height: 32px; display: inline-flex;">
-                                    {% include 'components/hero-icon.html' with name=step.icon|default:'search' sw='1.8' %}
+                                    {% include 'components/hero-icon.html' with name=step.icon|default:'search' sw='1.8'
+                                    %}
                                 </span>
                             </div>
-                            <span class="step-badge {{ step.accent|default:'accent-primary' }}">{{ step.badge|default:forloop.counter }}</span>
+                            <span class="step-badge {{ step.accent|default:'accent-primary' }}">{{
+                                step.badge|default:forloop.counter }}</span>
                             {% if not forloop.last %}
                             <div class="step-connector">
                                 <div class="step-connector-line"></div>
@@ -300,7 +305,8 @@
                                 {% include 'components/hero-icon.html' with name=step.icon|default:'search' sw='1.8' %}
                             </span>
                         </div>
-                        <span class="step-badge {{ step.accent|default:'accent-primary' }}">{{ step.badge|default:forloop.counter }}</span>
+                        <span class="step-badge {{ step.accent|default:'accent-primary' }}">{{
+                            step.badge|default:forloop.counter }}</span>
                     </div>
                     <h3 class="step-title">{{ step.title }}</h3>
                     <p class="step-desc">{{ step.desc }}</p>
@@ -327,12 +333,14 @@
 
 <!-- Testimonials Section -->
 {% if homepageContent.testimonials.visible %}
-<section class="testimonials-slider-section py-5 bg-transparent overflow-hidden" data-aos="fade-up">
+<section class="testimonials-slider-section py-5 bg-transparent overflow-hidden">
     <div class="container">
         <div class="text-center mb-5">
             <p class="section-subtitle-small">{{ homepageContent.testimonials.label|default:"Testimonials" }}</p>
-            <h2 class="font-weight-bold mb-2 text-dark" style="font-size: 1.75rem; letter-spacing:-0.02em;">{{ homepageContent.testimonials.title|default:"What Users Say About Their PadosiAgent" }}</h2>
-            <p class="text-muted" style="font-size: 15px;">{{ homepageContent.testimonials.subtitle|default:"Real experiences from users who found their PadosiAgent" }}</p>
+            <h2 class="font-weight-bold mb-2 text-dark" style="font-size: 1.75rem; letter-spacing:-0.02em;">{{
+                homepageContent.testimonials.title|default:"What Users Say About Their PadosiAgent" }}</h2>
+            <p class="text-muted" style="font-size: 15px;">{{ homepageContent.testimonials.subtitle|default:"Real
+                experiences from users who found their PadosiAgent" }}</p>
         </div>
 
         <div class="review-scroll-container no-scrollbar" id="review-slider">
@@ -343,12 +351,7 @@
     </div>
 </section>
 {% endif %}
-{% endblock %}
 
-{% block extra_js %}
-<script src="{% static 'js/owl.carousel.js' %}"></script>
-<script src="{% static 'js/aos.js' %}"></script>
-<script src="{% static 'js/animation.js' %}"></script>
 <script>
     var slideColorClasses = ['slide-new-policy', 'slide-claim', 'slide-review'];
 
@@ -598,7 +601,8 @@
                 if (!slider || !dotsWrap) return;
                 if (slider._reviewDestroy) slider._reviewDestroy();
 
-                var reviewsData = {{ reviews_json|safe }};
+                var reviewsData = {{ reviews_json| safe
+            }};
         var total = reviewsData.length;
 
         function renderStars(rating) {
@@ -790,7 +794,6 @@
             window.removeEventListener('resize', updatePinning);
         };
     })();
-
         } catch (e) {
         console.error("Error in initNewHomepageFeatures:", e);
     }

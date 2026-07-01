@@ -29,7 +29,7 @@
 </head>
 <body>
     <div id="app-content">
-        {% if not hide_header %}
+        {% if not hide_header or request.path == '/' %}
             {% include 'partials/header.html' %}
         {% endif %}
         
