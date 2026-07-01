@@ -559,8 +559,8 @@ class AgentProfile(models.Model):
                 except Exception:
                     pass
 
-        # ── 5. Return the target media path even if missing (causes 404 with full path) ─
-        return f"/media/app/public/profile/{filename}"
+        # ── 5. Return the default avatar if the file is completely missing ───
+        return '/static/img/avatar-icon.jpg'
 
     @property
     def service_pincode(self):
