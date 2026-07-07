@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ homepageContent.hero.headline|default:"Expert & Trusted Insurance Agent in your Padosi" }}{% endblock %}
+{% block title %}{{ settings.hero_heading|default:"Expert & Trusted Insurance Agent in your Padosi" }}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/owl.carousel.min.css' %}">
@@ -22,8 +22,8 @@
 </div>
 
 <!-- Did You Know? Section -->
-{% if homepageContent.dyk.visible %}
-<section class="dyk-section py-5 bg-transparent" data-aos="fade-up">
+{% if settings.show_dyk %}
+<section class="dyk-section py-5 bg-transparent" >
     <div class="container">
         <div class="d-flex align-items-end justify-content-between mb-4 mb-sm-5">
             <div>
@@ -36,9 +36,9 @@
                         <path d="M9 18h6" />
                         <path d="M10 22h4" />
                     </svg>
-                    {{ homepageContent.dyk.label|default:"Did you know?" }}
+                    Did you know?
                 </p>
-                <h2 class="dyk-title">{{ homepageContent.dyk.title|default:"Insights from the Padosi network" }}</h2>
+                <h2 class="dyk-title">Insights from the Padosi network</h2>
             </div>
             <div class="d-none d-sm-flex align-items-center" style="gap: 8px;">
                 <button id="dyk-prev-btn" aria-label="Previous" class="dyk-nav-btn">
@@ -62,8 +62,8 @@
             <div class="dyk-track" id="dyk-track">
                 {% for item in slides_zipped %}
                 <div class="dyk-slide">
-                    <div class="dyk-card {{ item.fact.accent|default:'accent-rose' }}">
-                        <div class="dyk-icon-wrap {{ item.fact.bg|default:'bg-rose-500' }}">
+                    <div class="dyk-card {{ item.fact.accent_class|default:'accent-rose' }}">
+                        <div class="dyk-icon-wrap {{ item.fact.bg_class|default:'bg-rose-500' }}">
                             {% include 'components/hero-icon.html' with name=item.fact.icon|default:'lightbulb' sw='2.2' %}
                         </div>
                         <h3 class="dyk-card-title">{{ item.fact.title }}</h3>
@@ -80,30 +80,30 @@
 {% endif %}
 
 <!-- Quick Picks Section -->
-{% if homepageContent.quickpicks.visible %}
-<section class="quick-picks-section py-4 bg-transparent" data-aos="fade-up">
+{% if settings.show_quickpicks %}
+<section class="quick-picks-section py-4 bg-transparent" >
     <div class="qp-container">
         <div class="d-flex align-items-end justify-content-between mb-4 mb-sm-5">
             <div>
-                <p class="qp-subtitle">{{ homepageContent.quickpicks.label|default:"Quick picks" }}</p>
-                <h2 class="qp-title-heading">{{ homepageContent.quickpicks.title|default:"Also buy / renew shortcuts" }}
+                <p class="qp-subtitle">Quick picks</p>
+                <h2 class="qp-title-heading">Also buy / renew shortcuts
                 </h2>
             </div>
-            <a href="{{ homepageContent.quickpicks.view_all_url|default:'/find-agents?ServiceType=New%20Policy&openFilter=1' }}"
+            <a href="/find-agents?ServiceType=New%20Policy&openFilter=1"
                 class="d-none d-sm-inline qp-view-all">
-                {{ homepageContent.quickpicks.view_all_text|default:"View all products →" }}
+                View all products →
             </a>
         </div>
 
         <div class="qp-outer-wrapper no-scrollbar">
             <div class="qp-grid">
-                {% for qpItem in homepageContent.quickpicks.items %}
+                {% for qpItem in quick_picks %}
                 <a href="{{ qpItem.url|default:'#' }}" class="qp-btn">
-                    {% if qpItem.badge %}
+                    {% if qpItem.badge_text %}
                     <span class="qp-badge-pill"
-                        style="background-color:{{ qpItem.badge_bg|default:'#ffe4e6' }};color:{{ qpItem.badge_color|default:'#be123c' }};">{{ qpItem.badge }}</span>
+                        style="background-color:{{ qpItem.badge_bg_color|default:'#ffe4e6' }};color:{{ qpItem.badge_text_color|default:'#be123c' }};">{{ qpItem.badge_text }}</span>
                     {% endif %}
-                    <div class="qp-icon-box" style="background-color:{{ qpItem.icon_bg|default:'#fff1f2' }};">
+                    <div class="qp-icon-box" style="background-color:{{ qpItem.icon_bg_color|default:'#fff1f2' }};">
                         <span
                             style="color:{{ qpItem.icon_color|default:'#f43f5e' }}; width: 16px; height: 16px; display: inline-flex;">
                             {% include 'components/hero-icon.html' with name=qpItem.icon|default:'heart' sw='2' %}
@@ -116,9 +116,9 @@
         </div>
 
         <div class="d-block d-sm-none text-center mt-3">
-            <a href="{{ homepageContent.quickpicks.view_all_url|default:'/find-agents?ServiceType=New%20Policy&openFilter=1' }}"
+            <a href="/find-agents?ServiceType=New%20Policy&openFilter=1"
                 class="qp-view-all">
-                {{ homepageContent.quickpicks.view_all_text|default:"View all products →" }}
+                View all products →
             </a>
         </div>
     </div>
@@ -126,7 +126,7 @@
 {% endif %}
 
 <!-- Why Choose PadosiAgent -->
-{% if homepageContent.why_choose.visible %}
+{% if settings.show_why_choose %}
 <section class="why-choose-section py-5 bg-transparent">
     <div class="container">
         <!-- Desktop Grid -->
@@ -137,28 +137,24 @@
                         <div class="pb-decoration-circle-1"></div>
                         <div class="pb-decoration-circle-2"></div>
                         <div class="pb-decoration-dots"></div>
-                        <p class="section-subtitle-small">{{ homepageContent.why_choose.label|default:"Why PadosiAgent" }}</p>
+                        <p class="section-subtitle-small">Why PadosiAgent</p>
 
                         <h2 class="why-choose-pb-title">
-                            {% if homepageContent.why_choose.title == "What makes PadosiAgent one of India's most trusted ways to buy insurance?" %}
                             <span class="pb-line"><span class="pb-light">What makes</span></span>
                             <span class="pb-line"><span class="pb-bold">PadosiAgent</span> <span class="pb-light">one
                                     of</span></span>
                             <span class="pb-line"><span class="pb-bold">India's most trusted</span></span>
                             <span class="pb-line"><span class="pb-light">ways to</span> <span class="pb-bold">buy
                                     insurance?</span></span>
-                            {% else %}
-                            <span class="pb-bold">{{ homepageContent.why_choose.title }}</span>
-                            {% endif %}
                         </h2>
 
                         <p class="text-muted mb-4" style="max-width: 320px;">
-                            {{ homepageContent.why_choose.description }}
+                            No spam, no platform fees and only licensed agents — built around your privacy, your time and your money.
                         </p>
                         <div>
-                            <a href="{{ homepageContent.why_choose.button_url|default:'/find-agents?openFilter=1' }}"
+                            <a href="/find-agents?openFilter=1"
                                 class="find-agent-btn text-decoration-none">
-                                {{ homepageContent.why_choose.button_text|default:"Find My PadosiAgent" }}
+                                Find My PadosiAgent
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
                                     stroke-linejoin="round" class="ml-2">
@@ -182,7 +178,7 @@
                                 </div>
                             </div>
                             <h3 class="pb-card-title" style="color: {{ item.accent.color }} !important;">
-                                {{ item.card.stat }} {{ item.card.caption }}
+                                {{ item.card.stat_text }} {{ item.card.caption }}
                             </h3>
                             <h4 class="pb-card-subtitle">{{ item.card.title }}</h4>
                             <p class="pb-card-body">{{ item.card.body }}</p>
@@ -198,7 +194,7 @@
                 <div class="why-mobile-header-card">
                     <p class="section-subtitle-small mb-2"
                         style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#0d9488; margin:0;">
-                        {{ homepageContent.why_choose.label|default:"Why PadosiAgent" }}</p>
+                        Why PadosiAgent</p>
                     <h2
                         style="font-size:16px!important; font-weight:800!important; color:#1e3a8a!important; line-height:1.35!important; font-family:'Urbanist', sans-serif!important; margin:0!important;">
                         What makes PadosiAgent one of India's most trusted ways to buy insurance?
@@ -210,7 +206,7 @@
                     style="border-left: 4px solid {{ item.accent.color }} !important;">
                     <div class="why-mobile-stat-row">
                         <div class="pb-mobile-title" style="color: {{ item.accent.color }} !important;">
-                            {{ item.card.stat }} {{ item.card.caption }}
+                            {{ item.card.stat_text }} {{ item.card.caption }}
                         </div>
                         <div class="pb-mobile-icon"
                             style="color: {{ item.accent.color }} !important; width:16px; height:16px; display:inline-flex;">
@@ -225,12 +221,12 @@
                 {% endfor %}
             </div>
             <div class="text-center px-3 mb-2">
-                <p class="why-mobile-description">{{ homepageContent.why_choose.description }}</p>
+                <p class="why-mobile-description">No spam, no platform fees and only licensed agents — built around your privacy, your time and your money.</p>
             </div>
             <div class="text-center mt-3">
-                <a href="{{ homepageContent.why_choose.button_url|default:'/find-agents?openFilter=1' }}"
+                <a href="/find-agents?openFilter=1"
                     class="find-agent-btn text-decoration-none">
-                    {{ homepageContent.why_choose.button_text|default:"Find My PadosiAgent" }}
+                    Find My PadosiAgent
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
                         class="ml-2">
@@ -245,29 +241,29 @@
 {% endif %}
 
 <!-- How It Works Section (4 Steps) -->
-{% if homepageContent.works.visible %}
-<section class="how-works-section py-5 bg-transparent overflow-hidden" data-aos="fade-up">
+{% if settings.show_how_it_works %}
+<section class="how-works-section py-5 bg-transparent overflow-hidden" >
     <div class="container">
         <div class="text-center mb-5">
-            <p class="section-subtitle-small">{{ homepageContent.works.label|default:"How It Works" }}</p>
-            <h2 class="font-weight-bold mb-2 text-dark" style="font-size:1.75rem; letter-spacing:-0.02em;">{{ homepageContent.works.title|default:"Find My PadosiAgent in 4 Simple Steps" }}</h2>
-            <p class="text-muted" style="font-size:15px;">{{ homepageContent.works.subtitle|default:"From search to service - it takes just minutes for you" }}</p>
+            <p class="section-subtitle-small">How It Works</p>
+            <h2 class="font-weight-bold mb-2 text-dark" style="font-size:1.75rem; letter-spacing:-0.02em;">Find My PadosiAgent in 4 Simple Steps</h2>
+            <p class="text-muted" style="font-size:15px;">{{ settings.works_subtitle }}</p>
         </div>
 
         <!-- Desktop View -->
         <div class="d-none d-md-block mb-4">
             <div class="row no-gutters justify-content-center">
-                {% for step in homepageContent.works.steps %}
+                {% for step in works_steps %}
                 <div class="col-md-3">
                     <div class="step-card-desktop text-center px-3">
                         <div class="step-icon-wrapper-container mb-4">
-                            <div class="step-icon-wrap {{ step.accent|default:'accent-primary' }}" data-toggle="tooltip"
+                            <div class="step-icon-wrap {{ step.accent_class|default:'accent-primary' }}" data-toggle="tooltip"
                                 data-placement="top" title="{{ step.tooltip }}">
                                 <span style="width: 32px; height: 32px; display: inline-flex;">
                                     {% include 'components/hero-icon.html' with name=step.icon|default:'search' sw='1.8' %}
                                 </span>
                             </div>
-                            <span class="step-badge {{ step.accent|default:'accent-primary' }}">{{ step.badge|default:forloop.counter }}</span>
+                            <span class="step-badge {{ step.accent_class|default:'accent-primary' }}">{{ step.badge_number|default:forloop.counter }}</span>
                             {% if not forloop.last %}
                             <div class="step-connector">
                                 <div class="step-connector-line"></div>
@@ -281,7 +277,7 @@
                             {% endif %}
                         </div>
                         <h3 class="step-title">{{ step.title }}</h3>
-                        <p class="step-desc">{{ step.desc }}</p>
+                        <p class="step-desc">{{ step.description }}</p>
                     </div>
                 </div>
                 {% endfor %}
@@ -291,28 +287,28 @@
         <!-- Mobile View -->
         <div class="d-block d-md-none mb-4">
             <div class="step-grid-mobile">
-                {% for step in homepageContent.works.steps %}
+                {% for step in works_steps %}
                 <div class="step-card-grid-mobile">
                     <div class="step-icon-wrapper-container-mobile">
-                        <div class="step-icon-wrap {{ step.accent|default:'accent-primary' }}" data-toggle="tooltip"
+                        <div class="step-icon-wrap {{ step.accent_class|default:'accent-primary' }}" data-toggle="tooltip"
                             data-placement="top" title="{{ step.tooltip }}">
                             <span style="width: 24px; height: 24px; display: inline-flex;">
                                 {% include 'components/hero-icon.html' with name=step.icon|default:'search' sw='1.8' %}
                             </span>
                         </div>
-                        <span class="step-badge {{ step.accent|default:'accent-primary' }}">{{ step.badge|default:forloop.counter }}</span>
+                        <span class="step-badge {{ step.accent_class|default:'accent-primary' }}">{{ step.badge_number|default:forloop.counter }}</span>
                     </div>
                     <h3 class="step-title">{{ step.title }}</h3>
-                    <p class="step-desc">{{ step.desc }}</p>
+                    <p class="step-desc">{{ step.description }}</p>
                 </div>
                 {% endfor %}
             </div>
         </div>
 
         <div class="text-center mt-5">
-            <a href="{{ homepageContent.works.button_url|default:'/find-agents?openFilter=1' }}"
+            <a href="{{ settings.works_button_url }}"
                 class="find-agent-btn-steps text-decoration-none">
-                {{ homepageContent.works.button_text|default:"Find Agent" }}
+                {{ settings.works_button_text }}
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
                     class="ml-2">
@@ -326,13 +322,13 @@
 {% endif %}
 
 <!-- Testimonials Section -->
-{% if homepageContent.testimonials.visible %}
-<section class="testimonials-slider-section py-5 bg-transparent overflow-hidden" data-aos="fade-up">
+{% if settings.show_testimonials %}
+<section class="testimonials-slider-section py-5 bg-transparent overflow-hidden" >
     <div class="container">
         <div class="text-center mb-5">
-            <p class="section-subtitle-small">{{ homepageContent.testimonials.label|default:"Testimonials" }}</p>
-            <h2 class="font-weight-bold mb-2 text-dark" style="font-size: 1.75rem; letter-spacing:-0.02em;">{{ homepageContent.testimonials.title|default:"What Users Say About Their PadosiAgent" }}</h2>
-            <p class="text-muted" style="font-size: 15px;">{{ homepageContent.testimonials.subtitle|default:"Real experiences from users who found their PadosiAgent" }}</p>
+            <p class="section-subtitle-small">Testimonials</p>
+            <h2 class="font-weight-bold mb-2 text-dark" style="font-size: 1.75rem; letter-spacing:-0.02em;">What Users Say About Their PadosiAgent</h2>
+            <p class="text-muted" style="font-size: 15px;">{{ settings.testimonials_subtitle }}</p>
         </div>
 
         <div class="review-scroll-container no-scrollbar" id="review-slider">

@@ -25,33 +25,15 @@
       <div class="pa-slider-card">
         <div class="pa-slider-viewport">
           <div class="pa-slider-track" id="pa-track-mob">
-            {% for item in facts_zipped %}
-              <div class="pa-slide">
-                <div class="pa-slide-inner pa-slide-inner-mob" style="background: {{ item.gradient }};">
-                  <div class="pa-slide-icon-white" style="background: rgba(255,255,255,0.2); color: #fff; box-shadow: {{ item.shadow }};">
-                    {% include 'components/hero-icon.html' with name=item.fact.icon sw='2.4' %}
-                  </div>
-                  {% if item.fact.isChart %}
-                    <h3 class="pa-slide-hero pa-slide-hero-chart">{{ item.fact.hero }}</h3>
-                    <p class="pa-slide-tag pa-slide-tag-chart">{{ item.fact.tag }}</p>
-                    <div class="pa-chart">
-                      {% for d in chart_data %}
-                        <div class="pa-chart-col">
-                          <span class="pa-chart-val">{{ d.rejection }}%</span>
-                          <div class="pa-chart-bar" style="height: {% widthratio d.rejection 1 2 %}px;"></div>
-                          <span class="pa-chart-year">{{ d.year }}</span>
-                        </div>
-                      {% endfor %}
-                    </div>
-                    <p class="pa-chart-footnote">Online sales 15% → 68%</p>
-                  {% else %}
-                    <h3 class="pa-slide-hero">{{ item.fact.hero }}</h3>
-                    <p class="pa-slide-tag">{{ item.fact.tag }}</p>
-                    <p class="pa-slide-body">{{ item.fact.body }}</p>
-                  {% endif %}
-                </div>
-              </div>
-            {% endfor %}
+            <div class="pa-slide"><div class="pa-slide-inner-img"><img src="{% static 'img/hero-chatbot-vs-agent-doodle.png' %}" alt="Who will help your family with insurance claims — a chatbot or an expert PadosiAgent?" loading="eager" draggable="false" class="pa-slide-img" /></div></div>
+            <div class="pa-slide"><div class="pa-slide-inner-img"><img src="{% static 'img/hero-nominee-doodle.png' %}" alt="Is your nominee an expert in settling insurance claims? If not, buy only from an experienced nearby agent." loading="lazy" draggable="false" class="pa-slide-img" /></div></div>
+            <div class="pa-slide"><div class="pa-slide-inner-img"><img src="{% static 'img/hero-nearby-agent-doodle.png' %}" alt="Your PadosiAgent at your doorstep — policies, renewals and claims handled in your neighbourhood." loading="lazy" draggable="false" class="pa-slide-img" /></div></div>
+            <div class="pa-slide"><div class="pa-slide-inner-img"><img src="{% static 'img/hero-trusted-expert-doodle.png' %}" alt="Trusted. Verified. Nearby. Every PadosiAgent is a licensed expert verified by us." loading="lazy" draggable="false" class="pa-slide-img" /></div></div>
+            <div class="pa-slide"><div class="pa-slide-inner-img"><img src="{% static 'img/dyk-faster-claims.jpg' %}" alt="Claims settled 3× faster with a Padosi agent by your side" loading="lazy" draggable="false" class="pa-slide-img" /></div></div>
+            <div class="pa-slide"><div class="pa-slide-inner-img"><img src="{% static 'img/dyk-policy-gaps.jpg' %}" alt="Spot the policy gaps call-centres miss — your neighbourhood expert knows your city" loading="lazy" draggable="false" class="pa-slide-img" /></div></div>
+            <div class="pa-slide"><div class="pa-slide-inner-img"><img src="{% static 'img/dyk-face-to-face.jpg' %}" alt="Real advice, face to face — 70% understand their cover only after meeting an agent" loading="lazy" draggable="false" class="pa-slide-img" /></div></div>
+            <div class="pa-slide"><div class="pa-slide-inner-img"><img src="{% static 'img/dyk-fewer-lapses.jpg' %}" alt="40% fewer lapsed policies — your Padosi agent reminds you every renewal" loading="lazy" draggable="false" class="pa-slide-img" /></div></div>
+            <div class="pa-slide"><div class="pa-slide-inner-img"><img src="{% static 'img/dyk-zero-fees.jpg' %}" alt="Zero fees, lifetime advisor — same premium, a real human in your neighbourhood" loading="lazy" draggable="false" class="pa-slide-img" /></div></div>
           </div>
         </div>
       </div>
@@ -64,7 +46,7 @@
       {# 4. Product tiles (4 columns) #}
       <div style="margin-top: 0.5rem; margin-bottom: 0.75rem;">
         <h2 style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.2em; color: var(--pa-primary); margin: 0 0 0.25rem; font-family: 'Jost', sans-serif;">
-          {{ claims_card_label }}
+          {{ settings.hero_claims_card_label }}
         </h2>
         <div style="font-size: 10px; font-weight: 500; color: #000; margin: 0; font-family: 'Jost', sans-serif;">
           Select to Buy New / Port / Renew Insurance
@@ -72,19 +54,25 @@
       </div>
       <div class="pa-tiles-row">
         {% for tile in product_tiles %}
-          <a href="{{ tile.url }}" class="pa-tile {{ tile.tileClass }}">
-            <div class="pa-tile-icon-box">
-              {% include 'components/hero-icon.html' with name=tile.icon sw='2.4' %}
-            </div>
-            <span class="pa-tile-label">{{ tile.label }}</span>
+          <a href="{{ tile.url }}" class="pa-tile {{ tile.tileClass }}" aria-label="Find {{ tile.label }} agent near me">
+            <div class="pa-tile-badge">{{ tile.label }}</div>
+            <div class="pa-tile-image-container">
+                {% include 'components/quadrant_icon.html' with tile=tile %}
+              </div>
           </a>
         {% endfor %}
       </div>
 
       {# 5. Claims & Audit buttons #}
       <div class="pa-cta-row">
-        <a href="{{ cta_claim_url }}" class="pa-btn pa-btn-claim">{{ cta_claim_text }}</a>
-        <a href="{{ cta_review_url }}" class="pa-btn pa-btn-review">{{ cta_review_text }}</a>
+        <a href="{{ settings.hero_cta_claim_url }}" class="pa-btn pa-btn-claim">
+          {% include 'components/hero-icon.html' with name='life-buoy' sw='2.4' %}
+          <span>{{ settings.hero_cta_claim_text }}</span>
+        </a>
+        <a href="{{ settings.hero_cta_review_url }}" class="pa-btn pa-btn-review">
+          {% include 'components/hero-icon.html' with name='file-search' sw='2.4' %}
+          <span>{{ settings.hero_cta_review_text }}</span>
+        </a>
       </div>
 
       {# 6. Stats counters #}
@@ -149,33 +137,15 @@
             <div class="pa-slider-card pa-slider-card-lg">
               <div class="pa-slider-viewport">
                 <div class="pa-slider-track" id="pa-track-desk">
-                  {% for item in facts_zipped %}
-                    <div class="pa-slide">
-                      <div class="pa-slide-inner pa-slide-inner-desk" style="background: {{ item.gradient }};">
-                        <div class="pa-slide-icon-white pa-slide-icon-box-desk" style="background: rgba(255,255,255,0.2); color: #fff; box-shadow: {{ item.shadow }};">
-                          {% include 'components/hero-icon.html' with name=item.fact.icon sw='2.4' %}
-                        </div>
-                        {% if item.fact.isChart %}
-                          <h3 class="pa-slide-hero pa-slide-hero-chart pa-slide-hero-desk">{{ item.fact.hero }}</h3>
-                          <p class="pa-slide-tag pa-slide-tag-chart pa-slide-tag-desk">{{ item.fact.tag }}</p>
-                          <div class="pa-chart">
-                            {% for d in chart_data %}
-                              <div class="pa-chart-col">
-                                <span class="pa-chart-val">{{ d.rejection }}%</span>
-                                <div class="pa-chart-bar" style="height: {% widthratio d.rejection 1 2 %}px;"></div>
-                                <span class="pa-chart-year">{{ d.year }}</span>
-                              </div>
-                            {% endfor %}
-                          </div>
-                          <p class="pa-chart-footnote">Online sales 15% → 68%</p>
-                        {% else %}
-                          <h3 class="pa-slide-hero pa-slide-hero-desk">{{ item.fact.hero }}</h3>
-                          <p class="pa-slide-tag pa-slide-tag-desk">{{ item.fact.tag }}</p>
-                          <p class="pa-slide-body pa-slide-body-desk">{{ item.fact.body }}</p>
-                        {% endif %}
-                      </div>
-                    </div>
-                  {% endfor %}
+                  <div class="pa-slide"><div class="pa-slide-inner-img"><img src="{% static 'img/hero-chatbot-vs-agent-doodle.png' %}" alt="Who will help your family with insurance claims — a chatbot or an expert PadosiAgent?" loading="eager" draggable="false" class="pa-slide-img" /></div></div>
+                  <div class="pa-slide"><div class="pa-slide-inner-img"><img src="{% static 'img/hero-nominee-doodle.png' %}" alt="Is your nominee an expert in settling insurance claims? If not, buy only from an experienced nearby agent." loading="lazy" draggable="false" class="pa-slide-img" /></div></div>
+                  <div class="pa-slide"><div class="pa-slide-inner-img"><img src="{% static 'img/hero-nearby-agent-doodle.png' %}" alt="Your PadosiAgent at your doorstep — policies, renewals and claims handled in your neighbourhood." loading="lazy" draggable="false" class="pa-slide-img" /></div></div>
+                  <div class="pa-slide"><div class="pa-slide-inner-img"><img src="{% static 'img/hero-trusted-expert-doodle.png' %}" alt="Trusted. Verified. Nearby. Every PadosiAgent is a licensed expert verified by us." loading="lazy" draggable="false" class="pa-slide-img" /></div></div>
+                  <div class="pa-slide"><div class="pa-slide-inner-img"><img src="{% static 'img/dyk-faster-claims.jpg' %}" alt="Claims settled 3× faster with a Padosi agent by your side" loading="lazy" draggable="false" class="pa-slide-img" /></div></div>
+                  <div class="pa-slide"><div class="pa-slide-inner-img"><img src="{% static 'img/dyk-policy-gaps.jpg' %}" alt="Spot the policy gaps call-centres miss — your neighbourhood expert knows your city" loading="lazy" draggable="false" class="pa-slide-img" /></div></div>
+                  <div class="pa-slide"><div class="pa-slide-inner-img"><img src="{% static 'img/dyk-face-to-face.jpg' %}" alt="Real advice, face to face — 70% understand their cover only after meeting an agent" loading="lazy" draggable="false" class="pa-slide-img" /></div></div>
+                  <div class="pa-slide"><div class="pa-slide-inner-img"><img src="{% static 'img/dyk-fewer-lapses.jpg' %}" alt="40% fewer lapsed policies — your Padosi agent reminds you every renewal" loading="lazy" draggable="false" class="pa-slide-img" /></div></div>
+                  <div class="pa-slide"><div class="pa-slide-inner-img"><img src="{% static 'img/dyk-zero-fees.jpg' %}" alt="Zero fees, lifetime advisor — same premium, a real human in your neighbourhood" loading="lazy" draggable="false" class="pa-slide-img" /></div></div>
                 </div>
               </div>
             </div>
@@ -186,7 +156,7 @@
         <div class="pa-cell pa-cell-r2l">
           <div id="pa-subtitle">
             <h2 class="pa-subtitle" style="margin-bottom: 0.25rem;">
-              {{ claims_card_label }}
+              {{ settings.hero_claims_card_label }}
             </h2>
             <div style="font-size: 15px; font-weight: 500; color: #000; margin-bottom: 12px; font-family: 'Jost', sans-serif;">
               Select to Buy New / Port / Renew Insurance
@@ -194,11 +164,11 @@
           </div>
           <div class="pa-tiles-row" id="pa-tiles">
             {% for tile in product_tiles %}
-              <a href="{{ tile.url }}" class="pa-tile {{ tile.tileClass }}">
-                <div class="pa-tile-icon-box">
-                  {% include 'components/hero-icon.html' with name=tile.icon sw='2.4' %}
-                </div>
-                <span class="pa-tile-label">{{ tile.label }}</span>
+              <a href="{{ tile.url }}" class="pa-tile {{ tile.tileClass }}" aria-label="Find {{ tile.label }} agent near me">
+                <div class="pa-tile-badge">{{ tile.label }}</div>
+                <div class="pa-tile-image-container">
+                {% include 'components/quadrant_icon.html' with tile=tile %}
+              </div>
               </a>
             {% endfor %}
           </div>
@@ -208,12 +178,18 @@
         <div class="pa-cell pa-cell-r2r" id="pa-claims">
           <div class="pa-claims-card">
             <div>
-              <h3 class="pa-claims-heading">{{ claims_card_heading }}</h3>
-              <p class="pa-claims-text">{{ claims_card_text }}</p>
+              <h3 class="pa-claims-heading">{{ settings.hero_claims_card_heading }}</h3>
+              <p class="pa-claims-text">{{ settings.hero_claims_card_text }}</p>
             </div>
             <div class="pa-cta-row">
-              <a href="{{ cta_claim_url }}" class="pa-btn pa-btn-claim">{{ cta_claim_text }}</a>
-              <a href="{{ cta_review_url }}" class="pa-btn pa-btn-review">{{ cta_review_text }}</a>
+              <a href="{{ settings.hero_cta_claim_url }}" class="pa-btn pa-btn-claim">
+                {% include 'components/hero-icon.html' with name='life-buoy' sw='2.4' %}
+                <span>{{ settings.hero_cta_claim_text }}</span>
+              </a>
+              <a href="{{ settings.hero_cta_review_url }}" class="pa-btn pa-btn-review">
+                {% include 'components/hero-icon.html' with name='file-search' sw='2.4' %}
+                <span>{{ settings.hero_cta_review_text }}</span>
+              </a>
             </div>
           </div>
         </div>
@@ -277,6 +253,65 @@
   .family_banner_outer .header {
     background: transparent !important;
     box-shadow: none !important;
+  }
+
+  
+  /* ═══ Quadrant Icon Grid ═══ */
+  .pa-quadrant-grid {
+    position: relative;
+    margin-left: auto;
+    margin-right: auto;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    height: 100%;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+  }
+
+  .pa-quadrant-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pa-quadrant-cell svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .pa-quadrant-cell-accident {
+    padding-left: 2px !important;
+    padding-bottom: 2px !important;
+  }
+
+  .pa-quadrant-cell-rickshaw {
+    padding-left: 2px !important;
+    padding-top: 2px !important;
+  }
+
+  .pa-quadrant-cell-tl {
+    padding-right: 6px;
+    padding-bottom: 6px;
+    border-right: 1px solid #000000;
+    border-bottom: 1px solid #000000;
+  }
+
+  .pa-quadrant-cell-tr {
+    padding-left: 6px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #000000;
+  }
+
+  .pa-quadrant-cell-bl {
+    padding-right: 6px;
+    padding-top: 6px;
+    border-right: 1px solid #000000;
+  }
+
+  .pa-quadrant-cell-br {
+    padding-left: 6px;
+    padding-top: 6px;
   }
 
   /* ═══ Section ═══ */
@@ -428,6 +463,31 @@
   .pa-slide {
     flex: 0 0 100%;
     min-width: 0;
+    height: 100%;
+  }
+
+  .pa-slide-inner-img {
+    position: relative;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 3/2;
+  }
+
+  @media (min-width: 1024px) {
+    .pa-slide-inner-img {
+      aspect-ratio: 3/2;
+      height: auto;
+      width: 100%;
+    }
+  }
+
+  .pa-slide-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    user-select: none;
+    display: block;
   }
 
   .pa-slide-inner {
@@ -1016,34 +1076,97 @@
   }
 
   .pa-tile {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.375rem;
-    border-radius: 1rem;
-    border: 1px solid hsla(var(--pa-border-h), var(--pa-border-s), var(--pa-border-l), 0.7);
-    padding: 0.75rem;
-    text-align: center;
-    box-shadow: 0 18px 60px -52px rgba(15, 23, 42, 0.45);
-    transition: transform 0.15s, border-color 0.15s;
+    justify-content: center;
+    border-radius: 0.5rem;
+    border: 1px solid #000000;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
     cursor: pointer;
     text-decoration: none;
     color: inherit;
+    overflow: hidden;
+    background-color: #ffffff;
   }
 
-  @media (min-width: 640px) {
-    .pa-tile {
-      gap: 0.75rem;
-      border-radius: 1.5rem;
-      padding: 1.25rem 1rem;
-    }
+  .pa-mobile-layout .pa-tile {
+    padding-top: 1.25rem;
+    padding-bottom: 0.75rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .pa-desktop-layout .pa-tile {
+    padding-top: 1.75rem;
+    padding-bottom: 1rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
   }
 
   .pa-tile:hover {
-    transform: translateY(-2px);
-    border-color: hsla(var(--pa-primary-h), var(--pa-primary-s), var(--pa-primary-l), 0.5);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -5px rgba(0, 0, 0, 0.1);
     text-decoration: none;
     color: inherit;
+  }
+
+  .pa-tile:active {
+    transform: translateY(-2px) scale(0.98);
+  }
+
+  .pa-tile-badge {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background-color: #ffffff;
+    color: #000000;
+    font-weight: 700;
+    text-align: center;
+    padding: 0.25rem 0.25rem;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-bottom: 1px solid #000000;
+  }
+
+  .pa-mobile-layout .pa-tile-badge {
+    font-size: 8px;
+  }
+
+  .pa-desktop-layout .pa-tile-badge {
+    font-size: 10px;
+  }
+
+  .pa-tile-image-container {
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pa-mobile-layout .pa-tile-image-container {
+    height: 58px;
+    width: 58px;
+    padding: 0.1rem;
+  }
+
+  .pa-desktop-layout .pa-tile-image-container {
+    height: 84px;
+    width: 84px;
+    padding: 0.125rem;
+  }
+
+  .pa-tile-image-container svg {
+    height: 100%;
+    width: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 3px rgba(0, 0, 0, 0.07)) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.06));
   }
 
   .pa-tile-icon-box {
@@ -1140,29 +1263,37 @@
     }
   }
 
-  /* ═══ Per-tile colors — matching React shadow-lg shadow-{color}200/60 ═══ */
-  .pa-tile-rose .pa-tile-icon-box {
-    background: hsl(0, 86%, 97%);
-    color: hsl(0, 72%, 51%);
-    box-shadow: 0 10px 15px -3px hsla(0, 96%, 89%, 0.6), 0 4px 6px -4px hsla(0, 96%, 89%, 0.6);
+  /* ═══ Per-tile colors ═══ */
+  .pa-tile-rose {
+    background: #ffffff;
+    border-color: #be123c;
+  }
+  .pa-tile-rose .pa-tile-badge {
+    border-bottom-color: #be123c;
   }
 
-  .pa-tile-sky .pa-tile-icon-box {
-    background: hsl(204, 81%, 96%);
-    color: hsl(199, 89%, 48%);
-    box-shadow: 0 10px 15px -3px hsla(201, 94%, 86%, 0.6), 0 4px 6px -4px hsla(201, 94%, 86%, 0.6);
+  .pa-tile-sky {
+    background: #ffffff;
+    border-color: #0369a1;
+  }
+  .pa-tile-sky .pa-tile-badge {
+    border-bottom-color: #0369a1;
   }
 
-  .pa-tile-amber .pa-tile-icon-box {
-    background: hsl(48, 100%, 96%);
-    color: hsl(38, 92%, 50%);
-    box-shadow: 0 10px 15px -3px hsla(48, 100%, 80%, 0.6), 0 4px 6px -4px hsla(48, 100%, 80%, 0.6);
+  .pa-tile-amber {
+    background: #ffffff;
+    border-color: #92400e;
+  }
+  .pa-tile-amber .pa-tile-badge {
+    border-bottom-color: #92400e;
   }
 
-  .pa-tile-violet .pa-tile-icon-box {
-    background: hsl(250, 100%, 98%);
-    color: hsl(262, 83%, 58%);
-    box-shadow: 0 10px 15px -3px hsla(255, 100%, 92%, 0.6), 0 4px 6px -4px hsla(255, 100%, 92%, 0.6);
+  .pa-tile-violet {
+    background: #ffffff;
+    border-color: #5b21b6;
+  }
+  .pa-tile-violet .pa-tile-badge {
+    border-bottom-color: #5b21b6;
   }
 
   /* ═══ Claims CTA ═══ */
@@ -1295,54 +1426,74 @@
   }
 
   .pa-btn {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 0.75rem;
-    padding: 0.75rem;
-    font-size: 0.75rem;
+    border-radius: 0.375rem;
+    height: 2.75rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    font-size: 10px;
     font-weight: 700;
-    color: #fff;
     text-decoration: none;
-    border: none;
     cursor: pointer;
     width: 100%;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-    transition: all 0.15s;
+    transition: all 0.15s ease-in-out;
+    gap: 0.375rem;
   }
 
   @media (min-width: 640px) {
     .pa-btn {
-      padding: 1rem;
+      height: 3rem;
       font-size: 0.875rem;
     }
   }
 
+  .pa-btn svg {
+    height: 0.875rem;
+    width: 0.875rem;
+    transition: stroke 0.15s;
+    flex-shrink: 0;
+  }
+
+  @media (min-width: 640px) {
+    .pa-btn svg {
+      height: 1rem;
+      width: 1rem;
+    }
+  }
+
   .pa-btn:hover {
-    color: #fff;
     text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
   }
 
   .pa-btn:active {
-    transform: scale(0.98);
+    transform: translateY(-2px) scale(0.98);
   }
 
   .pa-btn-claim {
-    background: linear-gradient(to right, hsla(var(--pa-claim-h), var(--pa-claim-s), var(--pa-claim-l), 0.85), hsla(var(--pa-claim-h), var(--pa-claim-s), var(--pa-claim-l), 0.6));
+    background: #ffffff;
+    border: 1px solid #f97316;
+    color: #f97316;
   }
 
   .pa-btn-claim:hover {
-    background: linear-gradient(to right, var(--pa-claim), hsla(var(--pa-claim-h), var(--pa-claim-s), var(--pa-claim-l), 0.7));
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    background: #fff7ed;
+    color: #f97316;
   }
 
   .pa-btn-review {
-    background: linear-gradient(to right, hsla(var(--pa-review-h), var(--pa-review-s), var(--pa-review-l), 0.85), hsla(var(--pa-review-h), var(--pa-review-s), var(--pa-review-l), 0.6));
+    background: #ffffff;
+    border: 1px solid #7c3aed;
+    color: #7c3aed;
   }
 
   .pa-btn-review:hover {
-    background: linear-gradient(to right, var(--pa-review), hsla(var(--pa-review-h), var(--pa-review-s), var(--pa-review-l), 0.7));
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    background: #f5f3ff;
+    color: #7c3aed;
   }
 </style>
 

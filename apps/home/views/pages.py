@@ -580,7 +580,7 @@ def get_portfolio_companies_by_type():
 
 
 def find_agents(request):
-    sort_by = request.GET.get('sort_by', 'distance')
+    sort_by = request.GET.get('sort_by', '').strip()
     invalid_pincode = False
 
     # RESET LOCATION
@@ -869,6 +869,9 @@ def find_agents(request):
         request.session['lat'] = str(user_lat)
         request.session['lng'] = str(user_lng)
 
+    if not sort_by:
+        sort_by = 'distance' if (user_lat is not None and user_lng is not None) else 'match'
+
     # Inject Padosi Smart Rank score calculation (MySQL-specific)
     if db_types:
         placeholders = ", ".join(["%s"] * len(db_types))
@@ -992,10 +995,15 @@ def find_agents(request):
 
     context = {
         'agents': agents_page,
+        'sort_by': sort_by,
         'shouldGateGuest': should_gate_guest,
         'shouldRequireFilterSelection': should_require_filter_selection,
         'filterPromptMessage': filter_prompt_message,
         'detectedArea': detected_area,
+        'pincode': pincode,
+        'location': location,
+        'lat': lat,
+        'lng': lng,
         'maxSmartRank': max_smart_rank,
         'invalidPincode': invalid_pincode,
         'next_page_url': next_page_url,

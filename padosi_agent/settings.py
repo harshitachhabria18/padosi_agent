@@ -80,6 +80,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'apps.admin_panel.context_processors.sidebar_counts',
+                'apps.home.context_processors.footer_settings',
             ],
         },
     },
@@ -234,4 +235,7 @@ LOGGING = {
         },
     },
 }
+
+TEST_RUNNER = 'apps.home.test_runner.ManagedModelsTestRunner'
+
 

@@ -307,20 +307,7 @@
         transform: scale(0.98);
     }
 
-    .nearby-link {
-        font-size: 12px;
-        color: #3b82f6 !important;
-        font-weight: 700;
-        text-decoration: none;
-        transition: all 0.2s ease;
-        display: inline-flex;
-        align-items: center;
-    }
 
-    .nearby-link:hover {
-        text-decoration: underline;
-        filter: brightness(1.2);
-    }
 
     #life-insurance-section {
         max-height: 500px;
@@ -1410,10 +1397,11 @@
                               hx-swap="outerHTML show:none"
                               hx-indicator="#filter-indicator"
                               hx-push-url="true">
-                            <input type="hidden" name="pincode" value="{{ request.GET.pincode|default:"" }}">
-                            <input type="hidden" name="lat" value="{{ request.GET.lat|default:"" }}">
-                            <input type="hidden" name="lng" value="{{ request.GET.lng|default:"" }}">
-                            <input type="hidden" name="sort_by" id="filter_sort_by" value="{{ request.GET.sort_by|default:"distance" }}">
+                            <input type="hidden" name="pincode" id="filter_pincode" value="{{ pincode|default:"" }}">
+                            <input type="hidden" name="lat" id="filter_lat" value="{{ lat|default:"" }}">
+                            <input type="hidden" name="lng" id="filter_lng" value="{{ lng|default:"" }}">
+                            <input type="hidden" name="location" id="filter_location" value="{{ location|default:"" }}">
+                            <input type="hidden" name="sort_by" id="filter_sort_by" value="{{ sort_by }}">
                             
                             <!-- Hidden containers for query params -->
                             <div id="hidden-service-types"></div>
@@ -1638,12 +1626,7 @@
                                 <p id="ClaimInsuranceCompanyHint" style="font-size: 11px; color: #6b7280; margin-top: 6px; margin-bottom: 0;"></p>
                             </div>
 
-                            <!-- Find agent nearby link -->
-                            <div class="text-center mt-3">
-                                <a href="javascript:void(0)" onclick="window.showLocationPopup('{% url 'home:find_agents' %}')" class="nearby-link">
-                                    <i class="fas fa-map-marker-alt mr-1"></i> Find agent nearby ↗
-                                </a>
-                            </div>
+
 
                             <!-- Action Buttons -->
                             <div class="filter-actions-container">
@@ -1955,7 +1938,7 @@
             $('.filter-pill.active').each(function() {
                 const serviceVal = $(this).data('value');
                 activeServices.push(serviceVal);
-                $serviceContainer.append(`<input type="hidden" name="ServiceType[]" value="${serviceVal}">`);
+                $serviceContainer.append(`<input type="hidden" name="ServiceType" value="${serviceVal}">`);
             });
 
             const isClaimActive = activeServices.includes('Claim');
@@ -1964,9 +1947,9 @@
             const activeTypes = new Set();
             $('.circle-tile.active').each(function() {
                 const productVal = $(this).data('product');
-                // Only add circle tile sub-products as InsuranceCompany[] when NOT in Claim mode
+                // Only add circle tile sub-products as InsuranceCompany when NOT in Claim mode
                 if (!isClaimActive) {
-                    $companyContainer.append(`<input type="hidden" name="InsuranceCompany[]" value="${productVal}">`);
+                    $companyContainer.append(`<input type="hidden" name="InsuranceCompany" value="${productVal}">`);
                 }
 
                 const parentSection = $(this).closest('.product-category-section');
@@ -1981,13 +1964,13 @@
             if (isClaimActive) {
                 const selectedCompany = $('#ClaimInsuranceCompany').val();
                 if (selectedCompany && selectedCompany !== '') {
-                    $companyContainer.append(`<input type="hidden" name="InsuranceCompany[]" value="${selectedCompany}">`);
+                    $companyContainer.append(`<input type="hidden" name="InsuranceCompany" value="${selectedCompany}">`);
                 }
             }
 
-            // Populate the active categories as InsuranceType[] hidden inputs
+            // Populate the active categories as InsuranceType hidden inputs
             activeTypes.forEach(type => {
-                $typeContainer.append(`<input type="hidden" name="InsuranceType[]" value="${type}">`);
+                $typeContainer.append(`<input type="hidden" name="InsuranceType" value="${type}">`);
             });
 
             // Update the compact filter bar elements
@@ -2399,16 +2382,18 @@
         };
         let locationPopupTimer = null;
 
-        if (!hasLocation) {
-            locationPopupTimer = setTimeout(() => {
-                if (!isFindAgentsPage()) {
-                    return;
-                }
-                if (typeof window.showLocationPopup === 'function') {
-                    window.showLocationPopup('{% url 'home:find_agents' %}');
-                }
-            }, 100);
-        }
+        $(document).ready(function() {
+            if (!hasLocation) {
+                locationPopupTimer = setTimeout(() => {
+                    if (!isFindAgentsPage()) {
+                        return;
+                    }
+                    if (typeof window.showLocationPopup === 'function') {
+                        window.showLocationPopup('{% url 'home:find_agents' %}');
+                    }
+                }, 5000);
+            }
+        });
 
         window.addEventListener('pagehide', function () {
             if (locationPopupTimer) {
@@ -2711,8 +2696,13 @@
             
             const modalEl = document.getElementById('comparisonModal');
             if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                modal.show();
+                if (bootstrap.Modal.getOrCreateInstance) {
+                    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    modal.show();
+                } else {
+                    const modal = new bootstrap.Modal(modalEl);
+                    modal.show();
+                }
             } else {
                 $('#comparisonModal').modal('show');
             }

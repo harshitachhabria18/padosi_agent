@@ -57,8 +57,8 @@ endblock %}
             <div class="dyk-track" id="dyk-track">
                 {% for item in slides_zipped %}
                 <div class="dyk-slide">
-                    <div class="dyk-card {{ item.fact.accent|default:'accent-rose' }}">
-                        <div class="dyk-icon-wrap {{ item.fact.bg|default:'bg-rose-500' }}">
+                    <div class="dyk-card {{ item.fact.accent_class|default:'accent-rose' }}">
+                        <div class="dyk-icon-wrap {{ item.fact.bg_class|default:'bg-rose-500' }}">
                             {% include 'components/hero-icon.html' with name=item.fact.icon|default:'lightbulb' sw='2.2'
                             %}
                         </div>

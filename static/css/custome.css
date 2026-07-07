@@ -4563,6 +4563,7 @@ Find Agents CSS ****/
         .why-choose-left-container {
             z-index: 10;
             will-change: transform;
+            margin-top: 40px; /* Reduced upward overlap */
         }
     }
 
@@ -4846,6 +4847,7 @@ Find Agents CSS ****/
             overflow-x: visible;
             scroll-snap-type: none;
             padding-bottom: 60px; /* space for staggered offset */
+            margin-top: 40px; /* Reduced upward overlap */
         }
         .why-choose-scroll > :nth-child(even) {
             transform: translateY(35px);
