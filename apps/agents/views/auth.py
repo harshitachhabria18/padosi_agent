@@ -8,6 +8,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.cache import never_cache
 from django.contrib import messages
 from django.core.cache import cache
 from django.http import HttpResponse, JsonResponse
@@ -56,6 +57,7 @@ def clear_login_throttle(ip):
     cache.delete(key)
 
 @csrf_protect
+@never_cache
 def agent_login(request):
     """
     Handle rendering the agent login view and authenticating agent users.
