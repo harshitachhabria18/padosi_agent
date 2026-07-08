@@ -13,6 +13,7 @@ import json
 import random
 import time
 import logging
+import re
 
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect
