@@ -1,0 +1,301 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Promo Codes — Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h4 mb-0"><i class="fa-solid fa-ticket-alt me-2 text-primary"></i> Promo Codes</h2>
+    <button class="btn btn-primary" id="btnAddNewPromo" data-toggle="modal" data-target="#addPromoModal">
+        <i class="fa-solid fa-plus me-1"></i> Add New Promo
+    </button>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0 align-middle">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Code</th>
+                        <th>Discount Type</th>
+                        <th>Discount Value</th>
+                        <th>Applicable To</th>
+                        <th>Uses / Max</th>
+                        <th>Expires At</th>
+                        <th>Status</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for promo in promo_codes %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-dark">
+                            <a href="{% url 'admin_agents' %}?promo_code={{ promo.code }}" class="text-decoration-none" title="Filter agents by this promo code">
+                                {{ promo.code }}
+                            </a>
+                        </td>
+                        <td>
+                            <span class="badge {% if promo.discount_type == 'percentage' %}bg-info{% else %}bg-primary{% endif %}">
+                                {{ promo.discount_type|title }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if promo.discount_type == 'percentage' %}
+                                {{ promo.discount_value|floatformat:0 }}%
+                            {% else %}
+                                ₹{{ promo.discount_value|floatformat:0 }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">
+                                {% if promo.applicable_plan and promo.applicable_plan != 'all' %}{% if promo.applicable_plan == 'basic' %}Basic (Starter's Plan){% elif promo.applicable_plan == 'professional' %}Professional Plan{% else %}{{ promo.applicable_plan|title }}{% endif %}{% else %}All Plans{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'admin_agents' %}?promo_code={{ promo.code }}" class="text-decoration-none fw-bold" title="Filter agents by this promo code">
+                                {{ promo.times_used }}
+                            </a> / {% if promo.max_uses %}{{ promo.max_uses }}{% else %}∞{% endif %}
+                        </td>
+                        <td>
+                            {% if promo.expires_at %}
+                                {% now "Y-m-d" as today %}
+                                {% if promo.expires_at|date:"Y-m-d" < today %}
+                                    <span class="text-danger">{{ promo.expires_at|date:"M d, Y" }}</span>
+                                {% else %}
+                                    <span class="text-success">{{ promo.expires_at|date:"M d, Y" }}</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">Never expires</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="form-check form-switch cursor-pointer">
+                                <input class="form-check-input status-toggle" type="checkbox" role="switch"
+                                       data-id="{{ promo.id }}" {% if promo.is_active %}checked{% endif %}>
+                            </div>
+                        </td>
+                        <td class="text-end pe-4">
+                            <button type="button" class="btn btn-sm btn-light text-primary btn-edit me-1" 
+                                    data-promo='{"id": {{ promo.id }}, "code": "{{ promo.code|escapejs }}", "discount_type": "{{ promo.discount_type }}", "discount_value": "{{ promo.discount_value|floatformat:0 }}", "applicable_plan": "{% if promo.applicable_plan %}{{ promo.applicable_plan }}{% endif %}", "max_uses": "{% if promo.max_uses %}{{ promo.max_uses }}{% endif %}", "expires_at": "{% if promo.expires_at %}{{ promo.expires_at|date:'c' }}{% endif %}"}'
+                                    data-toggle="modal" data-target="#addPromoModal" title="Edit" style="padding: 4px 8px;">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm delete-btn" 
+                                    data-model="promo_code" data-id="{{ promo.id }}" title="Delete" style="padding: 4px 8px;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <div class="mb-3"><i class="fa-solid fa-ticket-alt fa-3x opacity-50"></i></div>
+                            <h5 class="fw-normal">No promo codes found</h5>
+                            <p class="mb-0">Create your first promo code to start offering discounts.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Promo Modal -->
+<div class="modal fade" id="addPromoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0">
+                <h5 class="modal-title fw-bold" id="modalTitle">Create Promo Code</h5>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'admin_promo_code_store' %}" method="POST" id="promoForm">
+                {% csrf_token %}
+                <div class="modal-body bg-light">
+                    <div class="mb-3 bg-white p-3 rounded border">
+                        <label class="form-label text-muted small fw-bold">PROMO CODE</label>
+                        <input type="text" name="code" id="promoCode" class="form-control" required placeholder="e.g., SUMMER50" maxlength="50" oninput="this.value = this.value.toUpperCase()">
+                    </div>
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="bg-white p-3 rounded border h-100">
+                                <label class="form-label text-muted small fw-bold">DISCOUNT TYPE</label>
+                                <select name="discount_type" id="discountType" class="form-select" required>
+                                    <option value="percentage">Percentage (%)</option>
+                                    <option value="fixed">Fixed Amount (₹)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="bg-white p-3 rounded border h-100">
+                                <label class="form-label text-muted small fw-bold">DISCOUNT VALUE</label>
+                                <input type="number" step="0.01" name="discount_value" id="discountValue" class="form-control" required placeholder="50">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-12">
+                            <div class="bg-white p-3 rounded border h-100">
+                                <label class="form-label text-muted small fw-bold">APPLICABLE PLAN <span class="opacity-50 fw-normal">(Optional)</span></label>
+                                <select name="applicable_plan" id="applicablePlan" class="form-select">
+                                    <option value="">All Plans</option>
+                                    <option value="basic">Basic (Starter's Plan)</option>
+                                    <option value="professional">Professional Plan</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-3 rounded border mb-3">
+                        <label class="form-label text-muted small fw-bold">MAX USES <span class="opacity-50 fw-normal">(Optional)</span></label>
+                        <input type="number" name="max_uses" id="maxUses" class="form-control" placeholder="Leave empty for unlimited" min="1">
+                    </div>
+
+                    <div class="bg-white p-3 rounded border">
+                        <label class="form-label text-muted small fw-bold">EXPIRATION DATE <span class="opacity-50 fw-normal">(Optional)</span></label>
+                        <input type="date" name="expires_at" id="expiresAt" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0">
+                    <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4">Save Promo Code</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Edit Modal Logic
+    const promoForm = document.getElementById('promoForm');
+    const modalTitle = document.getElementById('modalTitle');
+    const storeUrl = "{% url 'admin_promo_code_store' %}";
+    
+    document.getElementById('btnAddNewPromo').addEventListener('click', function() {
+        modalTitle.textContent = 'Add Promo Code';
+        promoForm.action = storeUrl;
+        promoForm.reset();
+        document.getElementById('promoCode').readOnly = false;
+    });
+
+    document.querySelectorAll('.btn-edit').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const promo = JSON.parse(this.getAttribute('data-promo'));
+            modalTitle.textContent = 'Edit Promo Code';
+            
+            // Generate Update URL natively keeping Django syntax logic handled in JS
+            let updateUrl = "{% url 'admin_promo_code_update' 9999999 %}".replace('9999999', promo.id);
+            promoForm.action = updateUrl;
+            
+            document.getElementById('promoCode').value = promo.code;
+            document.getElementById('discountType').value = promo.discount_type;
+            document.getElementById('discountValue').value = promo.discount_value;
+            document.getElementById('applicablePlan').value = promo.applicable_plan || "";
+            document.getElementById('maxUses').value = promo.max_uses || "";
+            
+            if (promo.expires_at) {
+                document.getElementById('expiresAt').value = promo.expires_at.substring(0, 10);
+            } else {
+                document.getElementById('expiresAt').value = "";
+            }
+        });
+    });
+
+    // Delete Button Logic (SweetAlert)
+    $(document).on('click', '.delete-btn', function(e) {
+        e.preventDefault();
+        
+        const button = $(this);
+        const model = button.data('model');
+        const id = button.data('id');
+        const row = button.closest('tr');
+        
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "This action cannot be undone!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+                
+                $.ajax({
+                    url: '{% url "admin_agents_delete" %}',
+                    type: 'POST',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                    data: {
+                        model: model,
+                        id: id
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                toast: true,
+                                position: 'top-end',
+                                icon: 'success',
+                                title: response.message || 'Record has been deleted.',
+                                showConfirmButton: false,
+                                timer: 2000
+                            }).then(() => {
+                                row.fadeOut(300, function() { $(this).remove(); });
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        button.prop('disabled', false).html('<i class="fas fa-trash"></i>');
+                        alert('Error deleting record');
+                    }
+                });
+            }
+        });
+    });
+
+    // Status Toggle Logic
+    const toggles = document.querySelectorAll('.status-toggle');
+    toggles.forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            const promoId = this.getAttribute('data-id');
+            const url = `/admin/promo-codes/${promoId}/toggle-status/`;
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    this.checked = data.is_active;
+
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: data.message,
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+                } else {
+                    alert(data.message || 'Error updating status');
+                    this.checked = !this.checked; // revert
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Network error updating status');
+                this.checked = !this.checked; // revert
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,4 +1,4 @@
-{% extends 'admin/layout.html' %}
+{% extends 'admin/base.html' %}
 {% load static %}
 
 {% block title %}SEO Settings — PadosiAgent Admin{% endblock %}
@@ -7,7 +7,7 @@
 {% block content %}
 <div class="row">
     <div class="col-lg-12">
-        <form method="POST" action="{% url 'admin_panel:settings_update' %}">
+        <form method="POST" action="{% url 'admin_settings_update' %}">
             {% csrf_token %}
             <input type="hidden" name="group" value="seo">
             

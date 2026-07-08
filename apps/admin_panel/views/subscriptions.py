@@ -1,15 +1,20 @@
 import json
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.utils import timezone
 from django.db.models import Q, F
 from django.contrib import messages
-from apps.admin_panel.decorators import admin_login_required
-from apps.agents.models import AgentSubscription
-from apps.admin_panel.models import AdminActivityLog
 
-@admin_login_required
+# Use session based authentication
+from apps.admin_panel.views.dashboard import _get_admin_from_session
+
+# Use Phase 3A models
+from apps.admin_panel.models import AgentSubscription, AdminActivityLog
+
 def subscriptions_index(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return redirect('admin_login')
+
     filter_val = request.GET.get('filter', 'all')
     now = timezone.now()
 
@@ -31,11 +36,9 @@ def subscriptions_index(request):
             days_left = int(diff.total_seconds() / 86400)
             sub.days_left = days_left
             sub.days_left_abs = abs(days_left)
-            sub.is_expired = days_left < 0
             sub.is_expiring_soon = not sub.is_expired and days_left <= 30
         else:
             sub.days_left = None
-            sub.is_expired = False
             sub.is_expiring_soon = False
 
         # Status badge attributes
@@ -48,9 +51,6 @@ def subscriptions_index(request):
         else:
             sub.badge_class = 'bg-success'
             sub.badge_text = 'Active'
-
-        plan_name = sub.selected_plan or ''
-        sub.is_professional = 'professional' in plan_name.lower() or 'pro' in plan_name.lower()
 
         agent = sub.agent
         sub.display_fullname = agent.fullname
@@ -109,8 +109,11 @@ def subscriptions_index(request):
 
     return render(request, 'admin/subscriptions.html', context)
 
-@admin_login_required
 def delete_subscription(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id:
+        return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=401)
+
     if request.method == 'POST':
         sub_id = request.POST.get('id')
 

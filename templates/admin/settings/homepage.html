@@ -1,11 +1,11 @@
-{% extends 'admin/layout.html' %}
+{% extends 'admin/base.html' %}
 {% load static %}
 
 {% block title %}Homepage Dynamic — PadosiAgent Admin{% endblock %}
 {% block breadcrumb %}Content Control › Homepage Dynamic{% endblock %}
 
 {% block content %}
-<form method="POST" action="{% url 'admin_panel:settings_homepage_update' %}" id="homepage-form">
+<form method="POST" action="{% url 'admin_settings_homepage_update' %}" id="homepage-form">
     {% csrf_token %}
 
     <div class="d-flex justify-content-between align-items-center mb-4">

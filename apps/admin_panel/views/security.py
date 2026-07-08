@@ -1,15 +1,25 @@
+import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.contrib import messages
 from django.db.models import Count, Max
+from django.db import models
 
-from apps.admin_panel.decorators import admin_login_required
-from apps.admin_panel.models import SecurityThreatLog, AdminActivityLog
+from apps.admin_panel.views.dashboard import _get_admin_from_session
+from apps.admin_panel.models import AdminActivityLog
+
+logger = logging.getLogger(__name__)
+
+from apps.admin_panel.models.admin_auth import SecurityThreatLog
 from apps.agents.models import BlockedIp, AgentLead
 
-@admin_login_required
+
 def threat_logs(request):
+    admin = _get_admin_from_session(request)
+    if not admin:
+        return redirect('admin_login_page')
+        
     try:
         logs_list = SecurityThreatLog.objects.all().order_by('-id')
         paginator = Paginator(logs_list, 50)
@@ -24,8 +34,11 @@ def threat_logs(request):
     return render(request, 'admin/security/threat_logs.html', context)
 
 
-@admin_login_required
 def delete_threat_log(request):
+    admin = _get_admin_from_session(request)
+    if not admin:
+        return JsonResponse({'success': False, 'message': 'Unauthorized.'})
+        
     if request.method == 'POST':
         log_id = request.POST.get('id')
         if log_id:
@@ -38,8 +51,11 @@ def delete_threat_log(request):
     return JsonResponse({'success': False, 'message': 'Invalid request.'})
 
 
-@admin_login_required
 def blocked_ips(request):
+    admin = _get_admin_from_session(request)
+    if not admin:
+        return redirect('admin_login_page')
+        
     blocked_list = BlockedIp.objects.all().order_by('-id')
     paginator = Paginator(blocked_list, 20)
     page_number = request.GET.get('page', 1)
@@ -73,8 +89,11 @@ def blocked_ips(request):
     return render(request, 'admin/security/blocked_ips.html', context)
 
 
-@admin_login_required
 def block_ip(request):
+    admin = _get_admin_from_session(request)
+    if not admin:
+        return redirect('admin_login_page')
+        
     if request.method == 'POST':
         ip_address = request.POST.get('ip_address', '').strip()
         reason = request.POST.get('reason', '').strip() or 'Manually blocked by admin.'
@@ -92,15 +111,18 @@ def block_ip(request):
         else:
             messages.error(request, 'IP address is required.')
             
-    return redirect('admin_panel:security_threat_logs')
+    return redirect('security_threat_logs')
 
 
-@admin_login_required
 def unblock_ip(request, ip_id):
+    admin = _get_admin_from_session(request)
+    if not admin:
+        return redirect('admin_login_page')
+        
     if request.method == 'POST':
         blocked_ip = get_object_or_404(BlockedIp, id=ip_id)
         ip = blocked_ip.ip_address
         blocked_ip.delete()
         AdminActivityLog.log('Unblocked IP address', 'Security', ip_id, f"IP was: {ip}", request=request)
         messages.success(request, 'IP address unblocked successfully.')
-    return redirect('admin_panel:security_blocked_ips')
+    return redirect('security_blocked_ips')

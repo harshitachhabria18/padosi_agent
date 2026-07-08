@@ -1,0 +1,305 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Revenue Dashboard — PadosiAgent Admin{% endblock %}
+{% block breadcrumb_title %}Revenue Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .rev-card {
+        background: var(--bg-card, #ffffff);
+        border: 1px solid var(--border-color, #e2e8f0);
+        border-radius: 16px;
+        padding: 24px;
+        transition: all 0.2s;
+    }
+    .rev-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
+    .rev-val { font-size: 28px; font-weight: 800; color: var(--text-primary, #1e293b); line-height: 1.1; }
+    .rev-label { font-size: 12px; font-weight: 600; color: var(--text-muted, #64748b); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 6px; }
+    .rev-sub { font-size: 12px; color: var(--text-muted, #64748b); margin-top: 4px; }
+    .rev-icon { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .growth-up   { color: #16a34a; font-weight: 700; font-size: 13px; }
+    .growth-down { color: #dc2626; font-weight: 700; font-size: 13px; }
+    .plan-bar { height: 8px; border-radius: 100px; background: var(--border-color, #e2e8f0); overflow: hidden; }
+    .plan-bar-fill { height: 100%; border-radius: 100px; transition: width 0.6s ease; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h5 class="fw-bold mb-1">💰 Revenue Dashboard</h5>
+        <span style="font-size: 13px; color: var(--text-muted, #64748b);">Real revenue from completed payments · Updated live</span>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="#" class="btn btn-sm btn-outline-secondary" onclick="alert('Export module pending implementation'); return false;">
+            <i class="fa-solid fa-download me-1"></i>Export Data
+        </a>
+        <a href="#" class="btn btn-sm btn-primary">
+            <i class="fa-solid fa-shield-halved me-1"></i>Renewal Tracker
+        </a>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="rev-card d-flex align-items-center gap-3">
+            <div class="rev-icon" style="background: #dcfce7;"><i class="fa-solid fa-indian-rupee-sign" style="color: #16a34a;"></i></div>
+            <div>
+                <div class="rev-val">₹{{ mrr|intcomma }}</div>
+                <div class="rev-label">MRR (Est.)</div>
+                <div class="rev-sub">Monthly Recurring Revenue</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="rev-card d-flex align-items-center gap-3">
+            <div class="rev-icon" style="background: #dbeafe;"><i class="fa-solid fa-chart-line" style="color: #2563eb;"></i></div>
+            <div>
+                <div class="rev-val">₹{{ arr|intcomma }}</div>
+                <div class="rev-label">ARR (Est.)</div>
+                <div class="rev-sub">Annual Recurring Revenue</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="rev-card d-flex align-items-center gap-3">
+            <div class="rev-icon" style="background: #fef3c7;"><i class="fa-solid fa-calendar-check" style="color: #d97706;"></i></div>
+            <div>
+                <div class="rev-val">₹{{ revenueThisMonth|floatformat:0|intcomma }}</div>
+                <div class="rev-label">This Month (Actual)</div>
+                <div class="rev-sub">
+                    {% if revenueGrowth >= 0 %}
+                        <span class="growth-up"><i class="fa-solid fa-arrow-trend-up me-1"></i>+{{ revenueGrowth }}% vs last month</span>
+                    {% else %}
+                        <span class="growth-down"><i class="fa-solid fa-arrow-trend-down me-1"></i>{{ revenueGrowth }}% vs last month</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="rev-card d-flex align-items-center gap-3">
+            <div class="rev-icon" style="background: #ede9fe;"><i class="fa-solid fa-users" style="color: #7c3aed;"></i></div>
+            <div>
+                <div class="rev-val">{{ totalSubs }}</div>
+                <div class="rev-label">Active Subscribers</div>
+                <div class="rev-sub">{{ profCount }} Pro · {{ starterCount }} Starter · {{ trialCount }} Trial</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Total Collected Banner -->
+<div class="rev-card mb-4 d-flex align-items-center justify-content-between" style="background: linear-gradient(135deg,#1e3a6e,#2563eb); color:#fff; border:none;">
+    <div>
+        <div style="font-size:13px; opacity:0.8; font-weight:600; text-transform:uppercase; letter-spacing:.05em;">Total All-Time Revenue Collected</div>
+        <div style="font-size:36px; font-weight:900; letter-spacing:-1px;">₹{{ totalRevenue|floatformat:2|intcomma }}</div>
+        <div style="font-size:12px; opacity:0.7;">From completed payments</div>
+    </div>
+    <div style="text-align:right;">
+        <div style="font-size:13px; opacity:0.8;">Last Month Collected</div>
+        <div style="font-size:22px; font-weight:800;">₹{{ revenueLastMonth|floatformat:0|intcomma }}</div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Revenue Chart -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm p-4">
+            <h6 class="fw-bold mb-4"><i class="fa-solid fa-chart-area me-2 text-primary"></i>Revenue Trend (Last 12 Months)</h6>
+            <canvas id="revenueChart" height="110"></canvas>
+        </div>
+    </div>
+
+    <!-- Plan Breakdown -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm p-4 h-100">
+            <h6 class="fw-bold mb-4"><i class="fa-solid fa-tags me-2 text-primary"></i>Plan Breakdown</h6>
+
+
+
+            <!-- Calculate trial bar roughly in JS/template logic, but Django template handles this best with a quick manual fallback, 
+                 since free trial revenue is 0 normally we'll just set it to 0 -->
+            
+            <!-- Professional -->
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <span style="font-size: 13px; font-weight: 600;">Professional Plan</span>
+                    <span style="font-size: 13px; color: #1d7d5d; font-weight: 700;">₹{{ proRevenue|floatformat:0|intcomma }}</span>
+                </div>
+                <div class="plan-bar">
+                    <div class="plan-bar-fill" style="width: {{ proBar }}%; background: #1d7d5d;"></div>
+                </div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">{{ profCount }} subscriber{{ profCount|pluralize }}</div>
+            </div>
+
+            <!-- Starter -->
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <span style="font-size: 13px; font-weight: 600;">Starter Plan</span>
+                    <span style="font-size: 13px; color: #f59e0b; font-weight: 700;">₹{{ starterRevenue|floatformat:0|intcomma }}</span>
+                </div>
+                <div class="plan-bar">
+                    <div class="plan-bar-fill" style="width: {{ starterBar }}%; background: #f59e0b;"></div>
+                </div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">{{ starterCount }} subscriber{{ starterCount|pluralize }}</div>
+            </div>
+
+            <!-- Free Trial -->
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <span style="font-size: 13px; font-weight: 600;">Free Trial</span>
+                    <span style="font-size: 13px; color: #7c3aed; font-weight: 700;">₹{{ trialRevenue|floatformat:0|intcomma }}</span>
+                </div>
+                <div class="plan-bar">
+                    <div class="plan-bar-fill" style="width: {{ trialBar }}%; background: #7c3aed;"></div>
+                </div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">{{ trialCount }} agent{{ trialCount|pluralize }} on trial</div>
+            </div>
+
+            <div style="border-top: 1px solid var(--border-color); padding-top: 14px; margin-top: 4px;">
+                <div class="d-flex justify-content-between">
+                    <span style="font-size: 13px; font-weight: 600;">Total Collected</span>
+                    <span style="font-size: 16px; font-weight: 800; color: var(--primary);">₹{{ totalRevenue|floatformat:0|intcomma }}</span>
+                </div>
+                <div class="d-flex justify-content-between mt-1">
+                    <span style="font-size: 12px; color: var(--text-muted);">MRR (Est.)</span>
+                    <span style="font-size: 13px; font-weight: 700; color: var(--text-muted);">₹{{ mrr|intcomma }}/mo</span>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <canvas id="planPieChart" height="160"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Subscriptions -->
+<div class="card border-0 shadow-sm mb-5">
+    <div class="card-header py-3 bg-white border-bottom">
+        <h6 class="m-0 fw-bold"><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i>Recent Subscriptions</h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); padding: 12px 16px; background: var(--bg-table-header, #f8fafc); border-bottom: 1px solid var(--border-color);">Agent</th>
+                        <th style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); padding: 12px 16px; background: var(--bg-table-header, #f8fafc); border-bottom: 1px solid var(--border-color);">Plan</th>
+                        <th style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); padding: 12px 16px; background: var(--bg-table-header, #f8fafc); border-bottom: 1px solid var(--border-color);">Amount Paid</th>
+                        <th style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); padding: 12px 16px; background: var(--bg-table-header, #f8fafc); border-bottom: 1px solid var(--border-color);">Expires</th>
+                        <th style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); padding: 12px 16px; background: var(--bg-table-header, #f8fafc); border-bottom: 1px solid var(--border-color);">Subscribed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sub in recentSubs %}
+                    <tr>
+                        <td style="padding: 14px 16px; border-bottom: 1px solid var(--border-light, #f1f5f9);">
+                            <div class="fw-semibold" style="font-size: 13px; color: var(--text-primary);">{{ sub.display_name|default:sub.fullname }}</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">{{ sub.email }}</div>
+                        </td>
+                        <td style="padding: 14px 16px; border-bottom: 1px solid var(--border-light, #f1f5f9);">
+                            {% if "professional" in sub.selected_plan|lower %}
+                                <span class="badge" style="background: #ecfdf5; color: #065f46; font-size: 11px; padding: 4px 10px; border-radius: 8px;">Professional</span>
+                            {% else %}
+                                <span class="badge" style="background: #fef3c7; color: #92400e; font-size: 11px; padding: 4px 10px; border-radius: 8px;">Starter</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 14px 16px; border-bottom: 1px solid var(--border-light, #f1f5f9);">
+                            <span class="fw-bold" style="color: var(--primary);">₹{{ sub.registration_amount|default:0|floatformat:0|intcomma }}</span>
+                        </td>
+                        <td style="padding: 14px 16px; border-bottom: 1px solid var(--border-light, #f1f5f9);">
+                            {% if sub.expires_at %}
+                                <span style="font-size: 12px; color: var(--text-muted);">{{ sub.expires_at|date:"d M Y" }}</span>
+                            {% else %}
+                                <span style="font-size: 12px; color: var(--text-muted);">No expiry</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 14px 16px; border-bottom: 1px solid var(--border-light, #f1f5f9);">
+                            <span style="font-size: 12px; color: var(--text-muted);">{{ sub.created_at|date:"d M Y" }}</span>
+                            <div style="font-size: 10px; color: var(--text-label, #94a3b8);">{{ sub.created_at|timesince }} ago</div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center py-4" style="color: var(--text-muted); font-size: 13px;">No subscriptions found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Parse data from Django safely
+const chartLabels = {{ chart_labels|safe }};
+const chartProf = {{ chart_prof|safe }};
+const chartStarter = {{ chart_starter|safe }};
+const chartTrial = {{ chart_trial|safe }};
+
+// Revenue Trend
+const revCtx = document.getElementById('revenueChart').getContext('2d');
+new Chart(revCtx, {
+    type: 'bar',
+    data: {
+        labels: chartLabels,
+        datasets: [
+            {
+                label: 'Professional (Actual ₹)',
+                data: chartProf,
+                backgroundColor: 'rgba(29, 125, 93, 0.85)',
+                borderRadius: 6,
+            },
+            {
+                label: 'Starter (Actual ₹)',
+                data: chartStarter,
+                backgroundColor: 'rgba(245, 158, 11, 0.85)',
+                borderRadius: 6,
+            },
+            {
+                label: 'Free Trial (₹)',
+                data: chartTrial,
+                backgroundColor: 'rgba(124, 58, 237, 0.75)',
+                borderRadius: 6,
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { position: 'top' }, tooltip: { mode: 'index' } },
+        scales: {
+            x: { stacked: true, grid: { display: false } },
+            y: { stacked: true, beginAtZero: true,
+                ticks: { callback: v => '₹' + v.toLocaleString() },
+                grid: { color: 'rgba(0,0,0,0.04)' }
+            }
+        }
+    }
+});
+
+// Plan Pie
+const pieCtx = document.getElementById('planPieChart').getContext('2d');
+new Chart(pieCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Professional', 'Starter', 'Free Trial'],
+        datasets: [{ 
+            data: [{{ profCount }}, {{ starterCount }}, {{ trialCount }}], 
+            backgroundColor: ['#1d7d5d', '#f59e0b', '#7c3aed'], 
+            borderWidth: 0, 
+            hoverOffset: 4 
+        }]
+    },
+    options: { responsive: true, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { font: { size: 12 } } } } }
+});
+</script>
+{% endblock %}

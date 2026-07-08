@@ -7,6 +7,10 @@ import json
 import requests as http_requests
 from apps.home.models.site_setting import SiteSetting
 from apps.home.models.faq import Faq
+from apps.home.models.homepage import (
+    HomePageSettings, HeroTrustBadge, HeroStatistic, HeroProductTile,
+    HeroSlide, DidYouKnowSlide, QuickPickItem, WhyChooseCard, HowItWorksStep
+)
 from django.contrib.staticfiles.storage import staticfiles_storage
 
 
@@ -140,216 +144,82 @@ def contact_submit(request):
 
 
 def home(request):
-    # 1. Load homepage content from SiteSetting store (cached forever)
-    homepage_content = SiteSetting.get_value('homepage_content', {
-        'hero': {
-            'headline': 'Find Trusted & Verified Insurance Experts in your Neighbourhood',
-            'subheadline': 'Connect with your local PadosiAgent',
-            'visible': True
-        },
-        'benefits': {
-            'title': 'Buy/Port/Renew Insurance with PadosiAgent',
-            'subtitle': 'Click on the Icon to search for PadosiAgent',
-            'visible': True
-        },
-        'claims': {
-            'title': 'Stuck with your Claim?',
-            'subtitle': 'Get assisted with PadosiAgent Claim Experts',
-            'description': 'Select your insurance type below to find your claim assistance PadosiAgent'
-        },
-        'review': {
-            'title': 'Do you have multiple Insurance Policies?',
-            'subtitle': 'Get your Portfolio Audited by Expert PadosiAgents',
-            'description': 'PadosiAgent will analyse and identify gaps in your coverage'
-        },
-        'trust': {
-            'title': 'Why Users Trust their PadosiAgent',
-            'subtitle': 'The safest way to find your insurance PadosiAgent: No Spam, No Fees, just trusted service for you'
-        },
-        'dyk': {
-            'label': 'Did you know?',
-            'title': 'Insights from the Padosi network',
-            'visible': True,
-            'slides': [],
-        },
-        'quickpicks': {
-            'label': 'Quick picks',
-            'title': 'Also buy / renew shortcuts',
-            'view_all_text': 'View all products →',
-            'view_all_url': '/find-agents?ServiceType=New%20Policy&openFilter=1',
-            'visible': True,
-            'items': [],
-        },
-        'why_choose': {
-            'label': 'Why PadosiAgent',
-            'title': "What makes PadosiAgent one of India's most trusted ways to buy insurance?",
-            'description': 'No spam, no platform fees and only licensed agents — built around your privacy, your time and your money.',
-            'button_text': 'Find My PadosiAgent',
-            'button_url': '/find-agents?openFilter=1',
-            'visible': True,
-            'cards': [],
-        },
-        'works': {
-            'label': 'How It Works',
-            'title': 'Find My PadosiAgent in 4 Simple Steps',
-            'subtitle': 'From search to service - it takes just minutes for you',
-            'button_text': 'Find Agent',
-            'button_url': '/find-agents?openFilter=1',
-            'visible': True,
-            'steps': [],
-        },
-        'testimonials': {
-            'label': 'Testimonials',
-            'title': 'What Users Say About Their PadosiAgent',
-            'subtitle': 'Real experiences from users who found their PadosiAgent',
-            'use_custom': False,
-            'visible': True,
-            'custom_list': [],
-        },
-        'sections': {
-            'claim_assistance': True,
-            'policy_review': True,
-            'why_choose': True,
-            'stats': True
-        }
-    })
+    settings = HomePageSettings.load()
 
-    # Default listings (equivalent to Laravel's controller fallback logic)
-    default_dyk_slides = [
-        {'accent': 'accent-rose', 'bg': 'bg-rose-500', 'icon': 'users', 'title': '3× faster claim settlements', 'body': 'Customers served by a nearby agent report claims clearing up to 3× faster — your agent walks the file through with the insurer.'},
-        {'accent': 'accent-emerald', 'bg': 'bg-emerald-500', 'icon': 'shield', 'title': 'Local agents catch policy gaps', 'body': 'A neighbourhood expert knows your city\'s hospital network, traffic risks and weather patterns — and recommends covers a tele-caller never will.'},
-        {'accent': 'accent-sky', 'bg': 'bg-sky-500', 'icon': 'clock', 'title': 'Face-to-face saves hours of confusion', 'body': '70%+ of policyholders say they understood their cover only after meeting an agent in person. Jargon disappears across a table.'},
-        {'accent': 'accent-amber', 'bg': 'bg-amber-500', 'icon': 'trending-up', 'title': '40% lower lapse rates', 'body': 'Customers with a dedicated nearby agent are 40% less likely to let a policy lapse — they get timely renewal nudges from a real human.'},
-        {'accent': 'accent-violet', 'bg': 'bg-violet-500', 'icon': 'lightbulb', 'title': 'Zero platform fee, full licensed advice', 'body': 'Your agent earns from the insurer — not from you. Same premium, lifetime advisor in your neighbourhood.'},
-        {'accent': 'accent-pink', 'bg': 'bg-pink-500', 'icon': 'heart', 'title': 'Lifetime relationship, not a ticket number', 'body': 'Your Padosi agent stays the same across renewals, claims and family additions — no fresh call-centre script each time.'},
-        {'accent': 'accent-indigo', 'bg': 'bg-indigo-500', 'icon': 'building-2', 'title': 'Hospital networks matter locally', 'body': 'A local agent maps the right cashless hospitals near your home and office before you ever need one.'},
-        {'accent': 'accent-teal', 'bg': 'bg-teal-500', 'icon': 'indian-rupee', 'title': 'Right cover, not the costliest cover', 'body': 'A neighbourhood advisor sizes the premium to your real life — not to a target sheet.'},
-    ]
+    # Load from models
+    trust_badges = HeroTrustBadge.objects.all()
+    stats_data = HeroStatistic.objects.all()
+    product_tiles = HeroProductTile.objects.all()
+    hero_slides = HeroSlide.objects.all()
+    dyk_slides = DidYouKnowSlide.objects.all()
+    quick_picks = QuickPickItem.objects.all()
+    why_cards = WhyChooseCard.objects.all()
+    works_steps = HowItWorksStep.objects.all()
 
-    default_quick_picks = [
-        {'label': 'Mediclaim', 'badge': 'Most Bought', 'badge_bg': '#ffe4e6', 'badge_color': '#be123c', 'icon_bg': '#fff1f2', 'icon_color': '#f43f5e', 'icon': 'heart-pulse', 'url': '/find-agents?ServiceType=New%20Policy&InsuranceType=Health%20Insurance&InsuranceCompany=Mediclaim&openFilter=1'},
-        {'label': 'Term Plan', 'badge': 'Pure Cover', 'badge_bg': '#e0f2fe', 'badge_color': '#0369a1', 'icon_bg': '#f0f9ff', 'icon_color': '#0284c7', 'icon': 'clock', 'url': '/find-agents?ServiceType=New%20Policy&InsuranceType=Life%20Insurance&InsuranceCompany=Term%20Plan&openFilter=1'},
-        {'label': 'Private Car', 'badge': 'Renew Fast', 'badge_bg': '#fef3c7', 'badge_color': '#b45309', 'icon_bg': '#fffbeb', 'icon_color': '#d97706', 'icon': 'car-front', 'url': '/find-agents?ServiceType=New%20Policy&InsuranceType=Motor%20Insurance&InsuranceCompany=Private%20Car&openFilter=1'},
-        {'label': 'Two Wheeler', 'badge': '', 'badge_bg': '', 'badge_color': '', 'icon_bg': '#ecfdf5', 'icon_color': '#059669', 'icon': 'bike', 'url': '/find-agents?ServiceType=New%20Policy&InsuranceType=Motor%20Insurance&InsuranceCompany=Two%20Wheeler&openFilter=1'},
-        {'label': 'Critical Illness', 'badge': 'Lumpsum', 'badge_bg': '#fae8ff', 'badge_color': '#a21caf', 'icon_bg': '#fdf4ff', 'icon_color': '#c026d3', 'icon': 'alert-triangle', 'url': '/find-agents?ServiceType=New%20Policy&InsuranceType=Health%20Insurance&InsuranceCompany=Critical%20Illness&openFilter=1'},
-        {'label': 'Personal Accident', 'badge': '', 'badge_bg': '', 'badge_color': '', 'icon_bg': '#fff7ed', 'icon_color': '#ea580c', 'icon': 'user-check', 'url': '/find-agents?ServiceType=New%20Policy&InsuranceType=Health%20Insurance&InsuranceCompany=Personal%20Accident&openFilter=1'},
-        {'label': 'Super Top-up', 'badge': 'Save Big', 'badge_bg': '#ccfbf1', 'badge_color': '#0f766e', 'icon_bg': '#f0fdfa', 'icon_color': '#0d9488', 'icon': 'trending-up', 'url': '/find-agents?ServiceType=New%20Policy&InsuranceType=Health%20Insurance&InsuranceCompany=Super%20Top-up&openFilter=1'},
-        {'label': 'ULIP Plan', 'badge': '', 'badge_bg': '', 'badge_color': '', 'icon_bg': '#f5f3ff', 'icon_color': '#7c3aed', 'icon': 'bar-chart-3', 'url': '/find-agents?ServiceType=New%20Policy&InsuranceType=Life%20Insurance&InsuranceCompany=ULIP%20Plan&openFilter=1'},
-        {'label': 'Pension Plan', 'badge': 'Lifetime', 'badge_bg': '#e0e7ff', 'badge_color': '#4338ca', 'icon_bg': '#eef2ff', 'icon_color': '#4f46e5', 'icon': 'landmark', 'url': '/find-agents?ServiceType=New%20Policy&InsuranceType=Life%20Insurance&InsuranceCompany=Pension%20Plan&openFilter=1'},
-        {'label': 'Saving Plan', 'badge': '', 'badge_bg': '', 'badge_color': '', 'icon_bg': '#fdf2f8', 'icon_color': '#db2777', 'icon': 'piggy-bank', 'url': '/find-agents?ServiceType=New%20Policy&InsuranceType=Life%20Insurance&InsuranceCompany=Saving%20Plan&openFilter=1'},
-        {'label': 'Commercial Vehicle', 'badge': '', 'badge_bg': '', 'badge_color': '', 'icon_bg': '#fef9c3', 'icon_color': '#a16207', 'icon': 'truck', 'url': '/find-agents?ServiceType=New%20Policy&InsuranceType=Motor%20Insurance&InsuranceCompany=Commercial%20Vehicle&openFilter=1'},
-        {'label': 'Fire (SME)', 'badge': '', 'badge_bg': '', 'badge_color': '', 'icon_bg': '#fef2f2', 'icon_color': '#dc2626', 'icon': 'flame', 'url': '/find-agents?ServiceType=New%20Policy&InsuranceType=SME%20Insurance&InsuranceCompany=Fire%20(SME)&openFilter=1'},
-        {'label': 'Cyber (SME)', 'badge': 'New', 'badge_bg': '#cffafe', 'badge_color': '#0e7490', 'icon_bg': '#ecfeff', 'icon_color': '#0891b2', 'icon': 'lock', 'url': '/find-agents?ServiceType=New%20Policy&InsuranceType=SME%20Insurance&InsuranceCompany=Cyber%20(SME)&openFilter=1'},
-        {'label': 'Liability (SME)', 'badge': '', 'badge_bg': '', 'badge_color': '', 'icon_bg': '#f1f5f9', 'icon_color': '#475569', 'icon': 'scale', 'url': '/find-agents?ServiceType=New%20Policy&InsuranceType=SME%20Insurance&InsuranceCompany=Liability%20(SME)&openFilter=1'},
-    ]
+    # Testimonials logic (keep existing random/cache logic)
+    reviews = cache.get('homepage_reviews')
+    if reviews is None:
+        from apps.agents.models import AgentReview
+        db_reviews = AgentReview.objects.filter(is_approved=True).select_related('agent', 'agent__profile').order_by('-created_at')[:100]
 
-    default_why_cards = [
-        {'bg': '#fff1f2', 'stat': '0', 'caption': 'Spam Calls', 'icon_color': '#f43f5e', 'icon': 'shield-check', 'title': 'Privacy-first by design', 'body': 'Only YOU can contact an agent. Agents can never call you first — your number is never sold or shared.'},
-        {'bg': '#ecfdf5', 'stat': '₹0', 'caption': 'Platform Fee', 'icon_color': '#059669', 'icon': 'indian-rupee', 'title': '100% free for buyers', 'body': 'No charges, no hidden costs. Your premium stays the same — the agent earns from the insurer, never from you.'},
-        {'bg': '#f0f9ff', 'stat': '100%', 'caption': 'Licensed Agents', 'icon_color': '#0284c7', 'icon': 'badge-check', 'title': 'Verified, licensed experts only', 'body': 'Every agent is a licensed insurance professional, vetted before listing. No call-centre scripts, ever.'},
-        {'bg': '#fffbeb', 'stat': '1,000+', 'caption': 'Padosi Agents', 'icon_color': '#d97706', 'icon': 'map-pin', 'title': 'A neighbour in every PIN code', 'body': 'Discover trusted advisors within your locality who understand local hospitals, traffic and risks.'},
-        {'bg': '#f5f3ff', 'stat': '1L+', 'caption': 'Families Covered', 'icon_color': '#7c3aed', 'icon': 'users', 'title': 'A network you can rely on', 'body': 'Lakhs of Indian families have already found their PadosiAgent for buying, renewing and claims.'},
-        {'bg': '#fdf4ff', 'stat': '5.0★', 'caption': 'Average Rating', 'icon_color': '#c026d3', 'icon': 'star', 'title': 'Loved by buyers across India', 'body': 'Real reviews from real customers — no incentivised ratings, no fake testimonials.'},
-        {'bg': '#eef2ff', 'stat': 'AES-256', 'caption': 'Encrypted Data', 'icon_color': '#4f46e5', 'icon': 'lock', 'title': 'Bank-grade data security', 'body': 'Your information is encrypted end-to-end and never sold to third parties. Full control, always.'},
-    ]
+        agent_counts = {}
+        final_reviews = []
+        backfill_reviews = []
 
-    default_steps = [
-        {'icon': 'search', 'accent': 'accent-primary', 'badge': '1', 'title': 'Search', 'desc': 'Find verified agents', 'tooltip': 'Find verified insurance experts by area or service.'},
-        {'icon': 'git-compare', 'accent': 'accent-secondary', 'badge': '2', 'title': 'Compare', 'desc': 'Review ratings', 'tooltip': 'Review ratings and profiles to find your perfect match.'},
-        {'icon': 'message-square', 'accent': 'accent-accent', 'badge': '3', 'title': 'Connect', 'desc': 'Call or WhatsApp', 'tooltip': 'Get in touch via Call or WhatsApp instantly.'},
-        {'icon': 'hand-heart', 'accent': 'accent-violet', 'badge': '4', 'title': 'Assist Me', 'desc': 'Personalized service', 'tooltip': 'Get professional support for policies, claims, and more.'},
-    ]
-
-    # Re-populate slides & items if missing
-    if not homepage_content.get('dyk', {}).get('slides'):
-        homepage_content.setdefault('dyk', {})['slides'] = default_dyk_slides
-    if not homepage_content.get('quickpicks', {}).get('items'):
-        homepage_content.setdefault('quickpicks', {})['items'] = default_quick_picks
-    if not homepage_content.get('why_choose', {}).get('cards'):
-        homepage_content.setdefault('why_choose', {})['cards'] = default_why_cards
-    if not homepage_content.get('works', {}).get('steps'):
-        homepage_content.setdefault('works', {})['steps'] = default_steps
-
-    # Testimonials list helper
-    use_custom = homepage_content.get('testimonials', {}).get('use_custom', False)
-    custom_list = homepage_content.get('testimonials', {}).get('custom_list', [])
-
-    if use_custom and custom_list:
-        reviews = []
-        for r in custom_list:
-            reviews.append({
-                'name': r.get('name', 'User'),
-                'service': r.get('service', 'Verified Client'),
-                'agent_url': None,
-                'rating': float(r.get('rating', 5)),
-                'comment': r.get('comment', ''),
-                'image': f"https://ui-avatars.com/api/?name={r.get('name', 'User')}&background=0d9488&color=fff&bold=true"
-            })
-    else:
-        reviews = cache.get('homepage_reviews')
-        if reviews is None:
-            from apps.agents.models import AgentReview
-            db_reviews = AgentReview.objects.filter(is_approved=True).select_related('agent', 'agent__profile').order_by('-created_at')[:100]
-
-            agent_counts = {}
-            final_reviews = []
-            backfill_reviews = []
-
-            for rev in db_reviews:
-                agent_id = rev.agent_id
-                if agent_id:
-                    if agent_id not in agent_counts:
-                        agent_counts[agent_id] = 0
-                    if agent_counts[agent_id] < 3:
-                        final_reviews.append(rev)
-                        agent_counts[agent_id] += 1
-                    else:
-                        backfill_reviews.append(rev)
-                else:
+        for rev in db_reviews:
+            agent_id = rev.agent_id
+            if agent_id:
+                if agent_id not in agent_counts:
+                    agent_counts[agent_id] = 0
+                if agent_counts[agent_id] < 3:
                     final_reviews.append(rev)
+                    agent_counts[agent_id] += 1
+                else:
+                    backfill_reviews.append(rev)
+            else:
+                final_reviews.append(rev)
 
-            if len(final_reviews) < 10 and backfill_reviews:
-                needed = 10 - len(final_reviews)
-                final_reviews.extend(backfill_reviews[:needed])
+        if len(final_reviews) < 10 and backfill_reviews:
+            needed = 10 - len(final_reviews)
+            final_reviews.extend(backfill_reviews[:needed])
 
-            final_reviews = final_reviews[:10]
+        final_reviews = final_reviews[:10]
 
-            reviews = []
-            for rev in final_reviews:
-                agent_name = rev.agent.fullname if rev.agent else None
-                agent_slug = None
-                agent_photo = None
+        reviews = []
+        for rev in final_reviews:
+            agent_name = rev.agent.fullname if rev.agent else None
+            agent_slug = None
+            agent_photo = None
 
-                if rev.agent:
-                    try:
-                        profile = rev.agent.profile
-                        agent_slug = profile.slug
-                        agent_photo = profile.profile_photo_url
-                    except Exception:
-                        pass
+            if rev.agent:
+                try:
+                    profile = rev.agent.profile
+                    agent_slug = profile.slug
+                    agent_photo = profile.profile_photo_url
+                except Exception:
+                    pass
 
-                avatar_url = agent_photo if (agent_photo and 'avatar-icon.jpg' not in agent_photo) else f"https://ui-avatars.com/api/?name={rev.reviewer_name or 'User'}&background=0d9488&color=fff&bold=true"
+            avatar_url = agent_photo if (agent_photo and 'avatar-icon.jpg' not in agent_photo) else f"https://ui-avatars.com/api/?name={rev.reviewer_name or 'User'}&background=0d9488&color=fff&bold=true"
 
-                reviews.append({
-                    'name': rev.reviewer_name or 'User',
-                    'service': f"Client of {agent_name}" if agent_name else "Verified Client",
-                    'agent_url': f"/profile/{agent_slug}/" if agent_slug else None,
-                    'rating': float(rev.rating),
-                    'comment': rev.review or '',
-                    'image': avatar_url
-                })
+            reviews.append({
+                'name': rev.reviewer_name or 'User',
+                'service': f"Client of {agent_name}" if agent_name else "Verified Client",
+                'agent_url': f"/profile/{agent_slug}/" if agent_slug else None,
+                'rating': float(rev.rating),
+                'comment': rev.review or '',
+                'image': avatar_url
+            })
 
-            if not reviews:
-                reviews = [
-                    {'name': 'Sneha Patel', 'service': 'Client of Rajesh Kumar', 'agent_url': None, 'rating': 5.0, 'comment': 'Found my perfect health insurance through my PadosiAgent. They were professional and explained everything clearly.', 'image': 'https://ui-avatars.com/api/?name=Sneha+Patel&background=0d9488&color=fff&bold=true'},
-                    {'name': 'Rahul Verma', 'service': 'Client of Vikram Singh', 'agent_url': None, 'rating': 4.5, 'comment': 'My claim was rejected initially, but my PadosiAgent helped me get it approved. Highly recommended!', 'image': 'https://ui-avatars.com/api/?name=Rahul+Verma&background=0d9488&color=fff&bold=true'},
-                    {'name': 'Anjali Desai', 'service': 'Client of Priya Sharma', 'agent_url': None, 'rating': 4.0, 'comment': 'Got my policy reviewed and discovered I was overpaying. Saved ₹15,000 annually. Thank you!', 'image': 'https://ui-avatars.com/api/?name=Anjali+Desai&background=0d9488&color=fff&bold=true'},
-                ]
+        if not reviews:
+            reviews = [
+                {'name': 'Sneha Patel', 'service': 'Client of Rajesh Kumar', 'agent_url': None, 'rating': 5.0, 'comment': 'Found my perfect health insurance through my PadosiAgent. They were professional and explained everything clearly.', 'image': 'https://ui-avatars.com/api/?name=Sneha+Patel&background=0d9488&color=fff&bold=true'},
+                {'name': 'Rahul Verma', 'service': 'Client of Vikram Singh', 'agent_url': None, 'rating': 4.5, 'comment': 'My claim was rejected initially, but my PadosiAgent helped me get it approved. Highly recommended!', 'image': 'https://ui-avatars.com/api/?name=Rahul+Verma&background=0d9488&color=fff&bold=true'},
+                {'name': 'Anjali Desai', 'service': 'Client of Priya Sharma', 'agent_url': None, 'rating': 4.0, 'comment': 'Got my policy reviewed and discovered I was overpaying. Saved ₹15,000 annually. Thank you!', 'image': 'https://ui-avatars.com/api/?name=Anjali+Desai&background=0d9488&color=fff&bold=true'},
+            ]
 
-            cache.set('homepage_reviews', reviews, 1800)
+        cache.set('homepage_reviews', reviews, 1800)
 
     # Zip trust cards with indexes to allow colored borders easily in DTL
-    why_cards = homepage_content.get('why_choose', {}).get('cards', [])
     card_accents = [
         {'color': '#0065ff', 'class': 'pb-accent-blue'},
         {'color': '#10b981', 'class': 'pb-accent-green'},
@@ -366,60 +236,6 @@ def home(request):
             'accent': accent,
             'index': idx
         })
-
-    # 1. Load Hero Section defaults and database overrides
-    hero_defaults = {
-        'heading': 'Find a {Trusted} Insurance Expert in your {Padosi}',
-        'trust_badges': [
-            {'icon': 'check-circle', 'label': 'Licensed'},
-            {'icon': 'shield', 'label': 'No Spam Calls'},
-            {'icon': 'trending-up', 'label': 'Zero Platform Fee'},
-        ],
-        'stats': [
-            {'label': 'Expert Agents', 'target': 1000, 'suffix': '+', 'icon': 'users', 'large': True, 'decimal': False},
-            {'label': 'Cities Covered', 'target': 50, 'suffix': '+', 'icon': 'map-pin', 'large': False, 'decimal': False},
-            {'label': 'Rating', 'target': 4.8, 'suffix': '', 'icon': 'star', 'large': False, 'decimal': True},
-            {'label': 'Families Covered', 'target': 1, 'suffix': 'L+', 'icon': 'heart', 'large': False, 'decimal': False},
-        ],
-        'tiles': [
-            {'label': 'Health Insurance', 'icon': 'heart', 'url': '/find-agents?ServiceType=New+Policy&InsuranceType=Health+Insurance&openFilter=1', 'tileClass': 'pa-tile-rose'},
-            {'label': 'Life Insurance', 'icon': 'shield', 'url': '/find-agents?ServiceType=New+Policy&InsuranceType=Life+Insurance&openFilter=1', 'tileClass': 'pa-tile-sky'},
-            {'label': 'Vehicle Insurance', 'icon': 'car', 'url': '/find-agents?ServiceType=New+Policy&InsuranceType=Motor+Insurance&openFilter=1', 'tileClass': 'pa-tile-amber'},
-            {'label': 'Business Insurance', 'icon': 'building-2', 'url': '/find-agents?ServiceType=New+Policy&InsuranceType=SME+Insurance&openFilter=1', 'tileClass': 'pa-tile-violet'},
-        ],
-        'slides': [
-            {'icon': 'indian-rupee', 'hero': '₹25,000 Cr', 'tag': 'Unclaimed Insurance', 'body': "Most families miss out because they don't have an agent.", 'isChart': False},
-            {'icon': 'users', 'hero': 'Agent > Chatbot', 'tag': 'Real Support Matters', 'body': 'Cheap product or hassle-free service? Agents deliver both.', 'isChart': False},
-            {'icon': 'trending-up', 'hero': 'Claim Rejections +34%', 'tag': 'As Online Sales Grow', 'body': '', 'isChart': True},
-            {'icon': 'badge-percent', 'hero': 'Save 20-40%', 'tag': 'Better Premiums', 'body': "Agents find coverage algorithms can't.", 'isChart': False},
-            {'icon': 'clock', 'hero': 'Claims 2x Faster', 'tag': 'With an Agent', 'body': 'No IVR loops. Real human follow-through.', 'isChart': False},
-            {'icon': 'shield-check', 'hero': '9/10 Approved', 'tag': 'Agent-Backed Claims', 'body': 'Insurers settle 3x more with agent support.', 'isChart': False},
-            {'icon': 'users', 'hero': '1,000+ Agents', 'tag': 'In Your City', 'body': 'Your neighbour is already an agent. Meet face-to-face.', 'isChart': False},
-        ],
-        'cta_claim_text': 'Insurance Claims Support',
-        'cta_claim_url': '/find-agents?ServiceType=Claim%20Assistance&openFilter=1',
-        'cta_review_text': 'Insurance Audit',
-        'cta_review_url': '/find-agents?ServiceType=Policy%20Review&openFilter=1',
-        'claims_card_label': 'FIND INSURANCE EXPERTS NEAR ME FOR:',
-        'claims_card_heading': 'Claims, audits and policy review with local advisors',
-        'claims_card_text': 'Easy local guidance from verified agents, with real advisor stories and trusted help just a few minutes away.',
-    }
-
-    hero_section_db = SiteSetting.get_value('hero_section', {})
-    hero_data = {**hero_defaults, **(hero_section_db if isinstance(hero_section_db, dict) else {})}
-
-    stats_data = hero_data.get('stats', hero_defaults['stats'])
-    for s in stats_data:
-        s['large'] = str(s.get('large', '')).lower() in ('true', '1')
-        s['decimal'] = str(s.get('decimal', '')).lower() in ('true', '1')
-        try:
-            s['target'] = float(s.get('target', 0))
-        except (ValueError, TypeError):
-            s['target'] = 0.0
-
-    facts = hero_data.get('slides', hero_defaults['slides'])
-    for f in facts:
-        f['isChart'] = str(f.get('isChart', '')).lower() in ('true', '1')
 
     slide_gradients = [
         'linear-gradient(135deg, hsla(var(--pa-primary-h), var(--pa-primary-s), var(--pa-primary-l), 0.25), hsla(var(--pa-primary-h), var(--pa-primary-s), var(--pa-primary-l), 0.1), hsla(var(--pa-primary-h), var(--pa-primary-s), var(--pa-primary-l), 0.05))',
@@ -441,7 +257,7 @@ def home(request):
     ]
 
     facts_zipped = []
-    for idx, fact in enumerate(facts):
+    for idx, fact in enumerate(hero_slides):
         facts_zipped.append({
             'fact': fact,
             'gradient': slide_gradients[idx % len(slide_gradients)],
@@ -450,7 +266,6 @@ def home(request):
         })
 
     # 2. Build and zip dyk slides
-    dyk_slides = homepage_content.get('dyk', {}).get('slides', [])
     slides_zipped = []
     for idx, slide in enumerate(dyk_slides):
         slides_zipped.append({
@@ -467,37 +282,38 @@ def home(request):
         {'year': '2024', 'rejection': 34},
     ]
 
-    raw_heading = hero_data.get('heading', hero_defaults['heading'])
-    def replace_brace(match):
-        word = match.group(1)
-        if word.lower() == 'padosi':
+    from apps.home.models.site_setting import SiteSetting
+    custom_hero = SiteSetting.get_value('hero_section')
+    if custom_hero and isinstance(custom_hero, dict) and custom_hero.get('heading'):
+        raw_heading = custom_hero['heading']
+    else:
+        raw_heading = settings.hero_heading
+    # Clean braces first if any
+    cleaned_heading = raw_heading.replace('{', '').replace('}', '')
+    def replace_word(match):
+        word = match.group(0)
+        lower_word = word.lower()
+        if 'padosi' in lower_word:
             return f'<span class="pa-heading-highlight">{word}</span>'
         else:
             return f'<span class="pa-heading-trusted">{word}</span>'
-    hero_heading_html = re.sub(r'\{([^{}]+)\}', replace_brace, raw_heading)
+    hero_heading_html = re.sub(r'\b(Trusted|Licensed|Licenced|Padosi)\b', replace_word, cleaned_heading, flags=re.IGNORECASE)
 
     return render(request, 'public/home.html', {
-        'homepageContent': homepage_content,
+        'settings': settings,
         'why_cards_zipped': why_cards_zipped,
         'reviews_json': json.dumps(reviews),
         'hide_header': True,
-        # Hero Section specific values
-        'hero_data': hero_data,
-        'trust_badges': hero_data.get('trust_badges', hero_defaults['trust_badges']),
+        'trust_badges': trust_badges,
         'stats_data': stats_data,
-        'product_tiles': hero_data.get('tiles', hero_defaults['tiles']),
+        'product_tiles': product_tiles,
         'facts_zipped': facts_zipped,
         'slides_zipped': slides_zipped,
+        'quick_picks': quick_picks,
+        'why_cards': why_cards,
+        'works_steps': works_steps,
         'chart_data': chart_data,
-        'hero_heading': hero_data.get('heading', hero_defaults['heading']),
         'hero_heading_html': hero_heading_html,
-        'cta_claim_text': hero_data.get('cta_claim_text', hero_defaults['cta_claim_text']),
-        'cta_claim_url': hero_data.get('cta_claim_url', hero_defaults['cta_claim_url']),
-        'cta_review_text': hero_data.get('cta_review_text', hero_defaults['cta_review_text']),
-        'cta_review_url': hero_data.get('cta_review_url', hero_defaults['cta_review_url']),
-        'claims_card_label': hero_data.get('claims_card_label', hero_defaults['claims_card_label']),
-        'claims_card_heading': hero_data.get('claims_card_heading', hero_defaults['claims_card_heading']),
-        'claims_card_text': hero_data.get('claims_card_text', hero_defaults['claims_card_text']),
     })
 
 

@@ -1,4 +1,4 @@
-{% extends 'admin/layout.html' %}
+{% extends 'admin/base.html' %}
 {% load static %}
 
 {% block title %}Pincode Manager — PadosiAgent Admin{% endblock %}
@@ -42,8 +42,8 @@
         <p style="color:var(--text-muted);font-size:13px;margin-top:4px;">Import, manage and filter India-wide PIN code data by state/district.</p>
     </div>
     <div class="d-flex gap-2">
-        <a href="{% url 'admin_panel:pincode_sample' %}" class="btn-pm btn-pm-secondary"><i class="fas fa-download"></i> Sample CSV</a>
-        <a href="{% url 'admin_panel:pincode_export' %}{% if state %}?state={{ state }}{% endif %}" class="btn-pm btn-pm-secondary"><i class="fas fa-file-export"></i> Export</a>
+        <a href="{% url 'admin_pincode_sample' %}" class="btn-pm btn-pm-secondary"><i class="fas fa-download"></i> Sample CSV</a>
+        <a href="{% url 'admin_pincode_export' %}{% if state %}?state={{ state }}{% endif %}" class="btn-pm btn-pm-secondary"><i class="fas fa-file-export"></i> Export</a>
     </div>
 </div>
 
@@ -169,7 +169,7 @@
                 {% endfor %}
             </select>
             <button type="submit" class="btn-pm btn-pm-primary"><i class="fas fa-search"></i></button>
-            <a href="{% url 'admin_panel:pincode_index' %}" class="btn-pm btn-pm-secondary">Reset</a>
+            <a href="{% url 'admin_pincode_index' %}" class="btn-pm btn-pm-secondary">Reset</a>
         </form>
 
         <div style="overflow-x:auto;">
@@ -315,7 +315,7 @@ function uploadFile(file) {
         document.getElementById('uploadStatus').textContent = '❌ Upload failed. Try again.';
     });
 
-    xhr.open('POST', '{% url "admin_panel:pincode_upload" %}');
+    xhr.open('POST', '{% url "admin_pincode_upload" %}');
     xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
     xhr.send(formData);
 }
@@ -380,7 +380,7 @@ function startImport() {
     document.getElementById('importStatus').textContent = 'Importing... please wait, do not close this page.';
     document.getElementById('importBar').style.width = '50%';
 
-    fetch('{% url "admin_panel:pincode_import" %}', {
+    fetch('{% url "admin_pincode_import" %}', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
         body: JSON.stringify({

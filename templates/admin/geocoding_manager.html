@@ -1,4 +1,4 @@
-{% extends 'admin/layout.html' %}
+{% extends 'admin/base.html' %}
 {% load static %}
 
 {% block title %}Geocoding Manager — PadosiAgent Admin{% endblock %}
@@ -399,7 +399,7 @@ function refreshStats() {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
     btn.disabled = true;
 
-    fetch('{% url "admin_panel:geocoding_stats" %}')
+    fetch('{% url "admin_geocoding_stats" %}')
         .then(r => r.json())
         .then(d => {
             document.getElementById('statTotal').textContent    = d.total;
@@ -448,7 +448,7 @@ function geocodeSingleById(agentId, btn, rowId = null) {
 
     const resultDiv = document.getElementById('singleResult');
 
-    fetch('{% url "admin_panel:geocoding_single" %}', {
+    fetch('{% url "admin_geocoding_single" %}', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
         body: JSON.stringify({ agent_id: agentId })
@@ -511,7 +511,7 @@ function runNextBatch() {
 
     document.getElementById('batchStatusText').textContent = `Processing batch (offset ${bulkOffset})...`;
 
-    fetch('{% url "admin_panel:geocoding_batch" %}', {
+    fetch('{% url "admin_geocoding_batch" %}', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
         body: JSON.stringify({ offset: bulkOffset })

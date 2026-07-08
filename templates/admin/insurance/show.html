@@ -1,0 +1,127 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}{{ insurance.fullname }} — Insurance Company — PadosiAgent{% endblock %}
+{% block breadcrumb_title %}Insurance Details{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-4">
+    <a href="{% url 'admin_insurance_index' %}" class="btn btn-sm btn-light"><i class="fas fa-arrow-left"></i></a>
+    <div>
+        <h4 class="mb-0 fw-bold">{{ insurance.fullname }}</h4>
+        <p class="text-muted mb-0" style="font-size:13px;">Insurance Company — {{ insurance.email }}</p>
+    </div>
+    <div class="ms-auto">
+        <span class="badge {% if insurance.status == 'active' %}bg-success{% else %}bg-danger{% endif %} fs-6">
+            {{ insurance.status|capfirst }}
+        </span>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center p-3">
+            <div class="display-6 fw-bold text-primary">{{ insurance.agent_count|default:"0" }}</div>
+            <div class="text-muted" style="font-size:13px;">Total Agents</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center p-3">
+            <div class="display-6 fw-bold text-success">{{ active_count }}</div>
+            <div class="text-muted" style="font-size:13px;">Active Agents</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center p-3">
+            <div class="display-6 fw-bold text-warning">{{ inactive_count }}</div>
+            <div class="text-muted" style="font-size:13px;">Inactive Agents</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center p-3">
+            <div class="display-6 fw-bold text-secondary">{{ insurance.created_at|date:'M Y' }}</div>
+            <div class="text-muted" style="font-size:13px;">Member Since</div>
+        </div>
+    </div>
+</div>
+
+<!-- Agents Table -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+        <h5 class="mb-0 fw-bold">Agents Managed by {{ insurance.fullname }}</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">Agent</th>
+                    <th>Mobile</th>
+                    <th>Status</th>
+                    <th>Plan</th>
+                    <th>Joined</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for agent in agents %}
+                <tr>
+                    <td class="ps-4">
+                        <div class="fw-semibold" style="font-size:13.5px;">{{ agent.fullname }}</div>
+                        <div class="text-muted" style="font-size:12px;">{{ agent.email }}</div>
+                    </td>
+                    <td style="font-size:13px;">{{ agent.mobile|default:'—' }}</td>
+                    <td>
+                        <span class="badge {% if agent.status == 'active' %}bg-success{% else %}bg-secondary{% endif %}">
+                            {{ agent.status|capfirst }}
+                        </span>
+                    </td>
+                    <td style="font-size:12px;">
+                        {% if agent.active_sub %}
+                            <span class="text-success fw-semibold">{{ agent.active_sub.selected_plan }}</span>
+                        {% else %}
+                            <span class="text-muted">No plan</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:12px;color:#64748b;">{{ agent.created_at|date:'d M Y' }}</td>
+                    <td>
+                        <a href="{% url 'admin_agents_manage' agent.id %}" class="btn btn-sm btn-outline-primary">
+                            Manage
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-muted">No agents managed yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if agents.has_other_pages %}
+    <div class="card-footer bg-white">
+        <div class="card-footer bg-white border-top py-3">
+            <ul class="pagination pagination-sm mb-0">
+                {% if agents.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ agents.previous_page_number }}&search={{ search|default:'' }}&status={{ selected_status|default:'' }}">Previous</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                {% endif %}
+
+                {% for i in agents.paginator.page_range %}
+                    {% if agents.number == i %}
+                        <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                    {% elif i > agents.number|add:'-3' and i < agents.number|add:'3' %}
+                        <li class="page-item"><a class="page-link" href="?page={{ i }}&search={{ search|default:'' }}&status={{ selected_status|default:'' }}">{{ i }}</a></li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if agents.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ agents.next_page_number }}&search={{ search|default:'' }}&status={{ selected_status|default:'' }}">Next</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Next</span></li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

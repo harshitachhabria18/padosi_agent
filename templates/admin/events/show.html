@@ -1,0 +1,150 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}{{ event.name }} — Event Details{% endblock %}
+{% block breadcrumb_title %}Event Tracker / {{ event.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <a href="{% url 'admin_events_index' %}" class="btn btn-sm btn-link text-muted ps-0 mb-2 d-inline-flex align-items-center" style="text-decoration:none;font-weight:600;">
+            <i class="fa-solid fa-arrow-left me-1"></i> Back to Events
+        </a>
+        <h4 class="fw-bold mb-1">{{ event.name }}</h4>
+        <p class="text-muted small mb-0">
+            <i class="fa-regular fa-calendar-check me-1 text-primary"></i> Scheduled on: {{ event.event_date|date:"d-M-Y" }}
+        </p>
+    </div>
+    
+    <a href="{% url 'admin_events_export' event.id %}" class="btn btn-success d-flex align-items-center gap-2 fw-semibold px-4 py-2 border-0 shadow-sm">
+        <i class="fa-solid fa-file-excel fs-5"></i> Export to Excel (CSV)
+    </a>
+</div>
+
+<!-- Funnel Analytics Row -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0" style="border-left: 4px solid var(--primary) !important;">
+            <div class="card-body p-4">
+                <div class="stat-value text-dark">{{ total_entries }}</div>
+                <div class="stat-label">Total Funnel Entries</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0" style="border-left: 4px solid #f59e0b !important;">
+            <div class="card-body p-4">
+                <div class="stat-value text-warning">{{ step1_drop }}</div>
+                <div class="stat-label">Quit at Plans (Step 1 Drop)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0" style="border-left: 4px solid #f97316 !important;">
+            <div class="card-body p-4">
+                <div class="stat-value text-orange" style="color:#f97316;">{{ step2_drop }}</div>
+                <div class="stat-label">Quit at Checkout (Step 2 Drop)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0" style="border-left: 4px solid #10b981 !important;">
+            <div class="card-body p-4">
+                <div class="stat-value text-success">{{ fully_completed }}</div>
+                <div class="stat-label">Fully Completed & Paid</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Registrant Table Card -->
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0 text-dark">
+            <i class="fa-solid fa-users text-primary me-2"></i> Event Registrants Funnel List
+        </h5>
+        <span class="badge bg-light text-muted border">Live data feed</span>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>User Details</th>
+                    <th>Insurance Segments</th>
+                    <th>Pincode / Promo</th>
+                    <th>Selected Plan</th>
+                    <th>Funnel Progress Status</th>
+                    <th>Registered At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reg in registrants %}
+                    <tr>
+                        <td><strong>#{{ reg.id }}</strong></td>
+                        <td>
+                            <div class="fw-bold text-dark">{{ reg.fullname }}</div>
+                            <div class="text-muted small"><i class="fa-regular fa-envelope me-1"></i>{{ reg.email }}</div>
+                            <div class="text-muted small"><i class="fa-solid fa-phone me-1"></i>{{ reg.mobile }}</div>
+                        </td>
+                        <td>
+                            {% if reg.insurance_segments %}
+                                <div class="d-flex flex-wrap gap-1">
+                                    {% for seg in reg.insurance_segments %}
+                                        <span class="badge bg-light text-primary border" style="font-size:10px;">{{ seg }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <span class="badge bg-light text-muted border">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="small"><b>Pincode:</b> {{ reg.pincode|default:"N/A" }}</div>
+                            <div class="small"><b>Promo:</b> <span class="text-uppercase text-secondary font-monospace">{{ reg.promocode|default:"N/A" }}</span></div>
+                        </td>
+                        <td>
+                            {% if reg.selected_plan %}
+                                <span class="badge bg-light text-success border px-3">
+                                    <i class="fa-solid fa-tags me-1"></i> {{ reg.selected_plan|title }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted small">Not Selected</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if reg.current_step == 1 %}
+                                <span class="badge bg-warning text-dark px-3 py-2" style="font-size:11px;">
+                                    <i class="fa-solid fa-circle-exclamation me-1"></i> Step 1: Quit at Plans Page
+                                </span>
+                            {% elif reg.current_step == 2 %}
+                                <span class="badge bg-orange text-white px-3 py-2" style="font-size:11px; background:#f97316;">
+                                    <i class="fa-solid fa-hourglass-half me-1"></i> Step 2: Quit at Checkout
+                                </span>
+                            {% elif reg.current_step == 3 %}
+                                <span class="badge bg-success text-white px-3 py-2" style="font-size:11px;">
+                                    <i class="fa-solid fa-circle-check me-1"></i> Step 3: Registered & Paid
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary text-white px-3 py-2" style="font-size:11px;">
+                                    Unknown Step
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted small">
+                            {{ reg.created_at|date:"d-M-Y H:i" }}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-users-slash fa-3x mb-3 text-muted opacity-50"></i>
+                            <p class="mb-0 fw-bold">No user has registered for this event yet.</p>
+                            <p class="small text-muted mb-0">Share the registration URL to collect live submissions.</p>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

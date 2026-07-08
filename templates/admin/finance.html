@@ -1,4 +1,4 @@
-{% extends "admin/layout.html" %}
+{% extends "admin/base.html" %}
 {% load static %}
 
 {% block title %}Finance & Accounts — PadosiAgent Admin{% endblock %}
@@ -46,7 +46,7 @@
         <a href="?period=year"    class="filter-btn {% if period == 'year' %}active{% endif %}">This Year</a>
         <a href="?period=quarter" class="filter-btn {% if period == 'quarter' %}active{% endif %}">This Quarter</a>
         <a href="?period=month"   class="filter-btn {% if period == 'month' %}active{% endif %}">This Month</a>
-        <a href="{% url 'admin_panel:export_subscriptions' %}" class="btn btn-sm btn-outline-secondary ms-1">
+        <a href="#" class="btn btn-sm btn-outline-secondary ms-1">
             <i class="fa-solid fa-download me-1"></i>Export
         </a>
     </div>
@@ -336,7 +336,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 const CSRF_TOKEN = '{{ csrf_token }}';
-const MARK_URL   = '{% url "admin_panel:finance_mark_payment" %}';
+const MARK_URL   = '{% url "admin_finance_mark_payment" %}';
 
 // ── Cashflow Chart ──────────────────────────────────────────────────────────
 const cfCtx = document.getElementById('cashflowChart').getContext('2d');

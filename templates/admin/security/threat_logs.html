@@ -1,4 +1,4 @@
-{% extends 'admin/layout.html' %}
+{% extends 'admin/base.html' %}
 {% load static %}
 
 {% block title %}Security Threat Intelligence — PadosiAgent Admin{% endblock %}
@@ -32,7 +32,7 @@
                 <h4 class="m-0"><i class="fa-solid fa-bug-slash text-danger me-2"></i> Security Threat Intelligence</h4>
                 <p class="text-muted small mb-0">Real-time monitoring of malicious payloads and hacker profiles.</p>
             </div>
-            <a href="{% url 'admin_panel:security_blocked_ips' %}" class="btn btn-outline-danger">
+            <a href="{% url 'security_blocked_ips' %}" class="btn btn-outline-danger">
                 <i class="fa-solid fa-shield-halved me-1"></i> Manage Blocked IPs
             </a>
         </div>
@@ -116,7 +116,7 @@
                                     <button class="btn btn-sm btn-light border" type="button" data-bs-toggle="collapse" data-bs-target="#log-{{ threat.id }}" aria-expanded="false">
                                         <i class="fa-solid fa-eye"></i>
                                     </button>
-                                    <form action="{% url 'admin_panel:security_block_ip' %}" method="POST" class="d-inline ms-1">
+                                    <form action="{% url 'security_block_ip' %}" method="POST" class="d-inline ms-1">
                                         {% csrf_token %}
                                         <input type="hidden" name="ip_address" value="{{ threat.ip_address }}">
                                         <input type="hidden" name="reason" value="Recurring threats: {{ threat.event_type }}">
@@ -230,7 +230,7 @@ $(document).on('click', '.delete-btn', function(e) {
             button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
             
             $.ajax({
-                url: '{% url "admin_panel:security_threat_logs_delete" %}',
+                url: '{% url "security_threat_logs_delete" %}',
                 type: 'POST',
                 headers: { 'X-CSRFToken': '{{ csrf_token }}' },
                 data: {

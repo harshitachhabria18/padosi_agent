@@ -1,4 +1,4 @@
-{% extends 'admin/layout.html' %}
+{% extends 'admin/base.html' %}
 {% load static %}
 
 {% block title %}Contact Submissions — PadosiAgent Admin{% endblock %}
@@ -56,7 +56,7 @@
 <!-- Filters -->
 <div class="card mb-4">
     <div class="card-body py-3">
-        <form method="GET" action="{% url 'admin_panel:contacts_index' %}" class="row g-2 align-items-end">
+        <form method="GET" action="{% url 'admin_contacts_index' %}" class="row g-2 align-items-end">
             <div class="col-md-5">
                 <label class="form-label text-muted" style="font-size: 12px;">Search</label>
                 <input type="text" class="form-control form-control-sm" name="search" value="{{ search }}" placeholder="Name, Email, Subject, Ref ID...">
@@ -74,7 +74,7 @@
                 <button type="submit" class="btn btn-primary btn-sm w-100"><i class="fa-solid fa-filter me-1"></i>Filter</button>
             </div>
             <div class="col-md-2">
-                <a href="{% url 'admin_panel:contacts_index' %}" class="btn btn-outline-secondary btn-sm w-100">Reset</a>
+                <a href="{% url 'admin_contacts_index' %}" class="btn btn-outline-secondary btn-sm w-100">Reset</a>
             </div>
         </form>
     </div>
@@ -101,7 +101,7 @@
             <tbody>
                 {% for sub in submissions %}
                 <tr>
-                    <td><code style="font-size: 11px;">{{ sub.reference_id|default:"#"|add:sub.id|stringformat:"s" }}</code></td>
+                    <td><code style="font-size: 11px;">{% if sub.reference_id %}{{ sub.reference_id }}{% else %}#{{ sub.id }}{% endif %}</code></td>
                     <td>
                         <div style="font-weight: 600; font-size: 13px;">{{ sub.name }}</div>
                         <div style="font-size: 11px; color: #64748b;">
@@ -223,7 +223,7 @@ const CSRF_TOKEN = '{{ csrf_token }}';
 $(document).on('change', '.contact-status-select', function() {
     const $el = $(this);
     $.ajax({
-        url: '{% url "admin_panel:contacts_update_status" %}',
+        url: '{% url "admin_contacts_update_status" %}',
         method: 'POST',
         headers: { 'X-CSRFToken': CSRF_TOKEN },
         data: { id: $el.data('id'), status: $el.val() },
@@ -291,7 +291,7 @@ $(document).on('click', '.contact-delete-btn', function(e) {
             button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
 
             $.ajax({
-                url: '{% url "admin_panel:contacts_delete" %}',
+                url: '{% url "admin_contacts_delete" %}',
                 type: 'POST',
                 headers: { 'X-CSRFToken': CSRF_TOKEN },
                 data: { id: id },

@@ -1,4 +1,4 @@
-{% extends 'admin/layout.html' %}
+{% extends 'admin/base.html' %}
 
 {% block title %}FAQ Manager — PadosiAgent Admin{% endblock %}
 {% block breadcrumb_title %}Content Control › FAQ Manager{% endblock %}
@@ -24,7 +24,7 @@
                 <h6 class="m-0 fw-bold"><i class="fa-solid fa-gear me-2 text-primary"></i>FAQ Page Header &amp; Settings</h6>
             </div>
             <div class="card-body">
-                <form method="POST" action="{% url 'admin_panel:content_faqs_settings_update' %}">
+                <form method="POST" action="{% url 'admin_content_faqs_settings_update' %}">
                     {% csrf_token %}
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -59,7 +59,7 @@
                 <h6 class="m-0 fw-bold"><i class="fa-solid fa-plus me-2 text-success"></i>Add New FAQ</h6>
             </div>
             <div class="card-body">
-                <form method="POST" action="{% url 'admin_panel:content_faqs_store' %}">
+                <form method="POST" action="{% url 'admin_content_faqs_store' %}">
                     {% csrf_token %}
                     <div class="mb-3">
                         <label class="form-label fw-bold" style="font-size: 13px;">Question</label>
@@ -124,8 +124,8 @@
                             <div class="d-flex gap-1">
                                 <!-- Edit toggle -->
                                 <button class="btn btn-sm btn-outline-primary"
-                                        data-bs-toggle="collapse"
-                                        data-bs-target="#editFaq{{ faq.id }}"
+                                        data-toggle="collapse"
+                                        data-target="#editFaq{{ faq.id }}"
                                         title="Edit">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
@@ -137,15 +137,12 @@
                                     <i class="fa-solid {% if faq.is_active %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
                                 </button>
                                 <!-- Delete -->
-                                <form method="POST"
-                                      action="{% url 'admin_panel:content_faqs_delete' faq.id %}"
-                                      onsubmit="return confirm('Delete this FAQ?')"
-                                      style="display:inline;">
-                                    {% csrf_token %}
-                                    <button class="btn btn-sm btn-outline-danger" title="Delete">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                </form>
+                                <button class="btn btn-sm btn-outline-danger delete-btn" 
+                                        data-model="Faq" 
+                                        data-id="{{ faq.id }}" 
+                                        title="Delete">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
                             </div>
                         </div>
 
@@ -156,7 +153,7 @@
 
                         <!-- Inline Edit Form (collapsed) -->
                         <div class="collapse mt-3" id="editFaq{{ faq.id }}">
-                            <form method="POST" action="{% url 'admin_panel:content_faqs_update' faq.id %}">
+                            <form method="POST" action="{% url 'admin_content_faqs_update' faq.id %}">
                                 {% csrf_token %}
                                 <div class="mb-2">
                                     <input type="text" name="question"
@@ -195,7 +192,7 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
 <script>
 $(document).on('click', '.toggle-faq-btn', function () {
     var $btn = $(this);
@@ -203,7 +200,7 @@ $(document).on('click', '.toggle-faq-btn', function () {
     var currentStatus = $btn.data('current');  // 'true' or 'false'
 
     $.ajax({
-        url: '{% url "admin_panel:content_faqs_toggle" %}',
+        url: '{% url "admin_content_faqs_toggle" %}',
         method: 'POST',
         data: {
             csrfmiddlewaretoken: '{{ csrf_token }}',

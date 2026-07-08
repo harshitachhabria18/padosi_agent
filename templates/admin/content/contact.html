@@ -1,4 +1,4 @@
-{% extends 'admin/layout.html' %}
+{% extends 'admin/base.html' %}
 
 {% block title %}Contact Page — PadosiAgent Admin{% endblock %}
 {% block breadcrumb_title %}Content Control › Contact Page{% endblock %}
@@ -16,7 +16,7 @@
 </div>
 {% endif %}
 
-<form method="POST" action="{% url 'admin_panel:content_contact_update' %}">
+<form method="POST" action="{% url 'admin_content_contact_update' %}">
     {% csrf_token %}
 
     <!-- Banner Section -->

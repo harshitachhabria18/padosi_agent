@@ -1,0 +1,143 @@
+{% extends 'admin/base.html' %}
+{% block title %}Admin Management — PadosiAgent{% endblock %}
+{% block breadcrumb_title %}System › Admin Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="m-0 fw-bold">Administrators</h4>
+            <a href="{% url 'admin_admins_create' %}" class="btn btn-primary shadow-sm">
+                <i class="fa-solid fa-user-plus me-2"></i>Add Administrator
+            </a>
+        </div>
+
+        <div class="card mb-4 p-3">
+             <form method="GET" action="{% url 'admin_admins_index' %}" class="row g-3">
+                <div class="col-md-6">
+                     <input type="text" name="search" class="form-control" placeholder="Search name or email..." value="{{ search|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                     <select name="role" class="form-select">
+                          <option value="all" {% if selected_role == 'all' %}selected{% endif %}>All Roles</option>
+                          <option value="super" {% if selected_role == 'super' %}selected{% endif %}>Super Admin</option>
+                          <option value="staff" {% if selected_role == 'staff' %}selected{% endif %}>Staff Admin</option>
+                     </select>
+                </div>
+                <div class="col-md-3">
+                     <button type="submit" class="btn btn-primary w-100">Filter</button>
+                </div>
+             </form>
+        </div>
+
+        <div class="card shadow-sm border-0">
+             <div class="table-responsive">
+                  <table class="table align-middle mb-0">
+                      <thead>
+                          <tr>
+                              <th style="width: 50px;">#</th>
+                              <th>Name</th>
+                              <th>Email</th>
+                              <th>Role</th>
+                              <th>Assigned Sections</th>
+                              <th class="text-end" style="width: 150px;">Actions</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          {% for item in admins %}
+                          <tr>
+                              <td>{{ admins.start_index|add:forloop.counter0 }}</td>
+                              <td>
+                                  <div class="d-flex align-items-center gap-2">
+                                      <div style="width: 32px; height: 32px; border-radius: 50%; background: #ecfdf5; color: #1d7d5d; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;">
+                                          {{ item.name|slice:":1"|upper }}
+                                      </div>
+                                      <div class="fw-semibold">{{ item.name }}</div>
+                                  </div>
+                              </td>
+                              <td>{{ item.email }}</td>
+                              <td>
+                                  {% if item.role == 'super' %}
+                                      <span class="badge" style="font-size: 11px; background-color: #d1e7dd; color: #0f5132; border: 1px solid rgba(15, 81, 50, 0.2); font-weight: 600; padding: 4px 8px;">Super Admin</span>
+                                  {% else %}
+                                      <span class="badge" style="font-size: 11px; background-color: #cff4fc; color: #055160; border: 1px solid rgba(5, 81, 96, 0.2); font-weight: 600; padding: 4px 8px;">Staff Admin</span>
+                                  {% endif %}
+                              </td>
+                              <td>
+                                  {% if item.role == 'super' %}
+                                      <span class="text-success fw-medium" style="font-size: 12px;"><i class="fa-solid fa-square-check me-1"></i>All Sections (Full Access)</span>
+                                  {% else %}
+                                      {% if not item.permissions %}
+                                          <span class="text-muted" style="font-size: 12px; font-style: italic;">No sections assigned</span>
+                                      {% else %}
+                                          <div class="d-flex flex-wrap gap-1">
+                                              {% for perm in item.permissions %}
+                                                  <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 10px;">{{ perm|capfirst }}</span>
+                                              {% endfor %}
+                                          </div>
+                                      {% endif %}
+                                  {% endif %}
+                              </td>
+                              <td class="text-end">
+                                  <div class="d-flex justify-content-end gap-1">
+                                      <a href="{% url 'admin_admins_edit' item.id %}" class="btn btn-sm btn-light border" title="Edit Admin">
+                                          <i class="fa-solid fa-pen-to-square"></i>
+                                      </a>
+                                      {% if logged_in_admin.id != item.id %}
+                                          <button type="button" class="btn btn-danger btn-sm delete-btn" data-model="admin" data-id="{{ item.id }}" title="Delete" style="padding: 4px 8px;">
+                                              <i class="fas fa-trash"></i>
+                                          </button>
+                                      {% endif %}
+                                  </div>
+                              </td>
+                          </tr>
+                          {% empty %}
+                          <tr>
+                              <td colspan="6" class="text-center py-4 text-muted">
+                                  <i class="fa-solid fa-user-shield fa-2x mb-2 d-block opacity-25"></i>
+                                  No administrators found matching criteria.
+                              </td>
+                          </tr>
+                          {% endfor %}
+                      </tbody>
+                  </table>
+             </div>
+             {% if admins.has_other_pages %}
+             <div class="card-footer bg-white border-top py-3">
+                 <div class="pagination-container overflow-auto d-flex justify-content-center">
+                     <ul class="pagination pagination-sm mb-0">
+                         {% if admins.has_previous %}
+                             <li class="page-item"><a class="page-link" href="?page={{ admins.previous_page_number }}&search={{ search|default:'' }}&role={{ selected_role|default:'' }}">Previous</a></li>
+                         {% else %}
+                             <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                         {% endif %}
+
+                         {% for i in admins.paginator.page_range %}
+                             {% if admins.number == i %}
+                                 <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                             {% elif i > admins.number|add:'-3' and i < admins.number|add:'3' %}
+                                 <li class="page-item"><a class="page-link" href="?page={{ i }}&search={{ search|default:'' }}&role={{ selected_role|default:'' }}">{{ i }}</a></li>
+                             {% endif %}
+                         {% endfor %}
+
+                         {% if admins.has_next %}
+                             <li class="page-item"><a class="page-link" href="?page={{ admins.next_page_number }}&search={{ search|default:'' }}&role={{ selected_role|default:'' }}">Next</a></li>
+                         {% else %}
+                             <li class="page-item disabled"><span class="page-link">Next</span></li>
+                         {% endif %}
+                     </ul>
+                 </div>
+             </div>
+             {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.pagination { margin-bottom: 0px; flex-wrap: wrap; justify-content: center; gap: 5px; }
+.pagination .page-item .page-link { border-radius: 8px; padding: 8px 16px; color: #1d7d5d; border: 1px solid #e2e8f0; font-weight: 500; transition: all 0.2s; }
+.pagination .page-item.active .page-link { background-color: #1d7d5d; border-color: #1d7d5d; color: white; }
+.pagination .page-item.disabled .page-link { color: #64748b; background-color: #f8fafc; }
+.pagination svg { width: 1.25rem !important; height: 1.25rem !important; }
+</style>
+{% endblock %}

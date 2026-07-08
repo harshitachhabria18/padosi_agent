@@ -1,4 +1,4 @@
-{% extends 'admin/layout.html' %}
+{% extends 'admin/base.html' %}
 {% load static %}
 
 {% block title %}Subscription Manager — PadosiAgent Admin{% endblock %}
@@ -11,13 +11,13 @@
         <span class="text-muted" style="font-size: 13px;">Monitor agent subscription status and upcoming renewals</span>
     </div>
     <div class="d-flex gap-2">
-        <a href="{% url 'admin_panel:subscriptions' %}?filter=expiring_soon" class="btn btn-sm {% if filter == 'expiring_soon' %}btn-warning text-dark{% else %}btn-outline-warning{% endif %}">
+        <a href="{% url 'admin_subscriptions_index' %}?filter=expiring_soon" class="btn btn-sm {% if filter == 'expiring_soon' %}btn-warning text-dark{% else %}btn-outline-warning{% endif %}">
             <i class="fa-solid fa-triangle-exclamation me-1"></i> Expiring Soon
         </a>
-        <a href="{% url 'admin_panel:subscriptions' %}?filter=expired" class="btn btn-sm {% if filter == 'expired' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+        <a href="{% url 'admin_subscriptions_index' %}?filter=expired" class="btn btn-sm {% if filter == 'expired' %}btn-danger{% else %}btn-outline-danger{% endif %}">
             <i class="fa-solid fa-clock me-1"></i> Already Expired
         </a>
-        <a href="{% url 'admin_panel:subscriptions' %}" class="btn btn-sm {% if filter == 'all' or not filter %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+        <a href="{% url 'admin_subscriptions_index' %}" class="btn btn-sm {% if filter == 'all' or not filter %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
             <i class="fa-solid fa-rotate me-1"></i> All
         </a>
     </div>
@@ -144,7 +144,7 @@
                             <span class="badge {{ sub.badge_class }}" style="font-size: 10px;">{{ sub.badge_text }}</span>
                         </td>
                         <td class="text-end">
-                            <a href="/admin/agents/manage/{{ sub.agent_id }}/" class="btn btn-sm btn-light border" style="font-size: 11px;">
+                            <a href="{% url 'admin_agents_manage' sub.agent_id %}" class="btn btn-sm btn-light border" style="font-size: 11px;">
                                 <i class="fa-solid fa-pen-to-square me-1"></i> Manage
                             </a>
                             <button type="button" class="btn btn-danger btn-sm delete-btn" data-id="{{ sub.id }}" title="Delete" style="padding: 4px 8px;"><i class="fas fa-trash"></i></button>
@@ -188,7 +188,7 @@ $(document).on('click', '.delete-btn', function(e) {
             button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
             
             $.ajax({
-                url: '{% url "admin_panel:subscriptions_delete" %}',
+                url: '{% url "admin_delete_subscription" %}',
                 type: 'POST',
                 headers: { 'X-CSRFToken': '{{ csrf_token }}' },
                 data: {

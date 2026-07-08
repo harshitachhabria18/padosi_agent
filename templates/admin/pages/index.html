@@ -1,23 +1,24 @@
-{% extends 'admin/layout.html' %}
+{% extends 'admin/base.html' %}
 
-{% block title %}Pages & CMS — PadosiAgent Admin{% endblock %}
-{% block breadcrumb %}Content Control › Pages & CMS{% endblock %}
+{% block title %}CMS Pages — PadosiAgent Admin{% endblock %}
+{% block breadcrumb_title %}Pages{% endblock %}
 
 {% block content %}
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h4 class="m-0 fw-bold">Pages & CMS</h4>
-        <p class="text-muted mb-0" style="font-size: 13px;">Create and manage custom static pages. Each page gets a unique URL slug.</p>
+        <h5 class="fw-bold mb-1">📄 CMS Static Pages</h5>
+        <span style="font-size:13px;color:var(--text-muted);">Manage custom static pages (Privacy Policy, Terms, etc.).</span>
     </div>
-    <a href="{% url 'admin_panel:pages_create' %}" class="btn btn-primary shadow-sm">
-        <i class="fa-solid fa-file-circle-plus me-2"></i> Create New Page
+    <a href="{% url 'admin_pages_create' %}" class="btn btn-primary">
+        <i class="fa-solid fa-plus me-2"></i> Create New Page
     </a>
 </div>
 
 {% if messages %}
 <div class="mb-3">
     {% for message in messages %}
-    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible" role="alert">
         {{ message }}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
@@ -26,160 +27,131 @@
 {% endif %}
 
 {% if pages %}
-<div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead>
-                <tr>
-                    <th style="width: 40px; padding-left: 20px;">#</th>
-                    <th>Page Title</th>
-                    <th>URL Slug</th>
-                    <th>Status</th>
-                    <th>Last Modified</th>
-                    <th class="text-end" style="padding-right: 20px;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for page in pages %}
-                <tr>
-                    <td class="text-muted ps-4" style="font-size: 13px;">#{{ page.id }}</td>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="fw-semibold">{{ page.title }}</div>
+<div class="card" style="border-radius:14px; overflow:hidden; border:1px solid var(--border-color);">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle" style="font-size:13px;">
+                <thead style="background: var(--bg-hover); border-bottom: 2px solid var(--border-color);">
+                    <tr>
+                        <th class="px-4 py-3" style="width:50px;">#</th>
+                        <th class="py-3">Title</th>
+                        <th class="py-3">URL Slug</th>
+                        <th class="py-3">Status</th>
+                        <th class="py-3">Last Updated</th>
+                        <th class="py-3 text-end px-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for page in pages %}
+                    <tr>
+                        <td class="px-4 text-muted">{{ page.id }}</td>
+                        <td class="py-3 fw-semibold">
+                            {{ page.title }}
                             {% if page.is_raw_code %}
-                                <span class="badge bg-info text-white" style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.04em; border-radius: 4px; padding: 2px 6px;">
-                                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i> AI Code
-                                </span>
+                            <span class="badge ms-1" style="background:#f0fdf4;color:#16a34a;font-size:10px;border:1px solid #bbf7d0;">
+                                <i class="fa-solid fa-code fa-xs me-1"></i>HTML
+                            </span>
                             {% endif %}
-                        </div>
-                        {% if page.meta_description %}
-                            <div class="text-muted" style="font-size: 12px; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                {{ page.meta_description }}
+                        </td>
+                        <td>
+                            <a href="/page/{{ page.slug }}/" target="_blank" class="text-decoration-none text-muted"
+                               style="font-family:monospace;font-size:12px;">
+                                /page/{{ page.slug }}/
+                                <i class="fa-solid fa-arrow-up-right-from-square fa-xs ms-1"></i>
+                            </a>
+                        </td>
+                        <td>
+                            {% if page.is_active %}
+                            <span class="badge" style="background:#dcfce7;color:#15803d;border:1px solid #86efac;">
+                                <i class="fa-solid fa-circle fa-xs me-1" style="font-size:8px;"></i>Published
+                            </span>
+                            {% else %}
+                            <span class="badge" style="background:#fef9c3;color:#92400e;border:1px solid #fde68a;">
+                                <i class="fa-solid fa-circle fa-xs me-1" style="font-size:8px;"></i>Draft
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted">{{ page.updated_at|date:"d M Y, H:i" }}</td>
+                        <td class="text-end px-4">
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="/page/{{ page.slug }}/" target="_blank"
+                                   class="btn btn-sm btn-light border" title="View Page">
+                                    <i class="fa-solid fa-eye"></i>
+                                </a>
+                                <a href="{% url 'admin_pages_edit' page.id %}"
+                                   class="btn btn-sm btn-light border" title="Edit Page">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </a>
+                                <button type="button"
+                                    class="btn btn-sm btn-light border text-danger delete-page-btn"
+                                    data-page-id="{{ page.id }}"
+                                    data-page-title="{{ page.title }}"
+                                    title="Delete Page">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
                             </div>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <code class="text-primary" style="font-size: 13px; background: #f0f4ff; padding: 2px 8px; border-radius: 6px;">/{{ page.slug }}</code>
-                            <a href="/{{ page.slug }}/" target="_blank" class="text-muted" title="View Page" style="font-size: 11px;">
-                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                            </a>
-                        </div>
-                    </td>
-                    <td>
-                        <span class="badge {% if page.is_active %}bg-success{% else %}bg-secondary{% endif %}"
-                              style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; border-radius: 6px; padding: 4px 8px;">
-                            {% if page.is_active %}Published{% else %}Draft{% endif %}
-                        </span>
-                    </td>
-                    <td style="font-size: 13px; color: #64748b;">
-                        {{ page.updated_at|date:"M d, Y" }}
-                        <div style="font-size: 11px; color: #94a3b8;">{{ page.updated_at|timesince }} ago</div>
-                    </td>
-                    <td class="text-end pe-4">
-                        <div class="d-flex justify-content-end gap-2">
-                            <a href="/{{ page.slug }}/" target="_blank" class="btn btn-sm btn-light border" title="View Page">
-                                <i class="fa-solid fa-eye text-muted"></i>
-                            </a>
-                            <a href="{% url 'admin_panel:pages_edit' page.id %}" class="btn btn-sm btn-light border" title="Edit Page">
-                                <i class="fa-solid fa-pen-to-square text-primary"></i>
-                            </a>
-                            <button type="button" class="btn btn-danger btn-sm delete-btn" data-model="page" data-id="{{ page.id }}" title="Delete" style="padding: 4px 8px;"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
+
 {% else %}
-<div class="card border-0 shadow-sm text-center py-5" style="border-radius: 16px;">
-    <div class="py-4">
-        <div style="width:80px;height:80px;border-radius:50%;background:#f0f4ff;display:flex;align-items:center;justify-content:center;margin: 0 auto 20px;">
-            <i class="fa-solid fa-file-lines fa-2x text-primary opacity-50"></i>
-        </div>
-        <h5 class="fw-bold">No Pages Yet</h5>
-        <p class="text-muted mb-4" style="font-size: 14px;">Create custom static pages for your site like Terms, Privacy Policy, etc.</p>
-        <a href="{% url 'admin_panel:pages_create' %}" class="btn btn-primary px-4">
-            <i class="fa-solid fa-file-circle-plus me-2"></i> Create Your First Page
+<!-- Empty State -->
+<div class="card text-center py-5 border-0" style="border-radius:16px;background:linear-gradient(135deg,#f8fafc,#f0f9ff);">
+    <div class="card-body py-4">
+        <i class="fa-regular fa-file-lines fa-3x text-muted mb-3"></i>
+        <h6 class="fw-bold mb-1">No Pages Yet</h6>
+        <p class="text-muted mb-3" style="font-size:13px;">You haven't created any static pages yet. Create your first page now.</p>
+        <a href="{% url 'admin_pages_create' %}" class="btn btn-primary">
+            <i class="fa-solid fa-plus me-2"></i> Create First Page
         </a>
     </div>
 </div>
 {% endif %}
 
 <!-- Info Card -->
-<div class="card border-0 mt-4" style="background: linear-gradient(135deg, #eff6ff, #f0fdf4); border-radius: 12px;">
+<div class="card border-0 mt-4" style="background: linear-gradient(135deg,#eff6ff,#f0fdf4); border-radius:12px;">
     <div class="card-body py-3 px-4">
         <div class="d-flex align-items-start gap-3">
             <i class="fa-solid fa-circle-info fa-lg text-primary mt-1"></i>
             <div>
-                <div class="fw-bold mb-1" style="font-size: 14px;">How Pages & CMS Works</div>
+                <div class="fw-bold mb-1" style="font-size: 14px;">About CMS Pages</div>
                 <ul class="mb-0 text-muted" style="font-size: 13px; padding-left: 16px;">
-                    <li>Each page has a unique <strong>URL slug</strong> (e.g., <code>/terms</code>, <code>/privacy</code>).</li>
-                    <li>Use the <strong>WYSIWYG editor</strong> to add formatted content — no coding required.</li>
-                    <li><strong>Draft</strong> pages are saved but not publicly accessible.</li>
-                    <li>Set individual <strong>SEO meta title & description</strong> for each page.</li>
+                    <li>Pages are accessible at <code>/page/&lt;slug&gt;/</code> on the public site.</li>
+                    <li>Use <strong>Published</strong> to make a page live and <strong>Draft</strong> to hide it.</li>
+                    <li>Enable <strong>Raw HTML</strong> mode for pages with custom embedded code.</li>
+                    <li>Deleting a page is permanent. Make sure the URL is not linked anywhere.</li>
                 </ul>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Hidden delete forms -->
+{% for page in pages %}
+<form id="delete-form-{{ page.id }}" method="POST"
+      action="{% url 'admin_pages_delete' page.id %}" style="display:none;">
+    {% csrf_token %}
+</form>
+{% endfor %}
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
-$(document).on('click', '.delete-btn', function(e) {
-    e.preventDefault();
-    
-    const button = $(this);
-    const id = button.data('id');
-    const row = button.closest('tr');
-    
-    Swal.fire({
-        title: 'Are you sure?',
-        text: "This action cannot be undone!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it!',
-        cancelButtonText: 'Cancel'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
-            
-            $.ajax({
-                url: '/admin/pages/' + id + '/delete/',
-                type: 'POST',
-                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
-                success: function(response) {
-                    if (response.success) {
-                        Swal.fire({
-                            title: 'Deleted!',
-                            text: response.message,
-                            icon: 'success',
-                            timer: 1500,
-                            showConfirmButton: false
-                        });
-                        
-                        row.fadeOut(300, function() {
-                            $(this).remove();
-                            setTimeout(() => {
-                                location.reload();
-                            }, 500);
-                        });
-                    } else {
-                        Swal.fire('Error', response.message || 'Failed to delete page', 'error');
-                        button.prop('disabled', false).html('<i class="fas fa-trash"></i>');
-                    }
-                },
-                error: function(xhr) {
-                    Swal.fire('Error', 'Failed to delete page: ' + (xhr.responseJSON?.message || 'Server error'), 'error');
-                    button.prop('disabled', false).html('<i class="fas fa-trash"></i>');
-                }
-            });
-        }
+document.querySelectorAll('.delete-page-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var pageId    = this.dataset.pageId;
+        var pageTitle = this.dataset.pageTitle;
+
+        if (!confirm('Delete page "' + pageTitle + '"?\n\nThis is permanent and cannot be undone.')) return;
+
+        var form = document.getElementById('delete-form-' + pageId);
+        if (form) form.submit();
     });
 });
 </script>

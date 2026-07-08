@@ -1,0 +1,315 @@
+{% extends 'partials/base.html' %}
+
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .premium-auth-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at 10% 20%, rgb(240, 247, 255) 0%, rgb(255, 255, 255) 90%);
+            padding: 40px 20px;
+        }
+
+        .auth-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(226, 232, 240, 0.4);
+            width: 100%;
+            max-width: 440px;
+            padding: 40px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .auth-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .auth-logo {
+            height: 60px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .auth-logo:hover {
+            transform: scale(1.05);
+        }
+
+        .auth-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        .auth-header p {
+            font-size: 15px;
+            color: #64748b;
+        }
+
+        .form-group {
+            margin-bottom: 22px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 8px;
+        }
+
+        .form-control-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 12px;
+            font-size: 15px;
+            color: #1e293b;
+            background: #f8fafc;
+            outline: none;
+            transition: all 0.3s ease;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .form-control-input:focus {
+            border-color: #273c8e;
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(39, 60, 142, 0.1);
+        }
+
+        .password-input-wrapper {
+            position: relative;
+        }
+
+        .password-input-wrapper .form-control-input {
+            padding-right: 44px;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .password-toggle:hover {
+            color: #273c8e;
+        }
+
+        .forgot-link {
+            display: block;
+            text-align: right;
+            font-size: 14px;
+            font-weight: 600;
+            color: #273c8e;
+            text-decoration: none;
+            margin-bottom: 26px;
+            transition: opacity 0.2s;
+        }
+
+        .forgot-link:hover {
+            opacity: 0.85;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #273c8e 0%, #1e2e6d 100%);
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 10px 20px -5px rgba(39, 60, 142, 0.3);
+            transition: all 0.3s ease;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 15px 25px -5px rgba(39, 60, 142, 0.4);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .register-footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .register-footer a {
+            color: #0d9488;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .register-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .custom-alert {
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            line-height: 1.5;
+            border: 1px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .alert-success-custom {
+            color: #065f46;
+            background: #ecfdf5;
+            border-color: #a7f3d0;
+        }
+
+        .alert-danger-custom {
+            color: #991b1b;
+            background: #fef2f2;
+            border-color: #fca5a5;
+        }
+    </style>
+</head>
+<body>
+
+{% load static %}
+
+<div class="premium-auth-wrapper">
+    <div class="auth-card">
+
+        <!-- Header -->
+        <div class="auth-header">
+            <a href="/">
+                <img src="{% static 'img/logo-icon.png' %}" class="auth-logo" alt="PadosiAgent Logo">
+            </a>
+            <h1>Agent Login</h1>
+            <p>Welcome back! Please enter your details.</p>
+        </div>
+
+        <!-- Alert container (populated by Django / JS) -->
+        <div id="alert-container">
+            <!-- Success example (remove if not needed):
+            <div class="custom-alert alert-success-custom">
+                <i class="fas fa-check-circle"></i>
+                <span>Your session message here.</span>
+            </div>
+            -->
+            <!-- Error example (remove if not needed):
+            <div class="custom-alert alert-danger-custom">
+                <i class="fas fa-exclamation-circle"></i>
+                <div><span>Invalid credentials.</span></div>
+            </div>
+            -->
+        </div>
+
+        <form action="/agent-login" method="POST" id="login-form" autocomplete="on">
+            <!-- Django: {% csrf_token %} -->
+            <input type="hidden" name="login_type" value="agent">
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email"
+                    class="form-control-input"
+                    placeholder="your.email@example.com"
+                    required autofocus autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="password-input-wrapper">
+                    <input type="password" id="password" name="password"
+                        class="form-control-input"
+                        placeholder="••••••••"
+                        required autocomplete="current-password">
+                    <i class="fas fa-eye password-toggle" id="togglePassword"></i>
+                </div>
+            </div>
+
+            <a href="/password-reset?type=agent" class="forgot-link">Forgot password?</a>
+
+            <button type="submit" class="btn-submit" id="submit-btn">
+                <span id="btn-text">Login as Agent</span>
+                <i class="fas fa-arrow-right" id="btn-icon"></i>
+                <i class="fas fa-spinner fa-spin" id="btn-spinner" style="display:none;"></i>
+            </button>
+        </form>
+
+        <div class="register-footer">
+            New as PadosiAgent? <a href="/agent-registration">Register here</a>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // Password toggle
+    document.getElementById('togglePassword').addEventListener('click', function () {
+        const passwordInput = document.getElementById('password');
+        const isPassword = passwordInput.type === 'password';
+        passwordInput.type = isPassword ? 'text' : 'password';
+        this.classList.toggle('fa-eye', !isPassword);
+        this.classList.toggle('fa-eye-slash', isPassword);
+    });
+
+    // Submit spinner
+    document.getElementById('login-form').addEventListener('submit', function () {
+        const btn = document.getElementById('submit-btn');
+        const btnText = document.getElementById('btn-text');
+        const btnIcon = document.getElementById('btn-icon');
+        const btnSpinner = document.getElementById('btn-spinner');
+
+        btn.disabled = true;
+        btnText.textContent = 'Logging in...';
+        btnIcon.style.display = 'none';
+        btnSpinner.style.display = 'inline-block';
+    });
+</script>
+
+</body>
+</html>
+{% endblock %}

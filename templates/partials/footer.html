@@ -9,29 +9,37 @@
                             <div class="logo-content">
                                 <a href="/" class="footer-logo">
                                     <figure class="mb-0">
-                                        {% if footer_settings.site_logo %}
-                                            <img src="{{ footer_settings.site_logo }}" alt="{{ footer_settings.site_name|default:'PadosiAgent' }}" style="max-height: 50px;">
-                                        {% else %}
-                                            <img src="{% static 'img/logo.png' %}" alt="{{ footer_settings.site_name|default:'PadosiAgent' }}" style="max-height: 50px;">
-                                        {% endif %}
+                                        <img src="{% if footer_settings.site_logo %}{% if footer_settings.site_logo|slice:':4' == 'http' or footer_settings.site_logo|slice:':1' == '/' %}{{ footer_settings.site_logo }}{% else %}{% static footer_settings.site_logo %}{% endif %}{% else %}{% static 'img/logo.png' %}{% endif %}"
+                                            alt="{{ footer_settings.site_name|default:'PadosiAgent' }}"
+                                            style="max-height: 50px;" onerror="this.onerror=null; this.src='{% static 'img/logo.png' %}';">
                                     </figure>
                                 </a>
-                                <p class="text-size-14 mb-0">Connecting clients with the right insurance agents in their neighborhood.</p>
+                                <p class="text-size-14 mb-0">Connecting clients with the right insurance agents in their
+                                    neighborhood.</p>
                             </div>
                         </div>
                         <div class="col-lg-3 col-md-3 col-sm-4 col-6">
                             <div class="links">
                                 <h4 class="heading">Useful Links</h4>
                                 <ul class="list-unstyled mb-0">
-                                    <li><i class="fa-solid fa-circle"></i><a href="/" class="text-decoration-none">Home</a></li>
-                                    <li><i class="fa-solid fa-circle"></i><a href="/find-agents/?openFilter=1" class="text-decoration-none">Find Agents</a></li>
-                                    <li><i class="fa-solid fa-circle"></i><a href="{% url 'home:about' %}" class="text-decoration-none">About Us</a></li>
-                                    <li><i class="fa-solid fa-circle"></i><a href="/contact/" class="text-decoration-none">Contact Us</a></li>
-                                    <li><i class="fa-solid fa-circle"></i><a href="/faq/" class="text-decoration-none">FAQs</a></li>
-                                    <li><i class="fa-solid fa-circle"></i><a href="#" class="text-decoration-none">Insurance Blog</a></li>
-                                    <li><i class="fa-solid fa-circle"></i><a href="/calculator/" class="text-decoration-none">Insurance Calculator</a></li>
-                                    <li><i class="fa-solid fa-circle"></i><a href="/agent-login/" class="text-decoration-none">Agent Login</a></li>
-                                    <li><i class="fa-solid fa-circle"></i><a href="/agent-registration/" class="text-decoration-none">Agent Register</a></li>
+                                    <li><i class="fa-solid fa-circle"></i><a href="/"
+                                            class="text-decoration-none">Home</a></li>
+                                    <li><i class="fa-solid fa-circle"></i><a href="/find-agents/?openFilter=1"
+                                            class="text-decoration-none">Find Agents</a></li>
+                                    <li><i class="fa-solid fa-circle"></i><a href="{% url 'home:about' %}"
+                                            class="text-decoration-none">About Us</a></li>
+                                    <li><i class="fa-solid fa-circle"></i><a href="/contact/"
+                                            class="text-decoration-none">Contact Us</a></li>
+                                    <li><i class="fa-solid fa-circle"></i><a href="/faq/"
+                                            class="text-decoration-none">FAQs</a></li>
+                                    <li><i class="fa-solid fa-circle"></i><a href="#"
+                                            class="text-decoration-none">Insurance Blog</a></li>
+                                    <li><i class="fa-solid fa-circle"></i><a href="/calculator/"
+                                            class="text-decoration-none">Insurance Calculator</a></li>
+                                    <li><i class="fa-solid fa-circle"></i><a href="/agent-login/"
+                                            class="text-decoration-none">Agent Login</a></li>
+                                    <li><i class="fa-solid fa-circle"></i><a href="/agent-registration/"
+                                            class="text-decoration-none">Agent Register</a></li>
                                 </ul>
                             </div>
                         </div>
@@ -39,18 +47,15 @@
                             <div class="contact">
                                 <h4 class="heading">Contact Info</h4>
                                 <ul class="list-unstyled mb-0">
-                                    {% if footer_settings.contact_email %}
                                     <li class="text">
                                         <i class="fa-solid fa-envelope"></i>
-                                        <a href="mailto:{{ footer_settings.contact_email }}" id="footer-email-link" target="_blank" class="text-decoration-none">{{ footer_settings.contact_email }}</a>
+                                        <a href="mailto:{{ footer_settings.contact_email|default:'support@padosiagent.com' }}" id="footer-email-link"
+                                            target="_blank" class="text-decoration-none">{{ footer_settings.contact_email|default:'support@padosiagent.com' }}</a>
                                     </li>
-                                    {% endif %}
-                                    {% if footer_settings.contact_address %}
                                     <li class="text">
                                         <i class="fa-solid fa-location-dot"></i>
-                                        <a href="#" class="text-decoration-none address mb-0">{{ footer_settings.contact_address }}</a>
+                                        <a href="#" class="text-decoration-none address mb-0">{{ footer_settings.contact_address|default:'Ahmedabad - 380009 Gujarat, India' }}</a>
                                     </li>
-                                    {% endif %}
                                 </ul>
                             </div>
                         </div>
@@ -60,16 +65,25 @@
                                 <h4 class="heading">Social Networks</h4>
                                 <ul class="list-unstyled mb-0 social-icons">
                                     {% if footer_settings.social_links.facebook and footer_settings.social_links.facebook != '#' %}
-                                        <li><a href="{{ footer_settings.social_links.facebook }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none"><i class="fa-brands fa-facebook-f social-networks"></i></a></li>
+                                    <li><a href="{{ footer_settings.social_links.facebook }}" target="_blank"
+                                            rel="noopener noreferrer" class="text-decoration-none"><i
+                                                class="fa-brands fa-facebook-f social-networks"></i></a></li>
                                     {% endif %}
                                     {% if footer_settings.social_links.twitter and footer_settings.social_links.twitter != '#' %}
-                                        <li><a href="{{ footer_settings.social_links.twitter }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none"><i class="fa-brands fa-x-twitter social-networks" aria-hidden="true"></i></a></li>
+                                    <li><a href="{{ footer_settings.social_links.twitter }}" target="_blank"
+                                            rel="noopener noreferrer" class="text-decoration-none"><i
+                                                class="fa-brands fa-x-twitter social-networks"
+                                                aria-hidden="true"></i></a></li>
                                     {% endif %}
                                     {% if footer_settings.social_links.instagram and footer_settings.social_links.instagram != '#' %}
-                                        <li><a href="{{ footer_settings.social_links.instagram }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none"><i class="fa-brands fa-instagram social-networks"></i></a></li>
+                                    <li><a href="{{ footer_settings.social_links.instagram }}" target="_blank"
+                                            rel="noopener noreferrer" class="text-decoration-none"><i
+                                                class="fa-brands fa-instagram social-networks"></i></a></li>
                                     {% endif %}
                                     {% if footer_settings.social_links.linkedin and footer_settings.social_links.linkedin != '#' %}
-                                        <li><a href="{{ footer_settings.social_links.linkedin }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none"><i class="fa-brands fa-linkedin-in social-networks"></i></a></li>
+                                    <li><a href="{{ footer_settings.social_links.linkedin }}" target="_blank"
+                                            rel="noopener noreferrer" class="text-decoration-none"><i
+                                                class="fa-brands fa-linkedin-in social-networks"></i></a></li>
                                     {% endif %}
                                 </ul>
                             </div>
@@ -81,12 +95,14 @@
         </div>
     </div>
     <div class="copyright">
-        <p class="mb-0">© {% now "Y" %} {{ footer_settings.site_name|default:"PadosiAgent" }} ServTech Private Limited. All rights reserved. | <a href="/privacy/" class="text-decoration-none">Privacy Policy</a> | <a href="/terms/" class="text-decoration-none">Terms & Conditions</a></p>
+        <p class="mb-0">© {% now "Y" %} {{ footer_settings.site_name|default:"PadosiAgent" }} ServTech Private Limited.
+            All rights reserved. | <a href="/privacy/" class="text-decoration-none">Privacy Policy</a> | <a
+                href="/terms/" class="text-decoration-none">Terms & Conditions</a></p>
     </div>
-    
+
     {% if footer_settings.contact_email %}
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", function () {
             var email = "{{ footer_settings.contact_email|escapejs }}";
             if (email) {
                 var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);

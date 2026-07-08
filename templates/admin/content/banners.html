@@ -1,52 +1,54 @@
-{% extends 'admin/layout.html' %}
+{% extends 'admin/base.html' %}
 
 {% block title %}Banner Slides — PadosiAgent Admin{% endblock %}
-{% block breadcrumb %}Content Control › Banner Slides{% endblock %}
+{% block breadcrumb_title %}Content › Banner Slides{% endblock %}
 
 {% block content %}
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h4 class="m-0 fw-bold">Homepage Banner Slider</h4>
-        <p class="text-muted mb-0" style="font-size:13px;">Manage the hero slider on the homepage. Drag to reorder. Toggle to show/hide individual slides.</p>
+        <h5 class="fw-bold mb-1">🎯 Homepage Banner Slides</h5>
+        <span style="font-size:13px;color:var(--text-muted);">Edit the hero carousel shown on the public homepage. Drag to reorder, toggle visibility, and save.</span>
     </div>
-    <div class="d-flex gap-2">
-        <a href="/" target="_blank" class="btn btn-sm btn-outline-secondary">
-            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> View Site
-        </a>
-        <button type="button" class="btn btn-outline-primary btn-sm" id="addSlideBtn">
-            <i class="fa-solid fa-plus me-1"></i> Add Slide
-        </button>
-        <button type="submit" form="banner-form" class="btn btn-primary btn-sm px-4">
-            <i class="fa-solid fa-save me-1"></i> Save All Slides
-        </button>
-    </div>
+    <button type="button" class="btn btn-outline-primary btn-sm" id="addSlideBtn">
+        <i class="fa-solid fa-plus me-1"></i> Add Slide
+    </button>
 </div>
 
-<form method="POST" action="{% url 'admin_panel:content_banners_update' %}" id="banner-form">
+{% if messages %}
+<div class="mb-3">
+    {% for message in messages %}
+    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<form method="POST" action="{% url 'admin_content_banners_update' %}">
     {% csrf_token %}
 
     <div id="slides-container">
         {% for slide in banners %}
-        <div class="card mb-3 slide-card" data-index="{{ forloop.counter0 }}" style="border-left: 4px solid {% if slide.visible|default_if_none:True %}#10b981{% else %}#f59e0b{% endif %}; transition: border-color 0.3s;">
-            <div class="card-header py-2 d-flex justify-content-between align-items-center" style="cursor:grab;">
+        <div class="card mb-3 slide-card" style="border-left: 4px solid {% if slide.visible %}#10b981{% else %}#f59e0b{% endif %};">
+            <div class="card-header py-2 d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-3">
                     <i class="fa-solid fa-grip-vertical text-muted" style="cursor:grab;"></i>
-                    <span class="badge {% if slide.visible|default_if_none:True %}bg-success{% else %}bg-warning text-dark{% endif %}">
-                        Slide {{ forloop.counter }}
-                    </span>
-                    <span class="fw-semibold" style="font-size: 14px;">{{ slide.title|default:'Untitled Slide' }}</span>
+                    <span class="badge bg-secondary">Slide {{ forloop.counter }}</span>
+                    <span class="fw-semibold slide-title-label" style="font-size:14px;">{{ slide.title|default:'Untitled Slide' }}</span>
                 </div>
                 <div class="d-flex align-items-center gap-3">
                     <div class="form-check form-switch mb-0">
                         <input class="form-check-input visibility-toggle" type="checkbox"
-                            name="visible[{{ forloop.counter0 }}]" value="1" id="vis{{ forloop.counter0 }}"
-                            {% if slide.visible|default_if_none:True %}checked{% endif %}>
-                        <label class="form-check-label" for="vis{{ forloop.counter0 }}" style="font-size:12px;">Visible</label>
+                               name="visible[{{ forloop.counter0 }}]" value="1"
+                               {% if slide.visible %}checked{% endif %}>
+                        <label class="form-check-label" style="font-size:12px;">Visible</label>
                     </div>
-                    <button type="button" class="btn btn-sm btn-light border toggle-slide-body" title="Collapse/Expand">
+                    <button type="button" class="btn btn-sm btn-light border toggle-slide-body">
                         <i class="fa-solid fa-chevron-down"></i>
                     </button>
-                    <button type="button" class="btn btn-sm btn-light border text-danger remove-slide-btn" title="Remove Slide">
+                    <button type="button" class="btn btn-sm btn-light border text-danger remove-slide-btn">
                         <i class="fa-solid fa-trash"></i>
                     </button>
                 </div>
@@ -55,23 +57,29 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label fw-semibold" style="font-size:13px;">Slide Title <span class="text-danger">*</span></label>
-                        <input type="text" name="title[]" value="{{ slide.title|default:'' }}" class="form-control" required placeholder="e.g. Buy/Port/Renew Insurance">
+                        <input type="text" name="title[]" value="{{ slide.title|default:'' }}"
+                               class="form-control slide-title-input" required
+                               placeholder="e.g. Buy/Port/Renew Insurance">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold" style="font-size:13px;">Subtitle</label>
-                        <input type="text" name="subtitle[]" value="{{ slide.subtitle|default:'' }}" class="form-control" placeholder="Supporting text under the title">
+                        <input type="text" name="subtitle[]" value="{{ slide.subtitle|default:'' }}"
+                               class="form-control" placeholder="Supporting text under the title">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-semibold" style="font-size:13px;">CTA Button Text</label>
-                        <input type="text" name="cta_text[]" value="{{ slide.cta_text|default:'' }}" class="form-control" placeholder="e.g. Find Your PadosiAgent">
+                        <input type="text" name="cta_text[]" value="{{ slide.cta_text|default:'' }}"
+                               class="form-control" placeholder="e.g. Find Your PadosiAgent">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-semibold" style="font-size:13px;">CTA Button Link / URL</label>
-                        <input type="text" name="cta_link[]" value="{{ slide.cta_link|default:'' }}" class="form-control" placeholder="/find-agents?ServiceType=New%20Policy">
+                        <input type="text" name="cta_link[]" value="{{ slide.cta_link|default:'' }}"
+                               class="form-control" placeholder="/find-agents?ServiceType=New%20Policy">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-semibold" style="font-size:13px;">Background CSS Class</label>
-                        <input type="text" name="bg_class[]" value="{{ slide.bg_class|default:'' }}" class="form-control" placeholder="e.g. banner-new-policy">
+                        <input type="text" name="bg_class[]" value="{{ slide.bg_class|default:'' }}"
+                               class="form-control" placeholder="e.g. banner-new-policy">
                         <small class="text-muted">CSS class applied to the slide background. Defined in your frontend CSS.</small>
                     </div>
                 </div>
@@ -90,7 +98,7 @@
     </div>
 </form>
 
-<!-- Slide Info Card -->
+<!-- Info Card -->
 <div class="card border-0" style="background: linear-gradient(135deg,#eff6ff,#f0fdf4); border-radius:12px;">
     <div class="card-body py-3 px-4">
         <div class="d-flex align-items-start gap-3">
@@ -108,29 +116,33 @@
     </div>
 </div>
 
-<!-- New slide template -->
+<!-- New slide template (hidden, cloned by JS) -->
 <template id="slideTemplate">
     <div class="card mb-3 slide-card" style="border-left: 4px solid #6366f1;">
         <div class="card-header py-2 d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-3">
                 <i class="fa-solid fa-grip-vertical text-muted" style="cursor:grab;"></i>
                 <span class="badge bg-info">New Slide</span>
-                <span class="fw-semibold" style="font-size:14px;">Untitled Slide</span>
+                <span class="fw-semibold slide-title-label" style="font-size:14px;">Untitled Slide</span>
             </div>
             <div class="d-flex align-items-center gap-3">
                 <div class="form-check form-switch mb-0">
                     <input class="form-check-input visibility-toggle" type="checkbox" name="visible[__INDEX__]" value="1" checked>
                     <label class="form-check-label" style="font-size:12px;">Visible</label>
                 </div>
-                <button type="button" class="btn btn-sm btn-light border toggle-slide-body"><i class="fa-solid fa-chevron-down"></i></button>
-                <button type="button" class="btn btn-sm btn-light border text-danger remove-slide-btn"><i class="fa-solid fa-trash"></i></button>
+                <button type="button" class="btn btn-sm btn-light border toggle-slide-body">
+                    <i class="fa-solid fa-chevron-down"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-light border text-danger remove-slide-btn">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
             </div>
         </div>
         <div class="card-body slide-body">
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label fw-semibold" style="font-size:13px;">Slide Title <span class="text-danger">*</span></label>
-                    <input type="text" name="title[]" class="form-control" required placeholder="e.g. Buy/Port/Renew Insurance">
+                    <input type="text" name="title[]" class="form-control slide-title-input" required placeholder="e.g. Buy/Port/Renew Insurance">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label fw-semibold" style="font-size:13px;">Subtitle</label>
@@ -153,6 +165,7 @@
         </div>
     </div>
 </template>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -168,39 +181,59 @@ function addSlide() {
     updateSlideNumbers();
 }
 
-$('#addSlideBtn, #addSlideBtn2').on('click', addSlide);
+document.getElementById('addSlideBtn').addEventListener('click', addSlide);
+document.getElementById('addSlideBtn2').addEventListener('click', addSlide);
 
-$(document).on('click', '.remove-slide-btn', function() {
-    $(this).closest('.slide-card').fadeOut(200, function() {
-        $(this).remove();
-        updateSlideNumbers();
-    });
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-slide-btn')) {
+        var card = e.target.closest('.slide-card');
+        card.style.opacity = '0';
+        card.style.transition = 'opacity 0.2s';
+        setTimeout(function() {
+            card.remove();
+            updateSlideNumbers();
+        }, 200);
+    }
+
+    if (e.target.closest('.toggle-slide-body')) {
+        var btn = e.target.closest('.toggle-slide-body');
+        var body = btn.closest('.card').querySelector('.slide-body');
+        var icon = btn.querySelector('i');
+        if (body.style.display === 'none') {
+            body.style.display = '';
+            icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+        } else {
+            body.style.display = 'none';
+            icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+        }
+    }
 });
 
-$(document).on('click', '.toggle-slide-body', function() {
-    var body = $(this).closest('.card').find('.slide-body');
-    body.toggle(200);
-    $(this).find('i').toggleClass('fa-chevron-down fa-chevron-up');
+document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('visibility-toggle')) {
+        var card = e.target.closest('.slide-card');
+        card.style.borderLeftColor = e.target.checked ? '#10b981' : '#f59e0b';
+    }
 });
 
-$(document).on('change', '.visibility-toggle', function() {
-    var card = $(this).closest('.slide-card');
-    card.css('border-left-color', this.checked ? '#10b981' : '#f59e0b');
-});
-
-// Live title update
-$(document).on('input', 'input[name="title[]"]', function() {
-    var card = $(this).closest('.slide-card');
-    var text = this.value || 'Untitled Slide';
-    card.find('.card-header .fw-semibold').text(text);
+// Live title preview in card header
+document.addEventListener('input', function(e) {
+    if (e.target.classList.contains('slide-title-input')) {
+        var card = e.target.closest('.slide-card');
+        var label = card.querySelector('.slide-title-label');
+        label.textContent = e.target.value || 'Untitled Slide';
+    }
 });
 
 function updateSlideNumbers() {
-    $('.slide-card').each(function(i) {
-        $(this).find('.badge').not('.bg-info').text('Slide ' + (i + 1));
-        // Update input names for indices to keep visibility state aligned
-        var toggle = $(this).find('.visibility-toggle');
-        toggle.attr('name', 'visible[' + i + ']');
+    document.querySelectorAll('.slide-card').forEach(function(card, i) {
+        var badge = card.querySelector('.badge');
+        if (badge && !badge.classList.contains('bg-info')) {
+            badge.textContent = 'Slide ' + (i + 1);
+        }
+        // Keep visibility input names aligned with index
+        var toggle = card.querySelector('.visibility-toggle');
+        if (toggle) toggle.setAttribute('name', 'visible[' + i + ']');
     });
 }
 </script>

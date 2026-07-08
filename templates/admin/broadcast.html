@@ -1,4 +1,4 @@
-{% extends 'admin/layout.html' %}
+{% extends 'admin/base.html' %}
 {% load static %}
 
 {% block title %}Broadcast Message — PadosiAgent Admin{% endblock %}
@@ -19,7 +19,7 @@
                 <h6 class="m-0 fw-bold"><i class="fa-solid fa-paper-plane me-2 text-primary"></i>Compose Broadcast</h6>
             </div>
             <div class="card-body p-4">
-                <form method="POST" action="{% url 'admin_panel:broadcast_send' %}" id="broadcastForm">
+                <form method="POST" action="{% url 'broadcast_send' %}" id="broadcastForm">
                     {% csrf_token %}
                     <div class="mb-4">
                         <label class="form-label fw-semibold" style="font-size: 13px;">Target Audience</label>

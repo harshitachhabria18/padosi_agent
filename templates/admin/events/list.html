@@ -1,0 +1,85 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Events Dashboard — PadosiAgent{% endblock %}
+{% block breadcrumb_title %}Event Management{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">Dynamic Events Section</h4>
+        <p class="text-muted small mb-0">Track participant registration funnel stages live.</p>
+    </div>
+</div>
+
+<!-- Event List Card -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white py-3">
+        <h5 class="fw-bold mb-0 text-dark">
+            <i class="fa-solid fa-calendar-days text-primary me-2"></i> All Scheduled Events
+        </h5>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Event Name</th>
+                    <th>Event Date</th>
+                    <th class="text-center">Total Entries</th>
+                    <th class="text-center">Step 1 Drop (Form Only)</th>
+                    <th class="text-center">Step 2 Drop (Plan Selected)</th>
+                    <th class="text-center">Step 3 Done (Paid)</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                    <tr>
+                        <td><strong>#{{ event.id }}</strong></td>
+                        <td>
+                            <div class="fw-bold text-dark">{{ event.name }}</div>
+                            <div class="text-muted small text-truncate" style="max-width: 300px;">{{ event.description|default:"" }}</div>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border">
+                                <i class="fa-regular fa-clock me-1 text-muted"></i> {{ event.event_date|date:"d-M-Y" }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-primary rounded-pill px-3">{{ event.total_count }}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-light text-warning border px-2">{{ event.step1_count }}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-light text-danger border px-2">{{ event.step2_count }}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-success rounded-pill px-3">{{ event.step3_count }}</span>
+                        </td>
+                        <td>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'admin_events_show' event.id %}" class="btn btn-sm btn-primary">
+                                    <i class="fa-solid fa-eye me-1"></i> Track Funnel
+                                </a>
+                                <a href="{% url 'admin_events_export' event.id %}" class="btn btn-sm btn-outline-success">
+                                    <i class="fa-solid fa-file-excel me-1"></i> Export Excel
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-calendar-xmark fa-3x mb-3 text-muted opacity-50"></i>
+                            <p class="mb-0 fw-bold">No events created in the system yet.</p>
+                            <p class="small text-muted mb-0">Run EventSeeder to create dummy events for tracking.</p>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

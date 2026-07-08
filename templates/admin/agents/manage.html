@@ -1,0 +1,497 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Manage: {{ agent.fullname }} — PadosiAgent Admin{% endblock %}
+{% block breadcrumb_title %}Agent Management › Manage Profile{% endblock %}
+
+{% block content %}
+<style>
+    .manage-grid { display: grid; grid-template-columns: 340px 1fr; gap: 24px; }
+    .info-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #edf3f8; font-size: 14px; }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: #5f6b7a; font-weight: 500; }
+    .info-value { font-weight: 600; text-align: right; }
+    .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #5f6b7a; margin: 0 0 14px; }
+    .avatar-circle { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #1d7d5d, #2258a5); display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 800; color: #fff; flex-shrink: 0; }
+    .stat-box { background: #f8fafc; border: 1px solid #edf3f8; border-radius: 10px; padding: 14px 18px; text-align: center; flex: 1; min-width: 100px; }
+    .stat-box .num { font-size: 22px; font-weight: 800; }
+    .stat-box .lbl { font-size: 11px; color: #5f6b7a; margin-top: 2px; }
+    .review-card { background: #f8fafc; border: 1px solid #edf3f8; border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+    .plan-btn { padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; border: 2px solid #d7e0ea; background: #fff; color: #5f6b7a; cursor: pointer; transition: all .15s; }
+    .plan-btn.selected { border-color: #1d7d5d; background: #e6f4f0; color: #1d7d5d; }
+    .plan-btn:hover:not(.selected) { border-color: #aab8c8; }
+    .alert-success { background: #e6f4f0; border: 1px solid #1d7d5d; color: #1a5c45; padding: 10px 16px; border-radius: 8px; font-size: 14px; margin-bottom: 16px; }
+    .alert-error { background: #fef2f2; border: 1px solid #ef4444; color: #b91c1c; padding: 10px 16px; border-radius: 8px; font-size: 14px; margin-bottom: 16px; }
+    .expired-text { color: #ef4444; }
+    .badge-green { background: #dcfce7; color: #166534; }
+    .badge-destructive { background: #fee2e2; color: #991b1b; }
+    .badge-primary { background: #dbeafe; color: #1e40af; }
+    .badge-secondary { background: #f1f5f9; color: #475569; }
+    @media(max-width:900px) { .manage-grid { grid-template-columns: 1fr; } }
+</style>
+
+<div class="container-fluid py-2">
+  <!-- HEADER -->
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;flex-wrap:wrap;">
+    <div class="avatar-circle" style="overflow:hidden;">
+      <img src="{% if agent.profile_photo_path %}/storage/{{ agent.profile_photo_path }}{% else %}{% static 'admin_assets/images/avatar-icon.jpg' %}{% endif %}" alt="{{ agent.fullname }}" style="width:100%;height:100%;object-fit:cover;" onerror="this.onerror=null;this.src='{% static 'admin_assets/images/avatar-icon.jpg' %}';">
+    </div>
+    <div style="flex:1;">
+      <h1 style="font-size:24px;font-weight:800;margin:0;">{{ agent.fullname }}</h1>
+      <p style="color:#5f6b7a;font-size:14px;margin:4px 0 0;">{{ agent.email }} &nbsp;·&nbsp; {{ agent.mobile|default:'No phone' }}</p>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <span class="badge {% if agent.status == 'active' %}badge-green{% else %}badge-destructive{% endif %}" style="font-size:13px;padding:6px 14px;">
+        {% if agent.status == 'active' %}🟢 Active{% else %}🔴 Inactive{% endif %}
+      </span>
+      <form method="POST" action="javascript:void(0);" style="margin:0;">
+        {% csrf_token %}
+        <button type="button" class="btn" style="font-size:13px;" onclick="toggleStatus({{ agent.id }}, '{% if agent.status == 'active' %}suspended{% else %}active{% endif %}')">
+          {% if agent.status == 'active' %}⏸ Deactivate{% else %}▶ Activate{% endif %}
+        </button>
+      </form>
+      <a href="{% url 'agents:agent_edit_profile' %}?agent_id={{ agent.id }}" class="btn btn-primary" style="font-size:13px;" title="Full Profile Editor"><i class="fas fa-edit"></i> Full Profile Editor</a>
+      <a href="{% url 'admin_agents' %}" class="btn" style="font-size:13px;background:#f1f5f9;color:#1e293b;border:1px solid #d7e0ea;text-decoration:none;">← Back</a>
+    </div>
+  </div>
+
+  <!-- STATS ROW -->
+  <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
+    <div class="stat-box">
+      <div class="num">⭐ {% if agent.avg_rating %}{{ agent.avg_rating|floatformat:1 }}{% else %}—{% endif %}</div>
+      <div class="lbl">Avg Rating</div>
+    </div>
+    <div class="stat-box">
+      <div class="num">{{ agent.review_count|default:"0" }}</div>
+      <div class="lbl">Approved Reviews</div>
+    </div>
+    <div class="stat-box">
+      <div class="num">{{ agent.pending_reviews|default:"0" }}</div>
+      <div class="lbl">Pending Reviews</div>
+    </div>
+    <div class="stat-box">
+      <div class="num">
+        {% if agent.experience_range %}{{ agent.experience_range }}{% elif agent.experience_years %}{{ agent.experience_years }} yrs{% else %}—{% endif %}
+      </div>
+      <div class="lbl">Experience</div>
+    </div>
+    <div class="stat-box">
+      <div class="num">{% if agent.selected_plan %}✅{% else %}❌{% endif %}</div>
+      <div class="lbl">{{ agent.selected_plan|default:'No Plan' }}</div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="manage-grid">
+
+    <!-- LEFT: Info + Subscription -->
+    <div>
+      <div class="card" style="padding:20px;margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 14px;">
+            <p class="section-title" style="margin:0;">📋 Agent Information</p>
+            <span class="badge {% if agent.status == 'active' %}badge-green{% else %}badge-destructive{% endif %}">{{ agent.status|title }}</span>
+        </div>
+        <form method="POST" action="{% url 'admin_agents_update_profile' %}">
+          {% csrf_token %}
+          <input type="hidden" name="id" value="{{ agent.id }}">
+          
+          <div class="info-row" style="flex-direction:column; align-items:flex-start;">
+            <span class="info-label" style="margin-bottom:6px;">Full Name</span>
+            <input type="text" name="fullname" value="{{ agent.fullname }}" style="width:100%; border:1px solid #d7e0ea; border-radius:6px; padding:8px 12px; font-size:14px; font-family:inherit; box-sizing:border-box;">
+          </div>
+          <div class="info-row" style="flex-direction:column; align-items:flex-start;">
+            <span class="info-label" style="margin-bottom:6px;">Email</span>
+            <input type="email" name="email" value="{{ agent.email }}" style="width:100%; border:1px solid #d7e0ea; border-radius:6px; padding:8px 12px; font-size:14px; font-family:inherit; box-sizing:border-box;">
+          </div>
+          <div class="info-row" style="flex-direction:column; align-items:flex-start;">
+            <span class="info-label" style="margin-bottom:6px;">Phone</span>
+            <input type="text" name="mobile" value="{{ agent.mobile }}" style="width:100%; border:1px solid #d7e0ea; border-radius:6px; padding:8px 12px; font-size:14px; font-family:inherit; box-sizing:border-box;">
+          </div>
+          <div class="info-row" style="flex-direction:column; align-items:flex-start;">
+            <span class="info-label" style="margin-bottom:6px;">Location (City)</span>
+            <input type="text" name="address" value="{{ agent.address|default:'' }}" style="width:100%; border:1px solid #d7e0ea; border-radius:6px; padding:8px 12px; font-size:14px; font-family:inherit; box-sizing:border-box;">
+          </div>
+          <div class="info-row" style="flex-direction:column; align-items:flex-start;">
+            <span class="info-label" style="margin-bottom:6px;">Office Address</span>
+            <input type="text" name="office_address" value="{{ agent.office_address|default:'' }}" style="width:100%; border:1px solid #d7e0ea; border-radius:6px; padding:8px 12px; font-size:14px; font-family:inherit; box-sizing:border-box;">
+          </div>
+          <div class="info-row" style="flex-direction:column; align-items:flex-start;">
+            <span class="info-label" style="margin-bottom:6px;">License No.</span>
+            <input type="text" name="license_number" value="{{ agent.license_number|default:'' }}" style="width:100%; border:1px solid #d7e0ea; border-radius:6px; padding:8px 12px; font-size:14px; font-family:inherit; box-sizing:border-box;">
+          </div>
+          <div class="info-row" style="flex-direction:column; align-items:flex-start;">
+            <span class="info-label" style="margin-bottom:6px;">PAN Number</span>
+            <div style="display:flex; width:100%; gap:8px; align-items:center;">
+              <input type="text" name="pan_number" value="{{ agent.pan_number|default:'' }}" style="flex:1; border:1px solid #d7e0ea; border-radius:6px; padding:8px 12px; font-size:14px; font-family:inherit; box-sizing:border-box;">
+              <a href="https://agencyportal.irdai.gov.in/PublicAccess/LookUpPAN.aspx" target="_blank" class="btn" style="padding:7px 14px; font-size:12px; height:38px; display:inline-flex; align-items:center; background:#f1f5f9; border:1px solid #d7e0ea; color:#1e293b; font-weight:600;">
+                <i class="fas fa-external-link-alt mr-1"></i> IRDAI
+              </a>
+            </div>
+          </div>
+          <div class="info-row" style="flex-direction:column; align-items:flex-start;">
+            <span class="info-label" style="margin-bottom:6px;">Experience (years)</span>
+            <input type="text" name="experience_range" value="{% if agent.experience_range %}{{ agent.experience_range }}{% elif agent.experience_years %}{{ agent.experience_years }}{% endif %}" style="width:100%; border:1px solid #d7e0ea; border-radius:6px; padding:8px 12px; font-size:14px; font-family:inherit; box-sizing:border-box;">
+          </div>
+          <div class="info-row">
+            <span class="info-label">Registered On</span>
+            <span class="info-value">{{ agent.created_at|date:"d M Y" }}</span>
+          </div>
+          
+          <div style="margin-top: 16px;">
+            <button type="submit" class="btn btn-primary" style="font-size:13px; width:100%;">💾 Save Profile Changes</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card" style="padding:20px;margin-bottom:16px;">
+        <p class="section-title">💳 Subscription</p>
+        <div class="info-row">
+          <span class="info-label">Current Plan</span>
+          <span class="badge {% if 'Professional' in agent.selected_plan|default:'' %}badge-primary{% else %}badge-secondary{% endif %}">
+            {{ agent.selected_plan|default:'No Plan' }}
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Expires At</span>
+          <span class="info-value">{{ agent.expires_at|date:"d M Y"|default:'N/A' }}</span>
+        </div>
+
+        <form method="POST" action="{% url 'admin_agents_update_plan' %}" style="margin-top:14px;">
+          {% csrf_token %}
+          <input type="hidden" name="id" value="{{ agent.id }}">
+          <p style="font-size:13px;font-weight:600;margin:0 0 10px;">Change Plan:</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button type="submit" name="selected_plan" value="Starter's Plan" class="plan-btn {% if agent.selected_plan == "Starter's Plan" %}selected{% endif %}">Starter's</button>
+            <button type="submit" name="selected_plan" value="Professional's Plan" class="plan-btn {% if agent.selected_plan == "Professional's Plan" %}selected{% endif %}">Professional's</button>
+            <button type="submit" name="selected_plan" value="" class="plan-btn {% if not agent.selected_plan %}selected{% endif %}">No Plan</button>
+          </div>
+        </form>
+
+        <hr style="margin:16px 0;border-top:1px solid #edf3f8;">
+
+        <form method="POST" action="{% url 'admin_agents_update_achievement_limit' %}" style="margin-top:6px;">
+          {% csrf_token %}
+          <input type="hidden" name="id" value="{{ agent.id }}">
+          <div class="info-row">
+            <span class="info-label">Default Photo Limit</span>
+            <span class="info-value">{% if 'professional' in agent.selected_plan|lower|default:'' %}10{% else %}5{% endif %} (plan based)</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Current Effective Limit</span>
+            <span class="info-value">{{ agent.achievement_photo_limit|default_if_none:'' }}</span>
+          </div>
+
+          <p style="font-size:12px;color:#5f6b7a;margin:12px 0 8px;">Admin Override (optional). Keep empty to use plan default.</p>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="number" name="achievement_photo_limit" value="{{ agent.achievement_photo_limit|default_if_none:'' }}" style="flex:1;">
+            <button type="submit" class="btn btn-primary" style="font-size:13px;">Save Limit</button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: Controls + Reviews + Notes -->
+    <div>
+
+      <div class="card" style="padding:20px;margin-bottom:16px;">
+        <p class="section-title">🎛️ Profile Section Controls</p>
+        <p style="font-size:13px;color:#5f6b7a;margin:0 0 14px;">Toggle which sections appear on the public profile.</p>
+        
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f8fafc;border-radius:8px;border:1px solid #edf3f8;margin-bottom:10px;">
+          <span style="font-size:14px;font-weight:500;">Full Profile Visibility</span>
+          <button type="button" class="toggle {% if agent.is_profile_visible %}on{% else %}off{% endif %}" onclick="updateVisibility({{ agent.id }}, 'is_profile_visible', this)"></button>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f8fafc;border-radius:8px;border:1px solid #edf3f8;margin-bottom:10px;">
+          <span style="font-size:14px;font-weight:500;">Certificates Section</span>
+          <button type="button" class="toggle {% if agent.show_certificates %}on{% else %}off{% endif %}" onclick="updateVisibility({{ agent.id }}, 'show_certificates', this)"></button>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f8fafc;border-radius:8px;border:1px solid #edf3f8;margin-bottom:10px;">
+          <span style="font-size:14px;font-weight:500;">Achievements Section</span>
+          <button type="button" class="toggle {% if agent.show_achievements %}on{% else %}off{% endif %}" onclick="updateVisibility({{ agent.id }}, 'show_achievements', this)"></button>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f8fafc;border-radius:8px;border:1px solid #edf3f8;margin-bottom:10px;">
+          <span style="font-size:14px;font-weight:500;">Comments / Reviews Section</span>
+          <button type="button" class="toggle {% if agent.show_reviews %}on{% else %}off{% endif %}" onclick="updateVisibility({{ agent.id }}, 'show_reviews', this)"></button>
+        </div>
+      </div>
+
+      <div class="card" style="padding:20px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+            <p class="section-title" style="margin:0;">⭐ Recent Reviews</p>
+            <div style="font-size:12px;color:#5f6b7a;">
+                <span style="color:#22c55e;">●</span> {{ agent.review_count|default:"0" }} Approved &nbsp;
+                <span style="color:#f59e0b;">●</span> {{ agent.pending_reviews|default:"0" }} Pending
+            </div>
+        </div>
+        {% if not reviews %}
+          <p style="font-size:14px;color:#5f6b7a;margin:0;">No reviews yet.</p>
+        {% else %}
+          {% for r in reviews %}
+          <div class="review-card" style="position:relative;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #f1f5f9;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <strong style="font-size:14px;">{{ r.client_name|default:'Anonymous' }}</strong>
+              <span style="font-size:13px;color:#f59e0b;">
+                {% if r.rating == 5 %}⭐⭐⭐⭐⭐{% elif r.rating == 4 %}⭐⭐⭐⭐{% elif r.rating == 3 %}⭐⭐⭐{% elif r.rating == 2 %}⭐⭐{% elif r.rating == 1 %}⭐{% endif %}
+              </span>
+            </div>
+            
+            <p style="font-size:13px;color:#5f6b7a;margin:0 0 8px;line-height:1.5;">
+              {{ r.review_text|default:'No comment provided.'|linebreaksbr }}
+            </p>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:11px;color:#94a3b8;">{{ r.created_at|date:"d M Y" }}</span>
+              
+              <form method="POST" action="{% url 'admin_agents_toggle_review_approval' %}" style="margin:0;">
+                {% csrf_token %}
+                <input type="hidden" name="review_id" value="{{ r.id }}">
+                <input type="hidden" name="agent_id" value="{{ agent.id }}">
+                <input type="hidden" name="is_approved" value="{% if r.is_approved %}0{% else %}1{% endif %}">
+                <button type="submit" style="
+                    border:none;
+                    padding:4px 10px;
+                    border-radius:4px;
+                    font-size:11px;
+                    font-weight:600;
+                    cursor:pointer;
+                    {{ r.is_approved|yesno:'background:#dcfce7;color:#15803d;,background:#fee2e2;color:#b91c1c;' }}
+                  ">
+                    {% if r.is_approved %}✓ Approved{% else %}✗ Pending{% endif %}
+                </button>
+              </form>
+            </div>
+          </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+
+      <div class="card" style="padding:20px;margin-bottom:16px;">
+        <p class="section-title">📝 Admin Notes</p>
+        <form id="admin-notes-form">
+          <textarea id="admin_notes_input" rows="5"
+            placeholder="Internal notes about this agent (not visible to agent)..."
+            style="width:100%;border:1px solid #d7e0ea;border-radius:8px;padding:10px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;margin-bottom:10px;">{{ agent.admin_notes|default:'' }}</textarea>
+          <button type="button" class="btn btn-primary" style="font-size:13px;" onclick="saveAgentNotes({{ agent.id }})">💾 Save Notes</button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PROFILE CHANGE HISTORY -->
+  <div class="card" style="padding:24px;margin-top:8px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <p class="section-title" style="margin:0;">🕵️ Profile Change History</p>
+        <p style="font-size:13px;color:#5f6b7a;margin:4px 0 0;">
+          Every field the agent edited — previous value vs. new value, step-by-step.
+        </p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <span id="log-total-badge" style="background:#e0f2fe;color:#0369a1;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;">
+          {{ edit_logs|length }} edit{{ edit_logs|length|pluralize }}
+        </span>
+        <button onclick="filterLogs('all')" id="flt-all" class="log-filter-btn active">All</button>
+        <button onclick="filterLogs('agent')" id="flt-agent" class="log-filter-btn">By Agent</button>
+        <button onclick="filterLogs('admin')" id="flt-admin" class="log-filter-btn">By Admin</button>
+      </div>
+    </div>
+
+    {% if not edit_logs %}
+      <div style="text-align:center;padding:40px 20px;color:#94a3b8;">
+        <div style="font-size:48px;margin-bottom:12px;">📭</div>
+        <p style="font-size:15px;font-weight:600;margin:0 0 4px;">No edit history yet</p>
+        <p style="font-size:13px;margin:0;">Changes will appear here once the agent edits their profile.</p>
+      </div>
+    {% else %}
+      <div id="edit-log-timeline">
+        {% for log in edit_logs %}
+          <div class="edit-log-item" data-editor="{{ log.edited_by }}" style="border:1px solid #e2e8f0;border-radius:12px;margin-bottom:14px;overflow:hidden;transition:box-shadow .2s;">
+            <div class="log-header" onclick="toggleLog('log-{{ log.id }}')"
+                 style="display:flex;align-items:center;gap:12px;padding:14px 18px;cursor:pointer;background:{% if log.edited_by == 'agent' %}#f8fafc{% else %}#fffbeb{% endif %};transition:background .2s;">
+              
+              <div style="width:38px;height:38px;border-radius:50%;background:{% if log.edited_by == 'agent' %}#dbeafe{% else %}#fde68a{% endif %};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">
+                {% if log.step == 1 %}👤{% elif log.step == 2 %}💼{% elif log.step == 3 %}🛡️{% elif log.step == 4 %}📊{% elif log.step == 5 %}🌐{% elif log.step == 6 %}📋{% elif log.step == 7 %}✅{% else %}✏️{% endif %}
+              </div>
+
+              <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <span style="font-size:14px;font-weight:700;color:#1e293b;">
+                    {{ log.step_label|default:'Profile Edit' }}
+                  </span>
+                  <span style="font-size:11px;padding:2px 8px;border-radius:20px;font-weight:700;
+                    {% if log.edited_by == 'agent' %}background:#dbeafe;color:#1d4ed8;{% else %}background:#fde68a;color:#92400e;{% endif %}">
+                    {% if log.edited_by == 'agent' %}👤 Agent{% else %}🛡️ Admin{% endif %}
+                  </span>
+                  {% if log.status_before != log.status_after %}
+                    <span style="font-size:11px;padding:2px 8px;border-radius:20px;background:#dcfce7;color:#15803d;font-weight:700;">
+                      Status changed
+                    </span>
+                  {% endif %}
+                </div>
+                <div style="font-size:12px;color:#64748b;margin-top:4px;">
+                  {{ log.created_at|date:"d M Y, h:i A" }}
+                </div>
+              </div>
+
+              <div style="font-size:12px;font-weight:600;color:#94a3b8;">
+                {{ log.changes|length }} field{% if log.changes|length != 1 %}s{% endif %} modified ▾
+              </div>
+            </div>
+
+            <div id="log-{{ log.id }}" style="display:none;padding:16px 18px;border-top:1px solid #e2e8f0;background:#fff;">
+              {% if log.status_before != log.status_after %}
+                <div style="margin-bottom:12px;padding:10px 14px;background:#f8fafc;border-radius:8px;border-left:3px solid #3b82f6;">
+                  <span style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Approval Status</span>
+                  <div style="font-size:13px;display:flex;align-items:center;gap:8px;">
+                    <span style="color:#ef4444;text-decoration:line-through;">{{ log.status_before|default:'None' }}</span>
+                    <i class="fas fa-arrow-right" style="color:#cbd5e1;font-size:10px;"></i>
+                    <span style="color:#22c55e;font-weight:600;">{{ log.status_after|default:'None' }}</span>
+                  </div>
+                </div>
+              {% endif %}
+
+              {% if log.changes %}
+                <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                  <thead>
+                    <tr style="border-bottom:2px solid #e2e8f0;color:#64748b;">
+                      <th style="padding:8px;text-align:left;width:25%;">Field</th>
+                      <th style="padding:8px;text-align:left;width:37%;">Previous Value</th>
+                      <th style="padding:8px;text-align:left;width:37%;">New Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for c in log.changes %}
+                      <tr style="border-bottom:1px solid #f1f5f9;">
+                        <td style="padding:10px 8px;font-weight:600;color:#334155;vertical-align:top;">{{ c.label|default:c.field }}</td>
+                        <td style="padding:10px 8px;color:#ef4444;background:#fef2f2;vertical-align:top;border-right:1px solid #fff;">
+                          {{ c.old_value|default:'—' }}
+                        </td>
+                        <td style="padding:10px 8px;color:#15803d;background:#f0fdf4;vertical-align:top;">
+                          {{ c.new_value|default:'—' }}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              {% else %}
+                <p style="font-size:13px;color:#94a3b8;margin:0;">No field-level diff recorded.</p>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+function toggleLog(id) {
+    const el = document.getElementById(id);
+    if(el) {
+        el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+}
+function filterLogs(type) {
+    document.querySelectorAll('.log-filter-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('flt-' + type).classList.add('active');
+    
+    let visibleCount = 0;
+    document.querySelectorAll('.edit-log-item').forEach(item => {
+        if(type === 'all' || item.dataset.editor === type) {
+            item.style.display = 'block';
+            visibleCount++;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    document.getElementById('log-total-badge').textContent = visibleCount + ' edit' + (visibleCount !== 1 ? 's' : '');
+}
+
+function saveAgentNotes(id) {
+    const notes = document.getElementById('admin_notes_input').value;
+    fetch("{% url 'admin_agents_save_notes' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ id: id, admin_notes: notes })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Notes saved successfully', showConfirmButton: false, timer: 3000 });
+            }
+        } else {
+            alert(data.message || 'Error saving notes');
+        }
+    })
+    .catch(err => console.error(err));
+}
+function updateVisibility(id, field, btnElement) {
+    // Optimistically toggle class
+    const isCurrentlyOn = btnElement.classList.contains('on');
+    const newValue = !isCurrentlyOn;
+    
+    if (newValue) {
+        btnElement.classList.remove('off');
+        btnElement.classList.add('on');
+    } else {
+        btnElement.classList.remove('on');
+        btnElement.classList.add('off');
+    }
+
+    fetch("{% url 'admin_agents_update_visibility' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ id: id, field: field, value: newValue })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(!data.success) {
+            // Revert on failure
+            if (isCurrentlyOn) {
+                btnElement.classList.remove('off');
+                btnElement.classList.add('on');
+            } else {
+                btnElement.classList.remove('on');
+                btnElement.classList.add('off');
+            }
+            alert(data.message || 'Error updating visibility');
+        } else if (typeof Swal !== 'undefined') {
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Visibility updated', showConfirmButton: false, timer: 3000 });
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        // Revert on failure
+        if (isCurrentlyOn) {
+            btnElement.classList.remove('off');
+            btnElement.classList.add('on');
+        } else {
+            btnElement.classList.remove('on');
+            btnElement.classList.add('off');
+        }
+    });
+}
+</script>
+
+<style>
+.log-filter-btn { padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600; border:1px solid #cbd5e1; background:#fff; color:#64748b; cursor:pointer; transition:.2s; }
+.log-filter-btn:hover { background:#f8fafc; }
+.log-filter-btn.active { background:#1e293b; color:#fff; border-color:#1e293b; }
+.toggle { width:40px; height:22px; border-radius:11px; background:#cbd5e1; position:relative; cursor:pointer; border:none; transition:.2s; }
+.toggle::after { content:''; position:absolute; top:2px; left:2px; width:18px; height:18px; background:#fff; border-radius:50%; transition:.2s; box-shadow:0 1px 2px rgba(0,0,0,.1); }
+.toggle.on { background:#22c55e; }
+.toggle.on::after { left:20px; }
+</style>
+{% endblock %}

@@ -1,4 +1,4 @@
-{% extends 'admin/layout.html' %}
+{% extends 'admin/base.html' %}
 {% load static %}
 
 {% block title %}Security Settings — PadosiAgent Admin{% endblock %}
@@ -7,7 +7,7 @@
 {% block content %}
 <div class="row">
     <div class="col-lg-8">
-        <form method="POST" action="{% url 'admin_panel:settings_update' %}">
+        <form method="POST" action="{% url 'admin_settings_update' %}">
             {% csrf_token %}
             <input type="hidden" name="group" value="security">
             
@@ -55,7 +55,7 @@
                 <hr>
                 <div class="d-flex justify-content-between align-items-center">
                     <span style="font-size: 13px;">Explicit IP Blocks</span>
-                    <a href="{% url 'admin_panel:security_blocked_ips' %}" class="btn btn-sm btn-outline-danger py-1">Manage Blocked IPs</a>
+                    <a href="{% url 'security_blocked_ips' %}" class="btn btn-sm btn-outline-danger py-1">Manage Blocked IPs</a>
                 </div>
             </div>
         </div>

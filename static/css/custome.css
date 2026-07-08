@@ -4563,7 +4563,6 @@ Find Agents CSS ****/
         .why-choose-left-container {
             z-index: 10;
             will-change: transform;
-            margin-top: 40px; /* Reduced upward overlap */
         }
     }
 
@@ -4847,7 +4846,6 @@ Find Agents CSS ****/
             overflow-x: visible;
             scroll-snap-type: none;
             padding-bottom: 60px; /* space for staggered offset */
-            margin-top: 40px; /* Reduced upward overlap */
         }
         .why-choose-scroll > :nth-child(even) {
             transform: translateY(35px);
@@ -5207,7 +5205,7 @@ Find Agents CSS ****/
         background-color: #114c97 !important;
         color: #ffffff !important;
         font-weight: 700 !important;
-        border-radius: 12px !important;
+        border-radius: 9999px !important;
         padding: 12px 24px !important;
         box-shadow: 0 4px 6px -1px rgba(17, 76, 151, 0.15) !important;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;

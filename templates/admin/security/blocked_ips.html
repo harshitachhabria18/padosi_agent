@@ -1,4 +1,4 @@
-{% extends 'admin/layout.html' %}
+{% extends 'admin/base.html' %}
 {% load static %}
 
 {% block title %}Manage Blocked IPs — PadosiAgent Admin{% endblock %}
@@ -42,7 +42,7 @@
                     {% endfor %}
                 {% endif %}
 
-                <form method="POST" action="{% url 'admin_panel:security_block_ip' %}">
+                <form method="POST" action="{% url 'security_block_ip' %}">
                     {% csrf_token %}
                     <div class="mb-3">
                         <label class="form-label font-weight-bold">IP Address</label>
@@ -81,7 +81,7 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <form method="POST" action="{% url 'admin_panel:security_block_ip' %}" style="display:inline;">
+                                    <form method="POST" action="{% url 'security_block_ip' %}" style="display:inline;">
                                         {% csrf_token %}
                                         <input type="hidden" name="ip_address" value="{{ activity.ip_address }}">
                                         <input type="hidden" name="reason" value="Blocked from Activity Monitor">
@@ -125,7 +125,7 @@
                                 <td class="text-muted"><small>{{ blocked.reason|default:'Manually blocked.' }}</small></td>
                                 <td><small>{{ blocked.created_at|date:"d M y, h:i A" }}</small></td>
                                 <td class="text-end pe-3">
-                                    <form method="POST" action="{% url 'admin_panel:security_unblock_ip' blocked.id %}" onsubmit="return confirm('Are you sure you want to unblock this IP?');" class="d-inline">
+                                    <form method="POST" action="{% url 'security_unblock_ip' blocked.id %}" onsubmit="return confirm('Are you sure you want to unblock this IP?');" class="d-inline">
                                         {% csrf_token %}
                                         <button type="submit" class="btn btn-sm btn-outline-success">Unblock</button>
                                     </form>
@@ -211,12 +211,12 @@
                                 </td>
                                 <td>
                                     {% if threat.is_blocked %}
-                                        <form method="POST" action="{% url 'admin_panel:security_unblock_ip' threat.blocked_id %}">
+                                        <form method="POST" action="{% url 'security_unblock_ip' threat.blocked_id %}">
                                             {% csrf_token %}
                                             <button type="submit" class="btn btn-sm btn-success py-0" style="font-size: 11px;">Lift Block</button>
                                         </form>
                                     {% else %}
-                                        <form method="POST" action="{% url 'admin_panel:security_block_ip' %}">
+                                        <form method="POST" action="{% url 'security_block_ip' %}">
                                             {% csrf_token %}
                                             <input type="hidden" name="ip_address" value="{{ threat.ip_address }}">
                                             <input type="hidden" name="reason" value="Manual block due to security threat ({{ threat.event_type }})">

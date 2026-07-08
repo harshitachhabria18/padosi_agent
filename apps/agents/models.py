@@ -74,7 +74,7 @@ class AgentDraft(models.Model):
 class PromoCode(models.Model):
     """
     Django representation of Laravel's promo_codes table.
-    Set to managed = False because the table is managed by Laravel/migrations.
+    Set to managed = True because the table is managed by Laravel/migrations.
     """
     code = models.CharField(max_length=255, unique=True)
     discount_type = models.CharField(max_length=20, default='percentage')  # percentage, fixed
@@ -92,7 +92,7 @@ class PromoCode(models.Model):
 
     class Meta:
         db_table = 'promo_codes'
-        managed = False
+        managed = True
 
     def __str__(self):
         return f"PromoCode({self.code}, active={self.is_active})"
@@ -146,12 +146,16 @@ class Agent(models.Model):
     distributor_id = models.IntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_approved = models.BooleanField(default=False)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    achievement_photo_limit = models.PositiveSmallIntegerField(null=True, blank=True)
+    profession = models.CharField(max_length=255, null=True, blank=True, default='LIC Agent')
 
     serviceableCities = models.ManyToManyField('City', db_table='agent_serviceable_cities', blank=True, related_name='agents')
 
     class Meta:
         db_table = 'agents'
-        managed = False
+        managed = True
 
     def __str__(self):
         return f"Agent({self.email}, status={self.status})"
@@ -447,7 +451,20 @@ class AgentSubscription(models.Model):
 
     class Meta:
         db_table = 'agent_subscriptions'
-        managed = False
+        managed = True
+
+    @property
+    def is_active(self):
+        return self.status == 'active'
+
+    @property
+    def is_expired(self):
+        from django.utils import timezone
+        return self.expires_at is not None and self.expires_at < timezone.now()
+
+    @property
+    def is_professional(self):
+        return 'professional' in (self.selected_plan or '').lower()
 
     def __str__(self):
         return f"Subscription({self.selected_plan}, status={self.status})"
@@ -480,7 +497,7 @@ class AgentProfile(models.Model):
 
     class Meta:
         db_table = 'agent_profiles'
-        managed = False
+        managed = True
 
     def __str__(self):
         return f"Profile({self.agent.email})"
@@ -599,7 +616,7 @@ class City(models.Model):
 
     class Meta:
         db_table = 'cities'
-        managed = False
+        managed = True
 
 
 class AgentInsuranceSegment(models.Model):
@@ -610,7 +627,7 @@ class AgentInsuranceSegment(models.Model):
 
     class Meta:
         db_table = 'agent_insurance_segments'
-        managed = False
+        managed = True
 
 
 class AgentPerformanceStat(models.Model):
@@ -625,7 +642,7 @@ class AgentPerformanceStat(models.Model):
 
     class Meta:
         db_table = 'agent_performance_stats'
-        managed = False
+        managed = True
 
     @property
     def formatted_claims_processed(self):
@@ -656,7 +673,7 @@ class AgentLead(models.Model):
 
     class Meta:
         db_table = 'agent_leads'
-        managed = False
+        managed = True
 
 
 class AgentProfileView(models.Model):
@@ -668,7 +685,7 @@ class AgentProfileView(models.Model):
 
     class Meta:
         db_table = 'agent_profile_views'
-        managed = False
+        managed = True
 
 
 class AgentReview(models.Model):
@@ -685,7 +702,17 @@ class AgentReview(models.Model):
 
     class Meta:
         db_table = 'agent_reviews'
-        managed = False
+        managed = True
+
+    @property
+    def star_display(self):
+        return '⭐' * min(5, max(0, int(self.rating or 0)))
+
+    @property
+    def author_display(self):
+        if self.user:
+            return self.user.get_full_name() or self.user.username
+        return self.reviewer_name or 'Anonymous'
 
 
 class AgentFamilyLicense(models.Model):
@@ -698,7 +725,7 @@ class AgentFamilyLicense(models.Model):
 
     class Meta:
         db_table = 'agent_family_licenses'
-        managed = False
+        managed = True
 
 
 class AgentPortfolio(models.Model):
@@ -711,7 +738,7 @@ class AgentPortfolio(models.Model):
 
     class Meta:
         db_table = 'agent_portfolios'
-        managed = False
+        managed = True
 
 
 class AgentAchievementPhoto(models.Model):
@@ -722,7 +749,7 @@ class AgentAchievementPhoto(models.Model):
 
     class Meta:
         db_table = 'agent_achievement_photos'
-        managed = False
+        managed = True
 
     @property
     def photo_url(self):
@@ -762,7 +789,7 @@ class AgentLeadPreference(models.Model):
 
     class Meta:
         db_table = 'agent_lead_preferences'
-        managed = False
+        managed = True
 
 
 class AgentProductExpertise(models.Model):
@@ -776,7 +803,7 @@ class AgentProductExpertise(models.Model):
 
     class Meta:
         db_table = 'agent_product_expertise'
-        managed = False
+        managed = True
 
 
 class AgentCareerTimeline(models.Model):
@@ -790,7 +817,7 @@ class AgentCareerTimeline(models.Model):
 
     class Meta:
         db_table = 'agent_career_timelines'
-        managed = False
+        managed = True
 
 
 class AgentDeviceToken(models.Model):
@@ -803,7 +830,7 @@ class AgentDeviceToken(models.Model):
 
     class Meta:
         db_table = 'agent_device_tokens'
-        managed = False
+        managed = True
 
     def __str__(self):
         return f"DeviceToken({self.token[:20]}..., agent={self.agent_id})"
@@ -816,7 +843,7 @@ class Event(models.Model):
 
     class Meta:
         db_table = 'events'
-        managed = False
+        managed = True
 
     def __str__(self):
         return self.name
@@ -837,7 +864,7 @@ class AgentProfileEditLog(models.Model):
 
     class Meta:
         db_table = 'agent_profile_edit_logs'
-        managed = False
+        managed = True
 
     def __str__(self):
         return f"EditLog(agent={self.agent_id}, step={self.step})"
@@ -851,7 +878,7 @@ class BlockedIp(models.Model):
 
     class Meta:
         db_table = 'blocked_ips'
-        managed = False
+        managed = True
 
     def __str__(self):
         return f"BlockedIp({self.ip_address})"
@@ -866,7 +893,7 @@ class Client(models.Model):
 
     class Meta:
         db_table = 'clients'
-        managed = False
+        managed = True
 
     def __str__(self):
         return f"Client({self.user.username})"
@@ -899,7 +926,7 @@ class Invoice(models.Model):
 
     class Meta:
         db_table = 'invoices'
-        managed = False
+        managed = True
 
     def __str__(self):
         return f"Invoice({self.invoice_number}, total={self.total_amount})"

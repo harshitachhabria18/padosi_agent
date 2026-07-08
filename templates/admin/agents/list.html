@@ -1,0 +1,315 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Agents — PadosiAgent{% endblock %}
+{% block breadcrumb_title %}Agent Management › Active Registry{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="m-0">Agent Ecosystem</h4>
+    <div class="btn-group shadow-sm">
+        <button class="btn btn-light border" onclick="exportAgentsToCSV()">
+            <i class="fa-solid fa-file-csv me-1"></i> Export Data
+        </button>
+    </div>
+</div>
+
+<!-- Filters Section -->
+<div class="card mb-4 border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+    <div class="card-body p-4">
+        <form method="GET" action="{% url 'admin_agents' %}" class="row g-3">
+            <!-- Search -->
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" name="search" class="form-control border-start-0" placeholder="Search by name, email..." value="{{ search }}">
+                </div>
+            </div>
+
+            <!-- Promo Code: Hidden input preserved + active pill -->
+            {% if promo_code %}
+                <input type="hidden" name="promo_code" value="{{ promo_code }}">
+                <div class="col-12 mb-2">
+                    <span class="badge bg-info text-dark p-2">
+                        <i class="fa-solid fa-ticket-alt me-1"></i> Filtered by Promo: <strong>{{ promo_code }}</strong>
+                        <a href="{% url 'admin_agents' %}?search={{ search }}&plan={{ plan_filter }}&city={{ city_filter }}" class="text-dark ms-2 text-decoration-none"><i class="fa-solid fa-xmark"></i></a>
+                    </span>
+                </div>
+            {% endif %}
+
+            <!-- Plan Filter -->
+            <div class="col-md-3">
+                <select name="plan" class="form-select">
+                    <option value="All Plans" {% if plan_filter == "All Plans" %}selected{% endif %}>All Plans</option>
+                    <option value="Starter's Plan" {% if plan_filter == "Starter's Plan" %}selected{% endif %}>Starter's Plan</option>
+                    <option value="Professional's Plan" {% if plan_filter == "Professional's Plan" %}selected{% endif %}>Professional's Plan</option>
+                </select>
+            </div>
+
+            <!-- City Filter -->
+            <div class="col-md-3">
+                <input type="text" name="city" class="form-control" placeholder="Filter by city..." value="{{ city_filter }}">
+            </div>
+
+            <!-- Submit -->
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Filter Agents</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Agents Table Card -->
+<div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+
+    <!-- Bulk Actions Toolbar (Frontend only — backend wiring required later) -->
+    <form method="POST" action="#" id="bulkForm">
+        {% csrf_token %}
+        <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
+            <div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="selectAll">
+                    <label class="form-check-label fw-bold" for="selectAll" style="font-size: 13px;">Select All on Page</label>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <select name="action" class="form-select form-select-sm" style="width: 200px;" required>
+                    <option value="">-- Choose Bulk Action --</option>
+                    <option value="approve">Approve Selected</option>
+                    <option value="suspend">Suspend Selected</option>
+                </select>
+                <button type="button" class="btn btn-sm btn-primary" onclick="return confirm('Execute this bulk action for selected agents?')">Apply</button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;"></th>
+                        <th>ID</th>
+                        <th>Agent Details</th>
+                        <th>Location</th>
+                        <th>Plan Type</th>
+                        <th>Performance</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center">Recognition</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for agent in page_obj %}
+                    <tr>
+                        <!-- Bulk Checkbox -->
+                        <td>
+                            <input class="form-check-input row-chk" type="checkbox" name="agent_ids[]" value="{{ agent.id }}">
+                        </td>
+
+                        <!-- ID -->
+                        <td class="text-muted" style="font-size: 13px;">#{{ agent.id }}</td>
+
+                        <!-- Agent Details -->
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width: 32px; height: 32px; border-radius: 8px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #1e293b; font-size: 11px; border: 1px solid #e2e8f0; flex-shrink: 0;">
+                                    {{ agent.fullname|make_list|first|upper }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold">{{ agent.display_name|default:agent.fullname }}</div>
+                                    <div class="text-muted" style="font-size: 11px;">{{ agent.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Location -->
+                        <td style="font-size: 13px;">{{ agent.address|default:"Unknown" }}</td>
+
+                        <!-- Plan Type -->
+                        <td>
+                            <span class="badge {% if 'professional' in agent.selected_plan|lower %}bg-primary{% else %}bg-secondary{% endif %}" style="font-size: 10px; font-weight: 500;">
+                                {{ agent.selected_plan|default:"FREE" }}
+                            </span>
+                        </td>
+
+                        <!-- Performance -->
+                        <td>
+                            <div style="font-size: 13px;"><i class="fa-solid fa-star text-warning me-1"></i> {{ agent.avg_rating|default:"0"|floatformat:1 }} ({{ agent.review_count|default:"0" }})</div>
+                            <div class="text-muted" style="font-size: 11px;">0 Leads</div>
+                        </td>
+
+                        <!-- Status Toggle (Frontend only — backend wiring required later) -->
+                        <td class="text-center">
+                            <div class="form-check form-switch d-inline-block">
+                                <input class="form-check-input" type="checkbox" {% if agent.status == 'active' %}checked{% endif %} onchange="toggleAgentStatus({{ agent.id }}, this.checked)">
+                            </div>
+                        </td>
+
+                        <!-- Recognition Badges (Frontend only — backend wiring required later) -->
+                        <td class="text-center">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-light border dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false" style="font-size: 11px; border-radius: 8px; color: var(--text-primary);" id="badge-btn-{{ agent.id }}">
+                                    <i class="fa-solid fa-medal me-1" style="color: #f59e0b;"></i>
+                                    {% if agent.badge and agent.badge != 'none' %}1 Badge{% else %}No Badges{% endif %}
+                                </button>
+                                <div class="dropdown-menu p-3 shadow" style="min-width: 170px; border-radius: 12px;">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input agent-badge-chk-{{ agent.id }}" type="checkbox" value="verified" id="chk-verified-{{ agent.id }}" {% if agent.badge and 'verified' in agent.badge %}checked{% endif %} onchange="collectAndUpdateBadges({{ agent.id }})" style="cursor: pointer;">
+                                        <label class="form-check-label ms-1" for="chk-verified-{{ agent.id }}" style="font-size: 12px; cursor: pointer;">✅ Verified</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input agent-badge-chk-{{ agent.id }}" type="checkbox" value="irdai" id="chk-irdai-{{ agent.id }}" {% if agent.badge and 'irdai' in agent.badge %}checked{% endif %} onchange="collectAndUpdateBadges({{ agent.id }})" style="cursor: pointer;">
+                                        <label class="form-check-label ms-1" for="chk-irdai-{{ agent.id }}" style="font-size: 12px; cursor: pointer;">🏛 Licensed</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input agent-badge-chk-{{ agent.id }}" type="checkbox" value="trusted" id="chk-trusted-{{ agent.id }}" {% if agent.badge and 'trusted' in agent.badge %}checked{% endif %} onchange="collectAndUpdateBadges({{ agent.id }})" style="cursor: pointer;">
+                                        <label class="form-check-label ms-1" for="chk-trusted-{{ agent.id }}" style="font-size: 12px; cursor: pointer;">⭐ Trusted</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Actions Dropdown (Frontend parity with Laravel) -->
+                        <td class="text-end pe-4">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-light border dropdown-toggle"
+                                        type="button"
+                                        data-toggle="dropdown">
+                                    Actions
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                    <li><a class="dropdown-item" href="{% url 'agents:agent_edit_profile' %}?agent_id={{ agent.id }}"><i class="fa-solid fa-pen-to-square me-2 text-muted"></i> Full Profile Editor</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'admin_agents_manage' agent.id %}"><i class="fa-solid fa-chart-line me-2 text-muted"></i> Manage Statistics</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <button type="button" class="dropdown-item text-danger delete-btn" data-model="agent" data-id="{{ agent.id }}">
+                                            <i class="fa-solid fa-trash-can me-2"></i> Terminate Account
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-5 text-muted">No agents found matching your query.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="card-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+            <div class="text-muted small">
+                Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} agents
+            </div>
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search }}&plan={{ plan_filter }}&city={{ city_filter }}&promo_code={{ promo_code }}">Previous</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                    {% endif %}
+
+                    {% for i in page_obj.paginator.page_range %}
+                        {% if page_obj.number == i %}
+                            <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                        {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                            <li class="page-item"><a class="page-link" href="?page={{ i }}&search={{ search }}&plan={{ plan_filter }}&city={{ city_filter }}&promo_code={{ promo_code }}">{{ i }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search }}&plan={{ plan_filter }}&city={{ city_filter }}&promo_code={{ promo_code }}">Next</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">Next</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+
+    </form>
+</div>
+
+<script>
+function toggleAgentStatus(id, isActive) {
+    const status = isActive ? 'active' : 'inactive';
+    fetch("{% url 'admin_agents_toggle_status' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ id: id, status: status })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Status updated successfully', showConfirmButton: false, timer: 3000 });
+            }
+        } else {
+            alert(data.message || 'Error updating status');
+        }
+    })
+    .catch(err => console.error(err));
+}
+
+function collectAndUpdateBadges(agentId) {
+    const badges = [];
+    document.querySelectorAll('.agent-badge-chk-' + agentId + ':checked').forEach(chk => {
+        badges.push(chk.value);
+    });
+    
+    // Update button text locally immediately
+    const btn = document.getElementById('badge-btn-' + agentId);
+    if(btn) {
+        let count = badges.length;
+        let text = count > 0 ? count + ' Badge' + (count > 1 ? 's' : '') : 'No Badges';
+        btn.innerHTML = '<i class="fa-solid fa-medal me-1" style="color: #f59e0b;"></i> ' + text;
+    }
+    
+    updateAgentBadge(agentId, badges);
+}
+
+function updateAgentBadge(id, badge) {
+    fetch("{% url 'admin_agents_update_badge' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ id: id, badge: badge })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Badge assigned successfully', showConfirmButton: false, timer: 3000 });
+            }
+        } else {
+            alert(data.message || 'Error updating badge');
+        }
+    })
+    .catch(err => console.error(err));
+}
+
+function exportAgentsToCSV() {
+    // Frontend only — backend wiring required later
+    console.log('exportAgentsToCSV called — backend not yet wired');
+}
+
+document.getElementById('selectAll').addEventListener('change', function() {
+    document.querySelectorAll('.row-chk').forEach(chk => {
+        chk.checked = this.checked;
+    });
+});
+</script>
+
+{% endblock %}

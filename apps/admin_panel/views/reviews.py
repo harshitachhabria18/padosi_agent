@@ -5,12 +5,14 @@ from django.db.models import Avg, Q
 from django.utils import timezone
 from django.core.cache import cache
 from django.core.paginator import Paginator
-from apps.admin_panel.decorators import admin_login_required
-from apps.agents.models import AgentReview
+from apps.admin_panel.views.dashboard import _get_admin_from_session
+from django.contrib import messages
+from apps.admin_panel.models import AgentReview
 from apps.admin_panel.models import AdminActivityLog
 
-@admin_login_required
 def reviews_index(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return redirect('admin_login')
     search = request.GET.get('search', '').strip()
     status_filter = request.GET.get('status', 'all')
     rating_filter = request.GET.get('rating', 'all')
@@ -89,8 +91,9 @@ def reviews_index(request):
 
     return render(request, 'admin/reviews/index.html', context)
 
-@admin_login_required
 def toggle_review_approval(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=401)
     if request.method == 'POST':
         review_id = request.POST.get('id')
         is_approved_raw = request.POST.get('is_approved')
@@ -127,12 +130,13 @@ def toggle_review_approval(request):
             return JsonResponse({'success': True})
             
         messages.success(request, 'Review status updated.')
-        return redirect(request.META.get('HTTP_REFERER', 'admin_panel:reviews_index'))
+        return redirect(request.META.get('HTTP_REFERER', 'admin_reviews_index'))
 
     return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
 
-@admin_login_required
 def bulk_approve_reviews(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=401)
     if request.method == 'POST':
         ids = request.POST.getlist('ids[]') or request.POST.getlist('ids')
 
@@ -166,8 +170,9 @@ def bulk_approve_reviews(request):
 
     return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
 
-@admin_login_required
 def delete_review(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=401)
     if request.method == 'POST':
         review_id = request.POST.get('id')
 
@@ -195,6 +200,6 @@ def delete_review(request):
             return JsonResponse({'success': True})
 
         messages.success(request, 'Review deleted.')
-        return redirect(request.META.get('HTTP_REFERER', 'admin_panel:reviews_index'))
+        return redirect(request.META.get('HTTP_REFERER', 'admin_reviews_index'))
 
     return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)

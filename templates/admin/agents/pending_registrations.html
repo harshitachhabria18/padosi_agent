@@ -1,0 +1,301 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+{% block title %}Registration Pending — PadosiAgent Admin{% endblock %}
+{% block breadcrumb_title %}Agent Management › Registration Pending{% endblock %}
+
+{% block styles %}
+<style>
+    .wait-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 3px 10px; border-radius: 20px;
+        font-size: 11px; font-weight: 600;
+    }
+    .wait-urgent   { background: #fee2e2; color: #991b1b; }
+    .wait-medium   { background: #fef3c7; color: #92400e; }
+    .wait-fresh    { background: #dcfce7; color: #15803d; }
+
+    .sort-btn { padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; border: 1px solid var(--border-color); color: var(--text-muted); background: var(--bg-card); text-decoration: none; transition: all 0.15s; }
+    .sort-btn.active, .sort-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    .agent-row { transition: background 0.15s; }
+    .agent-row:hover { background: var(--menu-hover-bg) !important; }
+
+    .step-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-muted); }
+
+    .stat-mini { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 16px 20px; display: flex; align-items: center; gap: 12px; }
+    .stat-mini-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .stat-mini-val { font-size: 22px; font-weight: 800; color: var(--text-primary); line-height: 1; }
+    .stat-mini-lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.04em; margin-top: 3px; }
+
+    .timeline-dot {
+        width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 5px;
+    }
+    .agent-photo { width: 42px; height: 42px; border-radius: 12px; object-fit: cover; border: 2px solid var(--border-color); flex-shrink: 0; }
+    .agent-initials { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; color: white; flex-shrink: 0; background: linear-gradient(135deg, var(--primary), #3b82f6); }
+
+    .contact-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; text-decoration: none; transition: all 0.15s; border: 1px solid var(--border-color); }
+    .contact-btn:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .btn-call { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+    .btn-call:hover { background: #bbf7d0; color: #166534; }
+    .btn-email { background: #dbeafe; color: #1d4ed8; border-color: #bfdbfe; }
+    .btn-email:hover { background: #bfdbfe; color: #1e40af; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# Stat Cards #}
+<div class="row g-3 mb-4">
+    <div class="col-sm-4">
+        <div class="stat-mini">
+            <div class="stat-mini-icon" style="background: #fef3c7;">
+                <i class="fa-solid fa-hourglass-half" style="color: #d97706;"></i>
+            </div>
+            <div>
+                <div class="stat-mini-val">{{ totalPending }}</div>
+                <div class="stat-mini-lbl">Pending Registrations</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="stat-mini">
+            <div class="stat-mini-icon" style="background: #fee2e2;">
+                <i class="fa-solid fa-triangle-exclamation" style="color: #dc2626;"></i>
+            </div>
+            <div>
+                <div class="stat-mini-val" style="color: #dc2626;">{{ urgentCount }}</div>
+                <div class="stat-mini-lbl">Waiting 48h+ (Urgent)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="stat-mini">
+            <div class="stat-mini-icon" style="background: #dbeafe;">
+                <i class="fa-solid fa-clock" style="color: #2563eb;"></i>
+            </div>
+            <div>
+                <div class="stat-mini-val">{% if avgWaitHours > 0 %}{{ avgWaitHours|floatformat:0 }}h{% else %}—{% endif %}</div>
+                <div class="stat-mini-lbl">Avg. Waiting Time</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Header + Sort Controls #}
+<div class="card border-0 shadow-sm" style="border-top: 3px solid var(--primary);">
+    <div class="card-header py-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h6 class="m-0 fw-bold"><i class="fa-solid fa-user-clock me-2" style="color:var(--primary);"></i>Awaiting Verification</h6>
+                <span style="font-size: 12px; color: var(--text-muted);">Agents listed in time order. Oldest waiting shown first in "Longest Wait" mode.</span>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                {# Sort buttons #}
+                <div class="d-flex gap-1">
+                    <a href="?sort=newest{% if search %}&search={{ search }}{% endif %}" class="sort-btn {% if sort_by == 'newest' %}active{% endif %}">
+                        <i class="fa-solid fa-arrow-down me-1"></i>Newest
+                    </a>
+                    <a href="?sort=oldest{% if search %}&search={{ search }}{% endif %}" class="sort-btn {% if sort_by == 'oldest' %}active{% endif %}">
+                        <i class="fa-solid fa-arrow-up me-1"></i>Oldest
+                    </a>
+                    <a href="?sort=waiting{% if search %}&search={{ search }}{% endif %}" class="sort-btn {% if sort_by == 'waiting' %}active{% endif %}">
+                        <i class="fa-solid fa-hourglass me-1"></i>Longest Wait
+                    </a>
+                </div>
+
+                {# Search #}
+                <form method="GET" action="{% url 'admin_agents_pending_registrations' %}" class="d-flex gap-1 align-items-center">
+                    <input type="hidden" name="sort" value="{{ sort_by }}">
+                    
+                    {# Event Filter Dropdown #}
+                    <select name="event_id" onchange="this.form.submit()" class="form-select form-select-sm" style="width: 180px; border-radius: 8px; font-size: 12px; height: 31px; padding: 4px 8px;">
+                        <option value="All Events" {% if event_filter == 'All Events' %}selected{% endif %}>All Events</option>
+                        {% for ev in events %}
+                            <option value="{{ ev.id }}" {% if event_filter == ev.id|stringformat:"s" %}selected{% endif %}>
+                                {{ ev.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <input type="text" name="search" value="{{ search }}" placeholder="Search agent…"
+                        class="form-control form-control-sm" style="width: 180px; border-radius: 8px; font-size: 12px; height: 31px;">
+                    <button type="submit" class="btn btn-sm btn-primary" style="border-radius: 8px; height: 31px; padding: 0 10px;">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </form>
+
+                <button class="btn btn-sm btn-light border" onclick="window.location.reload()" style="border-radius: 8px; font-size: 12px;">
+                    <i class="fa-solid fa-rotate me-1"></i>Refresh
+                </button>
+
+                <a href="{% url 'export_pending' %}{% if event_filter or search %}?{% endif %}{% if event_filter and event_filter != 'All Events' %}event_id={{ event_filter }}{% endif %}{% if event_filter and search %}&{% endif %}{% if search %}search={{ search }}{% endif %}"
+                   class="btn btn-sm" style="border-radius: 8px; font-size: 12px; background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; font-weight: 600;">
+                    <i class="fa-solid fa-file-csv me-1"></i>Export CSV
+                    {% if totalPending > 0 %}
+                        <span class="badge ms-1" style="background:#166534; color:#fff; font-size:10px;">{{ totalPending }}</span>
+                    {% endif %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div id="bulkForm">
+
+        {# Agent Table #}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color);">Agent</th>
+                        <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color);">⏱ Registered</th>
+                        <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color);">⌛ Waiting</th>
+                        <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color);">Location</th>
+                        <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color);">Plan</th>
+                        <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color); text-align:center;">Contact</th>
+                        <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color); text-align:center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for agent in agents %}
+                    
+                    <tr class="agent-row">
+
+                        {# Agent Info #}
+                        <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
+                            <div class="d-flex align-items-center gap-3">
+                                {% if agent.profile_photo_path %}
+                                    <img src="/storage/{{ agent.profile_photo_path }}" class="agent-photo" alt="{{ agent.display_name|default:agent.fullname }}">
+                                {% else %}
+                                    <div class="agent-initials">{{ agent.fullname|make_list|first|upper }}</div>
+                                {% endif %}
+                                <div>
+                                    <div class="fw-bold" style="font-size:14px; color:var(--text-primary);">{{ agent.display_name|default:agent.fullname }}</div>
+                                    <div style="font-size:11px; color:var(--text-muted);">{{ agent.email }}</div>
+                                    {% if agent.mobile %}
+                                    <div style="font-size:11px; color:var(--text-muted);">
+                                        <i class="fa-solid fa-phone me-1" style="font-size:9px;"></i>{{ agent.mobile }}
+                                    </div>
+                                    {% endif %}
+                                    <div class="mt-1">
+                                        <span class="step-badge">
+                                            <i class="fa-solid fa-list-check"></i>
+                                            Step {{ agent.registration_step|default:'?' }}/5
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+
+                        {# Registered Date #}
+                        <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
+                            <div class="fw-semibold" style="font-size:13px; color:var(--text-primary);">
+                                {{ agent.created_at|date:'d M Y' }}
+                            </div>
+                            <div style="font-size:11px; color:var(--text-muted);">
+                                {{ agent.created_at|date:'h:i A' }}
+                            </div>
+                            <div style="font-size:10px; color:var(--text-label); margin-top:2px;">
+                                {{ agent.created_at|timesince }} ago
+                            </div>
+                        </td>
+
+                        {# Waiting Time #}
+                        <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
+                            {% if agent.hours_waiting > 48 %}
+                            <span class="wait-badge wait-urgent">
+                                <i class="fa-solid fa-triangle-exclamation" style="font-size:9px;"></i>
+                                <span class="format-wait-time" data-hours="{{ agent.hours_waiting }}"></span> — URGENT
+                            </span>
+                        {% elif agent.hours_waiting > 12 %}
+                            <span class="wait-badge wait-medium">
+                                <i class="fa-solid fa-clock" style="font-size:9px;"></i>
+                                <span class="format-wait-time" data-hours="{{ agent.hours_waiting }}"></span> waiting
+                            </span>
+                        {% else %}
+                            <span class="wait-badge wait-fresh">
+                                <i class="fa-solid fa-circle-check" style="font-size:9px;"></i>
+                                <span class="format-wait-time-short" data-hours="{{ agent.hours_waiting }}"></span>
+                            </span>
+                        {% endif %}
+                        </td>
+
+                        {# Location #}
+                        <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
+                            {% if agent.address %}
+                                <div style="font-size:13px; color:var(--text-primary);">
+                                    <i class="fa-solid fa-location-dot me-1" style="color:var(--primary); font-size:11px;"></i>
+                                    {{ agent.address|truncatechars:28 }}
+                                </div>
+                            {% else %}
+                                <span style="font-size:12px; color:var(--text-muted);">Not provided</span>
+                            {% endif %}
+                        </td>
+
+                        {# Plan #}
+                        <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
+                            {% if agent.selected_plan %}
+                                {% if 'professional' in agent.selected_plan|lower %}
+                                <span class="badge bg-primary" style="font-size:10px; border-radius:6px;">Professional</span>
+                                {% else %}
+                                <span class="badge bg-secondary" style="font-size:10px; border-radius:6px;">Starter</span>
+                                {% endif %}
+                            {% else %}
+                                <span style="font-size:12px; color:var(--text-muted);">N/A</span>
+                            {% endif %}
+                        </td>
+
+                        {# Contact #}
+                        <td style="padding:14px 16px; border-bottom:1px solid var(--border-light); text-align:center;">
+                            <div class="d-flex gap-2 justify-content-center flex-wrap">
+                                {% if agent.mobile %}
+                                <a href="tel:{{ agent.mobile }}" class="contact-btn btn-call" title="Call {{ agent.mobile }}">
+                                    <i class="fa-solid fa-phone" style="font-size:11px;"></i> Call
+                                </a>
+                                {% endif %}
+                                {% if agent.email %}
+                                <a href="mailto:{{ agent.email }}?subject=Complete Your PadosiAgent Registration&body=Hi {{ agent.display_name|default:agent.fullname }},%0D%0A%0D%0AWe noticed you started your registration on PadosiAgent but haven't completed it yet. We'd love to help you finish the process!%0D%0A%0D%0APlease visit our website to complete your registration.%0D%0A%0D%0ARegards,%0D%0APadosiAgent Team" class="contact-btn btn-email" title="Email {{ agent.email }}">
+                                    <i class="fa-solid fa-envelope" style="font-size:11px;"></i> Email
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+
+                        {# Actions #}
+                        <td style="padding:14px 16px; border-bottom:1px solid var(--border-light); text-align:center;">
+                            <button type="button" class="btn btn-danger btn-sm delete-btn" data-model="agent" data-id="{{ agent.id }}" title="Delete Incomplete Registration" style="padding: 4px 8px;"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <i class="fa-solid fa-circle-check fa-3x mb-3 opacity-25" style="color: var(--primary);"></i>
+                            <h6 class="fw-bold" style="color: var(--text-muted);">All Clear! No Pending Registrations</h6>
+                            <p style="font-size: 13px; color: var(--text-muted);">New registrations will appear here for review.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.format-wait-time').forEach(function(el) {
+        let h = parseInt(el.getAttribute('data-hours')) || 0;
+        let d = Math.floor(h / 24);
+        let rem = h % 24;
+        el.textContent = (d > 0 ? d + 'd ' : '') + rem + 'h';
+    });
+
+    document.querySelectorAll('.format-wait-time-short').forEach(function(el) {
+        let h = parseInt(el.getAttribute('data-hours')) || 0;
+        el.textContent = h < 1 ? 'Just now' : h + 'h ago';
+    });
+});
+</script>
+{% endblock %}

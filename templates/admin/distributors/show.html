@@ -1,0 +1,166 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Distributor Details — PadosiAgent{% endblock %}
+{% block breadcrumb_title %}Distributor Profile{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-6">
+        <a href="{% url 'admin_distributors' %}" class="btn btn-sm btn-light text-muted mb-2">
+            <i class="fa-solid fa-arrow-left me-1"></i> Back to Distributors
+        </a>
+        <h2 class="h4 mb-0 fw-bold">Distributor Overview</h2>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left Column: Distributor Profile Card -->
+    <div class="col-lg-4 mb-4">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body text-center pt-4 pb-4">
+                <div class="avatar bg-primary text-white d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 80px; height: 80px; font-size: 32px; font-weight: bold;">
+                    {{ distributor.fullname|make_list|first|upper }}
+                </div>
+                <h5 class="fw-bold mb-1">{{ distributor.fullname }}</h5>
+                <p class="text-muted mb-3" style="font-size: 14px;">{{ distributor.email }}</p>
+                
+                {% if distributor.status == 'active' %}
+                    <span class="badge bg-success px-3 py-2 rounded-pill"><i class="fa-solid fa-circle-check me-1"></i> Active</span>
+                {% else %}
+                    <span class="badge bg-danger px-3 py-2 rounded-pill"><i class="fa-solid fa-ban me-1"></i> Blocked</span>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-white border-top p-0">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item px-4 py-3 d-flex justify-content-between align-items-center">
+                        <span class="text-muted" style="font-size: 13px;"><i class="fa-solid fa-calendar me-2"></i> Joined</span>
+                        <span style="font-size: 14px; font-weight: 600;">{{ distributor.created_at|date:'M d, Y' }}</span>
+                    </li>
+                    <li class="list-group-item px-4 py-3 d-flex justify-content-between align-items-center">
+                        <span class="text-muted" style="font-size: 13px;"><i class="fa-solid fa-users me-2"></i> Total Agents</span>
+                        <span class="badge bg-primary rounded-pill">{{ distributor.agents_count }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        {% if referral_code %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="mb-0 fw-bold"><i class="fa-solid fa-link text-primary me-2"></i> Referral Information</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="text-muted" style="font-size: 12px; font-weight: 700; text-transform: uppercase;">Referral Code</label>
+                    <div class="d-flex align-items-center mt-1">
+                        <div class="bg-light px-3 py-2 rounded flex-grow-1 font-monospace text-dark fw-bold" style="border: 1px dashed #cbd5e1;">
+                            {{ referral_code }}
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-muted" style="font-size: 12px; font-weight: 700; text-transform: uppercase;">Registration Link</label>
+                    <div class="input-group mt-1">
+                        <input type="text" class="form-control form-control-sm bg-light" value="{{ registration_link }}" readonly>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Column: Agents List -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold">Agents Managed by {{ distributor.fullname }}</h6>
+                <span class="badge bg-light text-dark border">{{ page_obj.paginator.count }} total</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" class="ps-4">Agent Name</th>
+                            <th scope="col">Email</th>
+                            <th scope="col">Current Plan</th>
+                            <th scope="col">Status</th>
+                            <th scope="col" class="text-end pe-4">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for agent in page_obj %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold text-dark">{{ agent.fullname }}</div>
+                                <div class="text-muted" style="font-size: 12px;">Joined: {{ agent.created_at|date:'M d, Y' }}</div>
+                            </td>
+                            <td>
+                                <div style="font-size: 13px;">{{ agent.email }}</div>
+                            </td>
+                            <td>
+                                {% if agent.selected_plan %}
+                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle rounded-pill">
+                                        {{ agent.selected_plan|title }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle rounded-pill">
+                                        No Active Plan
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if agent.status == 'active' %}
+                                    <span class="badge bg-success rounded-pill">Active</span>
+                                {% elif agent.status == 'pending_approval' %}
+                                    <span class="badge bg-warning text-dark rounded-pill">Pending Approval</span>
+                                {% else %}
+                                    <span class="badge bg-secondary rounded-pill">{{ agent.status|title }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-4">
+                                <a href="{% url 'admin_agents_manage' agent.id %}" class="btn btn-sm btn-light border" title="View Agent">
+                                    <i class="fa-solid fa-eye text-muted"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <div class="mb-3"><i class="fa-solid fa-users-slash fa-2x text-light"></i></div>
+                                <p class="mb-0" style="font-size: 14px;">This distributor has no agents yet.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if page_obj.has_other_pages %}
+            <div class="card-footer bg-white border-top py-3">
+                <ul class="pagination pagination-sm mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                    {% endif %}
+
+                    {% for i in page_obj.paginator.page_range %}
+                        {% if page_obj.number == i %}
+                            <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                        {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                            <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">Next</span></li>
+                    {% endif %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

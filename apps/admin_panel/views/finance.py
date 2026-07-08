@@ -8,9 +8,9 @@ from django.utils import timezone
 from django.utils.timezone import now
 from django.views.decorators.http import require_POST
 
-from apps.admin_panel.decorators import admin_login_required
+from apps.admin_panel.views.dashboard import _get_admin_from_session
 from apps.admin_panel.models import AdminActivityLog
-from apps.agents.models import AgentSubscription
+from apps.admin_panel.models.agent_subscription import AgentSubscription
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -37,11 +37,27 @@ def _fmt(value) -> str:
         return "0"
 
 
+def _ensure_aware(dt):
+    if dt:
+        from django.conf import settings
+        if getattr(settings, 'USE_TZ', False):
+            if timezone.is_naive(dt):
+                return timezone.make_aware(dt)
+        else:
+            if not timezone.is_naive(dt):
+                return timezone.make_naive(dt)
+    return dt
+
 # ─── Index ───────────────────────────────────────────────────────────────────
 
-@admin_login_required
 def index(request):
     """Finance & Accounts dashboard — mirrors AdminFinanceController::index."""
+    
+    admin_id = _get_admin_from_session(request)
+    if not admin_id:
+        from django.shortcuts import redirect
+        return redirect('admin_login')
+
     period      = request.GET.get('period', 'all')
     date_from   = _date_from(period)
 
@@ -87,7 +103,16 @@ def index(request):
             ORDER BY yr ASC, mo ASC
         """)
         cols = [c[0] for c in cur.description]
-        monthly_cashflow = [dict(zip(cols, row)) for row in cur.fetchall()]
+        monthly_cashflow = []
+        import datetime
+        for row in cur.fetchall():
+            row_dict = dict(zip(cols, row))
+            yr = row_dict.get('yr')
+            mo = row_dict.get('mo')
+            if yr and mo:
+                dt = datetime.date(yr, mo, 1)
+                row_dict['label'] = dt.strftime('%b %Y')
+            monthly_cashflow.append(row_dict)
 
     # ── Plan-wise P&L breakdown ───────────────────────────────────────────────
     with connection.cursor() as cur:
@@ -145,7 +170,7 @@ def index(request):
 
     renewals_due = []
     for r in renewals_raw:
-        exp = r['expires_at']
+        exp = _ensure_aware(r['expires_at'])
         if exp:
             days_left = (exp - now_dt).days
         else:
@@ -180,7 +205,7 @@ def index(request):
 
     overdue_payments = []
     for o in overdue_raw:
-        created = o['created_at']
+        created = _ensure_aware(o['created_at'])
         o['days_old']    = (now_dt - created).days if created else 0
         o['display_name'] = o['display_name'] or o['fullname'] or ''
         overdue_payments.append(o)
@@ -211,7 +236,7 @@ def index(request):
         t['plan_bg']    = '#dcfce7' if is_pro else ('#fef9c3' if is_starter else '#ede9fe')
         t['display_name'] = t['display_name'] or t['fullname'] or ''
         # human-readable time ago
-        created = t['created_at']
+        created = _ensure_aware(t['created_at'])
         if created:
             diff  = now_dt - created
             secs  = int(diff.total_seconds())
@@ -306,10 +331,13 @@ def index(request):
 
 # ─── Mark Payment ─────────────────────────────────────────────────────────────
 
-@admin_login_required
-@require_POST
 def mark_payment(request):
     """Update a subscription's payment_status. Accepts AJAX or form POST."""
+    
+    admin_id = _get_admin_from_session(request)
+    if not admin_id:
+        return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=401)
+
     sub_id = request.POST.get('subscription_id')
     status = request.POST.get('status', '').strip()
 

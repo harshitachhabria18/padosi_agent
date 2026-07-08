@@ -5,13 +5,15 @@ from django.db.models import Q
 from django.views.decorators.http import require_POST
 
 from apps.admin_panel.models.contact_submission import ContactSubmission
-from apps.admin_panel.decorators import admin_login_required
+from apps.admin_panel.views.dashboard import _get_admin_from_session
+from django.shortcuts import redirect
 
 
 # ─── CONTACT INBOX ────────────────────────────────────────────────────────────
 
-@admin_login_required
 def contacts_index(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return redirect('admin_login')
     """List contact submissions with search + status filtering (mirrors AdminContactController::index)."""
     search        = request.GET.get('search', '').strip()
     status_filter = request.GET.get('status', 'all').strip()
@@ -51,8 +53,9 @@ def contacts_index(request):
     })
 
 
-@admin_login_required
 def contacts_show(request, submission_id):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=401)
     """Return full submission data as JSON for the detail modal (mirrors AdminContactController::show)."""
     sub = get_object_or_404(ContactSubmission, id=submission_id)
     return JsonResponse({
@@ -72,9 +75,10 @@ def contacts_show(request, submission_id):
     })
 
 
-@admin_login_required
 @require_POST
 def contacts_update_status(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=401)
     """AJAX status update (mirrors AdminContactController::updateStatus)."""
     sub_id = request.POST.get('id')
     status = request.POST.get('status')
@@ -90,9 +94,10 @@ def contacts_update_status(request):
     return JsonResponse({'success': True})
 
 
-@admin_login_required
 @require_POST
 def contacts_delete(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=401)
     """AJAX delete (mirrors AdminContactController::destroy)."""
     sub_id = request.POST.get('id')
     if not sub_id:

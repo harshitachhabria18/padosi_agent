@@ -5,15 +5,17 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.db.models import Q
 
-from apps.admin_panel.decorators import admin_login_required
-from apps.agents.models import Agent
+from apps.admin_panel.views.dashboard import _get_admin_from_session
+from django.shortcuts import redirect
+from apps.admin_panel.models import Agent
 from apps.home.models.pincode import PincodeCache
 from apps.home.services.geocoding import GeocodingService
 
 logger = logging.getLogger(__name__)
 
-@admin_login_required
 def index(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return redirect('admin_login')
     total = Agent.objects.filter(status='active').count()
     geocoded = Agent.objects.filter(status='active', latitude__isnull=False, longitude__isnull=False).count()
     missing = total - geocoded
@@ -49,8 +51,9 @@ def index(request):
     }
     return render(request, 'admin/geocoding_manager.html', context)
 
-@admin_login_required
 def geocode_single(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=401)
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Only POST method is allowed.'}, status=405)
         
@@ -100,8 +103,9 @@ def geocode_single(request):
         logger.error(f"[Admin GeoManager] Single geocode failed: Agent #{agent.id} - {str(e)}")
         return JsonResponse({'success': False, 'message': f"Error: {str(e)}"}, status=500)
 
-@admin_login_required
 def geocode_batch(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=401)
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Only POST method is allowed.'}, status=405)
         
@@ -193,8 +197,9 @@ def geocode_batch(request):
         'results': results,
     })
 
-@admin_login_required
 def stats(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=401)
     total = Agent.objects.filter(status='active').count()
     geocoded = Agent.objects.filter(status='active', latitude__isnull=False, longitude__isnull=False).count()
     missing = total - geocoded

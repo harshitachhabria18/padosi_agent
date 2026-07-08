@@ -1,4 +1,4 @@
-{% extends 'admin/layout.html' %}
+{% extends 'admin/base.html' %}
 {% load static %}
 
 {% block title %}General Settings — PadosiAgent Admin{% endblock %}
@@ -16,7 +16,7 @@
             {% endfor %}
         {% endif %}
 
-        <form method="POST" action="{% url 'admin_panel:settings_update' %}" enctype="multipart/form-data">
+        <form method="POST" action="{% url 'admin_settings_update' %}" enctype="multipart/form-data">
             {% csrf_token %}
             <input type="hidden" name="group" value="general">
             

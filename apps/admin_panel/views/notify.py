@@ -1,33 +1,25 @@
-"""
-Push Notification Center views.
-Mirrors AgentNotificationController from Laravel exactly:
-  - notify_index     → showNotifyForm()
-  - notify_send      → send()
-  - notify_broadcast → sendBroadcastPush()
-"""
-
 import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db.models import Count, Max, Q
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from django.db import models
 
-from apps.admin_panel.decorators import admin_login_required
-from apps.admin_panel.models import AdminActivityLog, AdminBroadcast
-from apps.agents.models import Agent, AgentDeviceToken, AgentSubscription
+from apps.admin_panel.views.dashboard import _get_admin_from_session
+from apps.admin_panel.models import AdminActivityLog, Agent
 
 logger = logging.getLogger(__name__)
 
+from apps.admin_panel.views.broadcast import AdminBroadcast, AgentDeviceToken
 
 # ─── INDEX ───────────────────────────────────────────────────────────────────
 
-@admin_login_required
 def notify_index(request):
-    """
-    Render the Push Notification Center.
-    Mirrors AgentNotificationController::showNotifyForm().
-    """
+    admin = _get_admin_from_session(request)
+    if not admin:
+        return redirect('admin_login_page')
+
     # All active agents (for single-agent dropdown)
     agents = Agent.objects.filter(status='active').order_by('fullname')
 
@@ -68,7 +60,7 @@ def notify_index(request):
             'fullname':    row['agent__fullname'],
             'email':       row['agent__email'],
             'mobile':      row['agent__mobile'] or '—',
-            'platform':    (row['platform'] or 'web').lower(),
+            'platform':    (row['platform'] or 'web').lower() if row['platform'] else 'web',
             'token_count': row['token_count'],
             'last_seen_at': last_seen,
             'is_recent':   is_recent,
@@ -85,13 +77,12 @@ def notify_index(request):
 
 # ─── SEND TO SINGLE AGENT ────────────────────────────────────────────────────
 
-@admin_login_required
 @require_POST
 def notify_send(request):
-    """
-    Send a push notification to a single agent.
-    Mirrors AgentNotificationController::send().
-    """
+    admin = _get_admin_from_session(request)
+    if not admin:
+        return redirect('admin_login_page')
+
     agent_id = request.POST.get('agent_id', '').strip()
     title    = request.POST.get('title', '').strip()
     body     = request.POST.get('body', '').strip()
@@ -99,7 +90,7 @@ def notify_send(request):
     # Basic validation
     if not agent_id or not title or not body:
         messages.error(request, 'Agent, title, and message are all required.')
-        return redirect('admin_panel:agent_notify')
+        return redirect('agent_notify')
 
     agent = get_object_or_404(Agent, id=agent_id)
 
@@ -119,16 +110,16 @@ def notify_send(request):
             f"No device tokens found for {agent.fullname}. "
             "They may not have the PWA installed or notifications enabled."
         )
-        return redirect('admin_panel:agent_notify')
+        return redirect('agent_notify')
 
     # Send via FCM
     try:
-        from apps.agents.services.fcm import FcmService
+        from apps.admin_panel.services.fcm import FcmService
         FcmService().send_to_tokens(tokens, title, body, {'type': 'admin_custom'})
     except Exception as exc:
         logger.error(f"FCM send failed for agent #{agent.id}: {exc}")
         messages.error(request, f"Push notification failed: {exc}")
-        return redirect('admin_panel:agent_notify')
+        return redirect('agent_notify')
 
     # Log activity
     try:
@@ -141,19 +132,17 @@ def notify_send(request):
         pass
 
     messages.success(request, f"Push notification sent successfully to {agent.fullname}!")
-    return redirect('admin_panel:agent_notify')
+    return redirect('agent_notify')
 
 
 # ─── BROADCAST PUSH ──────────────────────────────────────────────────────────
 
-@admin_login_required
 @require_POST
 def notify_broadcast(request):
-    """
-    Broadcast a push notification to ALL active agents (or a filtered subset).
-    Mirrors AgentNotificationController::sendBroadcastPush().
-    Logs the broadcast to admin_broadcasts table.
-    """
+    admin = _get_admin_from_session(request)
+    if not admin:
+        return redirect('admin_login_page')
+
     title  = request.POST.get('title', '').strip()
     body   = request.POST.get('body', '').strip()
     target = request.POST.get('target', '').strip()
@@ -161,7 +150,7 @@ def notify_broadcast(request):
     VALID_TARGETS = {'all', 'professional', 'starter', 'expiring'}
     if not title or not body or target not in VALID_TARGETS:
         messages.error(request, 'Title, message, and a valid target are required.')
-        return redirect('admin_panel:agent_notify')
+        return redirect('agent_notify')
 
     now = timezone.now()
 
@@ -186,7 +175,7 @@ def notify_broadcast(request):
 
     if not agent_ids:
         messages.error(request, 'No agents found for the selected target group.')
-        return redirect('admin_panel:agent_notify')
+        return redirect('agent_notify')
 
     # Gather all device tokens for those agents
     tokens = list(
@@ -204,12 +193,12 @@ def notify_broadcast(request):
             'No device tokens found for the selected agents. '
             'They may not have the PWA installed.'
         )
-        return redirect('admin_panel:agent_notify')
+        return redirect('agent_notify')
 
     # Send via FCM
     sent_count = len(tokens)
     try:
-        from apps.agents.services.fcm import FcmService
+        from apps.admin_panel.services.fcm import FcmService
         FcmService().send_to_tokens(tokens, title, body, {
             'type':   'admin_broadcast',
             'target': target,
@@ -217,7 +206,7 @@ def notify_broadcast(request):
     except Exception as exc:
         logger.error(f"FCM broadcast failed (target={target}): {exc}")
         messages.error(request, f"Broadcast push failed: {exc}")
-        return redirect('admin_panel:agent_notify')
+        return redirect('agent_notify')
 
     # Log to admin_broadcasts table (mirrors PHP DB::table('admin_broadcasts')->insert())
     try:
@@ -253,4 +242,4 @@ def notify_broadcast(request):
         f"Push notification broadcast sent to {sent_count} device(s) "
         f"in the '{targets_label.get(target, target)}' group!"
     )
-    return redirect('admin_panel:agent_notify')
+    return redirect('agent_notify')

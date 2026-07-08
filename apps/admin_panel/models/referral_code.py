@@ -16,8 +16,8 @@ class ReferralCode(models.Model):
     reward_claimed = models.BooleanField(default=False)
     reward_type = models.CharField(max_length=255, blank=True, null=True)
     reward_claimed_at = models.DateTimeField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(blank=True, null=True)
+    updated_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         db_table = 'referral_codes'
@@ -67,6 +67,11 @@ class ReferralCode(models.Model):
         ref_code = cls.objects.create(
             agent=agent,
             code=code,
-            is_active=True
+            is_active=True,
+            clicks=0,
+            total_referrals=0,
+            pending_referrals=0,
+            reward_discount_percent=0,
+            reward_claimed=False
         )
         return ref_code

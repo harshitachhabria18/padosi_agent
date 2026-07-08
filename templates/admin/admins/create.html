@@ -1,0 +1,110 @@
+{% extends 'admin/base.html' %}
+{% block title %}Add Administrator — PadosiAgent{% endblock %}
+{% block breadcrumb_title %}System › Admin Management › Add Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 offset-lg-2">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="m-0 fw-bold">Add Administrator</h4>
+            <a href="{% url 'admin_admins_index' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="fa-solid fa-arrow-left me-1"></i>Back to List
+            </a>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <form method="POST" action="{% url 'admin_admins_store' %}">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Name</label>
+                            <input type="text" name="name" class="form-control" placeholder="Enter full name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Email Address</label>
+                            <input type="email" name="email" class="form-control" placeholder="admin@example.com" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Password</label>
+                            <input type="password" name="password" class="form-control" placeholder="Min. 8 characters" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Confirm Password</label>
+                            <input type="password" name="password_confirmation" class="form-control" placeholder="Repeat password" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Administrator Role</label>
+                        <select name="role" id="roleSelect" class="form-select" required>
+                            <option value="staff" selected>Staff Admin (Restricted & No Delete)</option>
+                            <option value="super">Super Admin (Full Access & Delete)</option>
+                        </select>
+                    </div>
+
+                    <!-- Permissions Selection Card -->
+                    <div id="permissionsWrapper" class="card bg-light border-0 mb-4 p-3" style="display: block;">
+                        <h6 class="fw-bold mb-3"><i class="fa-solid fa-user-lock me-2 text-primary"></i>Section Permissions</h6>
+                        <p class="text-muted mb-3" style="font-size: 12px;">Select which dashboard sections this staff user is authorized to view and update:</p>
+                        
+                        <div class="row">
+                            {% for slug, label in permissionsList.items %}
+                                <div class="col-md-6 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input permission-checkbox" type="checkbox" name="permissions[]" value="{{ slug }}" id="perm_{{ slug }}">
+                                        <label class="form-check-label" style="font-size: 13px; font-weight: 500;" for="perm_{{ slug }}">
+                                            {{ label }}
+                                        </label>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mt-3 pt-2 border-top d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleAllCheckboxes(true)">Select All</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleAllCheckboxes(false)">Clear All</button>
+                        </div>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary px-4 shadow-sm">
+                            <i class="fa-solid fa-user-plus me-1"></i>Create Administrator
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const roleSelect = document.getElementById('roleSelect');
+        const permissionsWrapper = document.getElementById('permissionsWrapper');
+
+        function handleRoleChange() {
+            if (roleSelect.value === 'super') {
+                permissionsWrapper.style.display = 'none';
+            } else {
+                permissionsWrapper.style.display = 'block';
+            }
+        }
+
+        roleSelect.addEventListener('change', handleRoleChange);
+        handleRoleChange(); // Run on page load
+    });
+
+    function toggleAllCheckboxes(checked) {
+        document.querySelectorAll('.permission-checkbox').forEach(cb => {
+            cb.checked = checked;
+        });
+    }
+</script>
+{% endblock %}
+{% endblock %}

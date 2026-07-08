@@ -1,4 +1,4 @@
-{% extends 'admin/layout.html' %}
+{% extends 'admin/base.html' %}
 {% load static %}
 
 {% block title %}Push Notification Center — PadosiAgent Admin{% endblock %}
@@ -50,14 +50,14 @@
                     </h6>
                 </div>
                 <div class="card-body p-4">
-                    <form method="POST" action="{% url 'admin_panel:agent_notify_send' %}" id="singleNotifForm">
+                    <form method="POST" action="{% url 'agent_notify_send' %}" id="singleNotifForm">
                         {% csrf_token %}
 
                         <div class="mb-4">
                             <label for="agent_id" class="form-label fw-semibold" style="font-size: 13px;">Select Agent</label>
                             <div style="position: relative;">
                                 <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 13px; z-index: 1;"></i>
-                                <select name="agent_id" id="agent_id" class="form-select" required style="padding-left: 36px; border-radius: 10px; font-size: 14px;">
+                                <select name="agent_id" id="agent_id" class="form-control" required style="padding-left: 36px; border-radius: 10px; font-size: 14px;">
                                     <option value="" disabled selected>— Choose an agent —</option>
                                     {% for agent in agents %}
                                         <option value="{{ agent.id }}">{{ agent.fullname }} ({{ agent.mobile }})</option>
@@ -129,7 +129,7 @@
                         </div>
                     </div>
 
-                    <form method="POST" action="{% url 'admin_panel:agent_notify_broadcast' %}" id="broadcastPushForm">
+                    <form method="POST" action="{% url 'agent_notify_broadcast' %}" id="broadcastPushForm">
                         {% csrf_token %}
 
                         <div class="mb-4">
@@ -392,10 +392,12 @@
                     </h6>
                     <p class="text-muted mb-0" style="font-size: 12px;">Send an instant push notification to this agent</p>
                 </div>
-                <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal"></button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="border:none;background:none;font-size:1.5rem;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body p-4">
-                <form method="POST" action="{% url 'admin_panel:agent_notify_send' %}" id="quickSendForm">
+                <form method="POST" action="{% url 'agent_notify_send' %}" id="quickSendForm">
                     {% csrf_token %}
                     <input type="hidden" name="agent_id" id="qs_agentId">
 
@@ -556,8 +558,7 @@ function quickSend(agentId, agentName) {
     document.getElementById('qs_body').value = '';
     document.getElementById('qs_previewTitle').textContent = 'Title preview';
     document.getElementById('qs_previewBody').textContent = 'Message preview...';
-    const modal = new bootstrap.Modal(document.getElementById('quickSendModal'));
-    modal.show();
+    $('#quickSendModal').modal('show');
 }
 
 // ─── Form Submit Guards ─────────────────────────────────────────────────────

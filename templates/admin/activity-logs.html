@@ -1,4 +1,4 @@
-{% extends 'admin/layout.html' %}
+{% extends 'admin/base.html' %}
 {% load static %}
 
 {% block title %}Admin Activity Logs — PadosiAgent Admin{% endblock %}
@@ -114,7 +114,7 @@
                 <span class="badge" style="background:#f1f5f9;color:#334155;font-size:11px;padding:5px 10px;border-radius:8px;border:1px solid #e2e8f0;">
                     <i class="fa-solid fa-database me-1"></i>{{ total_records }} Records
                 </span>
-                <a href="{% url 'admin_panel:advanced_activity_logs' %}" class="btn btn-sm btn-light border" style="font-size:12px;">
+                <a href="{% url 'advanced_activity_logs' %}" class="btn btn-sm btn-light border" style="font-size:12px;">
                     <i class="fa-solid fa-rotate-right me-1"></i>Refresh
                 </a>
             </div>
@@ -259,7 +259,7 @@ $(document).on('click', '.delete-btn', function(e) {
             button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
             
             $.ajax({
-                url: '{% url "admin_panel:advanced_activity_logs_delete" %}',
+                url: '{% url "advanced_activity_logs_delete" %}',
                 type: 'POST',
                 headers: { 'X-CSRFToken': '{{ csrf_token }}' },
                 data: {

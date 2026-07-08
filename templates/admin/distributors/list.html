@@ -1,0 +1,221 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Manage Distributors — PadosiAgent{% endblock %}
+{% block breadcrumb_title %}Distributors{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-6">
+        <h2 class="h4 mb-0 fw-bold">Manage Distributors</h2>
+        <p class="text-muted mb-0" style="font-size: 14px;">View and manage all registered distributors.</p>
+    </div>
+    <div class="col-md-6 text-end">
+        <a href="{% url 'admin_distributors_create' %}" class="btn btn-primary shadow-sm">
+            <i class="fa-solid fa-plus me-2"></i> Add New Distributor
+        </a>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-bottom py-3">
+        <form method="GET" action="{% url 'admin_distributors' %}" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <input type="text" name="search" class="form-control" placeholder="Search by name or email..." value="{{ search }}">
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select">
+                    <option value="all">All Statuses</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                    <option value="suspended" {% if status_filter == 'suspended' %}selected{% endif %}>Blocked</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Filter</button>
+            </div>
+            {% if search or status_filter != 'all' %}
+            <div class="col-md-2">
+                <a href="{% url 'admin_distributors' %}" class="btn btn-light w-100">Clear</a>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th scope="col" class="ps-4">Distributor Details</th>
+                    <th scope="col">Contact Info</th>
+                    <th scope="col">Registered Agents</th>
+                    <th scope="col">Joined Date</th>
+                    <th scope="col">Status</th>
+                    <th scope="col" class="text-end pe-4">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for distributor in page_obj %}
+                <tr>
+                    <td class="ps-4">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar bg-primary text-white d-flex align-items-center justify-content-center rounded" style="width: 40px; height: 40px; font-weight: bold;">
+                                {{ distributor.fullname|make_list|first }}
+                            </div>
+                            <div class="ms-3">
+                                <h6 class="mb-0 fw-bold">{{ distributor.fullname }}</h6>
+                                <small class="text-muted">ID: #{{ distributor.id }}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-size: 14px;">
+                            <div><i class="fa-solid fa-envelope text-muted me-2"></i>{{ distributor.email }}</div>
+                            {% if distributor.mobile %}
+                            <div class="mt-1"><i class="fa-solid fa-phone text-muted me-2"></i>{{ distributor.mobile }}</div>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge bg-info text-dark rounded-pill" style="font-size: 12px; font-weight: 600;">
+                            <i class="fa-solid fa-users me-1"></i> {{ distributor.agents_count }} Agents
+                        </span>
+                    </td>
+                    <td>
+                        <div style="font-size: 13px;">{{ distributor.created_at|date:'M d, Y' }}</div>
+                        <div class="text-muted" style="font-size: 11px;">{{ distributor.created_at|date:'h:i A' }}</div>
+                    </td>
+                    <td>
+                        {% if distributor.status == 'active' %}
+                            <span class="badge bg-success" style="font-weight: 600;">Active</span>
+                        {% else %}
+                            <span class="badge bg-danger" style="font-weight: 600;">Blocked</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end pe-4">
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'admin_distributor_detail' distributor.id %}" class="btn btn-sm btn-primary" title="View Agents">
+                                <i class="fa-solid fa-eye me-1"></i> View Agents
+                            </a>
+                            
+                            {% if distributor.status == 'active' %}
+                                <button class="btn btn-sm btn-outline-danger toggle-status-btn" data-id="{{ distributor.id }}" data-status="suspended" title="Block Distributor">
+                                    <i class="fa-solid fa-ban"></i>
+                                </button>
+                            {% else %}
+                                <button class="btn btn-sm btn-outline-success toggle-status-btn" data-id="{{ distributor.id }}" data-status="active" title="Unblock Distributor">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                </button>
+                            {% endif %}
+                            
+                            <button type="button" class="btn btn-danger btn-sm delete-btn" data-model="user" data-id="{{ distributor.id }}" title="Delete" style="padding: 4px 8px;"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-5 text-muted">
+                        <div class="mb-3"><i class="fa-solid fa-building-user fa-3x text-light"></i></div>
+                        <h6>No distributors found</h6>
+                        <p class="mb-0" style="font-size: 14px;">Try adjusting your search filters.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% if page_obj.has_other_pages %}
+    <div class="card-footer bg-white border-top py-3">
+        <ul class="pagination pagination-sm mb-0">
+            {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search }}&status={{ status_filter }}">Previous</a></li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Previous</span></li>
+            {% endif %}
+
+            {% for i in page_obj.paginator.page_range %}
+                {% if page_obj.number == i %}
+                    <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                    <li class="page-item"><a class="page-link" href="?page={{ i }}&search={{ search }}&status={{ status_filter }}">{{ i }}</a></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search }}&status={{ status_filter }}">Next</a></li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Next</span></li>
+            {% endif %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleButtons = document.querySelectorAll('.toggle-status-btn');
+        
+        toggleButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                const status = this.getAttribute('data-status');
+                const actionText = status === 'blocked' ? 'Block' : 'Unblock';
+                const confirmationText = status === 'blocked' 
+                    ? "Are you sure you want to block this distributor?" 
+                    : "Are you sure you want to activate this distributor?";
+                
+                Swal.fire({
+                    title: `${actionText} Distributor?`,
+                    text: confirmationText,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: status === 'blocked' ? '#ef4444' : '#10b981',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: `Yes, ${actionText}`
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch("{% url 'admin_distributor_toggle_status' %}", {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: JSON.stringify({
+                                id: id,
+                                status: status
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire(
+                                    'Success!',
+                                    data.message,
+                                    'success'
+                                ).then(() => {
+                                    window.location.reload();
+                                });
+                            } else {
+                                Swal.fire(
+                                    'Error!',
+                                    data.message || 'An error occurred.',
+                                    'error'
+                                );
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.fire(
+                                'Error!',
+                                'Failed to toggle status.',
+                                'error'
+                            );
+                        });
+                    }
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}

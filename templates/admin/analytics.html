@@ -1,4 +1,4 @@
-{% extends 'admin/layout.html' %}
+{% extends 'admin/base.html' %}
 
 {% block title %}Agent Performance Analytics — PadosiAgent Admin{% endblock %}
 {% block breadcrumb %}Analytics › Agent Performance Rankings{% endblock %}
@@ -176,7 +176,7 @@
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center gap-1" style="font-size: 13px;">
-                                        {% for star in agent.precalculated_stars|default:agent.star_rating_list %}
+                                        {% for star in agent.precalculated_stars %}
                                             {% if star == 'full' %}
                                                 <i class="fa-solid fa-star text-warning" style="font-size: 11px;"></i>
                                             {% elif star == 'half' %}

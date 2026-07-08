@@ -1,177 +1,270 @@
-{% extends 'admin/layout.html' %}
+{% extends 'admin/base.html' %}
 
 {% block title %}Plans & Pricing — PadosiAgent Admin{% endblock %}
-{% block breadcrumb %}Content Control › Plans & Pricing{% endblock %}
+{% block breadcrumb_title %}Content › Plans & Pricing{% endblock %}
+
+{% block extra_css %}
+<style>
+.plan-editor-card {
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    overflow: hidden;
+}
+.plan-editor-header {
+    padding: 14px 20px;
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+.plan-preview-card {
+    border-radius: 16px;
+    padding: 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s;
+}
+.plan-preview-card:hover { transform: translateY(-3px); }
+.plan-preview-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    padding: 3px 10px;
+    border-radius: 100px;
+    margin-bottom: 10px;
+}
+.plan-price-full { font-size: 13px; color: var(--text-muted); text-decoration: line-through; }
+.plan-price-promo { font-size: 32px; font-weight: 900; letter-spacing: -1px; }
+.plan-price-note { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+</style>
+{% endblock %}
 
 {% block content %}
-<form method="POST" action="{% url 'admin_panel:content_plans_update' %}">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h5 class="fw-bold mb-1">💰 Plans & Pricing Editor</h5>
+        <span style="font-size:13px;color:var(--text-muted);">Configure the subscription plan prices shown to agents during registration.</span>
+    </div>
+</div>
+
+{% if messages %}
+<div class="mb-3">
+    {% for message in messages %}
+    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<form method="POST" action="{% url 'admin_content_plans_update' %}">
     {% csrf_token %}
 
+    <div class="row g-4 mb-4">
+
+        <!-- Starter Plan Editor -->
+        <div class="col-lg-6">
+            <div class="plan-editor-card">
+                <div class="plan-editor-header" style="background: linear-gradient(135deg,#fef9c3,#fff);">
+                    <i class="fa-solid fa-seedling text-warning"></i>
+                    Starter Plan (Basic)
+                </div>
+                <div class="p-4">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Plan Name</label>
+                            <input type="text" name="starter_name" class="form-control"
+                                   value="{{ pricing.starter.name|default:"Starter's Plan" }}"
+                                   placeholder="Starter's Plan">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Full Price (₹) <small class="text-muted fw-normal">— crossed out</small></label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" name="starter_full_price" class="form-control"
+                                       value="{{ pricing.starter.full_price|default:2359 }}" min="0"
+                                       id="starterFullPrice">
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Promo Price (₹) <small class="text-muted fw-normal">— shown large</small></label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" name="starter_promo_price" class="form-control"
+                                       value="{{ pricing.starter.promo_price|default:589 }}" min="0"
+                                       id="starterPromoPrice">
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Description</label>
+                            <input type="text" name="starter_description" class="form-control"
+                                   value="{{ pricing.starter.description|default:'Perfect for New Agents' }}"
+                                   placeholder="Perfect for New Agents">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Badge Label</label>
+                            <input type="text" name="starter_badge" class="form-control"
+                                   value="{{ pricing.starter.badge|default:'STANDARD' }}"
+                                   placeholder="STANDARD">
+                            <small class="text-muted">Short uppercase label shown on the plan card (e.g. STANDARD, POPULAR)</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Professional Plan Editor -->
+        <div class="col-lg-6">
+            <div class="plan-editor-card">
+                <div class="plan-editor-header" style="background: linear-gradient(135deg,#dcfce7,#fff);">
+                    <i class="fa-solid fa-star text-success"></i>
+                    Professional Plan
+                </div>
+                <div class="p-4">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Plan Name</label>
+                            <input type="text" name="professional_name" class="form-control"
+                                   value="{{ pricing.professional.name|default:"Professional's Plan" }}"
+                                   placeholder="Professional's Plan">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Full Price (₹)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" name="professional_full_price" class="form-control"
+                                       value="{{ pricing.professional.full_price|default:8258 }}" min="0"
+                                       id="proFullPrice">
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Promo Price (₹)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" name="professional_promo_price" class="form-control"
+                                       value="{{ pricing.professional.promo_price|default:2359 }}" min="0"
+                                       id="proPromoPrice">
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Description</label>
+                            <input type="text" name="professional_description" class="form-control"
+                                   value="{{ pricing.professional.description|default:'For Established Professionals' }}"
+                                   placeholder="For Established Professionals">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Badge Label</label>
+                            <input type="text" name="professional_badge" class="form-control"
+                                   value="{{ pricing.professional.badge|default:'RECOMMENDED' }}"
+                                   placeholder="RECOMMENDED">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Global Labels -->
-    <div class="card mb-4">
-        <div class="card-header bg-white py-3">
-            <h6 class="m-0 fw-bold"><i class="fa-solid fa-bullhorn me-2" style="color: #f59e0b;"></i>Page Labels</h6>
+    <div class="plan-editor-card mb-4">
+        <div class="plan-editor-header">
+            <i class="fa-solid fa-tag text-primary"></i>
+            Global Labels & Promo Text
         </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-bold" style="font-size: 13px;">Promo Active Label</label>
-                    <input type="text" name="promo_discount_label" value="{{ pricing.promo_discount_label|default:'' }}" class="form-control" placeholder="Partner Promo Applied!...">
-                    <small class="text-muted">Shown when a promo code is applied</small>
+        <div class="p-4">
+            <div class="row g-3">
+                <div class="col-lg-6">
+                    <label class="form-label fw-semibold" style="font-size:13px;">Promo Discount Label</label>
+                    <input type="text" name="promo_discount_label" class="form-control"
+                           value="{{ pricing.promo_discount_label|default:'Partner Promo Applied! Once in a lifetime offer!' }}"
+                           placeholder="Partner Promo Applied! Once in a lifetime offer!">
+                    <small class="text-muted">Shown when a promo code is applied at checkout.</small>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-bold" style="font-size: 13px;">Standard Label</label>
-                    <input type="text" name="standard_label" value="{{ pricing.standard_label|default:'' }}" class="form-control" placeholder="Get started with our standard plans">
-                    <small class="text-muted">Shown when no promo code is active</small>
+                <div class="col-lg-6">
+                    <label class="form-label fw-semibold" style="font-size:13px;">Standard Plans Label</label>
+                    <input type="text" name="standard_label" class="form-control"
+                           value="{{ pricing.standard_label|default:'Get started with our standard partner plans' }}"
+                           placeholder="Get started with our standard partner plans">
+                    <small class="text-muted">Shown above the plan cards on the pricing page.</small>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row">
-        <!-- Starter Plan -->
-        <div class="col-lg-6 mb-4">
-            <div class="card h-100" style="border-top: 4px solid #64748b;">
-                <div class="card-header bg-white py-3">
-                    <h6 class="m-0 fw-bold"><i class="fa-solid fa-seedling me-2 text-secondary"></i>Starter Plan</h6>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold" style="font-size: 13px;">Plan Name</label>
-                        <input type="text" name="starter_name" value="{{ pricing.starter.name|default:"Starter's Plan" }}" class="form-control">
-                    </div>
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <label class="form-label fw-bold" style="font-size: 13px;">Full Price (₹)</label>
-                            <input type="number" name="starter_full_price" value="{{ pricing.starter.full_price|default:2359 }}" class="form-control" id="starter_full_price_input">
-                        </div>
-                        <div class="col-6 mb-3">
-                            <label class="form-label fw-bold" style="font-size: 13px;">Promo Price (₹)</label>
-                            <input type="number" name="starter_promo_price" value="{{ pricing.starter.promo_price|default:589 }}" class="form-control" id="starter_promo_price_input">
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold" style="font-size: 13px;">Description</label>
-                        <input type="text" name="starter_description" value="{{ pricing.starter.description|default:'Perfect for New Agents' }}" class="form-control">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold" style="font-size: 13px;">Badge Text</label>
-                        <input type="text" name="starter_badge" value="{{ pricing.starter.badge|default:'STANDARD' }}" class="form-control form-control-sm" placeholder="STANDARD">
-                    </div>
-
-                    <!-- Price Preview -->
-                    <div class="p-3 rounded" style="background: #f8fafc; border: 1px dashed #e2e8f0;">
-                        <small class="text-muted d-block mb-1">Preview:</small>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <span class="fw-bold" style="font-size: 20px; color: var(--primary);">₹<span id="starter_full_price_preview">{{ pricing.starter.full_price|default:2359 }}</span></span>
-                                <span class="text-muted" style="font-size: 12px;">/ 1st Year</span>
-                            </div>
-                            <div class="text-end">
-                                <span class="text-muted" style="font-size: 12px;">Promo: </span>
-                                <span class="fw-bold text-success">₹<span id="starter_promo_price_preview">{{ pricing.starter.promo_price|default:589 }}</span></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <!-- Live Preview -->
+    <div class="plan-editor-card mb-4">
+        <div class="plan-editor-header">
+            <i class="fa-solid fa-eye text-secondary"></i>
+            Live Preview
+            <span class="badge bg-light text-muted fw-normal ms-1" style="font-size:11px;">Updates as you type</span>
         </div>
-
-        <!-- Professional Plan -->
-        <div class="col-lg-6 mb-4">
-            <div class="card h-100" style="border-top: 4px solid var(--primary);">
-                <div class="card-header bg-white py-3">
-                    <h6 class="m-0 fw-bold"><i class="fa-solid fa-crown me-2" style="color: #f59e0b;"></i>Professional Plan</h6>
+        <div class="p-4">
+            <div class="row g-4 justify-content-center">
+                <!-- Starter Preview -->
+                <div class="col-md-5">
+                    <div class="plan-preview-card" style="background: linear-gradient(135deg,#fefce8,#fff); border: 2px solid #fde047;">
+                        <div class="plan-preview-badge" style="background:#fef08a;color:#713f12;" id="prev-starter-badge">
+                            {{ pricing.starter.badge|default:'STANDARD' }}
+                        </div>
+                        <h6 class="fw-bold mb-1" id="prev-starter-name">{{ pricing.starter.name|default:"Starter's Plan" }}</h6>
+                        <div class="plan-price-full" id="prev-starter-full">₹{{ pricing.starter.full_price|default:2359 }}</div>
+                        <div class="plan-price-promo text-warning" id="prev-starter-promo">₹{{ pricing.starter.promo_price|default:589 }}</div>
+                        <div class="plan-price-note" id="prev-starter-desc">{{ pricing.starter.description|default:'Perfect for New Agents' }}</div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold" style="font-size: 13px;">Plan Name</label>
-                        <input type="text" name="professional_name" value="{{ pricing.professional.name|default:"Professional's Plan" }}" class="form-control">
-                    </div>
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <label class="form-label fw-bold" style="font-size: 13px;">Full Price (₹)</label>
-                            <input type="number" name="professional_full_price" value="{{ pricing.professional.full_price|default:8258 }}" class="form-control" id="professional_full_price_input">
+                <!-- Professional Preview -->
+                <div class="col-md-5">
+                    <div class="plan-preview-card" style="background: linear-gradient(135deg,#f0fdf4,#fff); border: 2px solid #86efac;">
+                        <div class="plan-preview-badge" style="background:#bbf7d0;color:#14532d;" id="prev-pro-badge">
+                            {{ pricing.professional.badge|default:'RECOMMENDED' }}
                         </div>
-                        <div class="col-6 mb-3">
-                            <label class="form-label fw-bold" style="font-size: 13px;">Promo Price (₹)</label>
-                            <input type="number" name="professional_promo_price" value="{{ pricing.professional.promo_price|default:2359 }}" class="form-control" id="professional_promo_price_input">
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold" style="font-size: 13px;">Description</label>
-                        <input type="text" name="professional_description" value="{{ pricing.professional.description|default:'For Established Professionals' }}" class="form-control">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold" style="font-size: 13px;">Badge Text</label>
-                        <input type="text" name="professional_badge" value="{{ pricing.professional.badge|default:'RECOMMENDED' }}" class="form-control form-control-sm" placeholder="RECOMMENDED">
-                    </div>
-
-                    <!-- Price Preview -->
-                    <div class="p-3 rounded" style="background: #f0fdf4; border: 1px dashed #86efac;">
-                        <small class="text-muted d-block mb-1">Preview:</small>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <span class="fw-bold" style="font-size: 20px; color: var(--primary);">₹<span id="professional_full_price_preview">{{ pricing.professional.full_price|default:8258 }}</span></span>
-                                <span class="text-muted" style="font-size: 12px;">/ 1st Year</span>
-                            </div>
-                            <div class="text-end">
-                                <span class="text-muted" style="font-size: 12px;">Promo: </span>
-                                <span class="fw-bold text-success">₹<span id="professional_promo_price_preview">{{ pricing.professional.promo_price|default:2359 }}</span></span>
-                            </div>
-                        </div>
+                        <h6 class="fw-bold mb-1" id="prev-pro-name">{{ pricing.professional.name|default:"Professional's Plan" }}</h6>
+                        <div class="plan-price-full" id="prev-pro-full">₹{{ pricing.professional.full_price|default:8258 }}</div>
+                        <div class="plan-price-promo text-success" id="prev-pro-promo">₹{{ pricing.professional.promo_price|default:2359 }}</div>
+                        <div class="plan-price-note" id="prev-pro-desc">{{ pricing.professional.description|default:'For Established Professionals' }}</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="text-end">
+    <div class="text-end mb-5">
         <button type="submit" class="btn btn-primary px-5">
             <i class="fa-solid fa-save me-2"></i> Save Pricing Configuration
         </button>
     </div>
 </form>
 
-<div class="card mt-4">
-    <div class="card-body">
-        <div class="d-flex align-items-center gap-3">
-            <div style="width: 44px; height: 44px; background: #fef3c7; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                <i class="fa-solid fa-triangle-exclamation" style="color: #d97706;"></i>
-            </div>
-            <div>
-                <h6 class="fw-bold m-0">Important Note</h6>
-                <p class="text-muted mb-0" style="font-size: 13px;">Price changes here update the display values. The actual Razorpay payment amount is calculated on registration using these saved values. Changes take effect immediately.</p>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    function formatNumber(val) {
-        return Number(val).toLocaleString('en-IN');
-    }
+// Live preview bindings
+function bind(inputId, previewId, prefix) {
+    var el = document.querySelector('[name="' + inputId + '"]');
+    var prev = document.getElementById(previewId);
+    if (!el || !prev) return;
+    el.addEventListener('input', function() {
+        prev.textContent = (prefix || '') + this.value;
+    });
+}
 
-    // Live previews
-    $('#starter_full_price_input').on('input', function() {
-        $('#starter_full_price_preview').text(formatNumber(this.value || 0));
-    });
-    $('#starter_promo_price_input').on('input', function() {
-        $('#starter_promo_price_preview').text(formatNumber(this.value || 0));
-    });
-    $('#professional_full_price_input').on('input', function() {
-        $('#professional_full_price_preview').text(formatNumber(this.value || 0));
-    });
-    $('#professional_promo_price_input').on('input', function() {
-        $('#professional_promo_price_preview').text(formatNumber(this.value || 0));
-    });
+bind('starter_name', 'prev-starter-name');
+bind('starter_badge', 'prev-starter-badge');
+bind('starter_description', 'prev-starter-desc');
+bind('starter_full_price', 'prev-starter-full', '₹');
+bind('starter_promo_price', 'prev-starter-promo', '₹');
 
-    // Run once on load to format previews
-    $('#starter_full_price_preview').text(formatNumber($('#starter_full_price_preview').text()));
-    $('#starter_promo_price_preview').text(formatNumber($('#starter_promo_price_preview').text()));
-    $('#professional_full_price_preview').text(formatNumber($('#professional_full_price_preview').text()));
-    $('#professional_promo_price_preview').text(formatNumber($('#professional_promo_price_preview').text()));
+bind('professional_name', 'prev-pro-name');
+bind('professional_badge', 'prev-pro-badge');
+bind('professional_description', 'prev-pro-desc');
+bind('professional_full_price', 'prev-pro-full', '₹');
+bind('professional_promo_price', 'prev-pro-promo', '₹');
 </script>
 {% endblock %}

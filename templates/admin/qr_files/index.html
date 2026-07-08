@@ -1,0 +1,834 @@
+{% extends 'admin/base.html' %}
+
+{% block breadcrumb_title %}QR Code File Generator{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <!-- Header with Language Toggle -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0 text-primary font-weight-bold" id="page-title" data-lang-en="QR Code File Generator" data-lang-gu="QR કોડ ફાઇલ જનરેટર">QR Code File Generator</h4>
+        <button id="langToggleBtn" class="btn btn-outline-primary btn-sm px-3 shadow-sm d-flex align-items-center gap-2" style="border-radius: 8px;">
+            <i class="fa-solid fa-language" style="font-size: 16px;"></i>
+            <span id="langBtnText">ગુજરાતી</span>
+        </button>
+    </div>
+
+    <!-- Quick stats cards -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3 mb-md-0">
+            <div class="card border-0 shadow-sm" style="border-left: 5px solid var(--primary) !important;">
+                <div class="card-body py-3 d-flex align-items-center">
+                    <div class="bg-light p-3 rounded-3 me-3 text-primary">
+                        <i class="fa-solid fa-file-circle-plus fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 font-weight-semibold" data-lang-en="Total Uploaded Files" data-lang-gu="કુલ અપલોડ કરેલી ફાઇલો">Total Uploaded Files</h6>
+                        <h3 class="mb-0 font-weight-bold text-dark">{{ totalFiles }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm" style="border-left: 5px solid #3b82f6 !important;">
+                <div class="card-body py-3 d-flex align-items-center">
+                    <div class="bg-light p-3 rounded-3 me-3 text-info">
+                        <i class="fa-solid fa-qrcode fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 font-weight-semibold" data-lang-en="Total QR Scans / Downloads" data-lang-gu="કુલ QR સ્કેન / ડાઉનલોડ">Total QR Scans / Downloads</h6>
+                        <h3 class="mb-0 font-weight-bold text-dark">{{ totalDownloads }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload & File Management Section -->
+    <div class="row">
+        <!-- Left: Upload Box -->
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent border-0 pt-4 pb-0">
+                    <h5 class="card-title font-weight-bold mb-0 text-dark" data-lang-en="Upload New File" data-lang-gu="નવી ફાઇલ અપલોડ કરો">Upload New File</h5>
+                </div>
+                <div class="card-body">
+                    <form id="fileUploadForm" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div id="dropzone" class="upload-dropzone d-flex flex-column align-items-center justify-content-center p-4 border border-dashed rounded-3 text-center cursor-pointer mb-3" style="min-height: 200px; background-color: var(--bg-body); transition: all 0.3s;">
+                            <i class="fa-solid fa-cloud-arrow-up fa-3x text-primary mb-3"></i>
+                            <p class="mb-1 font-weight-bold text-dark" data-lang-en="Drag & drop your file here" data-lang-gu="તમારી ફાઇલ અહીં ડ્રેગ અને ડ્રોપ કરો">Drag & drop your file here</p>
+                            <p class="text-muted small mb-2" data-lang-en="or click to browse" data-lang-gu="અથવા પસંદ કરવા માટે ક્લિક કરો">or click to browse</p>
+                            <input type="file" name="file" id="fileInput" class="d-none">
+                            <span class="badge bg-secondary px-2 py-1" style="font-size: 11px;" id="selected-file-badge">No file selected</span>
+                        </div>
+
+                        <!-- Progress indicator -->
+                        <div id="uploadProgressWrapper" class="d-none mb-3">
+                            <div class="d-flex justify-content-between mb-1 small text-muted">
+                                <span data-lang-en="Uploading..." data-lang-gu="અપલોડ થઈ રહ્યું છે...">Uploading...</span>
+                                <span id="uploadPercentage">0%</span>
+                            </div>
+                            <div class="progress" style="height: 10px; border-radius: 5px;">
+                                <div id="uploadProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+
+                        <div class="small text-muted mb-3" style="line-height: 1.4;">
+                            <strong data-lang-en="Supported files:" data-lang-gu="માન્ય ફાઇલો:">Supported files:</strong> PDF, APK, ZIP, DOCX, XLSX, SQL, JSON, Images (PNG, JPG, SVG, WebP). <br>
+                            <strong data-lang-en="Max size:" data-lang-gu="મહત્તમ સાઈઝ:">Max size:</strong> 512 MB.
+                        </div>
+
+                        <button type="submit" id="uploadBtn" class="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2 py-2" style="border-radius: 8px;">
+                            <i class="fa-solid fa-upload"></i>
+                            <span data-lang-en="Upload & Generate QR" data-lang-gu="અપલોડ કરો અને QR બનાવો">Upload & Generate QR</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Files List -->
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent border-0 pt-4 pb-2">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                        <h5 class="card-title font-weight-bold mb-0 text-dark" data-lang-en="Manage Uploaded Files" data-lang-gu="અપલોડ કરેલી ફાઇલો મેનેજ કરો">Manage Uploaded Files</h5>
+                        
+                        <!-- Search and Filter Form -->
+                        <form action="{% url 'admin_qr_files_index' %}" method="GET" class="d-flex flex-wrap gap-2">
+                            <input type="text" name="search" class="form-control form-control-sm px-3 py-1" style="width: 180px; border-radius: 8px;" placeholder="Search files..." value="{{ search|default:'' }}">
+                            <select name="type" class="form-select form-select-sm" style="width: 120px; border-radius: 8px;" onchange="this.form.submit()">
+                                <option value="" data-lang-en="All Types" data-lang-gu="બધા પ્રકાર">All Types</option>
+                                <option value="pdf" {% if selected_type == 'pdf' %}selected{% endif %}>PDF</option>
+                                <option value="apk" {% if selected_type == 'apk' %}selected{% endif %}>APK</option>
+                                <option value="zip" {% if selected_type == 'zip' %}selected{% endif %}>ZIP</option>
+                                <option value="docx" {% if selected_type == 'docx' %}selected{% endif %}>DOCX</option>
+                                <option value="json" {% if selected_type == 'json' %}selected{% endif %}>JSON</option>
+                                <option value="image" {% if selected_type == 'image' %}selected{% endif %} data-lang-en="Images" data-lang-gu="ઇમેજીસ">Images</option>
+                            </select>
+                            {% if search or selected_type %}
+                                <a href="{% url 'admin_qr_files_index' %}" class="btn btn-sm btn-outline-secondary" style="border-radius: 8px;"><i class="fa-solid fa-xmark"></i></a>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card-body px-0 py-2">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">#</th>
+                                    <th data-lang-en="File Name" data-lang-gu="ફાઇલ નામ">File Name</th>
+                                    <th data-lang-en="Size" data-lang-gu="સાઇઝ">Size</th>
+                                    <th data-lang-en="Upload Date" data-lang-gu="અપલોડ તારીખ">Upload Date</th>
+                                    <th data-lang-en="Downloads" data-lang-gu="ડાઉનલોડ">Downloads</th>
+                                    <th class="text-end" data-lang-en="Actions" data-lang-gu="ક્રિયાઓ">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for file in files %}
+                                <tr>
+                                    <td>{{ files.start_index|add:forloop.counter0 }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="file-icon-wrap me-2 text-primary" style="font-size: 20px;">
+                                                {% if file.file_type == 'png' or file.file_type == 'jpg' or file.file_type == 'jpeg' or file.file_type == 'gif' or file.file_type == 'svg' or file.file_type == 'webp' %}
+                                                    <i class="fa-solid fa-file-image text-warning"></i>
+                                                {% elif file.file_type == 'pdf' %}
+                                                    <i class="fa-solid fa-file-pdf text-danger"></i>
+                                                {% elif file.file_type == 'apk' %}
+                                                    <i class="fa-solid fa-android text-success"></i>
+                                                {% elif file.file_type == 'zip' or file.file_type == 'rar' or file.file_type == 'tar' or file.file_type == 'gz' %}
+                                                    <i class="fa-solid fa-file-zipper text-info"></i>
+                                                {% elif file.file_type == 'docx' or file.file_type == 'doc' %}
+                                                    <i class="fa-solid fa-file-word text-primary"></i>
+                                                {% elif file.file_type == 'sql' %}
+                                                    <i class="fa-solid fa-database text-info"></i>
+                                                {% elif file.file_type == 'json' %}
+                                                    <i class="fa-solid fa-file-code text-warning"></i>
+                                                {% else %}
+                                                    <i class="fa-solid fa-file text-secondary"></i>
+                                                {% endif %}
+                                            </div>
+                                            <div class="text-truncate" style="max-width: 200px;" title="{{ file.original_name }}">
+                                                <span class="font-weight-semibold text-dark">{{ file.original_name }}</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge bg-light text-dark">{{ file.formatted_size }}</span></td>
+                                    <td><span class="text-muted small">{{ file.created_at|date:'d-m-Y H:i' }}</span></td>
+                                    <td>
+                                        <span class="badge bg-success-light text-success font-weight-bold px-2 py-1" style="font-size: 12px;">
+                                            <i class="fa-solid fa-arrow-down-long me-1"></i>{{ file.download_count }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="d-flex justify-content-end gap-2 px-3">
+                                            <!-- Generate QR Code Icon Link -->
+                                            <button onclick="showQrModal('{{ file.unique_code }}', '{{ file.download_url }}', '{{ file.original_name|escapejs }}')" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" style="border-radius: 8px;" title="QR Code">
+                                                <i class="fa-solid fa-qrcode"></i>
+                                                <span class="d-none d-md-inline">QR</span>
+                                            </button>
+
+                                            <!-- Edit/Replace File button -->
+                                            <button onclick="openEditModal('{{ file.id }}', '{{ file.original_name|escapejs }}')" class="btn btn-sm btn-outline-info d-flex align-items-center gap-1" style="border-radius: 8px;" title="Replace File">
+                                                <i class="fa-solid fa-pen-to-square"></i>
+                                                <span class="d-none d-md-inline" data-lang-en="Replace" data-lang-gu="બદલો">Replace</span>
+                                            </button>
+                                            
+                                            <!-- Delete button -->
+                                            <form action="{% url 'admin_qr_files_delete' file.id %}" method="POST" class="delete-form d-inline-block">
+                                                {% csrf_token %}
+                                                <button type="button" class="btn btn-sm btn-outline-danger file-delete-btn" style="border-radius: 8px;">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-5 text-muted">
+                                        <i class="fa-solid fa-folder-open fa-3x mb-3 text-secondary opacity-50"></i>
+                                        <p class="mb-0" data-lang-en="No files uploaded yet." data-lang-gu="હજી સુધી કોઈ ફાઇલો અપલોડ કરવામાં આવી નથી.">No files uploaded yet.</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="d-flex justify-content-center mt-3">
+                        {% if files.has_other_pages %}
+                        <div class="card-footer bg-white border-top py-3 w-100">
+                            <ul class="pagination pagination-sm mb-0 justify-content-center">
+                                {% if files.has_previous %}
+                                    <li class="page-item"><a class="page-link" href="?page={{ files.previous_page_number }}&search={{ search|default:'' }}&type={{ selected_type|default:'' }}">Previous</a></li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                                {% endif %}
+
+                                {% for i in files.paginator.page_range %}
+                                    {% if files.number == i %}
+                                        <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                                    {% elif i > files.number|add:'-3' and i < files.number|add:'3' %}
+                                        <li class="page-item"><a class="page-link" href="?page={{ i }}&search={{ search|default:'' }}&type={{ selected_type|default:'' }}">{{ i }}</a></li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if files.has_next %}
+                                    <li class="page-item"><a class="page-link" href="?page={{ files.next_page_number }}&search={{ search|default:'' }}&type={{ selected_type|default:'' }}">Next</a></li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">Next</span></li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QR Code Modal Dialog -->
+<div class="modal fade" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title font-weight-bold text-dark" id="qrModalLabel" data-lang-en="QR Code for File" data-lang-gu="ફાઇલ માટે QR કોડ">QR Code for File</h5>
+                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close" style="background: none; border: none; font-size: 28px; line-height: 1; color: var(--text-muted); opacity: 0.8; margin-top: -10px;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <!-- File Display Info -->
+                <p id="qrFileName" class="font-weight-bold text-primary mb-3 text-truncate px-3"></p>
+
+                <!-- QR Display Area -->
+                <div id="qrDisplayContainer" class="d-flex justify-content-center align-items-center p-3 mx-auto bg-white rounded-3 shadow-sm mb-4" style="width: 250px; height: 250px; border: 1px solid var(--border-color);">
+                    <div id="qrDisplay"></div>
+                </div>
+
+                <!-- Hidden Canvas for PNG export generation -->
+                <canvas id="qrCanvas" class="d-none"></canvas>
+
+                <!-- URL Copy & Share Section -->
+                <div class="px-3 mb-4">
+                    <div class="input-group">
+                        <input type="text" id="qrDownloadUrl" class="form-control bg-light font-weight-semibold text-center small border-0 py-2" readonly style="border-radius: 8px 0 0 8px;">
+                        <button class="btn btn-primary px-3" type="button" id="copyUrlBtn" title="Copy Link" style="border-radius: 0 8px 8px 0;">
+                            <i class="fa-solid fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Download and Share Actions -->
+                <div class="d-flex flex-wrap justify-content-center gap-2 px-3">
+                    <button id="downloadPngBtn" class="btn btn-success d-flex align-items-center gap-2 px-3 py-2 shadow-sm" style="border-radius: 8px;">
+                        <i class="fa-solid fa-file-image"></i> Download PNG
+                    </button>
+                    <button id="downloadSvgBtn" class="btn btn-outline-success d-flex align-items-center gap-2 px-3 py-2 shadow-sm" style="border-radius: 8px;">
+                        <i class="fa-solid fa-file-code"></i> Download SVG
+                    </button>
+                    <button id="shareUrlBtn" class="btn btn-outline-primary d-flex align-items-center gap-2 px-3 py-2 shadow-sm" style="border-radius: 8px;">
+                        <i class="fa-solid fa-share-nodes"></i> Share
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Replace/Edit File Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title font-weight-bold text-dark" id="editModalLabel" data-lang-en="Replace File" data-lang-gu="ફાઇલ બદલો">Replace File</h5>
+                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close" style="background: none; border: none; font-size: 28px; line-height: 1; color: var(--text-muted); opacity: 0.8; margin-top: -10px;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body py-4">
+                <p class="text-muted small mb-3" data-lang-en="You are replacing the file for this QR Code. The download link and QR Code will remain exactly the same." data-lang-gu="તમે આ QR કોડ માટે ફાઇલ બદલી રહ્યા છો. ડાઉનલોડ લિંક અને QR કોડ બિલકુલ બદલાશે નહીં.">You are replacing the file for this QR Code. The download link and QR Code will remain exactly the same.</p>
+                
+                <div class="mb-3">
+                    <label class="form-label font-weight-bold text-dark" data-lang-en="Current File:" data-lang-gu="વર્તમાન ફાઇલ:">Current File:</label>
+                    <div id="currentFileName" class="p-2 bg-light rounded text-dark text-truncate font-weight-semibold" style="font-size: 13px;"></div>
+                </div>
+
+                <form id="fileReplaceForm" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" id="replaceFileId" name="id">
+                    
+                    <div id="replaceDropzone" class="upload-dropzone d-flex flex-column align-items-center justify-content-center p-4 border border-dashed rounded-3 text-center cursor-pointer mb-3" style="min-height: 150px; background-color: var(--bg-body); transition: all 0.3s;">
+                        <i class="fa-solid fa-file-circle-plus fa-2x text-info mb-2"></i>
+                        <p class="mb-1 font-weight-bold text-dark" style="font-size: 14px;" data-lang-en="Select new file to replace" data-lang-gu="બદલવા માટે નવી ફાઇલ પસંદ કરો">Select new file to replace</p>
+                        <input type="file" name="file" id="replaceFileInput" class="d-none">
+                        <span class="badge bg-secondary px-2 py-1" style="font-size: 11px;" id="replace-file-badge">No file selected</span>
+                    </div>
+
+                    <!-- Replace Progress indicator -->
+                    <div id="replaceProgressWrapper" class="d-none mb-3">
+                        <div class="d-flex justify-content-between mb-1 small text-muted">
+                            <span data-lang-en="Replacing..." data-lang-gu="બદલાઈ રહ્યું છે...">Replacing...</span>
+                            <span id="replacePercentage">0%</span>
+                        </div>
+                        <div class="progress" style="height: 10px; border-radius: 5px;">
+                            <div id="replaceProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-info" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="replaceBtn" class="btn btn-info w-100 text-white d-flex align-items-center justify-content-center gap-2 py-2" style="border-radius: 8px;">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                        <span data-lang-en="Replace File & Keep Link" data-lang-gu="ફાઇલ બદલો અને લિંક યથાવત રાખો">Replace File & Keep Link</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .upload-dropzone {
+        border-color: var(--primary) !important;
+        background-color: var(--bg-card);
+        cursor: pointer;
+        transition: border-color 0.2s, background-color 0.2s;
+    }
+    .upload-dropzone:hover, .upload-dropzone.dragover {
+        background-color: var(--primary-light) !important;
+        border-color: var(--primary) !important;
+    }
+    .bg-success-light {
+        background-color: rgba(16, 185, 129, 0.15) !important;
+    }
+    body.dark-mode .bg-success-light {
+        background-color: rgba(16, 185, 129, 0.25) !important;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Load reliable client-side vector QR library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+
+<script>
+    // -------------------------------------------------------------
+    // Bilingual client-side translation engine
+    // -------------------------------------------------------------
+    let currentLang = localStorage.getItem('qr_portal_lang') || 'en';
+
+    function applyLanguage(lang) {
+        currentLang = lang;
+        localStorage.setItem('qr_portal_lang', lang);
+
+        // Toggle button text based on the active language
+        const langToggleBtn = document.getElementById('langToggleBtn');
+        const langBtnText = document.getElementById('langBtnText');
+        if (lang === 'en') {
+            langBtnText.innerText = 'ગુજરાતી';
+        } else {
+            langBtnText.innerText = 'English';
+        }
+
+        // Update all translation labels
+        document.querySelectorAll('[data-lang-en]').forEach(el => {
+            const val = lang === 'en' ? el.getAttribute('data-lang-en') : el.getAttribute('data-lang-gu');
+            if (el.tagName === 'INPUT' && el.placeholder) {
+                el.placeholder = val;
+            } else {
+                el.innerText = val;
+            }
+        });
+    }
+
+    document.getElementById('langToggleBtn').addEventListener('click', function() {
+        const nextLang = currentLang === 'en' ? 'gu' : 'en';
+        applyLanguage(nextLang);
+    });
+
+    // Run layout translation check on load
+    document.addEventListener('DOMContentLoaded', () => {
+        applyLanguage(currentLang);
+    });
+
+    // -------------------------------------------------------------
+    // Drag and Drop Zone + Input file triggers
+    // -------------------------------------------------------------
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const selectedFileBadge = document.getElementById('selected-file-badge');
+
+    dropzone.addEventListener('click', () => fileInput.click());
+
+    dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+    });
+
+    dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('dragover');
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            updateFileBadge();
+        }
+    });
+
+    fileInput.addEventListener('change', updateFileBadge);
+
+    function updateFileBadge() {
+        if (fileInput.files.length) {
+            selectedFileBadge.innerText = fileInput.files[0].name;
+            selectedFileBadge.classList.remove('bg-secondary');
+            selectedFileBadge.classList.add('bg-primary');
+        } else {
+            selectedFileBadge.innerText = 'No file selected';
+            selectedFileBadge.classList.remove('bg-primary');
+            selectedFileBadge.classList.add('bg-secondary');
+        }
+    }
+
+    // -------------------------------------------------------------
+    // AJAX Upload with Real-time Progress Bar
+    // -------------------------------------------------------------
+    const uploadForm = document.getElementById('fileUploadForm');
+    const progressWrapper = document.getElementById('uploadProgressWrapper');
+    const progressBar = document.getElementById('uploadProgressBar');
+    const progressPercentage = document.getElementById('uploadPercentage');
+    const uploadBtn = document.getElementById('uploadBtn');
+
+    uploadForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        if (!fileInput.files.length) {
+            Swal.fire({
+                icon: 'warning',
+                title: currentLang === 'en' ? 'Select File' : 'ફાઇલ પસંદ કરો',
+                text: currentLang === 'en' ? 'Please select a file to upload first.' : 'કૃપા કરીને પહેલા અપલોડ કરવા માટે ફાઇલ પસંદ કરો.',
+                confirmButtonColor: '#1d7d5d'
+            });
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        // Disable elements during upload
+        uploadBtn.disabled = true;
+        progressWrapper.classList.remove('d-none');
+        progressBar.style.width = '0%';
+        progressBar.setAttribute('aria-valuenow', '0');
+        progressPercentage.innerText = '0%';
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '{% url "admin_qr_files_store" %}', true);
+
+        // Upload progress listener
+        xhr.upload.addEventListener('progress', function(e) {
+            if (e.lengthComputable) {
+                const percentComplete = Math.round((e.loaded / e.total) * 100);
+                progressBar.style.width = percentComplete + '%';
+                progressBar.setAttribute('aria-valuenow', percentComplete);
+                progressPercentage.innerText = percentComplete + '%';
+            }
+        });
+
+        // Response handling
+        xhr.onload = function() {
+            uploadBtn.disabled = false;
+            progressWrapper.classList.add('d-none');
+
+            if (xhr.status === 200) {
+                const response = JSON.parse(xhr.responseText);
+                if (response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: currentLang === 'en' ? 'Success!' : 'સફળતા!',
+                        text: currentLang === 'en' ? 'File uploaded and QR Code generated!' : 'ફાઇલ અપલોડ કરવામાં આવી છે અને QR કોડ બની ગયો છે!',
+                        confirmButtonColor: '#1d7d5d'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    showError(response.message);
+                }
+            } else {
+                let errText = currentLang === 'en' ? 'Failed to upload file. Check size limits.' : 'ફાઇલ અપલોડ કરવામાં નિષ્ફળ. સાઈઝ લિમિટ તપાસો.';
+                try {
+                    const respObj = JSON.parse(xhr.responseText);
+                    if (respObj.message) errText = respObj.message;
+                } catch(err) {}
+                showError(errText);
+            }
+        };
+
+        xhr.onerror = function() {
+            uploadBtn.disabled = false;
+            progressWrapper.classList.add('d-none');
+            showError(currentLang === 'en' ? 'Network error occurred.' : 'નેટવર્ક કનેક્શનમાં ભૂલ આવી છે.');
+        };
+
+        xhr.send(formData);
+    });
+
+    function showError(msg) {
+        Swal.fire({
+            icon: 'error',
+            title: currentLang === 'en' ? 'Upload Failed' : 'અપલોડ નિષ્ફળ',
+            text: msg,
+            confirmButtonColor: '#d33'
+        });
+    }
+
+    // -------------------------------------------------------------
+    // Delete validation using SweetAlert2
+    // -------------------------------------------------------------
+    document.querySelectorAll('.file-delete-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const form = this.closest('form');
+
+            Swal.fire({
+                title: currentLang === 'en' ? 'Are you sure?' : 'શું તમે ખરેખર કરવા માંગો છો?',
+                text: currentLang === 'en' ? "This will permanently delete the file!" : "આ ફાઇલ કાયમ માટે ડિલીટ થઈ જશે!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: currentLang === 'en' ? 'Yes, delete it!' : 'હા, ડીલીટ કરો!',
+                cancelButtonText: currentLang === 'en' ? 'Cancel' : 'રદ કરો'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    });
+
+    // -------------------------------------------------------------
+    // QR Code Dialog and dynamic downloads (PNG & SVG)
+    // -------------------------------------------------------------
+    let activeCode = '';
+    let activeUrl = '';
+    let activeFileName = '';
+
+    const qrModal = new bootstrap.Modal(document.getElementById('qrModal'));
+
+    function showQrModal(code, url, originalName) {
+        activeCode = code;
+        activeUrl = url;
+        activeFileName = originalName;
+
+        // Set labels inside modal
+        document.getElementById('qrFileName').innerText = originalName;
+        document.getElementById('qrDownloadUrl').value = url;
+
+        const container = document.getElementById('qrDisplay');
+        container.innerHTML = ''; // Clear old QR
+
+        // Generate QR code using qrcode-generator (SVG vector rendering)
+        // Type 0 detects version automatically, error level 'H' (High) to allow smooth reading
+        const qr = qrcode(0, 'H');
+        qr.addData(url);
+        qr.make();
+
+        // 1. Create clean SVG representation and inject
+        const svgString = qr.createSvgTag(6, 12); // size index, padding size
+        container.innerHTML = svgString;
+
+        // Ensure SVG displays perfectly inside parent container box
+        const svgElement = container.querySelector('svg');
+        if (svgElement) {
+            svgElement.style.maxWidth = '100%';
+            svgElement.style.height = 'auto';
+            svgElement.setAttribute('width', '200');
+            svgElement.setAttribute('height', '200');
+        }
+
+        // 2. Render pixel-perfect representation on hidden canvas for high-quality PNG export
+        const canvas = document.getElementById('qrCanvas');
+        const ctx = canvas.getContext('2d');
+        const modulesCount = qr.getModuleCount();
+        const exportSize = 600; // Generate high-resolution image
+        const cellSize = exportSize / modulesCount;
+
+        canvas.width = exportSize;
+        canvas.height = exportSize;
+
+        // Draw white background
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, exportSize, exportSize);
+
+        // Draw black modules
+        ctx.fillStyle = '#000000';
+        for (let row = 0; row < modulesCount; row++) {
+            for (let col = 0; col < modulesCount; col++) {
+                if (qr.isDark(row, col)) {
+                    ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+                }
+            }
+        }
+
+        qrModal.show();
+    }
+
+    // PNG Download trigger
+    document.getElementById('downloadPngBtn').addEventListener('click', function() {
+        const canvas = document.getElementById('qrCanvas');
+        const dataUrl = canvas.toDataURL('image/png');
+        
+        // Clean original filename for safe download name
+        const cleanName = activeFileName.replace(/\.[^/.]+$/, "");
+        const link = document.createElement('a');
+        link.download = `QR_${cleanName}.png`;
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+
+    // SVG Download trigger
+    document.getElementById('downloadSvgBtn').addEventListener('click', function() {
+        const container = document.getElementById('qrDisplay');
+        const svgElement = container.querySelector('svg');
+        if (!svgElement) return;
+
+        const serializer = new XMLSerializer();
+        const svgString = serializer.serializeToString(svgElement);
+        
+        const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+        const blobUrl = URL.createObjectURL(blob);
+
+        const cleanName = activeFileName.replace(/\.[^/.]+$/, "");
+        const link = document.createElement('a');
+        link.download = `QR_${cleanName}.svg`;
+        link.href = blobUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Free memory space
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+    });
+
+    // Copy to clipboard with success toast
+    document.getElementById('copyUrlBtn').addEventListener('click', function() {
+        const urlInput = document.getElementById('qrDownloadUrl');
+        urlInput.select();
+        urlInput.setSelectionRange(0, 99999); // mobile support
+        navigator.clipboard.writeText(urlInput.value).then(() => {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true
+            });
+            Toast.fire({
+                icon: 'success',
+                title: currentLang === 'en' ? 'Link copied!' : 'લિંક કોપી કરી લીધી છે!'
+            });
+        });
+    });
+
+    // Web Share API support or Copy fallback
+    document.getElementById('shareUrlBtn').addEventListener('click', function() {
+        if (navigator.share) {
+            navigator.share({
+                title: 'Scan to download ' + activeFileName,
+                url: activeUrl
+            }).catch(() => {});
+        } else {
+            // Fallback to Copy
+            document.getElementById('copyUrlBtn').click();
+        }
+    });
+
+    // -------------------------------------------------------------
+    // Edit / Replace File functionality (AJAX + Progress Bar)
+    // -------------------------------------------------------------
+    const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+    
+    function openEditModal(id, originalName) {
+        document.getElementById('replaceFileId').value = id;
+        document.getElementById('currentFileName').innerText = originalName;
+        document.getElementById('replace-file-badge').innerText = 'No file selected';
+        document.getElementById('replace-file-badge').classList.remove('bg-primary');
+        document.getElementById('replace-file-badge').classList.add('bg-secondary');
+        document.getElementById('replaceFileInput').value = ''; // clear previous
+        editModal.show();
+    }
+
+    const replaceDropzone = document.getElementById('replaceDropzone');
+    const replaceFileInput = document.getElementById('replaceFileInput');
+    const replaceFileBadge = document.getElementById('replace-file-badge');
+
+    replaceDropzone.addEventListener('click', () => replaceFileInput.click());
+
+    replaceDropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        replaceDropzone.classList.add('dragover');
+    });
+
+    replaceDropzone.addEventListener('dragleave', () => {
+        replaceDropzone.classList.remove('dragover');
+    });
+
+    replaceDropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        replaceDropzone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+            replaceFileInput.files = e.dataTransfer.files;
+            updateReplaceBadge();
+        }
+    });
+
+    replaceFileInput.addEventListener('change', updateReplaceBadge);
+
+    function updateReplaceBadge() {
+        if (replaceFileInput.files.length) {
+            replaceFileBadge.innerText = replaceFileInput.files[0].name;
+            replaceFileBadge.classList.remove('bg-secondary');
+            replaceFileBadge.classList.add('bg-primary');
+        } else {
+            replaceFileBadge.innerText = 'No file selected';
+            replaceFileBadge.classList.remove('bg-primary');
+            replaceFileBadge.classList.add('bg-secondary');
+        }
+    }
+
+    const replaceForm = document.getElementById('fileReplaceForm');
+    const replaceProgressWrapper = document.getElementById('replaceProgressWrapper');
+    const replaceProgressBar = document.getElementById('replaceProgressBar');
+    const replacePercentage = document.getElementById('replacePercentage');
+    const replaceBtn = document.getElementById('replaceBtn');
+
+    replaceForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        if (!replaceFileInput.files.length) {
+            Swal.fire({
+                icon: 'warning',
+                title: currentLang === 'en' ? 'Select File' : 'ફાઇલ પસંદ કરો',
+                text: currentLang === 'en' ? 'Please select a new file to replace first.' : 'કૃપા કરીને પહેલા બદલવા માટે નવી ફાઇલ પસંદ કરો.',
+                confirmButtonColor: '#1d7d5d'
+            });
+            return;
+        }
+
+        const fileId = document.getElementById('replaceFileId').value;
+        const formData = new FormData();
+        formData.append('file', replaceFileInput.files[0]);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        // Disable elements during replacement
+        replaceBtn.disabled = true;
+        replaceProgressWrapper.classList.remove('d-none');
+        replaceProgressBar.style.width = '0%';
+        replaceProgressBar.setAttribute('aria-valuenow', '0');
+        replacePercentage.innerText = '0%';
+
+        const xhr = new XMLHttpRequest();
+        // Generate route URL using JavaScript string replacement to avoid template compilation errors
+        const url = '{% url "admin_qr_files_update" 0 %}'.replace('0', fileId);
+        xhr.open('POST', url, true);
+
+        // Upload progress listener
+        xhr.upload.addEventListener('progress', function(e) {
+            if (e.lengthComputable) {
+                const percentComplete = Math.round((e.loaded / e.total) * 100);
+                replaceProgressBar.style.width = percentComplete + '%';
+                replaceProgressBar.setAttribute('aria-valuenow', percentComplete);
+                replacePercentage.innerText = percentComplete + '%';
+            }
+        });
+
+        // Response handling
+        xhr.onload = function() {
+            replaceBtn.disabled = false;
+            replaceProgressWrapper.classList.add('d-none');
+
+            if (xhr.status === 200) {
+                const response = JSON.parse(xhr.responseText);
+                if (response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: currentLang === 'en' ? 'Replaced!' : 'ફાઇલ બદલાઈ ગઈ!',
+                        text: response.message,
+                        confirmButtonColor: '#1d7d5d'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    showError(response.message);
+                }
+            } else {
+                let errText = currentLang === 'en' ? 'Failed to replace file. Check size limits.' : 'ફાઇલ બદલવામાં નિષ્ફળ. સાઈઝ લિમિટ તપાસો.';
+                try {
+                    const respObj = JSON.parse(xhr.responseText);
+                    if (respObj.message) errText = respObj.message;
+                } catch(err) {}
+                showError(errText);
+            }
+        };
+
+        xhr.onerror = function() {
+            replaceBtn.disabled = false;
+            replaceProgressWrapper.classList.add('d-none');
+            showError(currentLang === 'en' ? 'Network error occurred.' : 'નેટવર્ક કનેક્શનમાં ભૂલ આવી છે.');
+        };
+
+        xhr.send(formData);
+    });
+</script>
+{% endblock %}

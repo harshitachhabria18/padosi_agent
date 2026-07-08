@@ -1,0 +1,99 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Add New Distributor — PadosiAgent{% endblock %}
+{% block breadcrumb_title %}Add Distributor{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-6">
+        <a href="{% url 'admin_distributors' %}" class="btn btn-sm btn-light text-muted mb-2">
+            <i class="fa-solid fa-arrow-left me-1"></i> Back to Distributors
+        </a>
+        <h2 class="h4 mb-0 fw-bold">Add New Distributor</h2>
+        <p class="text-muted mb-0" style="font-size: 14px;">Create a new distributor account to manage agents.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                {% if errors %}
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                            {% for field, error in errors.items %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <form method="POST" action="{% url 'admin_distributors_store' %}">
+                    {% csrf_token %}
+                    
+                    <h6 class="fw-bold mb-3 border-bottom pb-2">Distributor Information</h6>
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="fullname" value="{{ old.fullname|default:'' }}" required placeholder="e.g. John Doe">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" name="email" value="{{ old.email|default:'' }}" required placeholder="john@example.com">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" name="password" id="password" required minlength="8" placeholder="Minimum 8 characters">
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('password', 'toggleIcon')"><i class="fa-solid fa-eye" id="toggleIcon"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Confirm Password <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" name="confirm_password" id="confirm_password" required minlength="8" placeholder="Must match password">
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('confirm_password', 'toggleIconConfirm')"><i class="fa-solid fa-eye" id="toggleIconConfirm"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-light p-3 rounded mb-4 border">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="fa-solid fa-circle-info text-primary"></i>
+                            <strong style="font-size: 14px;">What happens next?</strong>
+                        </div>
+                        <p class="mb-0 text-muted" style="font-size: 13px;">
+                            Upon creation, a unique <strong>Referral Code</strong> will be automatically generated for this distributor. They will be able to log in at <a href="/distributor/login" target="_blank"><code>/distributor/login</code></a> using the email and password you set above.
+                        </p>
+                    </div>
+
+                    <div class="text-end">
+                        <a href="{% url 'admin_distributors' %}" class="btn btn-light me-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4"><i class="fa-solid fa-user-check me-2"></i> Create Distributor</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function togglePassword(inputId, iconId) {
+        const passInput = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (passInput.type === 'password') {
+            passInput.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            passInput.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+</script>
+{% endblock %}

@@ -4,6 +4,8 @@ class Admin(models.Model):
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=255)
+    role = models.CharField(max_length=191, default='staff')
+    permissions = models.JSONField(null=True, blank=True)
     remember_token = models.CharField(max_length=100, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)

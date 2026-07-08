@@ -1,40 +1,43 @@
-{% extends 'admin/layout.html' %}
+{% extends 'admin/base.html' %}
+{% load static %}
 
-{% block title %}Admin Dashboard{% endblock %}
-{% block breadcrumb %}Dashboard Overview{% endblock %}
+{% block title %}Admin Dashboard — PadosiAgent{% endblock %}
+{% block breadcrumb_title %}Dashboard Overview{% endblock %}
 
 {% block content %}
+
 <div class="d-flex justify-content-end mb-3">
     <a href="/admin/advanced/analytics/" class="btn btn-sm btn-outline-primary shadow-sm rounded-pill px-3">
         <i class="fa-solid fa-chart-line me-1"></i> Open Full Analytics
     </a>
 </div>
+
 <!-- Primary Stats -->
 <div class="stats-grid">
     <div class="stat-card">
         <div class="d-flex justify-content-between">
             <div>
                 <div class="stat-label">Total Agents</div>
-                <div class="stat-value">{{ totalAgents }}</div>
+                <div class="stat-value">{{ total_agents }}</div>
             </div>
             <div style="font-size: 24px; color: var(--primary);"><i class="fa-solid fa-users-gear"></i></div>
         </div>
         <div style="font-size: 11px; margin-top: 8px;">
-            <span class="text-success fw-bold"><i class="fa-solid fa-arrow-trend-up"></i> {{ growthPercent }}%</span> 
+            <span class="text-success fw-bold"><i class="fa-solid fa-arrow-trend-up"></i> {{ growth_percent|cut:"-" }}%</span>
             <span class="text-muted">since last month</span>
         </div>
     </div>
-    
+
     <div class="stat-card">
         <div class="d-flex justify-content-between">
             <div>
                 <div class="stat-label">Active Agents</div>
-                <div class="stat-value">{{ activeCount }}</div>
+                <div class="stat-value">{{ active_count }}</div>
             </div>
             <div style="font-size: 24px; color: #10b981;"><i class="fa-solid fa-circle-check"></i></div>
         </div>
         <div style="font-size: 11px; margin-top: 8px;">
-            <span class="fw-bold">{{ activePercent }}%</span> 
+            <span class="fw-bold">{{ active_percent }}%</span>
             <span class="text-muted">of total registration</span>
         </div>
     </div>
@@ -43,13 +46,13 @@
         <div class="d-flex justify-content-between">
             <div>
                 <div class="stat-label">Total Leads</div>
-                <div class="stat-value">{{ totalLeads }}</div>
+                <div class="stat-value">{{ total_leads }}</div>
             </div>
             <div style="font-size: 24px; color: #3b82f6;"><i class="fa-solid fa-bolt"></i></div>
         </div>
         <div style="font-size: 11px; margin-top: 8px;">
-            <span class="fw-bold text-primary">{{ newLeadsToday }} today</span> 
-            <span class="text-muted">· {{ leadsAvg }} avg/agent</span>
+            <span class="fw-bold text-primary">{{ new_leads_today }} today</span>
+            <span class="text-muted">· {{ avg_leads_per_agent }} avg/agent</span>
         </div>
     </div>
 
@@ -57,7 +60,7 @@
         <div class="d-flex justify-content-between">
             <div>
                 <div class="stat-label">Page Views</div>
-                <div class="stat-value">{{ pageViews }}</div>
+                <div class="stat-value">{{ page_views }}</div>
             </div>
             <div style="font-size: 24px; color: #f59e0b;"><i class="fa-solid fa-eye"></i></div>
         </div>
@@ -69,46 +72,52 @@
 
 <!-- Secondary Action Stats -->
 <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 24px;">
-    <a href="/admin/reviews/?status=pending" class="stat-card text-decoration-none" style="border-left: 4px solid #f59e0b; transition: transform 0.15s;">
+    <a href="/admin/reviews/?status=pending" class="stat-card text-decoration-none"
+        style="border-left: 4px solid #f59e0b; transition: transform 0.15s;">
         <div class="d-flex align-items-center gap-3">
             <div style="width: 40px; height: 40px; background: #fef3c7; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
                 <i class="fa-solid fa-star-half-stroke" style="color: #d97706; font-size: 16px;"></i>
             </div>
             <div>
-                <div style="font-size: 22px; font-weight: 700; color: #d97706;">{{ pendingReviews }}</div>
+                <div style="font-size: 22px; font-weight: 700; color: #d97706;">{{ pending_reviews }}</div>
                 <div class="stat-label">Pending Reviews</div>
             </div>
         </div>
     </a>
-    <a href="/admin/contacts/?status=pending" class="stat-card text-decoration-none" style="border-left: 4px solid #3b82f6; transition: transform 0.15s;">
+
+    <a href="/admin/contacts/?status=pending" class="stat-card text-decoration-none"
+        style="border-left: 4px solid #3b82f6; transition: transform 0.15s;">
         <div class="d-flex align-items-center gap-3">
             <div style="width: 40px; height: 40px; background: #dbeafe; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
                 <i class="fa-solid fa-envelope-open-text" style="color: #2563eb; font-size: 16px;"></i>
             </div>
             <div>
-                <div style="font-size: 22px; font-weight: 700; color: #2563eb;">{{ pendingContacts }}</div>
+                <div style="font-size: 22px; font-weight: 700; color: #2563eb;">{{ pending_contacts }}</div>
                 <div class="stat-label">Pending Contacts</div>
             </div>
         </div>
     </a>
-    <a href="/admin/reviews/" class="stat-card text-decoration-none" style="border-left: 4px solid #10b981; transition: transform 0.15s;">
+
+    <a href="/admin/leads/" class="stat-card text-decoration-none"
+        style="border-left: 4px solid #10b981; transition: transform 0.15s;">
         <div class="d-flex align-items-center gap-3">
             <div style="width: 40px; height: 40px; background: #dcfce7; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
                 <i class="fa-solid fa-star" style="color: #059669; font-size: 16px;"></i>
             </div>
             <div>
-                <div style="font-size: 22px; font-weight: 700; color: #059669;">{{ totalReviews }}</div>
+                <div style="font-size: 22px; font-weight: 700; color: #059669;">{{ total_reviews }}</div>
                 <div class="stat-label">Total Reviews</div>
             </div>
         </div>
     </a>
+
     <div class="stat-card" style="border-left: 4px solid #8b5cf6;">
         <div class="d-flex align-items-center gap-3">
             <div style="width: 40px; height: 40px; background: #ede9fe; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
                 <i class="fa-solid fa-eye" style="color: #7c3aed; font-size: 16px;"></i>
             </div>
             <div>
-                <div style="font-size: 22px; font-weight: 700; color: #7c3aed;">{{ profileViews }}</div>
+                <div style="font-size: 22px; font-weight: 700; color: #7c3aed;">{{ profile_views }}</div>
                 <div class="stat-label">Profile Views</div>
             </div>
         </div>
@@ -118,15 +127,20 @@
 <!-- Quick Actions Panel -->
 <div class="card mb-4" style="border-left: 4px solid var(--primary);">
     <div class="card-body p-4">
-        <h6 class="fw-bold mb-3"><i class="fa-solid fa-zap me-2" style="color: var(--primary);"></i>Quick Actions</h6>
+        <h6 class="fw-bold mb-3"><i class="fa-solid fa-bolt me-2" style="color: var(--primary);"></i>Quick Actions</h6>
         <div class="d-flex flex-wrap gap-2">
             <a href="/admin/approvals/" class="btn btn-sm btn-outline-warning">
                 <i class="fa-solid fa-user-clock me-1"></i> Review Approvals
-                {% if pending_approvals > 0 %} <span class="badge bg-warning text-dark ms-1">{{ pending_approvals }}</span> {% endif %}
+                {% if pending_approvals > 0 %}
+                    <span class="badge bg-warning text-dark ms-1">{{ pending_approvals }}</span>
+                {% endif %}
             </a>
-            <a href="/admin/reviews/?status=pending" class="btn btn-sm btn-outline-purple" style="border-color: #8b5cf6; color: #8b5cf6;">
+            <a href="/admin/reviews/?status=pending" class="btn btn-sm btn-outline-secondary"
+                style="border-color: #8b5cf6; color: #8b5cf6;">
                 <i class="fa-solid fa-star-half-stroke me-1"></i> Moderate Reviews
-                {% if pendingReviews > 0 %} <span class="badge ms-1" style="background:#8b5cf6;">{{ pendingReviews }}</span> {% endif %}
+                {% if pending_reviews > 0 %}
+                    <span class="badge ms-1" style="background:#8b5cf6;">{{ pending_reviews }}</span>
+                {% endif %}
             </a>
             <a href="/admin/subscriptions/?filter=expiring_soon" class="btn btn-sm btn-outline-danger">
                 <i class="fa-solid fa-hourglass-half me-1"></i> Expiring Subscriptions
@@ -139,7 +153,9 @@
             </a>
             <a href="/admin/contacts/?status=pending" class="btn btn-sm btn-outline-info">
                 <i class="fa-solid fa-inbox me-1"></i> Contact Inbox
-                {% if pendingContacts > 0 %} <span class="badge bg-info ms-1">{{ pendingContacts }}</span> {% endif %}
+                {% if pending_contacts > 0 %}
+                    <span class="badge bg-info ms-1">{{ pending_contacts }}</span>
+                {% endif %}
             </a>
         </div>
     </div>
@@ -149,63 +165,75 @@
 <div class="row mb-4">
     <div class="col-lg-8">
         <div class="card p-4 mb-4">
-             <div class="d-flex justify-content-between align-items-center mb-4">
-                 <h6 class="fw-bold m-0">Registration Analytics</h6>
-                 <div class="d-flex gap-2">
-                     <a href="?period=3"
-                        class="btn btn-xs {% if periodMonths == 3 %}btn-primary{% else %}btn-light border{% endif %}"
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h6 class="fw-bold m-0">Registration Analytics</h6>
+                <div class="d-flex gap-2">
+                    {# Period filter — active class mirrors Blade: $periodMonths == $val ? 'btn-primary' : 'btn-light border' #}
+                    <a href="?period=3"
+                        class="btn {% if period_months == 3 %}btn-primary{% else %}btn-light border{% endif %}"
                         style="font-size: 11px; padding: 3px 10px; border-radius: 6px;">3M</a>
-                     <a href="?period=6"
-                        class="btn btn-xs {% if periodMonths == 6 %}btn-primary{% else %}btn-light border{% endif %}"
+                    <a href="?period=6"
+                        class="btn {% if period_months == 6 %}btn-primary{% else %}btn-light border{% endif %}"
                         style="font-size: 11px; padding: 3px 10px; border-radius: 6px;">6M</a>
-                     <a href="?period=12"
-                        class="btn btn-xs {% if periodMonths == 12 %}btn-primary{% else %}btn-light border{% endif %}"
+                    <a href="?period=12"
+                        class="btn {% if period_months == 12 %}btn-primary{% else %}btn-light border{% endif %}"
                         style="font-size: 11px; padding: 3px 10px; border-radius: 6px;">1Y</a>
-                 </div>
-             </div>
-             <canvas id="growthChart" height="260"></canvas>
+                </div>
+            </div>
+            <canvas id="growthChart" height="260"></canvas>
         </div>
     </div>
+
     <div class="col-lg-4">
         <div class="card p-4 mb-4">
-             <h6 class="fw-bold mb-4">Plan Distribution</h6>
-             <canvas id="planChart" height="200"></canvas>
+            <h6 class="fw-bold mb-4">Plan Distribution</h6>
+            <canvas id="planChart" height="200"></canvas>
         </div>
-        {# Renewal Alerts Mini Card #}
+
+        <!-- Renewal Alerts Mini Card -->
         <div class="card p-4">
             <h6 class="fw-bold mb-3"><i class="fa-solid fa-shield-halved me-2 text-primary"></i>Renewal Alerts</h6>
+
+            {# Expired — red #}
             <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
                 <span style="font-size: 13px; color: var(--text-muted);">
                     <i class="fa-solid fa-ban me-2" style="color: #ef4444;"></i>Expired
                 </span>
-                <span class="fw-bold" style="color: {% if renewalStats.expired > 0 %}#ef4444{% else %}var(--text-muted){% endif %}; font-size: 14px;">
-                    {{ renewalStats.expired }}
+                <span class="fw-bold" style="color: {% if renewal_stats.expired > 0 %}#ef4444{% else %}var(--text-muted){% endif %}; font-size: 14px;">
+                    {{ renewal_stats.expired }}
                 </span>
             </div>
+
+            {# Due in 30 days — amber #}
             <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
                 <span style="font-size: 13px; color: var(--text-muted);">
                     <i class="fa-solid fa-triangle-exclamation me-2" style="color: #f59e0b;"></i>Due in 30 days
                 </span>
-                <span class="fw-bold" style="color: {% if renewalStats.next_30 > 0 %}#f59e0b{% else %}var(--text-muted){% endif %}; font-size: 14px;">
-                    {{ renewalStats.next_30 }}
+                <span class="fw-bold" style="color: {% if renewal_stats.next_30 > 0 %}#f59e0b{% else %}var(--text-muted){% endif %}; font-size: 14px;">
+                    {{ renewal_stats.next_30 }}
                 </span>
             </div>
+
+            {# Due in 60 days — blue #}
             <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
                 <span style="font-size: 13px; color: var(--text-muted);">
                     <i class="fa-solid fa-calendar me-2" style="color: #3b82f6;"></i>Due in 60 days
                 </span>
-                <span class="fw-bold" style="color: {% if renewalStats.next_60 > 0 %}#3b82f6{% else %}var(--text-muted){% endif %}; font-size: 14px;">
-                    {{ renewalStats.next_60 }}
+                <span class="fw-bold" style="color: {% if renewal_stats.next_60 > 0 %}#3b82f6{% else %}var(--text-muted){% endif %}; font-size: 14px;">
+                    {{ renewal_stats.next_60 }}
                 </span>
             </div>
+
+            {# Due in 90 days — green #}
             <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
                 <span style="font-size: 13px; color: var(--text-muted);">
                     <i class="fa-solid fa-calendar-check me-2" style="color: #10b981;"></i>Due in 90 days
                 </span>
-                <span class="fw-bold" style="color: {% if renewalStats.next_90 > 0 %}#10b981{% else %}var(--text-muted){% endif %}; font-size: 14px;">
-                    {{ renewalStats.next_90 }}
+                <span class="fw-bold" style="color: {% if renewal_stats.next_90 > 0 %}#10b981{% else %}var(--text-muted){% endif %}; font-size: 14px;">
+                    {{ renewal_stats.next_90 }}
                 </span>
             </div>
+
             <div class="mt-3">
                 <a href="/admin/subscriptions/" class="btn btn-sm btn-outline-primary w-100" style="font-size: 12px;">
                     View Full Tracker →
@@ -228,24 +256,28 @@
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>AGENT</th>
-                            <th>WHATSAPP</th>
-                            <th>CALL</th>
-                            <th>TOTAL</th>
+                            <th>Agent</th>
+                            <th>WhatsApp</th>
+                            <th>Call</th>
+                            <th>Total</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for agent in topAgentsByLeads %}
+                        {% for agent in top_agents_by_leads %}
                         <tr>
-                            <td><span class="badge {% if forloop.counter0 == 0 %}bg-warning text-dark{% elif forloop.counter0 == 1 %}bg-secondary{% else %}bg-light text-dark{% endif %}">{{ forloop.counter }}</span></td>
+                            <td>
+                                <span class="badge {% if forloop.counter0 == 0 %}bg-warning text-dark{% elif forloop.counter0 == 1 %}bg-secondary{% else %}bg-light text-dark{% endif %}">
+                                    {{ forloop.counter }}
+                                </span>
+                            </td>
                             <td style="font-weight: 600; font-size: 13px;">
-                                <a href="/admin/agents/manage/{{ agent.id }}/" style="color: var(--primary);">
-                                    {{ agent.display_name|upper }}
+                                <a href="/admin/agents/{{ agent.id }}/manage/" style="color: var(--primary);">
+                                    {{ agent.display_name|default:agent.fullname }}
                                 </a>
                             </td>
                             <td><span style="color: #16a34a; font-weight: 600;">{{ agent.whatsapp_count }}</span></td>
                             <td><span style="color: #2563eb; font-weight: 600;">{{ agent.call_count }}</span></td>
-                            <td><span style="color: #eff0f3ff; font-weight: 600;" class="badge bg-dark">{{ agent.lead_count }}</span></td>
+                            <td><span class="badge bg-dark" style="color: #eff0f3ff; font-weight: 600;">{{ agent.lead_count }}</span></td>
                         </tr>
                         {% empty %}
                         <tr><td colspan="5" class="text-center text-muted py-3">No lead data yet</td></tr>
@@ -255,6 +287,7 @@
             </div>
         </div>
     </div>
+
     <div class="col-lg-6">
         <div class="card mb-4">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
@@ -265,28 +298,28 @@
                 <table class="table table-sm mb-0">
                     <thead>
                         <tr>
-                            <th>CUSTOMER</th>
-                            <th>AGENT</th>
-                            <th>TYPE</th>
-                            <th>WHEN</th>
+                            <th>Customer</th>
+                            <th>Agent</th>
+                            <th>Type</th>
+                            <th>When</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for lead in recentLeads %}
+                        {% for lead in recent_leads %}
                         <tr>
                             <td style="font-size: 13px;">
                                 <div style="font-weight: 600;">{{ lead.customer_name|default:"Unknown" }}</div>
                                 <div style="font-size: 10px; color: #94a3b8;">{{ lead.customer_mobile }}</div>
                             </td>
-                            <td style="font-size: 13px;">{{ lead.agent.fullname }}</td>
+                            <td style="font-size: 13px;">{{ lead.agent_name }}</td>
                             <td>
-                                {% if lead.interaction_type == 'whatsapp' %}
+                                {% if lead.interaction_type == "whatsapp" %}
                                     <i class="fa-brands fa-whatsapp" style="color: #16a34a;"></i>
                                 {% else %}
                                     <i class="fa-solid fa-phone" style="color: #2563eb;"></i>
                                 {% endif %}
                             </td>
-                            <td style="font-size: 11px; color: #0f6becff;">{{ lead.created_at|timesince }} ago</td>
+                            <td style="font-size: 11px; color: #0f6bec;">{{ lead.created_at|timesince }} ago</td>
                         </tr>
                         {% empty %}
                         <tr><td colspan="4" class="text-center text-muted py-3">No leads yet</td></tr>
@@ -297,11 +330,13 @@
         </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+// Growth Chart — data from mom_labels_json / mom_totals_json (mirrors Blade @json(collect($momData)->pluck(...)))
 const growthCtx = document.getElementById('growthChart').getContext('2d');
 new Chart(growthCtx, {
     type: 'line',
@@ -323,6 +358,8 @@ new Chart(growthCtx, {
     }
 });
 
+// Plan Distribution Chart — data from plan_keys_json / plan_values_json (mirrors Blade @json(array_keys/values($planBreakdown)))
+// 5 colours preserved exactly from Blade L311
 const planCtx = document.getElementById('planChart').getContext('2d');
 new Chart(planCtx, {
     type: 'doughnut',

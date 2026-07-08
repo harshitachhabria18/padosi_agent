@@ -1,4 +1,4 @@
-{% extends 'admin/layout.html' %}
+{% extends 'admin/base.html' %}
 {% load static %}
 
 {% block title %}Review Moderation — PadosiAgent Admin{% endblock %}
@@ -56,7 +56,7 @@
 <!-- Filters & Bulk Actions -->
 <div class="card mb-4">
     <div class="card-body py-3">
-        <form method="GET" action="{% url 'admin_panel:reviews_index' %}" class="row g-2 align-items-end">
+        <form method="GET" action="{% url 'admin_reviews_index' %}" class="row g-2 align-items-end">
             <div class="col-md-4">
                 <label class="form-label text-muted" style="font-size: 12px;">Search</label>
                 <input type="text" class="form-control form-control-sm" name="search" value="{{ search }}" placeholder="Agent name, reviewer, review text...">
@@ -230,7 +230,7 @@
 $(document).on('click', '.toggle-review-btn', function() {
     var $btn = $(this);
     $.ajax({
-        url: '{% url "admin_panel:reviews_toggle_approval" %}',
+        url: '{% url "admin_reviews_toggle_approval" %}',
         method: 'POST',
         headers: { 'X-CSRFToken': '{{ csrf_token }}' },
         data: { id: $btn.data('id'), is_approved: $btn.data('status') },
@@ -256,7 +256,7 @@ $(document).on('click', '.delete-review-btn', function() {
     }).then((result) => {
         if (result.isConfirmed) {
             $.ajax({
-                url: '{% url "admin_panel:reviews_delete" %}',
+                url: '{% url "admin_reviews_delete" %}',
                 method: 'POST',
                 headers: { 'X-CSRFToken': '{{ csrf_token }}' },
                 data: { id: $btn.data('id') },
@@ -292,7 +292,7 @@ $('#bulk-approve-btn').on('click', function() {
     if (ids.length === 0) return;
 
     $.ajax({
-        url: '{% url "admin_panel:reviews_bulk_approve" %}',
+        url: '{% url "admin_reviews_bulk_approve" %}',
         method: 'POST',
         headers: { 'X-CSRFToken': '{{ csrf_token }}' },
         data: { ids: ids },

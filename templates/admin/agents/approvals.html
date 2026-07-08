@@ -1,10 +1,9 @@
-{% extends 'admin/layout.html' %}
+{% extends 'admin/base.html' %}
 {% load static %}
-
 {% block title %}Pending Approvals — PadosiAgent Admin{% endblock %}
-{% block breadcrumb %}Agent Management &rsaquo; Approvals{% endblock %}
+{% block breadcrumb_title %}Agent Management › Approvals{% endblock %}
 
-{% block extra_css %}
+{% block styles %}
 <style>
     .wait-badge {
         display: inline-flex; align-items: center; gap: 5px;
@@ -86,27 +85,27 @@
             <div class="d-flex align-items-center gap-2 flex-wrap">
                 {# Sort buttons #}
                 <div class="d-flex gap-1">
-                    <a href="?sort=newest{% if search %}&search={{ search }}{% endif %}{% if eventFilter %}&event_id={{ eventFilter }}{% endif %}" class="sort-btn {% if sortBy == 'newest' %}active{% endif %}">
+                    <a href="?sort=newest{% if search %}&search={{ search }}{% endif %}" class="sort-btn {% if sort_by == 'newest' %}active{% endif %}">
                         <i class="fa-solid fa-arrow-down me-1"></i>Newest
                     </a>
-                    <a href="?sort=oldest{% if search %}&search={{ search }}{% endif %}{% if eventFilter %}&event_id={{ eventFilter }}{% endif %}" class="sort-btn {% if sortBy == 'oldest' %}active{% endif %}">
+                    <a href="?sort=oldest{% if search %}&search={{ search }}{% endif %}" class="sort-btn {% if sort_by == 'oldest' %}active{% endif %}">
                         <i class="fa-solid fa-arrow-up me-1"></i>Oldest
                     </a>
-                    <a href="?sort=waiting{% if search %}&search={{ search }}{% endif %}{% if eventFilter %}&event_id={{ eventFilter }}{% endif %}" class="sort-btn {% if sortBy == 'waiting' %}active{% endif %}">
+                    <a href="?sort=waiting{% if search %}&search={{ search }}{% endif %}" class="sort-btn {% if sort_by == 'waiting' %}active{% endif %}">
                         <i class="fa-solid fa-hourglass me-1"></i>Longest Wait
                     </a>
                 </div>
 
                 {# Search #}
-                <form method="GET" action="{% url 'admin_panel:approvals' %}" class="d-flex gap-1 align-items-center">
-                    <input type="hidden" name="sort" value="{{ sortBy }}">
+                <form method="GET" action="{% url 'admin_agents_approvals' %}" class="d-flex gap-1 align-items-center">
+                    <input type="hidden" name="sort" value="{{ sort_by }}">
                     
                     {# Event Filter Dropdown #}
                     <select name="event_id" onchange="this.form.submit()" class="form-select form-select-sm" style="width: 180px; border-radius: 8px; font-size: 12px; height: 31px; padding: 4px 8px;">
-                        <option value="All Events" {% if eventFilter == 'All Events' %}selected{% endif %}>All Events</option>
-                        {% for event in events %}
-                            <option value="{{ event.id }}" {% if eventFilter == event.id|stringformat:"s" %}selected{% endif %}>
-                                {{ event.name }}
+                        <option value="All Events" {% if event_filter == 'All Events' %}selected{% endif %}>All Events</option>
+                        {% for ev in events %}
+                            <option value="{{ ev.id }}" {% if event_filter == ev.id|stringformat:"s" %}selected{% endif %}>
+                                {{ ev.name }}
                             </option>
                         {% endfor %}
                     </select>
@@ -126,7 +125,7 @@
     </div>
 
     {# Bulk Actions Bar #}
-    <form method="POST" action="{% url 'admin_panel:advanced_bulk_agents' %}" id="bulkForm">
+    <form method="POST" action="{% url 'admin_agents_bulk_action' %}" id="bulkForm">
         {% csrf_token %}
         <div class="px-4 py-2 d-flex justify-content-between align-items-center" style="background: var(--bg-body); border-bottom: 1px solid var(--border-color);">
             <div class="form-check">
@@ -161,6 +160,7 @@
                 </thead>
                 <tbody>
                     {% for agent in agents %}
+                    
                     <tr class="agent-row">
                         {# Checkbox #}
                         <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
@@ -170,13 +170,13 @@
                         {# Agent Info #}
                         <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
                             <div class="d-flex align-items-center gap-3">
-                                {% if agent.photo_path %}
-                                    <img src="{{ agent.photo_url }}" class="agent-photo" alt="{{ agent.display_name }}">
+                                {% if agent.profile_photo_path %}
+                                    <img src="/storage/{{ agent.profile_photo_path }}" class="agent-photo" alt="{{ agent.display_name|default:agent.fullname }}">
                                 {% else %}
-                                    <div class="agent-initials">{{ agent.display_name|slice:":1"|upper }}</div>
+                                    <div class="agent-initials">{{ agent.fullname|make_list|first|upper }}</div>
                                 {% endif %}
                                 <div>
-                                    <div class="fw-bold" style="font-size:14px; color:var(--text-primary);">{{ agent.display_name }}</div>
+                                    <div class="fw-bold" style="font-size:14px; color:var(--text-primary);">{{ agent.display_name|default:agent.fullname }}</div>
                                     <div style="font-size:11px; color:var(--text-muted);">{{ agent.email }}</div>
                                     {% if agent.mobile %}
                                     <div style="font-size:11px; color:var(--text-muted);">
@@ -186,7 +186,7 @@
                                     <div class="mt-1">
                                         <span class="step-badge">
                                             <i class="fa-solid fa-list-check"></i>
-                                            Step {{ agent.registration_step|default:"?" }}/5
+                                            Step {{ agent.registration_step|default:'?' }}/5
                                         </span>
                                     </div>
                                 </div>
@@ -196,10 +196,10 @@
                         {# Registered Date #}
                         <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
                             <div class="fw-semibold" style="font-size:13px; color:var(--text-primary);">
-                                {{ agent.created_at|date:"d M Y" }}
+                                {{ agent.created_at|date:'d M Y' }}
                             </div>
                             <div style="font-size:11px; color:var(--text-muted);">
-                                {{ agent.created_at|date:"h:i A" }}
+                                {{ agent.created_at|date:'h:i A' }}
                             </div>
                             <div style="font-size:10px; color:var(--text-label); margin-top:2px;">
                                 {{ agent.created_at|timesince }} ago
@@ -208,18 +208,30 @@
 
                         {# Waiting Time #}
                         <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
-                            <span class="wait-badge {{ agent.wait_class }}">
-                                <i class="fa-solid {{ agent.wait_icon }}" style="font-size:9px;"></i>
-                                {{ agent.wait_text }}
+                            {% if agent.hours_waiting > 48 %}
+                            <span class="wait-badge wait-urgent">
+                                <i class="fa-solid fa-triangle-exclamation" style="font-size:9px;"></i>
+                                <span class="format-wait-time" data-hours="{{ agent.hours_waiting }}"></span> — URGENT
                             </span>
+                        {% elif agent.hours_waiting > 12 %}
+                            <span class="wait-badge wait-medium">
+                                <i class="fa-solid fa-clock" style="font-size:9px;"></i>
+                                <span class="format-wait-time" data-hours="{{ agent.hours_waiting }}"></span> waiting
+                            </span>
+                        {% else %}
+                            <span class="wait-badge wait-fresh">
+                                <i class="fa-solid fa-circle-check" style="font-size:9px;"></i>
+                                <span class="format-wait-time-short" data-hours="{{ agent.hours_waiting }}"></span>
+                            </span>
+                        {% endif %}
                         </td>
 
                         {# Location #}
                         <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
-                            {% if agent.agent_address %}
+                            {% if agent.address %}
                                 <div style="font-size:13px; color:var(--text-primary);">
                                     <i class="fa-solid fa-location-dot me-1" style="color:var(--primary); font-size:11px;"></i>
-                                    {{ agent.agent_address|truncatechars:28 }}
+                                    {{ agent.address|truncatechars:28 }}
                                 </div>
                             {% else %}
                                 <span style="font-size:12px; color:var(--text-muted);">Not provided</span>
@@ -228,10 +240,12 @@
 
                         {# Plan #}
                         <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
-                            {% if agent.plan_name %}
-                                <span class="{% if agent.is_pro %}badge bg-primary{% else %}badge bg-secondary{% endif %}" style="font-size:10px; border-radius:6px;">
-                                    {% if agent.is_pro %}Professional{% else %}Starter{% endif %}
-                                </span>
+                            {% if agent.selected_plan %}
+                                {% if 'professional' in agent.selected_plan|lower %}
+                                <span class="badge bg-primary" style="font-size:10px; border-radius:6px;">Professional</span>
+                                {% else %}
+                                <span class="badge bg-secondary" style="font-size:10px; border-radius:6px;">Starter</span>
+                                {% endif %}
                             {% else %}
                                 <span style="font-size:12px; color:var(--text-muted);">N/A</span>
                             {% endif %}
@@ -240,16 +254,24 @@
                         {# Badges #}
                         <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
                             <div class="dropdown">
-                                <button class="btn btn-sm btn-light border dropdown-toggle" type="button" data-toggle="dropdown"
+                                <button class="btn btn-sm btn-light border" type="button" data-toggle="dropdown"
                                     style="font-size:11px; border-radius:8px; color:var(--text-primary);" id="badge-btn-approval-{{ agent.id }}">
                                     <i class="fa-solid fa-medal me-1" style="color:#f59e0b;"></i>
-                                    {{ agent.badge_list|length }} Badge{% if agent.badge_list|length != 1 %}s{% endif %}
+                                    {% if 'verified' in agent.badge|default:'' and 'irdai' in agent.badge|default:'' and 'trusted' in agent.badge|default:'' %}
+                                        3 Badges
+                                    {% elif 'verified' in agent.badge|default:'' and 'irdai' in agent.badge|default:'' or 'verified' in agent.badge|default:'' and 'trusted' in agent.badge|default:'' or 'irdai' in agent.badge|default:'' and 'trusted' in agent.badge|default:'' %}
+                                        2 Badges
+                                    {% elif 'verified' in agent.badge|default:'' or 'irdai' in agent.badge|default:'' or 'trusted' in agent.badge|default:'' %}
+                                        1 Badge
+                                    {% else %}
+                                        No Badges
+                                    {% endif %}
                                 </button>
                                 <div class="dropdown-menu p-3 shadow" style="min-width:170px; border-radius:12px; border:1px solid var(--border-color);">
                                     <div class="form-check mb-2">
                                         <input class="form-check-input agent-badge-chk-{{ agent.id }}" type="checkbox"
                                             value="verified" id="chk-verified-{{ agent.id }}"
-                                            {% if 'verified' in agent.badge_names %}checked{% endif %}
+                                            {% if 'verified' in agent.badge|default:'' %}checked{% endif %}
                                             onchange="collectAndUpdateBadges({{ agent.id }})" style="cursor:pointer;">
                                         <label class="form-check-label ms-1" for="chk-verified-{{ agent.id }}"
                                             style="font-size:12px; cursor:pointer; color:var(--text-primary);">✅ Verified</label>
@@ -257,7 +279,7 @@
                                     <div class="form-check mb-2">
                                         <input class="form-check-input agent-badge-chk-{{ agent.id }}" type="checkbox"
                                             value="irdai" id="chk-irdai-{{ agent.id }}"
-                                            {% if 'irdai' in agent.badge_names %}checked{% endif %}
+                                            {% if 'irdai' in agent.badge|default:'' %}checked{% endif %}
                                             onchange="collectAndUpdateBadges({{ agent.id }})" style="cursor:pointer;">
                                         <label class="form-check-label ms-1" for="chk-irdai-{{ agent.id }}"
                                             style="font-size:12px; cursor:pointer; color:var(--text-primary);">🏛 Licensed</label>
@@ -265,7 +287,7 @@
                                     <div class="form-check mb-2">
                                         <input class="form-check-input agent-badge-chk-{{ agent.id }}" type="checkbox"
                                             value="trusted" id="chk-trusted-{{ agent.id }}"
-                                            {% if 'trusted' in agent.badge_names %}checked{% endif %}
+                                            {% if 'trusted' in agent.badge|default:'' %}checked{% endif %}
                                             onchange="collectAndUpdateBadges({{ agent.id }})" style="cursor:pointer;">
                                         <label class="form-check-label ms-1" for="chk-trusted-{{ agent.id }}"
                                             style="font-size:12px; cursor:pointer; color:var(--text-primary);">⭐ Trusted</label>
@@ -277,18 +299,20 @@
                         {# Actions #}
                         <td style="padding:14px 16px; border-bottom:1px solid var(--border-light); text-align:right;">
                             <div class="d-flex gap-2 justify-content-end flex-wrap">
+                                {# FIX: type="button" prevents bulk-form submission #}
                                 <button type="button"
-                                    onclick="openChangesDrawer({{ agent.id }}, '{{ agent.display_name|escapejs }}')"
+                                    onclick="openChangesDrawer({{ agent.id }}, '{{ agent.display_name|default:agent.fullname|escapejs }}')"
                                     class="btn btn-sm" style="font-size:11px; border-radius:8px; padding:5px 12px;
                                     background:#eff6ff;color:#1d4ed8;border:1.5px solid #bfdbfe;font-weight:600;"
                                     title="See what the agent changed">
                                     <i class="fa-solid fa-clock-rotate-left me-1"></i>Changes
                                 </button>
-                                <a href="/admin/agents/{{ agent.id }}/edit-full-profile/"
+                                <a href="{% url 'admin_agents_manage' agent.id %}"
                                     class="btn btn-sm btn-light border" style="font-size:12px; border-radius:8px;"
                                     title="Review Full Profile">
                                     <i class="fa-solid fa-file-invoice text-muted me-1"></i>Review
                                 </a>
+                                {# FIX: type="button" prevents bulk-form submission #}
                                 <button type="button" onclick="approveAgent({{ agent.id }}, this)"
                                     class="btn btn-sm btn-success" data-agent-id="{{ agent.id }}"
                                     style="font-size:12px; border-radius:8px; padding:5px 14px;">
@@ -373,8 +397,6 @@
     </div>
 </div>
 
-{% endblock %}
-
 {% block extra_js %}
 <script>
 function approveAgent(id, btn) {
@@ -383,7 +405,7 @@ function approveAgent(id, btn) {
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
-    fetch("{% url 'admin_panel:agents_toggle_status' %}", {
+    fetch("{% url 'admin_agents_toggle_status' %}", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
         body: JSON.stringify({ id: id, status: 'active' })
@@ -411,7 +433,7 @@ function rejectAgent(id, btn) {
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
-    fetch("{% url 'admin_panel:agents_toggle_status' %}", {
+    fetch("{% url 'admin_agents_toggle_status' %}", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
         body: JSON.stringify({ id: id, status: 'suspended' })
@@ -442,7 +464,7 @@ function collectAndUpdateBadges(agentId) {
         btn.innerHTML = '<i class="fa-solid fa-medal me-1" style="color:#f59e0b;"></i> ' + text;
     }
 
-    fetch("{% url 'admin_panel:agents_update_badge' %}", {
+    fetch("{% url 'admin_agents_update_badge' %}", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
         body: JSON.stringify({ id: agentId, badge: badges })
@@ -461,8 +483,9 @@ document.getElementById('selectAll').addEventListener('change', function () {
 // CHANGES DRAWER
 // ═══════════════════════════════════════════════════════
 
-const ADMIN_BASE      = '/admin/agents';
-const TOGGLE_URL      = "{% url 'admin_panel:agents_toggle_status' %}";
+// FIX: Use url() base path + JS string replace — avoids route() encoding __ID__
+const ADMIN_BASE      = '{% url 'admin_agents' %}';
+const TOGGLE_URL      = '{% url "admin_agents_toggle_status" %}';
 const CSRF_TOKEN      = '{{ csrf_token }}';
 
 let _currentDrawerAgentId = null;
@@ -477,10 +500,10 @@ function openChangesDrawer(agentId, agentName) {
     document.getElementById('drawer-empty').style.display = 'none';
     document.getElementById('drawer-footer').style.display = 'none';
 
-    // Wire footer approve/reject to call API directly
+    // Wire footer approve/reject to call API directly — no DOM click tricks
     document.getElementById('drawer-approve-btn').dataset.agentId = agentId;
     document.getElementById('drawer-reject-btn').dataset.agentId  = agentId;
-    document.getElementById('drawer-full-review-btn').href = ADMIN_BASE + '/' + agentId + '/edit-full-profile/';
+    document.getElementById('drawer-full-review-btn').href = ADMIN_BASE + agentId + '/manage/';
 
     // Open overlay + drawer
     document.getElementById('changes-overlay').style.display = 'block';
@@ -488,7 +511,8 @@ function openChangesDrawer(agentId, agentName) {
         document.getElementById('changes-drawer').style.transform = 'translateX(0)';
     }, 10);
 
-    const logsUrl = ADMIN_BASE + '/' + agentId + '/edit-logs/?t=' + Date.now();
+    // FIX: build URL properly without route() placeholder
+    const logsUrl = ADMIN_BASE + agentId + '/edit-logs/?t=' + Date.now();
 
     fetch(logsUrl, {
         headers: { 'Accept': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
@@ -525,6 +549,7 @@ function closeChangesDrawer() {
     _currentDrawerAgentId = null;
 }
 
+// FIX: Drawer footer approve/reject call the API directly, no DOM button searching
 document.getElementById('drawer-approve-btn').addEventListener('click', function () {
     const agentId = parseInt(this.dataset.agentId);
     if (!agentId) return;
@@ -683,4 +708,5 @@ function buildLogsHTML(logs) {
     return html;
 }
 </script>
+{% endblock %}
 {% endblock %}

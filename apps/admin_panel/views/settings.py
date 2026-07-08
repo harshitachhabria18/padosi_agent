@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from apps.home.models.site_setting import SiteSetting
 from apps.admin_panel.models.admin_activity_log import AdminActivityLog
-from apps.admin_panel.decorators import admin_login_required
+from apps.admin_panel.views.dashboard import _get_admin_from_session
 
 def parse_nested_post(post_dict):
     """
@@ -53,8 +53,10 @@ def parse_nested_post(post_dict):
             
     return data
 
-@admin_login_required
 def homepage(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return redirect('admin_login')
+
     # Fetch homepage settings (with fallback defaults)
     default_dyk_slides = [
         {'accent': 'accent-rose',   'bg': 'bg-rose-500',   'icon': 'users',         'title': '3× faster claim settlements',      'body': 'Customers served by a nearby agent report claims clearing up to 3× faster — your agent walks the file through with the insurer.'},
@@ -117,8 +119,10 @@ def homepage(request):
 
     return render(request, 'admin/settings/homepage.html', {'content': content})
 
-@admin_login_required
 def update_homepage(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return redirect('admin_login')
+
     if request.method == 'POST':
         # Reconstruct structured nested dictionary
         post_data = request.POST.dict()
@@ -150,10 +154,12 @@ def update_homepage(request):
         AdminActivityLog.log('Update homepage content', 'SiteSetting', request=request)
         messages.success(request, 'Homepage settings saved successfully. Changes are live immediately!')
         
-    return redirect('admin_panel:settings_homepage')
+    return redirect('admin_settings_homepage')
 
-@admin_login_required
 def hero_section(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return redirect('admin_login')
+
     defaults = {
         'heading': 'Find a {Trusted} Insurance Expert in your {Padosi}',
         'trust_badges': [
@@ -209,8 +215,10 @@ def hero_section(request):
         'tileClasses_json': json.dumps(tile_classes)
     })
 
-@admin_login_required
 def update_hero_section(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return redirect('admin_login')
+
     if request.method == 'POST':
         post_data = request.POST.dict()
         parsed = parse_nested_post(post_data)
@@ -277,11 +285,13 @@ def update_hero_section(request):
         AdminActivityLog.log('Updated Hero Section content', 'SiteSetting', request=request)
         messages.success(request, 'Hero Section saved successfully!')
 
-    return redirect('admin_panel:settings_hero_section')
+    return redirect('admin_settings_hero_section')
 
 
-@admin_login_required
 def general(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return redirect('admin_login')
+
     social_links_default = {
         'facebook': '',
         'twitter': '',
@@ -312,8 +322,10 @@ def general(request):
     return render(request, 'admin/settings/general.html', context)
 
 
-@admin_login_required
 def update_settings(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return redirect('admin_login')
+
     if request.method == 'POST':
         group = request.POST.get('group', 'general')
         
@@ -343,15 +355,17 @@ def update_settings(request):
         messages.success(request, f'{label} settings updated successfully.')
         
         if group == 'seo':
-            return redirect('admin_panel:settings_seo')
+            return redirect('admin_settings_seo')
         elif group == 'security':
-            return redirect('admin_panel:settings_security')
+            return redirect('admin_settings_security')
         
-    return redirect('admin_panel:settings_general')
+    return redirect('admin_settings_general')
 
 
-@admin_login_required
 def seo(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return redirect('admin_login')
+
     context = {
         'seo_meta_title': SiteSetting.get_value('seo_meta_title', 'Expert & Trusted Insurance Agent in your Padosi'),
         'seo_meta_description': SiteSetting.get_value('seo_meta_description', ''),
@@ -362,8 +376,10 @@ def seo(request):
     return render(request, 'admin/settings/seo.html', context)
 
 
-@admin_login_required
 def security(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return redirect('admin_login')
+
     context = {
         'rate_limit_clicks': SiteSetting.get_value('rate_limit_clicks', '10'),
         'rate_limit_timeframe': SiteSetting.get_value('rate_limit_timeframe', '2'),
@@ -585,8 +601,10 @@ def _initialize_default_template(template_type, path):
         f.write(defaults[template_type].strip())
 
 
-@admin_login_required
 def templates(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return redirect('admin_login')
+
     template_type = request.GET.get('type', 'invoice')
     path = _get_template_path(template_type)
     _initialize_default_template(template_type, path)
@@ -600,8 +618,10 @@ def templates(request):
     })
 
 
-@admin_login_required
 def update_templates(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return redirect('admin_login')
+
     if request.method == 'POST':
         template_type = request.POST.get('type')
         content = request.POST.get('file_content')

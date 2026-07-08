@@ -14,7 +14,8 @@ from django.db.models import Q
 from django.utils import timezone
 from django.conf import settings
 
-from apps.admin_panel.decorators import admin_login_required
+from apps.admin_panel.views.dashboard import _get_admin_from_session
+from django.shortcuts import redirect
 from apps.home.models.pincode import Pincode
 from apps.admin_panel.models.pincode_import_log import PincodeImportLog
 
@@ -118,8 +119,9 @@ def map_headers(lower_headers):
             
     return header_index
 
-@admin_login_required
 def index(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return redirect('admin_login')
     search = request.GET.get('search', '')
     state = request.GET.get('state', '')
     district = request.GET.get('district', '')
@@ -165,8 +167,9 @@ def index(request):
     }
     return render(request, 'admin/pincode_manager.html', context)
 
-@admin_login_required
 def upload(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=401)
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Only POST method is allowed.'}, status=405)
     
@@ -274,8 +277,9 @@ def upload(request):
         fs.delete(saved_name)
         return JsonResponse({'success': False, 'message': f'File processing failed: {str(e)}'}, status=500)
 
-@admin_login_required
 def import_data(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=401)
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Only POST method is allowed.'}, status=405)
         
@@ -390,8 +394,7 @@ def import_data(request):
                 Pincode.objects.bulk_create(
                     batch,
                     update_conflicts=True,
-                    update_fields=['office_name', 'district', 'state', 'latitude', 'longitude', 'taluk', 'updated_at'],
-                    unique_fields=['pincode']
+                    update_fields=['office_name', 'district', 'state', 'latitude', 'longitude', 'taluk', 'updated_at']
                 )
                 batch = []
                 
@@ -399,8 +402,7 @@ def import_data(request):
             Pincode.objects.bulk_create(
                 batch,
                 update_conflicts=True,
-                update_fields=['office_name', 'district', 'state', 'latitude', 'longitude', 'taluk', 'updated_at'],
-                unique_fields=['pincode']
+                update_fields=['office_name', 'district', 'state', 'latitude', 'longitude', 'taluk', 'updated_at']
             )
             
         log.status = 'completed'
@@ -424,8 +426,9 @@ def import_data(request):
         log.save()
         return JsonResponse({'success': False, 'message': f"Import failed: {str(e)}"}, status=500)
 
-@admin_login_required
 def sample_download(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return redirect('admin_login')
     csv_content = (
         "state,district,office_name,taluk,pincode,latitude,longitude\n"
         "Gujarat,Ahmedabad,Satellite,Ahmedabad,380015,23.0305,72.5066\n"
@@ -436,8 +439,9 @@ def sample_download(request):
     response['Content-Disposition'] = 'attachment; filename="pincode_sample.csv"'
     return response
 
-@admin_login_required
 def export_data(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return redirect('admin_login')
     state = request.GET.get('state')
     query = Pincode.objects.all()
     if state:
@@ -461,8 +465,9 @@ def export_data(request):
         ])
     return response
 
-@admin_login_required
 def delete_by_state(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=401)
     if request.method in ['DELETE', 'POST']:
         state = request.POST.get('state')
         if not state and request.body:
@@ -476,8 +481,9 @@ def delete_by_state(request):
         return JsonResponse({'success': True, 'deleted': deleted[0]})
     return JsonResponse({'success': False, 'message': 'Method not allowed.'}, status=405)
 
-@admin_login_required
 def get_districts(request):
+    admin_id = _get_admin_from_session(request)
+    if not admin_id: return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=401)
     state = request.GET.get('state')
     districts = list(Pincode.objects.filter(state=state).values_list('district', flat=True).distinct().order_by('district'))
     return JsonResponse({'districts': districts})

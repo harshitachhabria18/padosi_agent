@@ -1,0 +1,261 @@
+{% extends 'partials/base.html' %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Referral Rewards — PadosiAgent</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+.referral-hero {
+  background:linear-gradient(135deg,#1e1b4b 0%,#4c1d95 50%,#2563eb 100%);
+  padding:48px 0 80px;
+  color:#fff;
+  position:relative;
+  overflow:hidden;
+}
+.referral-hero::before {
+  content:'';position:absolute;right:-80px;top:-80px;width:320px;height:320px;
+  border-radius:50%;background:rgba(255,255,255,0.06);
+}
+.stat-card {
+  background:#fff;border-radius:18px;padding:22px 24px;
+  box-shadow:0 2px 20px rgba(0,0,0,0.07);text-align:center;
+  border:1px solid #f1f5f9;
+}
+.stat-num { font-size:32px;font-weight:800;line-height:1; }
+.stat-lbl { font-size:12px;color:#64748b;font-weight:600;margin-top:6px; }
+.share-card {
+  background:#fff;border-radius:18px;padding:24px;
+  box-shadow:0 2px 20px rgba(0,0,0,0.07);border:1px solid #f1f5f9;
+}
+.tier-card {
+  border-radius:14px;padding:18px;border:2px solid transparent;
+  transition:.2s;text-align:center;
+}
+.tier-card.active { transform:scale(1.05);box-shadow:0 6px 24px rgba(0,0,0,0.12); }
+.tier-1 { background:linear-gradient(135deg,#fef3c7,#fffbeb);border-color:#f59e0b; }
+.tier-2 { background:linear-gradient(135deg,#dbeafe,#eff6ff);border-color:#3b82f6; }
+.tier-3 { background:linear-gradient(135deg,#d1fae5,#ecfdf5);border-color:#10b981; }
+.ref-table { background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 2px 20px rgba(0,0,0,0.07); }
+.ref-table table { width:100%;border-collapse:collapse; }
+.ref-table th { padding:14px 20px;font-size:12px;font-weight:700;color:#94a3b8;text-transform:uppercase;background:#f8fafc;letter-spacing:.04em; }
+.ref-table td { padding:14px 20px;font-size:13px;border-bottom:1px solid #f8fafc; }
+.ref-table tr:last-child td { border-bottom:none; }
+.code-display {
+  background:linear-gradient(135deg,#f5f3ff,#ede9fe);
+  border:2px dashed #7c3aed;
+  border-radius:14px;
+  padding:18px 24px;
+  text-align:center;
+  cursor:pointer;
+}
+.progress-bar-wrap {
+  height:12px;border-radius:50rem;
+  background:#f1f5f9;overflow:hidden;
+}
+.progress-bar-fill {
+  height:100%;border-radius:50rem;
+  background:linear-gradient(90deg,#7c3aed,#2563eb);
+  transition:width 0.8s ease;
+}
+</style>
+</head>
+<body style="background:#f8fafc;">
+
+{# Hero #}
+<div class="referral-hero">
+  <div class="container" style="position:relative;z-index:2;">
+    <div class="row align-items-center">
+      <div class="col-lg-8">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,0.6);margin-bottom:8px;">Your Referral Program</div>
+        <h1 style="font-size:2.2rem;font-weight:900;margin-bottom:8px;">🔗 Earn Rewards. Grow Together.</h1>
+        <p style="color:rgba(255,255,255,0.8);font-size:15px;margin:0;">Refer agents to PadosiAgent and unlock exclusive upgrade discounts. The more you refer, the bigger your reward.</p>
+      </div>
+      <div class="col-lg-4 text-right mt-3 mt-lg-0">
+        <div style="font-size:13px;color:rgba(255,255,255,0.7);">Logged in as</div>
+        <div style="font-weight:700;font-size:18px;">{{ agent.fullname }}</div>
+        <div style="color:rgba(255,255,255,0.6);font-size:12px;">{{ agent.plan_type|title }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container" style="margin-top:-40px; position:relative; z-index:10;">
+
+  {# ── Stats Row ── #}
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-num" style="color:#7c3aed;">{{ actual_conversions }}</div>
+        <div class="stat-lbl">Total Conversions</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-num" style="color:#f59e0b;">{{ pending_count }}</div>
+        <div class="stat-lbl">Pending Referrals</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-num" style="color:#2563eb;">{{ clicks }}</div>
+        <div class="stat-lbl">Link Clicks</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-num" style="color:#10b981;">{{ tier_label|slice:":1" }}{% if current_tier %}{{ current_tier.discount }}%{% else %}—{% endif %}</div>
+        <div class="stat-lbl">Current Reward</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+
+    {# LEFT: Code + Share + Progress #}
+    <div class="col-lg-5">
+
+      {# Referral Code #}
+      <div class="share-card mb-4">
+        <div class="font-weight-bold mb-3" style="color:#1e293b;font-size:15px;">📋 Your Referral Code</div>
+        <div class="code-display mb-3" onclick="copyCode()" title="Click to copy">
+          <div style="font-size:28px;font-weight:900;color:#7c3aed;letter-spacing:4px;">{{ ref_code }}</div>
+          <div style="font-size:11px;color:#7c3aed;margin-top:4px;">Click to copy</div>
+        </div>
+        <div class="font-weight-bold mb-2" style="font-size:13px;color:#64748b;">Your Referral Link</div>
+        <div class="input-group mb-3">
+          <input type="text" id="refLinkInput" class="form-control form-control-sm" value="{{ referral_url }}" readonly style="font-size:12px;border-radius:10px 0 0 10px;">
+          <div class="input-group-append">
+            <button class="btn btn-primary btn-sm" onclick="copyLink()" style="border-radius:0 10px 10px 0;font-weight:600;">Copy</button>
+          </div>
+        </div>
+        <div class="d-flex gap-2" style="flex-wrap:wrap;">
+          <a href="{{ wa_url }}" target="_blank" class="btn btn-success btn-sm flex-grow-1" style="border-radius:10px;font-weight:700;">
+            <i class="fab fa-whatsapp mr-1"></i> Share on WhatsApp
+          </a>
+          <a href="{{ email_url }}" class="btn btn-outline-primary btn-sm flex-grow-1" style="border-radius:10px;font-weight:700;">
+            <i class="fas fa-envelope mr-1"></i> Share via Email
+          </a>
+        </div>
+      </div>
+
+      {# Progress Bar #}
+      <div class="share-card">
+        <div class="font-weight-bold mb-1" style="color:#1e293b;font-size:15px;">🎯 Progress to Next Tier</div>
+        <div class="text-muted mb-3" style="font-size:12px;">{{ progress_label }}</div>
+        <div class="progress-bar-wrap mb-2">
+          <div class="progress-bar-fill" style="width:{{ progress_pct }}%;"></div>
+        </div>
+        <div style="font-size:12px;color:#7c3aed;font-weight:600;">{{ next_goal_text }}</div>
+      </div>
+
+    </div>
+
+    {# RIGHT: Tier Cards #}
+    <div class="col-lg-7">
+      <div class="share-card">
+        <div class="font-weight-bold mb-4" style="color:#1e293b;font-size:15px;">🏆 Reward Tiers</div>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="tier-card tier-1 {% if current_tier and current_tier.reward == 'discount_25' or current_tier and current_tier.reward == 'discount_50' or current_tier and current_tier.reward == 'pro_plan_1rs' %}active{% endif %}">
+              <div style="font-size:2.5rem;">🥉</div>
+              <div style="font-weight:900;font-size:22px;color:#92400e;">25% OFF</div>
+              <div style="font-size:12px;color:#b45309;font-weight:700;margin-top:4px;">Tier 1</div>
+              <div style="font-size:11px;color:#78350f;margin-top:4px;">5 conversions</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="tier-card tier-2 {% if current_tier and current_tier.reward == 'discount_50' or current_tier and current_tier.reward == 'pro_plan_1rs' %}active{% endif %}">
+              <div style="font-size:2.5rem;">🥈</div>
+              <div style="font-weight:900;font-size:22px;color:#1d4ed8;">50% OFF</div>
+              <div style="font-size:12px;color:#1e40af;font-weight:700;margin-top:4px;">Tier 2</div>
+              <div style="font-size:11px;color:#1e3a8a;margin-top:4px;">10 conversions</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="tier-card tier-3 {% if current_tier and current_tier.reward == 'pro_plan_1rs' %}active{% endif %}">
+              <div style="font-size:2.5rem;">🥇</div>
+              <div style="font-weight:900;font-size:22px;color:#065f46;">Pro @ ₹1</div>
+              <div style="font-size:12px;color:#047857;font-weight:700;margin-top:4px;">Tier 3</div>
+              <div style="font-size:11px;color:#065f46;margin-top:4px;">15 conversions</div>
+            </div>
+          </div>
+        </div>
+
+        {% if current_tier %}
+        <div class="mt-4 p-3" style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-radius:14px;border:1.5px solid #10b981;">
+          <div style="font-weight:700;color:#065f46;font-size:14px;">🎉 Current Reward: {{ tier_label }}</div>
+          <div style="color:#047857;font-size:13px;margin-top:4px;">Your upgrade discount is automatically applied at checkout.</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {# ── Referred Agents Table ── #}
+  <div class="ref-table mb-5">
+    <div style="padding:20px 24px;border-bottom:1px solid #f1f5f9;">
+      <div class="font-weight-bold" style="font-size:15px;color:#1e293b;">👥 Your Referred Network</div>
+      <div class="text-muted" style="font-size:12px;">Agents who joined via your referral link</div>
+    </div>
+    {% if referred_agents %}
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Agent Name</th><th>Plan</th><th>Status</th><th>Conversion</th><th>Joined</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ref in referred_agents %}
+        <tr>
+          <td style="color:#cbd5e1;font-weight:600;">{{ forloop.counter }}</td>
+          <td style="font-weight:700;color:#1e293b;">{{ ref.ref_fullname|default:ref.referred_agent_name|default:"Unknown" }}</td>
+          <td>
+            {% if ref.ref_plan_type == 'free_trial' %}<span style="background:#fef3c7;color:#92400e;border-radius:6px;padding:2px 9px;font-size:11px;font-weight:700;">Free Trial</span>
+            {% elif ref.ref_plan_type == 'professional' %}<span style="background:#ede9fe;color:#7c3aed;border-radius:6px;padding:2px 9px;font-size:11px;font-weight:700;">Professional</span>
+            {% else %}<span style="background:#f1f5f9;color:#64748b;border-radius:6px;padding:2px 9px;font-size:11px;font-weight:700;">{{ ref.ref_plan_type|default:"—" }}</span>{% endif %}
+          </td>
+          <td>
+            {% if ref.ref_status == 'active' %}<span style="background:#dcfce7;color:#15803d;border-radius:50rem;padding:2px 10px;font-size:11px;font-weight:700;">Active</span>
+            {% else %}<span style="background:#f1f5f9;color:#64748b;border-radius:50rem;padding:2px 10px;font-size:11px;font-weight:700;">{{ ref.ref_status|default:"—"|title }}</span>{% endif %}
+          </td>
+          <td>
+            {% if ref.status == 'converted' %}<span style="background:#dcfce7;color:#15803d;border-radius:50rem;padding:2px 10px;font-size:11px;font-weight:700;">✓ Converted</span>
+            {% else %}<span style="background:#fef3c7;color:#92400e;border-radius:50rem;padding:2px 10px;font-size:11px;font-weight:700;">⏳ Pending</span>{% endif %}
+          </td>
+          <td style="color:#64748b;font-size:12px;">{{ ref.ref_created_at|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="text-align:center;padding:48px 20px;">
+      <div style="font-size:3rem;opacity:0.3;">🔗</div>
+      <div style="font-weight:600;color:#64748b;margin-top:8px;">No referrals yet. Share your link to get started!</div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+function copyCode() {
+  navigator.clipboard.writeText('{{ ref_code }}');
+  alert('Referral code {{ ref_code }} copied!');
+}
+function copyLink() {
+  const inp = document.getElementById('refLinkInput');
+  inp.select();
+  document.execCommand('copy');
+  alert('Referral link copied!');
+}
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.2/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+{% endblock %}

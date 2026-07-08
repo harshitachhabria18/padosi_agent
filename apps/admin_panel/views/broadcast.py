@@ -3,12 +3,28 @@ from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.db.models import Q
 from django.contrib import messages
-from apps.admin_panel.decorators import admin_login_required
-from apps.agents.models import Agent, AgentDeviceToken
-from apps.admin_panel.models import AdminActivityLog, AdminBroadcast
+from django.db import models
+from apps.admin_panel.views.dashboard import _get_admin_from_session
+from apps.admin_panel.models import Agent, AdminActivityLog
 
-@admin_login_required
+class AdminBroadcast(models.Model):
+    subject = models.CharField(max_length=255)
+    message = models.TextField()
+    target = models.CharField(max_length=50)
+    channels = models.CharField(max_length=100)
+    sent_count = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        managed = False
+        db_table = 'admin_broadcasts'
+
+from apps.agents.models import AgentDeviceToken
+
 def broadcast_index(request):
+    admin = _get_admin_from_session(request)
+    if not admin:
+        return redirect('admin_login_page')
+    
     now = timezone.now()
 
     # Calculate agent counts per target segment
@@ -16,18 +32,18 @@ def broadcast_index(request):
 
     professional_count = Agent.objects.filter(
         status='active',
-        subscriptions__selected_plan__icontains='professional'
+        plan_type__icontains='professional'
     ).distinct().count()
 
     starter_count = Agent.objects.filter(
         status='active',
-        subscriptions__selected_plan__icontains='starter'
+        plan_type__icontains='starter'
     ).distinct().count()
 
     expiring_count = Agent.objects.filter(
         status='active',
-        subscriptions__expires_at__gte=now,
-        subscriptions__expires_at__lte=now + timezone.timedelta(days=30)
+        trial_ends_at__gte=now,
+        trial_ends_at__lte=now + timezone.timedelta(days=30)
     ).distinct().count()
 
     agent_counts = {
@@ -59,8 +75,11 @@ def broadcast_index(request):
 
     return render(request, 'admin/broadcast.html', context)
 
-@admin_login_required
 def send_broadcast(request):
+    admin = _get_admin_from_session(request)
+    if not admin:
+        return redirect('admin_login_page')
+        
     if request.method == 'POST':
         target = request.POST.get('target')
         subject = request.POST.get('subject', '').strip()
@@ -69,7 +88,7 @@ def send_broadcast(request):
 
         if not target or not subject or not message:
             messages.error(request, "Target, Subject, and Message are required.")
-            return redirect('admin_panel:broadcast_index')
+            return redirect('broadcast_index')
 
         now = timezone.now()
 
@@ -78,14 +97,14 @@ def send_broadcast(request):
 
         if target == 'professional':
             agents_query = agents_query.filter(
-                Q(subscriptions__selected_plan__icontains='professional') | Q(subscriptions__selected_plan__icontains='pro')
+                Q(plan_type__icontains='professional') | Q(plan_type__icontains='pro')
             )
         elif target == 'starter':
-            agents_query = agents_query.filter(subscriptions__selected_plan__icontains='starter')
+            agents_query = agents_query.filter(plan_type__icontains='starter')
         elif target == 'expiring':
             agents_query = agents_query.filter(
-                subscriptions__expires_at__gte=now,
-                subscriptions__expires_at__lte=now + timezone.timedelta(days=30)
+                trial_ends_at__gte=now,
+                trial_ends_at__lte=now + timezone.timedelta(days=30)
             )
 
         agents = list(agents_query.distinct())
@@ -94,7 +113,7 @@ def send_broadcast(request):
 
         # Email Delivery Channel
         if 'email' in channels:
-            from apps.agents.services.brevo import send_brevo_email
+            from apps.admin_panel.services.brevo import send_brevo_email
             for agent in agents:
                 try:
                     personalized_message = message.replace('[Agent Name]', agent.fullname).replace('{name}', agent.fullname)
@@ -136,7 +155,7 @@ def send_broadcast(request):
 
         # Push Notification Channel
         if 'notification' in channels:
-            from apps.agents.services.fcm import FcmService
+            from apps.admin_panel.services.fcm import FcmService
             agent_ids = [agent.id for agent in agents]
             if agent_ids:
                 tokens = list(AgentDeviceToken.objects.filter(agent_id__in=agent_ids).exclude(token=None).exclude(token='').values_list('token', flat=True).distinct())
@@ -188,6 +207,6 @@ def send_broadcast(request):
         summary = " and ".join(parts) if parts else "0 recipients"
 
         messages.success(request, f"Broadcast sent successfully to {summary}.")
-        return redirect('admin_panel:broadcast_index')
+        return redirect('broadcast_index')
 
-    return redirect('admin_panel:broadcast_index')
+    return redirect('broadcast_index')

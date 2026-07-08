@@ -1,0 +1,17 @@
+<div class="rating-guide">
+    <div class="guide-item">
+        <i class="fas fa-star"></i> <span>Basic knowledge</span>
+    </div>
+    <div class="guide-item">
+        <i class="fas fa-star"></i><i class="fas fa-star"></i> <span>Some experience</span>
+    </div>
+    <div class="guide-item">
+        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i> <span>Proficient</span>
+    </div>
+    <div class="guide-item">
+        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i> <span>Advanced</span>
+    </div>
+    <div class="guide-item">
+        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i> <span>Expert</span>
+    </div>
+</div>

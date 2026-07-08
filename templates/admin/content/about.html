@@ -1,10 +1,10 @@
-{% extends 'admin/layout.html' %}
+{% extends 'admin/base.html' %}
 
 {% block title %}About Page — PadosiAgent Admin{% endblock %}
 {% block breadcrumb %}Content Control › About Page{% endblock %}
 
 {% block content %}
-<form method="POST" action="{% url 'admin_panel:content_about_update' %}">
+<form method="POST" action="{% url 'admin_content_about_update' %}">
     {% csrf_token %}
 
     <!-- Banner Section -->
@@ -99,7 +99,7 @@
     </div>
 
     <div class="d-flex justify-content-between align-items-center">
-        <a href="{% url 'home:about' %}" target="_blank" class="btn btn-outline-secondary">
+        <a href="#" target="_blank" class="btn btn-outline-secondary">
             <i class="fa-solid fa-external-link me-1"></i> Preview About Page
         </a>
         <button type="submit" class="btn btn-primary px-5">

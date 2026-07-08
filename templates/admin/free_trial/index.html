@@ -1,0 +1,781 @@
+{% extends 'admin/base.html' %}
+{% block title %}Free Trial Management{% endblock %}
+
+{% block content %}
+<style>
+.ft-stat-card { border-radius:14px; padding:20px; display:flex; align-items:center; gap:16px; }
+.ft-stat-icon { width:52px; height:52px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+.nav-tabs-ft .nav-link { border:none; padding:10px 18px; border-radius:10px 10px 0 0; color:#6b7280; font-weight:600; font-size:14px; cursor:pointer; }
+.nav-tabs-ft .nav-link.active { background:linear-gradient(135deg,#1e3a6e,#2563eb); color:#fff; }
+.nav-tabs-ft .nav-link:hover:not(.active) { background:#f1f5f9; }
+.ft-tab-panel { background:#fff; border-radius:0 14px 14px 14px; border:1px solid #e5e7eb; padding:24px; }
+.promo-badge { font-size:10px; padding:2px 7px; border-radius:20px; font-weight:700; letter-spacing:.5px; }
+.tier-card { border-radius:14px; padding:18px; border:2px solid transparent; transition:.2s; }
+.tier-card:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,.08); }
+.tier-1 { background:linear-gradient(135deg,#fef3c7,#fffbeb); border-color:#f59e0b; }
+.tier-2 { background:linear-gradient(135deg,#dbeafe,#eff6ff); border-color:#3b82f6; }
+.tier-3 { background:linear-gradient(135deg,#d1fae5,#ecfdf5); border-color:#10b981; }
+.history-row:hover { background:#f8fafc; }
+.btn-xs { padding:2px 7px; font-size:11px; }
+</style>
+
+<div class="container-fluid py-4">
+
+  {# ── Header ── #}
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h1 class="h3 mb-0 font-weight-bold" style="color:#1e3a6e;"><i class="fas fa-flask mr-2 text-success"></i>Free Trial Management</h1>
+      <p class="text-muted mb-0 mt-1">History · Promo Codes · Referral System · Analytics</p>
+    </div>
+    <a href="{% url 'admin_free_trial' %}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-sync-alt mr-1"></i> Refresh</a>
+  </div>
+
+  {# Flash Messages #}
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alert alert-{% if msg.tags == 'error' %}danger{% else %}{{ msg.tags }}{% endif %} alert-dismissible fade show">
+        <i class="fas fa-{% if msg.tags == 'error' %}exclamation-circle{% else %}check-circle{% endif %} mr-2"></i>
+        {{ msg|safe }}
+        <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {# ── KPI Stats Row ── #}
+  <div class="row mb-4">
+    <div class="col-6 col-md-4 col-xl-2 mb-3">
+      <div class="ft-stat-card shadow-sm" style="background:linear-gradient(135deg,#d1fae5,#ecfdf5);">
+        <div class="ft-stat-icon" style="background:#10b981;color:#fff;"><i class="fas fa-users"></i></div>
+        <div>
+          <div class="font-weight-bold" style="font-size:1.5rem;color:#10b981;">{{ stats.active }}</div>
+          <div class="text-muted small">Active Trials</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2 mb-3">
+      <div class="ft-stat-card shadow-sm" style="background:linear-gradient(135deg,#fee2e2,#fef2f2);">
+        <div class="ft-stat-icon" style="background:#ef4444;color:#fff;"><i class="fas fa-user-clock"></i></div>
+        <div>
+          <div class="font-weight-bold text-danger" style="font-size:1.5rem;">{{ stats.expired }}</div>
+          <div class="text-muted small">Expired</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2 mb-3">
+      <div class="ft-stat-card shadow-sm" style="background:linear-gradient(135deg,#dbeafe,#eff6ff);">
+        <div class="ft-stat-icon" style="background:#3b82f6;color:#fff;"><i class="fas fa-ticket-alt"></i></div>
+        <div>
+          <div class="font-weight-bold text-primary" style="font-size:1.5rem;">{{ stats.total }}</div>
+          <div class="text-muted small">Total Sign-ups</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2 mb-3">
+      <div class="ft-stat-card shadow-sm" style="background:linear-gradient(135deg,#fef3c7,#fffbeb);">
+        <div class="ft-stat-icon" style="background:#f59e0b;color:#fff;"><i class="fas fa-tag"></i></div>
+        <div>
+          <div class="font-weight-bold text-warning" style="font-size:1.5rem;">{{ stats.by_promo }}</div>
+          <div class="text-muted small">Via Promo</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2 mb-3">
+      <div class="ft-stat-card shadow-sm" style="background:linear-gradient(135deg,#ede9fe,#f5f3ff);">
+        <div class="ft-stat-icon" style="background:#7c3aed;color:#fff;"><i class="fas fa-share-alt"></i></div>
+        <div>
+          <div class="font-weight-bold" style="font-size:1.5rem;color:#7c3aed;">{{ stats.by_ref }}</div>
+          <div class="text-muted small">Via Referral</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2 mb-3">
+      <div class="ft-stat-card shadow-sm" style="background:linear-gradient(135deg,#d1fae5,#ecfdf5);">
+        <div class="ft-stat-icon" style="background:#059669;color:#fff;"><i class="fas fa-rupee-sign"></i></div>
+        <div>
+          <div class="font-weight-bold text-success" style="font-size:1.5rem;">₹{{ stats.revenue|floatformat:0 }}</div>
+          <div class="text-muted small">Trial Revenue</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ── Tabs ── #}
+  <ul class="nav nav-tabs-ft d-flex mb-0" id="ftTabs" style="gap:4px;list-style:none;padding:0;margin:0;">
+    <li><button type="button" class="nav-link active" onclick="switchFtTab(this,'tab-overview')">📊 Overview</button></li>
+    <li><button type="button" class="nav-link" onclick="switchFtTab(this,'tab-history')">📋 History</button></li>
+    <li><button type="button" class="nav-link" onclick="switchFtTab(this,'tab-promo')">🎟️ Promo Codes</button></li>
+    <li><a href="{% url 'admin_referrals_index' %}" class="nav-link" style="text-decoration:none;">🤝 Referral System</a></li>
+    <li><button type="button" class="nav-link" onclick="switchFtTab(this,'tab-config')">⚙️ Config</button></li>
+  </ul>
+
+  <script>
+  function switchFtTab(btn, paneId) {
+    document.querySelectorAll('#ftTabs button').forEach(function(b){ b.classList.remove('active'); });
+    document.querySelectorAll('#ftTabContent > div').forEach(function(p){ p.style.display='none'; });
+    btn.classList.add('active');
+    var p = document.getElementById(paneId);
+    if (p) p.style.display = 'block';
+  }
+  </script>
+
+  <div class="ft-tab-panel" id="ftTabContent">
+
+    {# ═══ TAB 1: OVERVIEW ═══ #}
+    <div id="tab-overview" style="display:block;">
+      <div class="row">
+        {# Chart #}
+        <div class="col-xl-7 mb-4">
+          <div class="card border-0 shadow-sm">
+            <div class="card-header font-weight-bold" style="background:#f8fafc;"><i class="fas fa-chart-line mr-2 text-primary"></i>Monthly Trial Sign-ups &amp; Revenue</div>
+            <div class="card-body"><canvas id="monthlyChart" height="200"></canvas></div>
+          </div>
+        </div>
+        {# Top Promo Usage #}
+        <div class="col-xl-5 mb-4">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-header font-weight-bold" style="background:#f8fafc;"><i class="fas fa-trophy mr-2 text-warning"></i>Top Promo Codes Used</div>
+            <div class="card-body p-0">
+              {% if promo_usage_summary %}
+              <table class="table table-sm mb-0">
+                <thead class="thead-light"><tr><th>Code</th><th>Plan</th><th>Uses</th><th>Revenue</th></tr></thead>
+                <tbody>
+                {% for row in promo_usage_summary %}
+                <tr>
+                  <td><code class="font-weight-bold" style="color:#6366f1;">{{ row.promo_code }}</code></td>
+                  <td class="small text-muted">{{ row.trial_plan_name|default:"—" }}</td>
+                  <td><span class="badge badge-primary">{{ row.usages }}</span></td>
+                  <td class="text-success font-weight-bold">₹{{ row.revenue|floatformat:0 }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+              </table>
+              {% else %}
+              <div class="p-4 text-center text-muted">No promo code data yet.</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {# Active Trial Agents Table #}
+        <div class="col-12">
+          <div class="card border-0 shadow-sm">
+            <div class="card-header d-flex align-items-center justify-content-between" style="background:#1e3a6e;color:#fff;">
+              <span><i class="fas fa-users mr-2"></i><strong>Active Trial Agents</strong></span>
+              <a href="{% url 'admin_agents' %}" class="btn btn-sm btn-light">View All Agents</a>
+            </div>
+            <div class="card-body p-0">
+              {% if active_agents %}
+              <div class="table-responsive" style="max-height:360px;overflow-y:auto;">
+                <table class="table table-sm table-hover mb-0">
+                  <thead class="thead-light" style="position:sticky;top:0;">
+                    <tr><th>Agent</th><th>Mobile</th><th>Trial Ends</th><th>Days Left</th><th>Discount</th><th>Status</th><th></th></tr>
+                  </thead>
+                  <tbody>
+                  {% for a in active_agents %}
+                  {% with ends=a.trial_ends_at %}
+                  <tr>
+                    <td>
+                      <div class="font-weight-bold" style="font-size:13px;">{{ a.fullname|truncatechars:22 }}</div>
+                      <small class="text-muted">{{ a.email }}</small>
+                    </td>
+                    <td class="small text-muted">{{ a.mobile }}</td>
+                    <td class="small">{% if ends %}{{ ends|date:"d M Y" }}{% else %}—{% endif %}</td>
+                    <td>
+                      {% if ends %}
+                        {% if a.is_expired %}<span class="text-danger">Expired</span>
+                        {% else %}<span class="text-success">Active</span>{% endif %}
+                      {% else %}<span class="text-muted">—</span>{% endif %}
+                    </td>
+                    <td><span class="badge badge-warning text-dark">{{ a.upgrade_discount_percent|default:0 }}%</span></td>
+                    <td>
+                        <span class="badge {% if a.is_expired %}badge-danger{% else %}badge-success{% endif %}">
+                          {% if a.is_expired %}Expired{% else %}Active{% endif %}
+                        </span>
+                    </td>
+                    <td><a href="{% url 'admin_agents_manage' a.id %}" class="btn btn-outline-primary btn-xs">Manage</a></td>
+                  </tr>
+                  {% endwith %}
+                  {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              {% else %}
+              <div class="p-4 text-center text-muted"><i class="fas fa-user-clock fa-2x mb-2"></i><br>No agents on trial yet.</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ═══ TAB 2: HISTORY ═══ #}
+    <div id="tab-history" style="display:none;">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h5 class="font-weight-bold mb-0"><i class="fas fa-history mr-2 text-secondary"></i>Free Trial Sign-up History</h5>
+        <div class="d-flex" style="gap:8px;">
+          <input type="text" id="historySearch" class="form-control form-control-sm" placeholder="Search name, email, code…" style="width:220px;">
+          <select id="historyFilter" class="form-control form-control-sm" style="width:140px;">
+            <option value="">All Sources</option>
+            <option value="direct">Direct</option>
+            <option value="promo">Promo Code</option>
+            <option value="referral">Referral</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="thead-light">
+            <tr>
+              <th>#</th><th>Agent</th><th>Contact</th><th>Promo Code</th>
+              <th>Plan</th><th>Duration</th><th>Discount</th><th>Paid</th>
+              <th>Source</th><th>Trial Start</th><th>Trial End</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+          {% for h in history %}
+          <tr class="history-row"
+              data-source="{{ h.source|default:'direct' }}"
+              data-search="{{ h.agent_name|lower|default:'' }} {{ h.agent_email|lower|default:'' }} {{ h.promo_code|lower|default:'' }}">
+            <td class="text-muted small">{{ h.id }}</td>
+            <td><div class="font-weight-bold">{{ h.agent_name|default:"—" }}</div></td>
+            <td>
+              <div class="small">{{ h.agent_email|default:"—" }}</div>
+              <div class="small text-muted">{{ h.agent_mobile|default:"" }}</div>
+            </td>
+            <td>
+              {% if h.promo_code %}
+                <code class="font-weight-bold" style="color:#6366f1;font-size:12px;">{{ h.promo_code }}</code>
+              {% else %}
+                <span class="text-muted small">—</span>
+              {% endif %}
+            </td>
+            <td class="small">{{ h.trial_plan_name|default:"Standard Free Trial" }}</td>
+            <td><span class="badge badge-light border">{{ h.trial_duration_days|default:30 }}d</span></td>
+            <td>
+              {% if h.discount_amount and h.discount_amount > 0 %}
+                <span class="text-success font-weight-bold">-₹{{ h.discount_amount|floatformat:0 }}</span>
+                {% if h.discount_type %}<small class="text-muted d-block">{{ h.discount_type }}</small>{% endif %}
+              {% else %}<span class="text-muted">—</span>{% endif %}
+            </td>
+            <td class="font-weight-bold text-success">₹{{ h.trial_price_paid|floatformat:0 }}</td>
+            <td>
+              {% if h.source == 'promo' %}
+                <span class="badge" style="background:#6366f1;">🎟️ Promo</span>
+              {% elif h.source == 'referral' %}
+                <span class="badge" style="background:#7c3aed;">🤝 Referral</span>
+              {% else %}
+                <span class="badge badge-secondary">Direct</span>
+              {% endif %}
+            </td>
+            <td class="small text-muted">{% if h.trial_started_at %}{{ h.trial_started_at }}{% else %}—{% endif %}</td>
+            <td class="small">{% if h.trial_ends_at %}{{ h.trial_ends_at }}{% else %}—{% endif %}</td>
+            <td>
+              {% if h.trial_ends_at %}
+                <span class="badge {% if h.is_expired %}badge-secondary{% else %}badge-success{% endif %}">
+                  {% if h.is_expired %}Ended{% else %}Active{% endif %}
+                </span>
+              {% else %}<span class="badge badge-secondary">Ended</span>{% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="12" class="text-center text-muted py-5"><i class="fas fa-history fa-3x mb-3 d-block" style="opacity:.25;"></i>No free trial history yet.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if history.has_other_pages %}
+      <div class="d-flex justify-content-end mt-3">
+        <ul class="pagination pagination-sm mb-0">
+          {% if history.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ history.previous_page_number }}">&laquo;</a></li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+          {% endif %}
+          
+          {% for i in history.paginator.page_range %}
+            {% if history.number == i %}
+              <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+            {% else %}
+              <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+            {% endif %}
+          {% endfor %}
+          
+          {% if history.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ history.next_page_number }}">&raquo;</a></li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+          {% endif %}
+        </ul>
+      </div>
+      {% endif %}
+    </div>
+
+    {# ═══ TAB 3: PROMO CODES ═══ #}
+    <div id="tab-promo" style="display:none;">
+      <div class="row">
+        {# Generator (left) #}
+        <div class="col-xl-5 mb-4">
+          <div class="card border-0 shadow-sm">
+            <div class="card-header font-weight-bold" style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;">
+              <i class="fas fa-magic mr-2"></i>Create Trial Promo Code
+            </div>
+            <div class="card-body">
+              <p class="small text-muted">Each code can define its own free trial plan — duration, price, and plan name. Leave blank to use the global default.</p>
+              <form action="{% url 'admin_ft_generate_promo' %}" method="POST">
+                {% csrf_token %}
+                <div class="row">
+                  <div class="col-6 mb-3">
+                    <label class="font-weight-bold small">Code Prefix</label>
+                    <input type="text" name="prefix" class="form-control form-control-sm" value="TRIAL" maxlength="10" placeholder="e.g. VIP, LAUNCH">
+                  </div>
+                  <div class="col-6 mb-3">
+                    <label class="font-weight-bold small">Plan Name</label>
+                    <input type="text" name="trial_plan_name" class="form-control form-control-sm" placeholder="e.g. VIP 60-Day Trial" maxlength="100">
+                  </div>
+                  <div class="col-6 mb-3">
+                    <label class="font-weight-bold small">Trial Duration (Days)</label>
+                    <input type="number" name="trial_duration_days" class="form-control form-control-sm" min="1" max="365" placeholder="Default (global)">
+                  </div>
+                  <div class="col-6 mb-3">
+                    <label class="font-weight-bold small">Price Override (₹)</label>
+                    <div class="input-group input-group-sm">
+                      <div class="input-group-prepend"><span class="input-group-text">₹</span></div>
+                      <input type="number" name="trial_price_override" class="form-control" min="0" step="0.01" placeholder="Default">
+                    </div>
+                  </div>
+                  <div class="col-6 mb-3">
+                    <label class="font-weight-bold small">Max Uses</label>
+                    <input type="number" name="max_uses" class="form-control form-control-sm" min="1" placeholder="Unlimited">
+                  </div>
+                  <div class="col-6 mb-3">
+                    <label class="font-weight-bold small">Expires On</label>
+                    <input type="date" name="expires_at" class="form-control form-control-sm" min="{{ tomorrow_date_str }}">
+                  </div>
+                  <div class="col-6 mb-3">
+                    <label class="font-weight-bold small">Discount Type</label>
+                    <select name="discount_type" class="form-control form-control-sm">
+                      <option value="fixed">Fixed (₹)</option>
+                      <option value="percentage">Percentage (%)</option>
+                    </select>
+                  </div>
+                  <div class="col-6 mb-3">
+                    <label class="font-weight-bold small">Discount Value</label>
+                    <input type="number" name="discount_value" class="form-control form-control-sm" min="0" value="0" step="0.01">
+                  </div>
+                  <div class="col-12 mb-3">
+                    <label class="font-weight-bold small">Notes (Internal)</label>
+                    <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="e.g. For VIP agents at conference 2026…" maxlength="500"></textarea>
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block font-weight-bold" style="background:#6366f1;border-color:#6366f1;">
+                  <i class="fas fa-magic mr-2"></i>Generate Promo Code
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        {# Codes List (right) #}
+        <div class="col-xl-7 mb-4">
+          <div class="card border-0 shadow-sm">
+            <div class="card-header font-weight-bold d-flex align-items-center justify-content-between" style="background:#f8fafc;">
+              <span><i class="fas fa-list mr-2"></i>Trial Promo Codes ({{ trial_promo_codes|length }})</span>
+              <span class="badge badge-success">{{ stats.codes_active }} Active</span>
+            </div>
+            <div class="card-body p-0">
+              {% if trial_promo_codes %}
+              <div class="table-responsive" style="max-height:520px;overflow-y:auto;">
+                <table class="table table-sm align-middle mb-0">
+                  <thead class="thead-light sticky-top" style="position:sticky;top:0;">
+                    <tr>
+                      <th>Code</th><th>Plan</th><th>Duration</th><th>Price</th>
+                      <th>Discount</th><th>Uses</th><th>Expires</th><th>Status</th><th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                  {% for p in trial_promo_codes %}
+                  <tr>
+                    <td>
+                      <code class="font-weight-bold" style="color:#6366f1;font-size:13px;">{{ p.code }}</code>
+                      <button class="btn btn-link p-0 ml-1 btn-xs" onclick="copyText('{{ p.code }}',this)"><i class="fas fa-copy fa-xs text-muted"></i></button>
+                      {% if p.notes %}<br><small class="text-muted font-italic">{{ p.notes|truncatechars:40 }}</small>{% endif %}
+                    </td>
+                    <td><small>{{ p.trial_plan_name|default:"<span class='text-muted'>Default</span>"|safe }}</small></td>
+                    <td>
+                      {% if p.trial_duration_days %}<span class="badge badge-info text-dark">{{ p.trial_duration_days }}d</span>
+                      {% else %}<span class="text-muted small">Default</span>{% endif %}
+                    </td>
+                    <td>
+                      {% if p.trial_price_override is not None %}<span class="text-success font-weight-bold">₹{{ p.trial_price_override }}</span>
+                      {% else %}<span class="text-muted small">Default</span>{% endif %}
+                    </td>
+                    <td>
+                      {% if p.discount_value and p.discount_value > 0 %}
+                        <span class="badge badge-warning text-dark">
+                          {% if p.discount_type == 'percentage' %}{{ p.discount_value }}%{% else %}₹{{ p.discount_value }}{% endif %}
+                        </span>
+                      {% else %}<span class="text-muted small">None</span>{% endif %}
+                    </td>
+                    <td><span class="badge badge-light border">{{ p.times_used }}{% if p.max_uses %}/{{ p.max_uses }}{% else %}/∞{% endif %}</span></td>
+                    <td class="small text-muted">{% if p.expires_at %}{{ p.expires_at|date:"d M Y" }}{% else %}—{% endif %}</td>
+                    <td>
+                      <span class="badge {% if p.is_active %}badge-success{% else %}badge-secondary{% endif %}" id="promo-badge-{{ p.id }}">
+                        {% if p.is_active %}Active{% else %}Off{% endif %}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="d-flex" style="gap:4px;">
+                        <button class="btn btn-xs btn-outline-info" onclick="editTrialPromoCode({{ p.id }},'{{ p.code }}','{{ p.trial_plan_name|default:''|escapejs }}','{{ p.trial_duration_days|default:'' }}','{{ p.trial_price_override|default:'' }}','{{ p.max_uses|default:'' }}','{{ p.expires_at|date:'Y-m-d'|default:'' }}','{{ p.discount_type|default:'fixed' }}','{{ p.discount_value|default:0 }}','{{ p.notes|default:''|escapejs }}')" title="Edit">
+                          <i class="fas fa-edit fa-xs"></i>
+                        </button>
+                        <button class="btn btn-xs btn-outline-{% if p.is_active %}warning{% else %}success{% endif %}" onclick="togglePromoCode({{ p.id }},this)" title="{% if p.is_active %}Disable{% else %}Enable{% endif %}">
+                          <i class="fas fa-{% if p.is_active %}pause{% else %}play{% endif %} fa-xs" id="toggle-icon-{{ p.id }}"></i>
+                        </button>
+                        <form method="POST" action="{% url 'admin_ft_delete_promo' p.id %}" onsubmit="return confirm('Delete promo code {{ p.code }}?')" style="display:inline;">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-xs btn-outline-danger" title="Delete"><i class="fas fa-trash fa-xs"></i></button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              {% else %}
+              <div class="p-5 text-center text-muted"><i class="fas fa-ticket-alt fa-2x mb-2"></i><br>No trial promo codes yet.</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    {# ═══ TAB 5: CONFIG ═══ #}
+    <div id="tab-config" style="display:none;">
+      <div class="row">
+        {# Global Trial Plan Config #}
+        <div class="col-xl-5 mb-4">
+          <div class="card border-0 shadow-sm">
+            <div class="card-header font-weight-bold" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;">
+              <i class="fas fa-cogs mr-2"></i>Global Trial Plan Config
+              <span class="ml-auto badge {% if trial_config.is_active %}badge-light text-success{% else %}badge-danger{% endif %}">
+                {% if trial_config.is_active %}ACTIVE{% else %}DISABLED{% endif %}
+              </span>
+            </div>
+            <div class="card-body">
+              <form action="{% url 'admin_ft_update_config' %}" method="POST">
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label class="font-weight-bold">Default Price (₹)<span class="text-danger">*</span></label>
+                  <div class="input-group">
+                    <div class="input-group-prepend"><span class="input-group-text">₹</span></div>
+                    <input type="number" name="price" class="form-control" value="{{ trial_config.price|default:99 }}" min="1" required>
+                  </div>
+                  <small class="text-muted">Flat price agents pay for the free trial.</small>
+                </div>
+                <div class="mb-3">
+                  <label class="font-weight-bold">Default Duration (Days)<span class="text-danger">*</span></label>
+                  <input type="number" name="duration_days" class="form-control" value="{{ trial_config.duration_days|default:30 }}" min="1" max="365" required>
+                </div>
+                <div class="mb-3">
+                  <label class="font-weight-bold">Badge Label</label>
+                  <input type="text" name="badge" class="form-control" value="{{ trial_config.badge|default:'FREE TRIAL' }}" maxlength="30">
+                </div>
+                <div class="mb-3">
+                  <label class="font-weight-bold">Plan Description</label>
+                  <input type="text" name="description" class="form-control" value="{{ trial_config.description|default:'' }}" maxlength="255">
+                </div>
+                <div class="custom-control custom-switch mb-3">
+                  <input class="custom-control-input" type="checkbox" name="is_active" id="trialIsActive" value="1" {% if trial_config.is_active %}checked{% endif %}>
+                  <label class="custom-control-label font-weight-bold" for="trialIsActive">Trial Plan Is Active</label>
+                  <small class="d-block text-muted">When disabled, the Free Trial card won't appear even with valid promo codes.</small>
+                </div>
+                <button type="submit" class="btn btn-success btn-block font-weight-bold"><i class="fas fa-save mr-2"></i>Save Global Config</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        {# Referral System Setting + Upgrade Discount #}
+        <div class="col-xl-4 mb-4">
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header font-weight-bold bg-dark text-white">
+              <i class="fas fa-tags mr-2"></i>Referral System Setting
+            </div>
+            <div class="card-body">
+              <form action="{% url 'admin_ft_update_referral_config' %}" method="POST">
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label class="font-weight-bold">Referral System Eligibility</label>
+                  <select name="eligibility" class="form-control border-secondary">
+                    <option value="free_trial_only" {% if referral_config.eligibility == 'free_trial_only' or not referral_config.eligibility %}selected{% endif %}>Only Free Trial Agents</option>
+                    <option value="all" {% if referral_config.eligibility == 'all' %}selected{% endif %}>All Agents (Trial + Paid)</option>
+                  </select>
+                  <small class="text-muted d-block mt-2">Choose which agents see the referral section in their dashboard.</small>
+                </div>
+                <div class="mb-3">
+                  <label class="font-weight-bold">Count Free Trial as Conversion</label>
+                  <select name="count_free_trial" class="form-control border-secondary">
+                    <option value="0" {% if not referral_config.count_free_trial %}selected{% endif %}>No, Require Premium Upgrade</option>
+                    <option value="1" {% if referral_config.count_free_trial %}selected{% endif %}>Yes, Count Free Trial Purchases</option>
+                  </select>
+                  <small class="text-muted d-block mt-2">If YES, an agent receives +1 conversion even if the referred user only buys the Free Trial.</small>
+                </div>
+                <button type="submit" class="btn btn-dark btn-block font-weight-bold"><i class="fas fa-save mr-2"></i>Save Referral Config</button>
+              </form>
+            </div>
+          </div>
+          <!-- TEST TOOL -->
+          <div class="card border-0 shadow-sm mb-4 border border-danger">
+            <div class="card-header font-weight-bold bg-danger text-white">
+              <i class="fas fa-flask mr-2"></i>[TESTING] Add Fake Conversion
+            </div>
+            <div class="card-body">
+              <form action="{% url 'admin_ft_force_test_credit' %}" method="POST">
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label class="font-weight-bold text-danger">Agent ID</label>
+                  <input type="number" name="agent_id" class="form-control border-danger" required placeholder="Enter the exact Agent ID to get +1 referral">
+                  <small class="text-danger font-weight-bold d-block mt-1">WARNING: TESTING ONLY! DO NOT PUSH THIS MODULE TO PRODUCTION!</small>
+                </div>
+                <button type="submit" class="btn btn-danger btn-block font-weight-bold"><i class="fas fa-plus mr-2"></i>Force +1 Conversion</button>
+              </form>
+            </div>
+          </div>
+
+          <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header font-weight-bold" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;">
+              <i class="fas fa-percentage mr-2"></i>Upgrade Discount Banner
+            </div>
+            <div class="card-body">
+              <div class="alert alert-info py-2 mb-3">
+                <small><i class="fas fa-info-circle mr-1"></i>This discount is shown in a <strong>promotional banner</strong> on the trial agent's dashboard. When they click upgrade, the discount is automatically applied.</small>
+              </div>
+              <form action="{% url 'admin_ft_update_discount' %}" method="POST">
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label class="font-weight-bold">Upgrade Discount (%)</label>
+                  <div class="input-group">
+                    <input type="number" name="upgrade_discount" class="form-control form-control-lg" value="{{ upgrade_discount|default:20 }}" min="0" max="100" step="0.5" required>
+                    <div class="input-group-append"><span class="input-group-text font-weight-bold" style="font-size:1.25rem;">%</span></div>
+                  </div>
+                  <small class="text-muted mt-1 d-block">Set to 0 to hide the discount badge. Updating applies instantly to all active trial agents.</small>
+                </div>
+                <button type="submit" class="btn btn-warning btn-block font-weight-bold text-white"><i class="fas fa-bolt mr-2"></i>Update Discount (Live)</button>
+              </form>
+              <div class="mt-3 p-3 rounded" style="background:#fffbeb;border:1px solid #fde68a;">
+                <div class="font-weight-bold small mb-1">📣 Current Banner Preview</div>
+                <div class="small"><em>"Upgrade to Basic or Professional and save <strong>{{ upgrade_discount }}%</strong> before your trial ends!"</em></div>
+              </div>
+            </div>
+          </div>
+
+          {# Summary Stats #}
+          <div class="row">
+            <div class="col-6 mb-3">
+              <div class="text-center p-3 rounded shadow-sm" style="background:linear-gradient(135deg,#d1fae5,#ecfdf5);">
+                <div class="font-weight-bold text-success" style="font-size:1.5rem;">{{ stats.active }}</div>
+                <div class="text-muted small">Active Trials</div>
+              </div>
+            </div>
+            <div class="col-6 mb-3">
+              <div class="text-center p-3 rounded shadow-sm" style="background:linear-gradient(135deg,#fee2e2,#fef2f2);">
+                <div class="font-weight-bold text-danger" style="font-size:1.5rem;">{{ stats.expired }}</div>
+                <div class="text-muted small">Expired</div>
+              </div>
+            </div>
+            <div class="col-6 mb-3">
+              <div class="text-center p-3 rounded shadow-sm" style="background:linear-gradient(135deg,#dbeafe,#eff6ff);">
+                <div class="font-weight-bold text-primary" style="font-size:1.5rem;">{{ stats.codes_active }}</div>
+                <div class="text-muted small">Active Codes</div>
+              </div>
+            </div>
+            <div class="col-6 mb-3">
+              <div class="text-center p-3 rounded shadow-sm" style="background:linear-gradient(135deg,#fef3c7,#fffbeb);">
+                <div class="font-weight-bold text-warning" style="font-size:1.5rem;">{{ upgrade_discount|default:0 }}%</div>
+                <div class="text-muted small">Upgrade Disc.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ═══ EDIT PROMO CODE MODAL ═══ #}
+    <div class="modal fade" id="editTrialPromoModal" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <form id="editPromoForm" method="POST" action="">
+          {% csrf_token %}
+          <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-light border-0">
+              <h5 class="modal-title font-weight-bold"><i class="fas fa-edit mr-2"></i>Edit Trial Promo Code</h5>
+              <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+              <div class="row">
+                <div class="col-8 mb-3">
+                  <label class="font-weight-bold small">Trial Plan Name</label>
+                  <input type="text" name="trial_plan_name" id="edit_trial_plan_name" class="form-control form-control-sm" placeholder="Leave empty for Standard">
+                </div>
+                <div class="col-4 mb-3">
+                  <label class="font-weight-bold small">Duration (Days)</label>
+                  <input type="number" name="trial_duration_days" id="edit_trial_duration_days" class="form-control form-control-sm" min="1" max="365" placeholder="30">
+                </div>
+                <div class="col-6 mb-3">
+                  <label class="font-weight-bold small">Price Override (₹)</label>
+                  <input type="number" name="trial_price_override" id="edit_trial_price_override" class="form-control form-control-sm" min="0" step="0.01" placeholder="e.g. 0 or 49">
+                  <div class="form-text" style="font-size:11px;">Leave empty to use base</div>
+                </div>
+                <div class="col-6 mb-3">
+                  <label class="font-weight-bold small">Max Uses</label>
+                  <input type="number" name="max_uses" id="edit_max_uses" class="form-control form-control-sm" min="1" placeholder="Unlimited">
+                </div>
+                <div class="col-12 mb-3">
+                  <label class="font-weight-bold small">Expiry Date</label>
+                  <input type="date" name="expires_at" id="edit_expires_at" class="form-control form-control-sm" min="{{ tomorrow_date_str }}">
+                </div>
+                <div class="col-6 mb-3">
+                  <label class="font-weight-bold small">Discount Type</label>
+                  <select name="discount_type" id="edit_discount_type" class="form-control form-control-sm">
+                    <option value="fixed">Fixed Amount (₹)</option>
+                    <option value="percentage">Percentage (%)</option>
+                  </select>
+                </div>
+                <div class="col-6 mb-3">
+                  <label class="font-weight-bold small">Discount Value</label>
+                  <input type="number" name="discount_value" id="edit_discount_value" class="form-control form-control-sm" min="0" step="0.01">
+                </div>
+                <div class="col-12 mb-3">
+                  <label class="font-weight-bold small">Notes</label>
+                  <textarea name="notes" id="edit_notes" class="form-control form-control-sm" rows="2"></textarea>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer border-0">
+              <button type="button" class="btn btn-sm btn-light" data-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-sm btn-primary">Save Changes</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>{# end ftTabContent #}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// ── Monthly Chart ────────────────────────────────────────────────────────────
+var monthlyData = {{ monthly_stats|safe }};
+var ctx = document.getElementById('monthlyChart');
+if (ctx && monthlyData.length > 0) {
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: monthlyData.map(function(r){ return r.label; }),
+      datasets: [
+        {
+          label: 'Sign-ups',
+          data: monthlyData.map(function(r){ return r.signups; }),
+          backgroundColor: 'rgba(99,102,241,0.7)',
+          borderRadius: 6,
+          yAxisID: 'y',
+        },
+        {
+          label: 'Revenue (₹)',
+          data: monthlyData.map(function(r){ return r.revenue; }),
+          type: 'line',
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16,185,129,0.15)',
+          fill: true,
+          tension: 0.4,
+          yAxisID: 'y1',
+          pointRadius: 4,
+          pointBackgroundColor: '#10b981',
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { position: 'top' } },
+      scales: {
+        y:  { type:'linear', position:'left',  title:{ display:true, text:'Sign-ups' } },
+        y1: { type:'linear', position:'right', title:{ display:true, text:'Revenue (₹)' }, grid:{ drawOnChartArea:false } }
+      }
+    }
+  });
+}
+
+// ── Promo Code Toggle (AJAX) ─────────────────────────────────────────────────
+function togglePromoCode(id, btn) {
+  var csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+  fetch('{% url "admin_ft_toggle_promo" %}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken
+    },
+    body: JSON.stringify({ id: id })
+  }).then(function(r){ return r.json(); }).then(function(data) {
+    if (data.success) {
+      var badge  = document.getElementById('promo-badge-' + id);
+      var icon   = document.getElementById('toggle-icon-' + id);
+      if (data.is_active) {
+        if (badge) { badge.className = 'badge badge-success'; badge.textContent = 'Active'; }
+        if (btn)   btn.className = 'btn btn-xs btn-outline-warning';
+        if (icon)  icon.className = 'fas fa-pause fa-xs';
+      } else {
+        if (badge) { badge.className = 'badge badge-secondary'; badge.textContent = 'Off'; }
+        if (btn)   btn.className = 'btn btn-xs btn-outline-success';
+        if (icon)  icon.className = 'fas fa-play fa-xs';
+      }
+    }
+  });
+}
+
+// ── Copy helper ──────────────────────────────────────────────────────────────
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).then(function() {
+    var orig = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check fa-xs text-success"></i>';
+    setTimeout(function(){ btn.innerHTML = orig; }, 1500);
+  });
+}
+
+// ── History inline filter ────────────────────────────────────────────────────
+function filterHistory() {
+  var s = document.getElementById('historySearch');
+  var f = document.getElementById('historyFilter');
+  var search = s ? s.value.toLowerCase() : '';
+  var src    = f ? f.value : '';
+  document.querySelectorAll('#historyBody tr').forEach(function(row) {
+    var ms = !search || (row.dataset.search || '').includes(search);
+    var mf = !src    || (row.dataset.source || '') === src;
+    row.style.display = (ms && mf) ? '' : 'none';
+  });
+}
+var _hs = document.getElementById('historySearch');
+var _hf = document.getElementById('historyFilter');
+if (_hs) _hs.addEventListener('input', filterHistory);
+if (_hf) _hf.addEventListener('change', filterHistory);
+
+// ── Edit Promo Code Modal ────────────────────────────────────────────────────
+function editTrialPromoCode(id, code, planName, duration, priceOverride, maxUses, expiresAt, discountType, discountValue, notes) {
+  var form = document.getElementById('editPromoForm');
+  form.action = '/admin/free-trial/promo/' + id + '/update/';
+  document.getElementById('edit_trial_plan_name').value     = planName;
+  document.getElementById('edit_trial_duration_days').value = duration;
+  document.getElementById('edit_trial_price_override').value = priceOverride;
+  document.getElementById('edit_max_uses').value            = maxUses;
+  document.getElementById('edit_expires_at').value          = expiresAt;
+  document.getElementById('edit_discount_type').value       = discountType;
+  document.getElementById('edit_discount_value').value      = discountValue;
+  document.getElementById('edit_notes').value               = notes;
+  $('#editTrialPromoModal').modal('show');
+}
+</script>
+{% endblock %}

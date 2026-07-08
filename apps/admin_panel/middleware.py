@@ -6,9 +6,9 @@ from django.http import HttpResponseForbidden, JsonResponse
 from django.utils import timezone
 from django.conf import settings
 from django.template.loader import render_to_string
-from apps.agents.models import BlockedIp
-from apps.admin_panel.models import SecurityThreatLog
-from apps.agents.services.brevo import send_brevo_email
+
+from apps.admin_panel.views.security import BlockedIp, SecurityThreatLog
+from apps.admin_panel.services.brevo import send_brevo_email
 
 logger = logging.getLogger(__name__)
 

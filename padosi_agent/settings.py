@@ -54,6 +54,8 @@ INSTALLED_APPS = [
     'apps.home',
     'apps.admin_panel',
     'apps.agents',
+    'rest_framework',
+    'django.contrib.humanize',
 ]
 
 MIDDLEWARE = [
@@ -79,7 +81,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'apps.admin_panel.context_processors.sidebar_counts',
+                'apps.admin_panel.context_processors.admin_badge_counts',
                 'apps.home.context_processors.footer_settings',
             ],
         },

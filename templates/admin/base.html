@@ -1,0 +1,998 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>{% block title %}Admin Dashboard — PadosiAgent{% endblock %}</title>
+
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Bootstrap -->
+    <link href="{% static 'bootstrap/bootstrap.min.css' %}" rel="stylesheet">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- jQuery & Bootstrap JS (loaded early so child templates can use $) -->
+    <script src="{% static 'js/jquery-3.7.1.min.js' %}"></script>
+    <script>window.$ = window.jQuery;</script>
+    <script src="{% static 'js/popper.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+
+    <style>
+        :root {
+            --primary: #1d7d5d;
+            --primary-light: #ecfdf5;
+            --secondary: #1e293b;
+            --accent: #f59e0b;
+            --sidebar-width: 260px;
+            --header-height: 70px;
+            /* Light mode */
+            --bg-body: #f8fafc;
+            --bg-sidebar: #ffffff;
+            --bg-navbar: #ffffff;
+            --bg-card: #ffffff;
+            --bg-table-header: #f8fafc;
+            --border-color: #e2e8f0;
+            --border-light: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-muted: #64748b;
+            --text-label: #94a3b8;
+            --menu-hover-bg: #f1f5f9;
+            --input-bg: #ffffff;
+        }
+
+        body.dark-mode {
+            --bg-body: #0f172a;
+            --bg-sidebar: #1e293b;
+            --bg-navbar: #1e293b;
+            --bg-card: #1e293b;
+            --bg-table-header: #0f172a;
+            --border-color: #334155;
+            --border-light: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-muted: #94a3b8;
+            --text-label: #64748b;
+            --menu-hover-bg: #0f172a;
+            --input-bg: #0f172a;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* ── Sidebar ─────────────────────────────────────────────── */
+        .admin-sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-brand {
+            height: var(--header-height);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .sidebar-brand img { height: 40px; width: auto; }
+
+        .sidebar-menu {
+            padding: 20px 12px;
+            height: calc(100vh - var(--header-height) - 80px);
+            overflow-y: auto;
+        }
+
+        .menu-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--text-label);
+            margin: 20px 0 8px 12px;
+            letter-spacing: 0.05em;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 14px;
+            color: var(--text-muted);
+            text-decoration: none !important;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            transition: all 0.2s;
+        }
+
+        .menu-item i {
+            width: 20px;
+            margin-right: 12px;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .menu-item:hover {
+            background-color: var(--menu-hover-bg);
+            color: var(--primary);
+        }
+
+        .menu-item.active {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .menu-item .badge {
+            font-size: 10px !important;
+            font-weight: 800 !important;
+            padding: 2px 8px !important;
+            border-radius: 50rem !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            letter-spacing: 0.02em;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 18px;
+        }
+
+        body.dark-mode .menu-item.active {
+            background-color: rgba(29, 125, 93, 0.2);
+        }
+
+        /* ── Main wrapper ─────────────────────────────────────────── */
+        .main-wrapper {
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+
+        .top-navbar {
+            height: var(--header-height);
+            background: var(--bg-navbar);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            transition: background-color 0.3s;
+        }
+
+        .content-body { padding: 32px; }
+
+        /* ── Stats grid ───────────────────────────────────────────── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: background-color 0.3s;
+        }
+
+        .stat-value { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+        .stat-label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+
+        /* ── Buttons ──────────────────────────────────────────────── */
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            font-weight: 600;
+            padding: 8px 20px;
+            border-radius: 8px;
+        }
+        .btn-primary:hover { background-color: #16654b; border-color: #16654b; }
+
+        /* ── Card ─────────────────────────────────────────────────── */
+        .card {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            overflow: hidden;
+            background: var(--bg-card);
+            transition: background-color 0.3s;
+        }
+        .card-header {
+            background: var(--bg-card) !important;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        /* ── Table ────────────────────────────────────────────────── */
+        .table thead th {
+            background: var(--bg-table-header);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            color: var(--text-muted);
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .table tbody td {
+            padding: 16px;
+            vertical-align: middle;
+            border-bottom: 1px solid var(--border-light);
+            color: var(--text-primary);
+        }
+
+        /* ── Dark-mode overrides ──────────────────────────────────── */
+        body.dark-mode .form-control,
+        body.dark-mode .form-select {
+            background-color: var(--input-bg);
+            border-color: var(--border-color);
+            color: var(--text-primary);
+        }
+        body.dark-mode .table  { color: var(--text-primary); }
+        body.dark-mode .bg-white { background-color: var(--bg-card) !important; }
+        body.dark-mode .bg-light { background-color: #0f172a !important; }
+        body.dark-mode .text-dark { color: var(--text-primary) !important; }
+
+        /* ── Notification bell ────────────────────────────────────── */
+        .notif-btn {
+            position: relative;
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .notif-btn:hover { background: var(--menu-hover-bg); color: var(--primary); }
+
+        .notif-badge {
+            position: absolute;
+            top: -4px; right: -4px;
+            background: #ef4444;
+            color: white;
+            font-size: 9px; font-weight: 700;
+            border-radius: 50%;
+            width: 16px; height: 16px;
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid var(--bg-navbar);
+        }
+
+        .notif-dropdown {
+            position: absolute;
+            right: 0; top: 48px;
+            width: 340px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            z-index: 9999;
+            display: none;
+            animation: fadeInDown 0.2s ease;
+        }
+        .notif-dropdown.show { display: block; }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .notif-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-light);
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .notif-item:hover { background: var(--menu-hover-bg); }
+        .notif-item:last-child { border-bottom: none; }
+
+        /* ── Dark-mode toggle ─────────────────────────────────────── */
+        .dark-toggle {
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 15px;
+        }
+        .dark-toggle:hover { background: var(--menu-hover-bg); color: var(--primary); }
+
+        /* ── Quick search ─────────────────────────────────────────── */
+        .quick-search-wrap { position: relative; }
+
+        .quick-search-input {
+            width: 200px;
+            padding: 7px 14px 7px 36px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-body);
+            color: var(--text-primary);
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .quick-search-input:focus {
+            width: 280px;
+            outline: none;
+            border-color: var(--primary);
+        }
+        .quick-search-icon {
+            position: absolute;
+            left: 10px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        /* ── Responsive ───────────────────────────────────────────── */
+        @media screen and (max-width: 991px) {
+            .admin-sidebar { transform: translateX(-100%); }
+            .admin-sidebar.mobile-open { transform: translateX(0); }
+            .main-wrapper { margin-left: 0; width: 100%; }
+            .quick-search-input { width: 140px; }
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!--  SIDEBAR                                                          -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<aside class="admin-sidebar" id="sidebar">
+
+    <div class="sidebar-brand">
+        <a href="/admin/dashboard/">
+            <img src="{% static 'img/logo.png' %}" alt="PadosiAgent">
+        </a>
+    </div>
+
+    <div class="sidebar-menu">
+
+        <!-- Dashboard -->
+        <a href="/admin/dashboard/"
+           class="menu-item {% if request.path == '/admin/dashboard/' %}active{% endif %}">
+            <i class="fa-solid fa-chart-pie"></i> Dashboard
+        </a>
+
+        <!-- User Management -->
+        <div class="menu-label">User Management</div>
+
+        <a href="/admin/agents/"
+           class="menu-item {% if request.path == '/admin/agents/' %}active{% endif %}">
+            <i class="fa-solid fa-users-gear"></i> Agents
+        </a>
+
+        <a href="/admin/distributors/"
+           class="menu-item {% if '/admin/distributors/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-building-user"></i> Distributors
+        </a>
+
+        <a href="/admin/approvals/"
+           class="menu-item {% if '/admin/approvals/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-user-check"></i> Pending Approvals
+            {% if pending_agents_count > 0 %}
+            <span class="badge bg-success ms-auto">{{ pending_agents_count }}</span>
+            {% endif %}
+        </a>
+
+        <a href="/admin/pending-registrations/"
+           class="menu-item {% if '/admin/pending-registrations/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-user-clock"></i> Registration Pending
+            {% if incomplete_agents_count > 0 %}
+            <span class="badge bg-dark ms-auto">{{ incomplete_agents_count }}</span>
+            {% endif %}
+        </a>
+
+        <a href="/admin/users/"
+           class="menu-item {% if '/admin/users/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-user-group"></i> Clients / Users
+        </a>
+
+        <a href="{% url 'admin_insurance_index' %}"
+           class="menu-item {% if '/admin/insurance/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-shield-halved" style="color:#0f3460;"></i> Insurance Companies
+        </a>
+
+        <a href="{% url 'admin_insurance_approvals_index' %}"
+           class="menu-item {% if '/admin/insurance-approvals/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-clipboard-check" style="color:#d97706;"></i> Insurance Approvals
+            {% if insurance_pending_count > 0 %}
+            <span class="badge bg-warning text-dark ms-auto">{{ insurance_pending_count }}</span>
+            {% endif %}
+        </a>
+
+        {% if logged_in_admin.role == 'super' %}
+        <a href="{% url 'admin_admins_index' %}"
+           class="menu-item {% if '/admin/admins/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-user-shield text-info"></i> Admin Users
+        </a>
+        {% endif %}
+
+        <!-- Event Management -->
+        <div class="menu-label">Event Management</div>
+
+        <a href="/admin/events/"
+           class="menu-item {% if '/admin/events/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-calendar-days"></i> Events
+        </a>
+
+        <!-- Subscriptions -->
+        <div class="menu-label">Subscriptions</div>
+
+        <a href="/admin/subscriptions/"
+           class="menu-item {% if '/admin/subscriptions/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-shield-halved"></i> Renewal Tracker
+            {% if expiring_soon_count > 0 %}
+            <span class="badge bg-danger ms-auto">{{ expiring_soon_count }}</span>
+            {% endif %}
+        </a>
+
+        <!-- Leads & Inquiries -->
+        <div class="menu-label">Leads &amp; Inquiries</div>
+
+        <a href="/admin/leads/"
+           class="menu-item {% if '/admin/leads/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-phone-volume"></i> Agent Leads
+            {% if new_leads_count > 0 %}
+            <span class="badge bg-warning text-dark ms-auto">{{ new_leads_count }}</span>
+            {% endif %}
+        </a>
+
+        <a href="/admin/contacts/"
+           class="menu-item {% if '/admin/contacts/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-envelope-open-text"></i> Contact Inbox
+            {% if pending_contacts_count > 0 %}
+            <span class="badge bg-primary ms-auto">{{ pending_contacts_count }}</span>
+            {% endif %}
+        </a>
+
+        <!-- Reviews & Ratings -->
+        <div class="menu-label">Reviews &amp; Ratings</div>
+
+        <a href="/admin/reviews/"
+           class="menu-item {% if '/admin/reviews/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-star-half-stroke"></i> Review Moderation
+            {% if pending_reviews_count > 0 %}
+            <span class="badge bg-warning text-dark ms-auto">{{ pending_reviews_count }}</span>
+            {% endif %}
+        </a>
+
+        <!-- Communications -->
+        <div class="menu-label">Communications</div>
+
+        <a href="/admin/agent/notifications/"
+           class="menu-item {% if '/admin/agent/notifications/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-bell"></i> Custom Notification
+        </a>
+
+        <a href="/admin/broadcast/"
+           class="menu-item {% if '/admin/broadcast/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-paper-plane"></i> Broadcast
+        </a>
+
+        <!-- Content Control -->
+        <div class="menu-label">Content Control</div>
+
+        <a href="/admin/settings/homepage/"
+           class="menu-item {% if '/admin/settings/homepage/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-house-laptop"></i> Homepage Dynamic
+        </a>
+
+        <a href="/admin/settings/hero-section/"
+           class="menu-item {% if '/admin/settings/hero-section/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-star"></i> Hero Section Editor
+        </a>
+
+        <a href="/admin/content/banners/"
+           class="menu-item {% if '/admin/content/banners/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-images"></i> Banner Slides
+        </a>
+
+        <a href="/admin/content/faqs/"
+           class="menu-item {% if '/admin/content/faqs/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-circle-question"></i> FAQ Manager
+        </a>
+
+        <a href="/admin/content/plans/"
+           class="menu-item {% if '/admin/content/plans/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-tags"></i> Plans &amp; Pricing
+        </a>
+
+        <a href="/admin/content/about/"
+           class="menu-item {% if '/admin/content/about/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-building-columns"></i> About Page
+        </a>
+
+        <a href="/admin/content/contact/"
+           class="menu-item {% if '/admin/content/contact/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-address-book"></i> Contact Page
+        </a>
+
+        <a href="/admin/pages/"
+           class="menu-item {% if '/admin/pages/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-file-lines"></i> Pages &amp; CMS
+        </a>
+
+        <!-- Finances -->
+        <div class="menu-label">Finances</div>
+
+        <a href="/admin/revenue/"
+           class="menu-item {% if '/admin/revenue/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-indian-rupee-sign"></i> Revenue Dashboard
+        </a>
+
+        <a href="/admin/invoices/"
+           class="menu-item {% if '/admin/invoices/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-file-invoice" style="color:#4f46e5;"></i> Invoices
+            {% if unsynced_invoice_count > 0 %}
+            <span class="badge ms-auto" style="background:#4f46e5;">{{ unsynced_invoice_count }}</span>
+            {% endif %}
+        </a>
+
+        <a href="/admin/promo-codes/"
+           class="menu-item {% if '/admin/promo-codes/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-ticket-alt"></i> Promo Codes
+        </a>
+
+        <a href="/admin/free-trial/"
+           class="menu-item {% if '/admin/free-trial/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-flask text-success"></i> Free Trial Manager
+            {% if active_trial_count > 0 %}
+            <span class="badge bg-success ms-auto">{{ active_trial_count }}</span>
+            {% endif %}
+        </a>
+
+        <a href="/admin/referrals/"
+           class="menu-item {% if '/admin/referrals/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-share-nodes" style="color:#7c3aed;"></i> Referral System
+            {% if unclaimed_rewards_count > 0 %}
+            <span class="badge ms-auto" style="background:#7c3aed;">{{ unclaimed_rewards_count }}</span>
+            {% endif %}
+        </a>
+
+        <!-- Tools -->
+        <div class="menu-label">Tools</div>
+
+        <a href="/admin/finance/"
+           class="menu-item {% if '/admin/finance/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-landmark" style="color:#2563eb;"></i> Finance &amp; Accounts
+        </a>
+
+        <a href="/admin/export/"
+           class="menu-item {% if '/admin/export/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-download"></i> Export Center
+        </a>
+
+        <a href="{% url 'admin_qr_files_index' %}"
+           class="menu-item {% if '/admin/qr-files/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-qrcode" style="color:#10b981;"></i> QR Code Generator
+        </a>
+
+        <a href="/admin/geocoding-manager/"
+           class="menu-item {% if '/admin/geocoding-manager/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-map-location-dot" style="color:#0891b2;"></i> Geocoding Manager
+            {% if geo_missing_count > 0 %}
+            <span class="badge ms-auto" style="background:#0891b2;">{{ geo_missing_count }}</span>
+            {% endif %}
+        </a>
+
+        <a href="{% url 'admin_pincode_index' %}"
+           class="menu-item {% if '/admin/pincode/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-map-pin" style="color:#7c3aed;"></i> Pincode Manager
+            {% if total_pincodes_count > 0 %}
+            <span class="badge ms-auto" style="background:#7c3aed;">{{ total_pincodes_count }}</span>
+            {% endif %}
+        </a>
+
+        <!-- Advanced -->
+        <div class="menu-label">Advanced</div>
+
+        <a href="/admin/advanced/analytics/"
+           class="menu-item {% if '/admin/advanced/analytics/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-chart-line"></i> Analytics
+        </a>
+
+        <a href="/admin/advanced/activity-logs/"
+           class="menu-item {% if '/admin/advanced/activity-logs/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-clock-rotate-left"></i> Activity Logs
+        </a>
+
+        <a href="/admin/security/threat-logs/"
+           class="menu-item {% if '/admin/security/threat-logs/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-bug-slash"></i> Threat Intelligence
+        </a>
+
+        <!-- System -->
+        <div class="menu-label">System</div>
+
+        <a href="/admin/settings/general/"
+           class="menu-item {% if '/admin/settings/general/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-sliders"></i> Site Settings
+        </a>
+
+        <a href="/admin/settings/seo/"
+           class="menu-item {% if '/admin/settings/seo/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-magnifying-glass-chart"></i> SEO Meta
+        </a>
+
+        <a href="/admin/settings/security/"
+           class="menu-item {% if '/admin/settings/security/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-shield-halved"></i> Security &amp; Limits
+        </a>
+
+        <a href="/admin/settings/templates/"
+           class="menu-item {% if '/admin/settings/templates/' in request.path %}active{% endif %}">
+            <i class="fa-solid fa-file-code"></i> Email &amp; PDF Templates
+        </a>
+
+        <div style="margin-top:40px; border-top:1px solid var(--border-light); padding-top:20px;">
+            <a href="/admin/logout/" class="menu-item text-danger">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </a>
+        </div>
+
+    </div>
+</aside>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!--  MAIN WRAPPER                                                     -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="main-wrapper">
+
+    <!-- ── Top Navbar ─────────────────────────────────────────────── -->
+    <nav class="top-navbar">
+
+        <!-- Left: hamburger + breadcrumb -->
+        <div style="display:flex;align-items:center;gap:16px;">
+            <button class="d-lg-none btn btn-sm btn-light" onclick="toggleSidebar()">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <div style="font-weight:500;font-size:15px;color:var(--text-muted);">
+                {% block breadcrumb_title %}Overview{% endblock %}
+            </div>
+        </div>
+
+        <!-- Right: search, view-site, dark-mode, bell, avatar -->
+        <div style="display:flex;align-items:center;gap:12px;">
+
+            <!-- Quick Search -->
+            <div class="quick-search-wrap d-none d-md-block">
+                <i class="fa-solid fa-magnifying-glass quick-search-icon"></i>
+                <input type="text" class="quick-search-input" id="quickSearch"
+                       placeholder="Quick search… (⌘K)" autocomplete="off">
+            </div>
+
+            <!-- View Website -->
+            <a href="/" target="_blank"
+               class="btn btn-sm btn-outline-secondary d-none d-lg-flex align-items-center"
+               style="font-size:13px;">
+                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Site
+            </a>
+
+            <!-- Dark-mode toggle -->
+            <button class="dark-toggle" id="darkToggle" title="Toggle Dark Mode">
+                <i class="fa-solid fa-moon" id="darkIcon"></i>
+            </button>
+
+            <!-- Notification Bell -->
+            <div style="position:relative;">
+                <button class="notif-btn" id="notifBtn" title="Notifications">
+                    <i class="fa-solid fa-bell" style="font-size:15px;"></i>
+                    {% if notif_count > 0 %}
+                    <span class="notif-badge">{{ notif_count }}</span>
+                    {% endif %}
+                </button>
+
+                <div class="notif-dropdown" id="notifDropdown">
+                    <div style="padding:14px 16px;border-bottom:1px solid var(--border-color);">
+                        <span style="font-weight:700;font-size:14px;">Notifications</span>
+                        {% if notif_count > 0 %}
+                        <span class="badge bg-danger ms-2" style="font-size:10px;">{{ notif_count }} new</span>
+                        {% endif %}
+                    </div>
+
+                    {% if pending_agents_count > 0 %}
+                    <a href="/admin/approvals/" class="notif-item d-flex align-items-center gap-3 text-decoration-none" style="color:var(--text-primary);">
+                        <div style="width:36px;height:36px;border-radius:10px;background:#fef3c7;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i class="fa-solid fa-user-clock" style="color:#d97706;font-size:14px;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size:13px;font-weight:600;">{{ pending_agents_count }} Pending Approval{{ pending_agents_count|pluralize }}</div>
+                            <div style="font-size:11px;color:var(--text-muted);">Agents awaiting review</div>
+                        </div>
+                    </a>
+                    {% endif %}
+
+                    {% if pending_reviews_count > 0 %}
+                    <a href="/admin/reviews/" class="notif-item d-flex align-items-center gap-3 text-decoration-none" style="color:var(--text-primary);">
+                        <div style="width:36px;height:36px;border-radius:10px;background:#ede9fe;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i class="fa-solid fa-star" style="color:#7c3aed;font-size:14px;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size:13px;font-weight:600;">{{ pending_reviews_count }} Pending Review{{ pending_reviews_count|pluralize }}</div>
+                            <div style="font-size:11px;color:var(--text-muted);">Awaiting moderation</div>
+                        </div>
+                    </a>
+                    {% endif %}
+
+                    {% if pending_contacts_count > 0 %}
+                    <a href="/admin/contacts/" class="notif-item d-flex align-items-center gap-3 text-decoration-none" style="color:var(--text-primary);">
+                        <div style="width:36px;height:36px;border-radius:10px;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i class="fa-solid fa-envelope" style="color:#2563eb;font-size:14px;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size:13px;font-weight:600;">{{ pending_contacts_count }} Contact{{ pending_contacts_count|pluralize }} Pending</div>
+                            <div style="font-size:11px;color:var(--text-muted);">Unread contact submissions</div>
+                        </div>
+                    </a>
+                    {% endif %}
+
+                    {% if new_leads_count > 0 %}
+                    <a href="/admin/leads/" class="notif-item d-flex align-items-center gap-3 text-decoration-none" style="color:var(--text-primary);">
+                        <div style="width:36px;height:36px;border-radius:10px;background:#fef9c3;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i class="fa-solid fa-phone-volume" style="color:#ca8a04;font-size:14px;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size:13px;font-weight:600;">{{ new_leads_count }} New Lead{{ new_leads_count|pluralize }}</div>
+                            <div style="font-size:11px;color:var(--text-muted);">Unread agent leads</div>
+                        </div>
+                    </a>
+                    {% endif %}
+
+                    {% if expiring_soon_count > 0 %}
+                    <a href="/admin/subscriptions/" class="notif-item d-flex align-items-center gap-3 text-decoration-none" style="color:var(--text-primary);">
+                        <div style="width:36px;height:36px;border-radius:10px;background:#fee2e2;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i class="fa-solid fa-shield-halved" style="color:#dc2626;font-size:14px;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size:13px;font-weight:600;">{{ expiring_soon_count }} Subscription{{ expiring_soon_count|pluralize }} Expiring</div>
+                            <div style="font-size:11px;color:var(--text-muted);">Within the next 30 days</div>
+                        </div>
+                    </a>
+                    {% endif %}
+
+                    {% if notif_count == 0 %}
+                    <div class="notif-item text-center text-muted py-4">
+                        <i class="fa-solid fa-check-circle fa-2x mb-2 text-success opacity-50"></i>
+                        <p class="mb-0" style="font-size:13px;">All caught up!</p>
+                    </div>
+                    {% endif %}
+
+                    <div style="padding:10px 16px;text-align:center;border-top:1px solid var(--border-color);">
+                        <a href="/admin/advanced/activity-logs/"
+                           style="font-size:12px;color:var(--primary);text-decoration:none;">
+                            View all activity logs →
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Avatar -->
+            <div style="display:flex;align-items:center;gap:10px;">
+                <div style="text-align:right;line-height:1;" class="d-none d-md-block">
+                    <div style="font-weight:600;font-size:14px;color:var(--text-primary);">Administrator</div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Super Admin</div>
+                </div>
+                <div style="width:38px;height:38px;border-radius:10px;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">
+                    A
+                </div>
+            </div>
+
+        </div>
+    </nav>
+
+    <!-- ── Content body ────────────────────────────────────────────── -->
+    <main class="content-body">
+
+        <!-- Django messages framework (replaces Laravel session flash) -->
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == 'success' %}
+                    <div class="alert alert-success border-0 shadow-sm mb-4"
+                         style="border-left:4px solid #10b981 !important;">
+                        <i class="fa-solid fa-circle-check me-2"></i> {{ message }}
+                    </div>
+                {% elif message.tags == 'error' %}
+                    <div class="alert alert-danger border-0 shadow-sm mb-4"
+                         style="border-left:4px solid #ef4444 !important;">
+                        <i class="fa-solid fa-circle-exclamation me-2"></i> {{ message }}
+                    </div>
+                {% elif message.tags == 'warning' %}
+                    <div class="alert alert-warning border-0 shadow-sm mb-4"
+                         style="border-left:4px solid #f59e0b !important;">
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ message }}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info border-0 shadow-sm mb-4"
+                         style="border-left:4px solid #3b82f6 !important;">
+                        <i class="fa-solid fa-circle-info me-2"></i> {{ message }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+
+    </main>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!--  SHARED JAVASCRIPT                                                -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<script>
+    /* ── Mobile sidebar toggle ─────────────────────────────────────── */
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('mobile-open');
+    }
+
+    /* ── Auto-hide flash alerts after 5 s ──────────────────────────── */
+    setTimeout(function () {
+        if (typeof jQuery !== 'undefined') {
+            jQuery('.alert').fadeOut('slow');
+        }
+    }, 5000);
+
+    /* ── Dark-mode ─────────────────────────────────────────────────── */
+    var darkToggle = document.getElementById('darkToggle');
+    var darkIcon   = document.getElementById('darkIcon');
+
+    function applyDark(on) {
+        document.body.classList.toggle('dark-mode', on);
+        darkIcon.className = on ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        localStorage.setItem('adminDark', on ? '1' : '0');
+    }
+
+    /* Restore preference on page load */
+    applyDark(localStorage.getItem('adminDark') === '1');
+
+    darkToggle.addEventListener('click', function () {
+        applyDark(!document.body.classList.contains('dark-mode'));
+    });
+
+    /* ── Notification bell ─────────────────────────────────────────── */
+    var notifBtn      = document.getElementById('notifBtn');
+    var notifDropdown = document.getElementById('notifDropdown');
+
+    notifBtn && notifBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        notifDropdown.classList.toggle('show');
+    });
+    document.addEventListener('click', function () {
+        notifDropdown && notifDropdown.classList.remove('show');
+    });
+    notifDropdown && notifDropdown.addEventListener('click', function (e) {
+        e.stopPropagation();
+    });
+
+    /* ── Quick search (Ctrl/Cmd + K) ───────────────────────────────── */
+    var qs = document.getElementById('quickSearch');
+
+    document.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            qs && qs.focus();
+        }
+        if (e.key === 'Escape' && document.activeElement === qs) {
+            qs.blur();
+            qs.value = '';
+        }
+    });
+
+    qs && qs.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && this.value.trim()) {
+            window.location.href = '/admin/agents/?search=' + encodeURIComponent(this.value.trim());
+        }
+    });
+
+    /* ── Generic delete handler ─────────────────────────────────────── */
+    $(document).on('click', '.delete-btn', function (e) {
+        e.preventDefault();
+
+        var button = $(this);
+        var model  = button.data('model');
+        var id     = button.data('id');
+        var row    = button.closest('tr');
+
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'This action cannot be undone!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel'
+        }).then(function (result) {
+            if (result.isConfirmed) {
+                button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+                $.ajax({
+                    url: '/admin/delete/',
+                    type: 'POST',
+                    data: {
+                        csrfmiddlewaretoken: '{{ csrf_token }}',
+                        model: model,
+                        id: id
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            Swal.fire({
+                                title: 'Deleted!',
+                                text: response.message,
+                                icon: 'success',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                            row.fadeOut(300, function () {
+                                $(this).remove();
+                                updateCounts();
+                            });
+                        } else {
+                            Swal.fire({ title: 'Error!', text: response.message, icon: 'error' });
+                            button.prop('disabled', false).html('<i class="fas fa-trash"></i>');
+                        }
+                    },
+                    error: function (xhr) {
+                        var msg = (xhr.responseJSON && xhr.responseJSON.message)
+                                    ? xhr.responseJSON.message
+                                    : 'Failed to delete record';
+                        Swal.fire({ title: 'Error!', text: msg, icon: 'error' });
+                        button.prop('disabled', false).html('<i class="fas fa-trash"></i>');
+                    }
+                });
+            }
+        });
+    });
+
+    function updateCounts() {
+        $('table tbody tr').each(function (index) {
+            $(this).find('td:first').text(index + 1);
+        });
+        $('.total-count').text($('table tbody tr').length);
+    }
+
+    /* ── Auto-scroll active sidebar item into view on load ─────────── */
+    document.addEventListener('DOMContentLoaded', function () {
+        var activeItem = document.querySelector('.sidebar-menu .menu-item.active');
+        if (activeItem) {
+            activeItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+    });
+</script>
+
+{% block extra_js %}{% endblock %}
+
+</body>
+</html>

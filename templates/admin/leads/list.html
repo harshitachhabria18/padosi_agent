@@ -1,0 +1,300 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Agent Leads — PadosiAgent Admin{% endblock %}
+{% block breadcrumb_title %}Leads & Inquiries › Agent Leads{% endblock %}
+
+{% block content %}
+<!-- Stats Row -->
+<div class="stats-grid" style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 1.5rem;">
+    <div class="stat-card" style="background: white; padding: 1.25rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div class="d-flex align-items-center gap-3">
+            <div style="width: 44px; height: 44px; background: #ecfdf5; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-phone-volume" style="color: #059669; font-size: 18px;"></i>
+            </div>
+            <div>
+                <div class="stat-value" style="font-size: 20px; font-weight: 700; color: #1e293b; line-height: 1;">{{ stats.total }}</div>
+                <div class="stat-label" style="font-size: 13px; color: #64748b; margin-top: 4px;">Total Leads</div>
+            </div>
+        </div>
+    </div>
+    <div class="stat-card" style="background: white; padding: 1.25rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div class="d-flex align-items-center gap-3">
+            <div style="width: 44px; height: 44px; background: #fef3c7; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-bolt" style="color: #d97706; font-size: 18px;"></i>
+            </div>
+            <div>
+                <div class="stat-value" style="font-size: 20px; font-weight: 700; color: #1e293b; line-height: 1;">{{ stats.today }}</div>
+                <div class="stat-label" style="font-size: 13px; color: #64748b; margin-top: 4px;">Today</div>
+            </div>
+        </div>
+    </div>
+    <div class="stat-card" style="background: white; padding: 1.25rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div class="d-flex align-items-center gap-3">
+            <div style="width: 44px; height: 44px; background: #dcfce7; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <i class="fa-brands fa-whatsapp" style="color: #16a34a; font-size: 20px;"></i>
+            </div>
+            <div>
+                <div class="stat-value" style="font-size: 20px; font-weight: 700; color: #1e293b; line-height: 1;">{{ stats.whatsapp }}</div>
+                <div class="stat-label" style="font-size: 13px; color: #64748b; margin-top: 4px;">WhatsApp</div>
+            </div>
+        </div>
+    </div>
+    <div class="stat-card" style="background: white; padding: 1.25rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div class="d-flex align-items-center gap-3">
+            <div style="width: 44px; height: 44px; background: #dbeafe; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-phone" style="color: #2563eb; font-size: 16px;"></i>
+            </div>
+            <div>
+                <div class="stat-value" style="font-size: 20px; font-weight: 700; color: #1e293b; line-height: 1;">{{ stats.call }}</div>
+                <div class="stat-label" style="font-size: 13px; color: #64748b; margin-top: 4px;">Call Leads</div>
+            </div>
+        </div>
+    </div>
+    <div class="stat-card" style="background: white; padding: 1.25rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div class="d-flex align-items-center gap-3">
+            <div style="width: 44px; height: 44px; background: #fee2e2; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-circle-exclamation" style="color: #dc2626; font-size: 18px;"></i>
+            </div>
+            <div>
+                <div class="stat-value" style="font-size: 20px; font-weight: 700; color: #1e293b; line-height: 1;">{{ stats.new }}</div>
+                <div class="stat-label" style="font-size: 13px; color: #64748b; margin-top: 4px;">New / Unread</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4 border-0 shadow-sm">
+    <div class="card-body py-3">
+        <form method="GET" action="{% url 'admin_leads_index' %}" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label text-muted" style="font-size: 12px;">Search</label>
+                <input type="text" class="form-control form-control-sm" name="search" value="{{ search }}" placeholder="Customer, Agent, Email...">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label text-muted" style="font-size: 12px;">Type</label>
+                <select name="type" class="form-select form-select-sm">
+                    <option value="all" {% if typeFilter == 'all' %}selected{% endif %}>All Types</option>
+                    <option value="whatsapp" {% if typeFilter == 'whatsapp' %}selected{% endif %}>WhatsApp</option>
+                    <option value="call" {% if typeFilter == 'call' %}selected{% endif %}>Call</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label text-muted" style="font-size: 12px;">Status</label>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="all" {% if statusFilter == 'all' %}selected{% endif %}>All Status</option>
+                    <option value="new" {% if statusFilter == 'new' %}selected{% endif %}>New</option>
+                    <option value="contacted" {% if statusFilter == 'contacted' %}selected{% endif %}>Contacted</option>
+                    <option value="converted" {% if statusFilter == 'converted' %}selected{% endif %}>Converted</option>
+                    <option value="closed" {% if statusFilter == 'closed' %}selected{% endif %}>Closed</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label text-muted" style="font-size: 12px;">From</label>
+                <input type="date" class="form-control form-control-sm" name="date_from" value="{{ dateFrom }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label text-muted" style="font-size: 12px;">To</label>
+                <input type="date" class="form-control form-control-sm" name="date_to" value="{{ dateTo }}">
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-primary btn-sm w-100"><i class="fa-solid fa-filter"></i></button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Leads Table -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 fw-bold">All Leads ({{ total_rows }})</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Customer</th>
+                    <th>Agent</th>
+                    <th>Type</th>
+                    <th>Service</th>
+                    <th>Source</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lead in leads %}
+                <tr>
+                    <td>
+                        <div style="font-weight: 600; font-size: 13px;">{{ lead.customer_name|default:"—" }}</div>
+                        <div style="font-size: 11px; color: #64748b;">
+                            {{ lead.customer_mobile|default:"" }}
+                            {% if lead.customer_email %} · {{ lead.customer_email }} {% endif %}
+                        </div>
+                        {% if lead.customer_pincode %}
+                            <span style="font-size: 10px; color: #94a3b8;">PIN: {{ lead.customer_pincode }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span style="font-weight: 600; font-size: 13px;">
+                            {{ lead.agent_display_name|default:lead.agent_name }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if lead.interaction_type == 'whatsapp' %}
+                            <span class="badge" style="background: #dcfce7; color: #16a34a; font-size: 11px; padding: 0.35em 0.65em;"><i class="fa-brands fa-whatsapp me-1"></i>WhatsApp</span>
+                        {% else %}
+                            <span class="badge" style="background: #dbeafe; color: #2563eb; font-size: 11px; padding: 0.35em 0.65em;"><i class="fa-solid fa-phone me-1"></i>Call</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 12px;">
+                        {{ lead.service_type|default:"—" }}
+                        {% if lead.insurance_type %}
+                            <br><span class="text-muted">{{ lead.insurance_type }}</span>
+                        {% endif %}
+                    </td>
+                    <td><span style="font-size: 11px; color: #64748b;">{{ lead.source_page|default:"find-agents" }}</span></td>
+                    <td>
+                        <select class="form-select form-select-sm lead-status-select" data-id="{{ lead.id }}" style="width: 120px; font-size: 12px; cursor: pointer; font-weight: 500;">
+                            <option value="new" {% if lead.lead_status == 'new' %}selected{% endif %}>🔴 New</option>
+                            <option value="contacted" {% if lead.lead_status == 'contacted' %}selected{% endif %}>🟡 Contacted</option>
+                            <option value="converted" {% if lead.lead_status == 'converted' %}selected{% endif %}>🟢 Converted</option>
+                            <option value="closed" {% if lead.lead_status == 'closed' %}selected{% endif %}>⚫ Closed</option>
+                        </select>
+                    </td>
+                    <td style="font-size: 12px; color: #64748b; white-space: nowrap;">
+                        {{ lead.created_at|date:"d M Y" }}
+                        <br>{{ lead.created_at|date:"h:i A" }}
+                    </td>
+                    <td>
+                        {% if lead.customer_mobile %}
+                            <a href="tel:{{ lead.customer_mobile }}" class="btn btn-sm btn-outline-primary" title="Call" style="padding: 4px 8px;"><i class="fa-solid fa-phone"></i></a>
+                        {% endif %}
+                        <button type="button" class="btn btn-danger btn-sm delete-btn" data-model="lead" data-id="{{ lead.id }}" title="Delete" style="padding: 4px 8px;"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-inbox fa-2x mb-2 d-block"></i> No leads found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if total_pages > 1 %}
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center p-3 border-top">
+        <div class="text-muted small">
+            Showing {{ start_row }} to {{ end_row }} of {{ total_rows }} results
+        </div>
+        <div class="pagination-container overflow-auto">
+            <ul class="pagination pagination-sm m-0">
+                <!-- Previous -->
+                <li class="page-item {% if not has_previous %}disabled{% endif %}">
+                    <a class="page-link" href="?page={{ previous_page }}&search={{ search }}&type={{ typeFilter }}&status={{ statusFilter }}&date_from={{ dateFrom }}&date_to={{ dateTo }}" aria-label="Previous">
+                        &lsaquo;
+                    </a>
+                </li>
+                
+                <!-- Pages -->
+                {% for p in visible_pages %}
+                    {% if p == '...' %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% else %}
+                        <li class="page-item {% if p == page %}active{% endif %}">
+                            <a class="page-link" href="?page={{ p }}&search={{ search }}&type={{ typeFilter }}&status={{ statusFilter }}&date_from={{ dateFrom }}&date_to={{ dateTo }}">{{ p }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- Next -->
+                <li class="page-item {% if not has_next %}disabled{% endif %}">
+                    <a class="page-link" href="?page={{ next_page }}&search={{ search }}&type={{ typeFilter }}&status={{ statusFilter }}&date_from={{ dateFrom }}&date_to={{ dateTo }}" aria-label="Next">
+                        &rsaquo;
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <style>
+    /* Pagination Fixes */
+    .pagination {
+        margin-bottom: 0px;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 5px;
+    }
+    .pagination .page-item .page-link {
+        border-radius: 8px !important;
+        padding: 8px 16px;
+        color: var(--primary);
+        border: 1px solid var(--border-color);
+        font-weight: 500;
+        transition: all 0.2s;
+        margin: 0 2px;
+    }
+    .pagination .page-item.active .page-link {
+        background-color: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+    .pagination .page-item.disabled .page-link {
+        color: var(--text-muted);
+        background-color: var(--bg-body);
+        pointer-events: none;
+    }
+    </style>
+    {% endif %}
+
+    <style>
+    /* Table Styling Fixes */
+    .table thead th {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+    .table tbody td {
+        vertical-align: middle;
+        padding-top: 15px;
+        padding-bottom: 15px;
+    }
+    .lead-status-select:focus {
+        border-color: var(--primary);
+    }
+    </style>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).on('change', '.lead-status-select', function() {
+    var $el = $(this);
+    $.ajax({
+        url: '{% url "admin_leads_update_status" %}',
+        method: 'POST',
+        data: {
+            csrfmiddlewaretoken: '{{ csrf_token }}',
+            id: $el.data('id'),
+            status: $el.val()
+        },
+        success: function(res) {
+            if (res.success) {
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Status updated', showConfirmButton: false, timer: 1500 });
+            } else {
+                Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: res.message || 'Failed to update', showConfirmButton: false, timer: 1500 });
+            }
+        },
+        error: function() {
+            Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Failed to update', showConfirmButton: false, timer: 1500 });
+        }
+    });
+});
+</script>
+{% endblock %}
