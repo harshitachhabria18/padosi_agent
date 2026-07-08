@@ -11,7 +11,7 @@ from .dashboard import _get_admin_from_session
 
 logger = logging.getLogger(__name__)
 
-def _build_agent_list_query(search, plan_filter, city_filter, promo_code_filter):
+def _build_agent_list_query(search, plan_filter, status_filter, city_filter, promo_code_filter):
     """
     Builds the raw SQL query and params for the agent list based on Laravel logic.
     """
@@ -39,6 +39,14 @@ def _build_agent_list_query(search, plan_filter, city_filter, promo_code_filter)
         query += " AND s.selected_plan = %s"
         params.append(plan_filter)
 
+    # Status Filter logic
+    if status_filter and status_filter != 'All Status':
+        query += " AND a.status = %s"
+        params.append(status_filter)
+    elif not status_filter and not promo_code_filter:
+        # Default behavior if status_filter is None/empty and no promo code filter: only active agents
+        query += " AND a.status = 'active'"
+
     if promo_code_filter:
         query += """ AND (
             EXISTS (SELECT 1 FROM invoices WHERE invoices.agent_id = a.id AND invoices.promo_code = %s)
@@ -46,9 +54,6 @@ def _build_agent_list_query(search, plan_filter, city_filter, promo_code_filter)
             EXISTS (SELECT 1 FROM free_trial_history WHERE free_trial_history.agent_id = a.id AND free_trial_history.promo_code = %s)
         )"""
         params.extend([promo_code_filter, promo_code_filter])
-    else:
-        # Default behavior: only active agents unless searching by promo code
-        query += " AND a.status = 'active'"
 
     if city_filter:
         query += " AND ap.address LIKE %s"
@@ -69,10 +74,11 @@ def agent_list(request):
 
     search = request.GET.get('search', '')
     plan_filter = request.GET.get('plan', 'All Plans')
+    status_filter = request.GET.get('status', 'All Status')
     city_filter = request.GET.get('city', '')
     promo_code_filter = request.GET.get('promo_code', '')
 
-    query, params = _build_agent_list_query(search, plan_filter, city_filter, promo_code_filter)
+    query, params = _build_agent_list_query(search, plan_filter, status_filter, city_filter, promo_code_filter)
     
     agents = []
     try:
@@ -91,6 +97,7 @@ def agent_list(request):
         'agents': agents,
         'search': search,
         'plan_filter': plan_filter,
+        'status_filter': status_filter,
         'city_filter': city_filter,
         'promo_code': promo_code_filter,
         'page_obj': page_obj,

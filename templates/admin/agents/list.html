@@ -21,7 +21,7 @@
     <div class="card-body p-4">
         <form method="GET" action="{% url 'admin_agents' %}" class="row g-3">
             <!-- Search -->
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="input-group">
                     <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
                     <input type="text" name="search" class="form-control border-start-0" placeholder="Search by name, email..." value="{{ search }}">
@@ -34,17 +34,31 @@
                 <div class="col-12 mb-2">
                     <span class="badge bg-info text-dark p-2">
                         <i class="fa-solid fa-ticket-alt me-1"></i> Filtered by Promo: <strong>{{ promo_code }}</strong>
-                        <a href="{% url 'admin_agents' %}?search={{ search }}&plan={{ plan_filter }}&city={{ city_filter }}" class="text-dark ms-2 text-decoration-none"><i class="fa-solid fa-xmark"></i></a>
+                        <a href="{% url 'admin_agents' %}?search={{ search }}&plan={{ plan_filter }}&status={{ status_filter }}&city={{ city_filter }}" class="text-dark ms-2 text-decoration-none"><i class="fa-solid fa-xmark"></i></a>
                     </span>
                 </div>
             {% endif %}
 
             <!-- Plan Filter -->
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <select name="plan" class="form-select">
                     <option value="All Plans" {% if plan_filter == "All Plans" %}selected{% endif %}>All Plans</option>
                     <option value="Starter's Plan" {% if plan_filter == "Starter's Plan" %}selected{% endif %}>Starter's Plan</option>
                     <option value="Professional's Plan" {% if plan_filter == "Professional's Plan" %}selected{% endif %}>Professional's Plan</option>
+                </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="col-md-2">
+                <select name="status" class="form-select">
+                    <option value="All Status" {% if status_filter == "All Status" %}selected{% endif %}>All Status</option>
+                    <option value="active" {% if status_filter == "active" %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if status_filter == "inactive" %}selected{% endif %}>Inactive</option>
+                    <option value="incomplete" {% if status_filter == "incomplete" %}selected{% endif %}>Incomplete</option>
+                    <option value="pending" {% if status_filter == "pending" %}selected{% endif %}>Pending</option>
+                    <option value="pending_approval" {% if status_filter == "pending_approval" %}selected{% endif %}>Pending Approval</option>
+                    <option value="pending_payment" {% if status_filter == "pending_payment" %}selected{% endif %}>Pending Payment</option>
+                    <option value="suspended" {% if status_filter == "suspended" %}selected{% endif %}>Suspended</option>
                 </select>
             </div>
 
