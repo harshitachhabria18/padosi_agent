@@ -247,8 +247,8 @@
             -->
         </div>
 
-        <form action="/agent-login" method="POST" id="login-form" autocomplete="on">
-            <!-- Django: {% csrf_token %} -->
+        <form action="/agent-login/" method="POST" id="login-form" autocomplete="on">
+            {% csrf_token %}
             <input type="hidden" name="login_type" value="agent">
 
             <div class="form-group">
