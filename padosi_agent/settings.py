@@ -39,6 +39,15 @@ DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 _allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', '')
 ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts_env.split(',') if h.strip()] or ['*']
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://catfish-rebirth-uproar.ngrok-free.dev',
+    'https://*.ngrok-free.dev',
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+    'http://127.0.0.1:1234',
+    'http://localhost:1234',
+]
+
 
 # Application definition
 
