@@ -6,6 +6,13 @@
 
 {% block extra_css %}
 <style>
+    /* Desktop-only header visibility for Find Agents page */
+    @media (max-width: 991.98px) {
+        .header {
+            display: none !important;
+        }
+    }
+
     /* Premium Dark Filter Sidebar Styles */
     .premium-dark-filter {
         background: #ffffff !important; 
@@ -942,6 +949,7 @@
 
     /* Custom Premium Compact Filter Bar Styling */
     .compact-filter-bar {
+        display: none !important; /* Hide on desktop mode */
         width: 100% !important;
         background: #ffffff !important;
         border-bottom: 1px solid #e2e8f0 !important;
@@ -952,6 +960,12 @@
         border-right: none !important;
         border-top: none !important;
         padding: 10px 0 !important;
+    }
+    
+    @media (max-width: 1180px) {
+        .compact-filter-bar {
+            display: block !important; /* Show on phone/tablet mode */
+        }
     }
     
     .compact-filter-bar .container {

@@ -353,6 +353,54 @@ def update_badge(request):
     return JsonResponse({'success': True})
 
 
+def update_irdai_license(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+        
+    admin_id = _get_admin_from_session(request)
+    if not admin_id:
+        return JsonResponse({'success': False, 'message': 'Unauthorized'})
+
+    try:
+        data = json.loads(request.body)
+        agent_id = data.get('id')
+        license_number = data.get('license_number')
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'message': 'Invalid JSON'})
+
+    if not agent_id or license_number is None:
+        return JsonResponse({'success': False, 'message': 'Missing required fields'})
+
+    license_number = license_number.strip()
+
+    try:
+        with connection.cursor() as cursor:
+            # Check if agent exists
+            cursor.execute("SELECT id FROM agents WHERE id = %s", [agent_id])
+            if not cursor.fetchone():
+                return JsonResponse({'success': False, 'message': 'Agent not found'})
+            
+            # Check if agent profile exists
+            cursor.execute("SELECT id FROM agent_profiles WHERE agent_id = %s", [agent_id])
+            profile_exists = bool(cursor.fetchone())
+            
+            if profile_exists:
+                cursor.execute(
+                    "UPDATE agent_profiles SET license_number = %s, updated_at = %s WHERE agent_id = %s",
+                    [license_number, timezone.now(), agent_id]
+                )
+            else:
+                cursor.execute(
+                    "INSERT INTO agent_profiles (agent_id, license_number, created_at, updated_at) VALUES (%s, %s, %s, %s)",
+                    [agent_id, license_number, timezone.now(), timezone.now()]
+                )
+                
+            return JsonResponse({'success': True, 'message': 'IRDAI license number updated successfully.'})
+    except Exception as e:
+        logger.error(f"Error updating agent IRDAI license: {e}")
+        return JsonResponse({'success': False, 'message': 'Database error.'})
+
+
 def save_agent_notes(request):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
@@ -494,8 +542,8 @@ def update_plan(request):
     agent_id = request.POST.get('id')
     new_plan = request.POST.get('selected_plan')
 
-    if not agent_id or not new_plan:
-        messages.error(request, "Agent ID and plan are required.")
+    if not agent_id or new_plan is None:
+        messages.error(request, "Agent ID is required.")
         return redirect('admin_agents')
         
     agent_id = int(agent_id)
@@ -553,6 +601,21 @@ def update_plan(request):
                 
                 insert_sql = f"INSERT INTO agent_subscriptions ({keys_str}) VALUES ({placeholders})"
                 cursor.execute(insert_sql, values)
+
+            # Map selected plan name to plan_type for agents table
+            if new_plan == "Starter's Plan":
+                plan_type = 'basic'
+            elif new_plan == "Professional's Plan":
+                plan_type = 'professional'
+            elif 'trial' in new_plan.lower():
+                plan_type = 'free_trial'
+            else:
+                plan_type = 'standard'
+
+            cursor.execute(
+                "UPDATE agents SET plan_type = %s, updated_at = %s WHERE id = %s",
+                [plan_type, timezone.now(), agent_id]
+            )
 
     except Exception as e:
         logger.error(f"Error updating agent plan: {e}")
@@ -806,6 +869,8 @@ def _get_events_list():
     return events
 
 
+
+
 def agent_approvals(request):
     admin_id = _get_admin_from_session(request)
     if not admin_id:
@@ -842,6 +907,28 @@ def agent_approvals(request):
 
     avg_wait_hours = (total_wait_hours / total_pending) if total_pending > 0 else 0
 
+    missing_irdai_agents = []
+    try:
+        missing_query = """
+            SELECT a.id, a.fullname, a.email, a.mobile, a.badge, ap.pan_number, ap.license_number
+            FROM agents as a
+            LEFT JOIN agent_profiles as ap ON a.id = ap.agent_id
+            WHERE a.status = 'active'
+              AND (ap.license_number IS NULL OR ap.license_number = '')
+            ORDER BY a.id DESC
+        """
+        with connection.cursor() as cursor:
+            cursor.execute(missing_query)
+            columns = [col[0] for col in cursor.description]
+            missing_irdai_agents = [dict(zip(columns, row)) for row in cursor.fetchall()]
+    except Exception as e:
+        logger.error(f"Error fetching missing IRDAI agents: {e}")
+
+    for agent in missing_irdai_agents:
+        badge_str = agent.get('badge') or ''
+        agent['badges'] = [b for b in badge_str.split(',') if b]
+        agent['initials'] = agent['fullname'][0].upper() if agent['fullname'] else 'A'
+
     context = {
         'agents': agents,
         'search': search,
@@ -853,6 +940,7 @@ def agent_approvals(request):
         'totalPending': total_pending,
         'urgentCount': urgent_count,
         'avgWaitHours': avg_wait_hours,
+        'missingIrdaiAgents': missing_irdai_agents,
     }
 
     return render(request, 'admin/agents/approvals.html', context)

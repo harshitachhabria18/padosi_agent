@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token }}">
     <title>{% block title %}Admin Dashboard — PadosiAgent{% endblock %}</title>
+    <link rel="icon" href="{% url 'home:favicon' %}" type="image/x-icon">
 
     <!-- Modern Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -359,7 +360,18 @@
             .admin-sidebar { transform: translateX(-100%); }
             .admin-sidebar.mobile-open { transform: translateX(0); }
             .main-wrapper { margin-left: 0; width: 100%; }
+            .top-navbar { padding: 0 16px !important; }
+            .content-body { padding: 16px !important; }
+            .stats-grid { gap: 16px !important; margin-bottom: 24px !important; }
+            .stat-card { padding: 16px !important; }
             .quick-search-input { width: 140px; }
+            .quick-search-input:focus { width: 180px; }
+        }
+        @media screen and (max-width: 575px) {
+            .sidebar-brand { padding: 0 16px !important; }
+            .top-navbar { height: 60px !important; }
+            .admin-sidebar { width: 240px !important; }
+            .notif-dropdown { width: 300px !important; }
         }
     </style>
 

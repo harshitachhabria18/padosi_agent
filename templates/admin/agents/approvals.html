@@ -3,7 +3,7 @@
 {% block title %}Pending Approvals — PadosiAgent Admin{% endblock %}
 {% block breadcrumb_title %}Agent Management › Approvals{% endblock %}
 
-{% block styles %}
+{% block extra_css %}
 <style>
     .wait-badge {
         display: inline-flex; align-items: center; gap: 5px;
@@ -254,7 +254,7 @@
                         {# Badges #}
                         <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
                             <div class="dropdown">
-                                <button class="btn btn-sm btn-light border" type="button" data-toggle="dropdown"
+                                <button class="btn btn-sm btn-light border badge-btn-approval-{{ agent.id }}" type="button" data-toggle="dropdown"
                                     style="font-size:11px; border-radius:8px; color:var(--text-primary);" id="badge-btn-approval-{{ agent.id }}">
                                     <i class="fa-solid fa-medal me-1" style="color:#f59e0b;"></i>
                                     {% if 'verified' in agent.badge|default:'' and 'irdai' in agent.badge|default:'' and 'trusted' in agent.badge|default:'' %}
@@ -339,6 +339,123 @@
             </table>
         </div>
     </form>
+</div>
+
+{# ═══════════════ MISSING IRDAI LICENSES SECTION ═══════════════ #}
+<div class="card border-0 shadow-sm mt-4" style="border-top: 3px solid #10b981;">
+    <div class="card-header py-3">
+        <h6 class="m-0 fw-bold"><i class="fa-solid fa-building-shield me-2" style="color:#10b981;"></i>Missing IRDAI Licenses</h6>
+        <span style="font-size: 12px; color: var(--text-muted);">These are active agents who don't have an IRDAI license number set. You can update their license and assign badges directly from here.</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" id="missingIrdaiTable">
+            <thead>
+                <tr>
+                    <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color);">Agent</th>
+                    <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color);">PAN Number</th>
+                    <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color); width: 300px;">IRDAI License Number</th>
+                    <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color);">Badges</th>
+                    <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color); text-align:right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for miAgent in missingIrdaiAgents %}
+                <tr id="irdai-row-{{ miAgent.id }}" class="agent-row">
+                    {# Agent Info #}
+                    <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="agent-initials" style="background: linear-gradient(135deg, #10b981, #059669);">{{ miAgent.initials }}</div>
+                            <div>
+                                <div class="fw-bold" style="font-size:14px; color:var(--text-primary);">{{ miAgent.fullname }}</div>
+                                <div style="font-size:11px; color:var(--text-muted);">{{ miAgent.email }}</div>
+                                {% if miAgent.mobile %}
+                                <div style="font-size:11px; color:var(--text-muted);">
+                                    <i class="fa-solid fa-phone me-1" style="font-size:9px;"></i>{{ miAgent.mobile }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+
+                    {# PAN Number #}
+                    <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
+                        {% if miAgent.pan_number %}
+                            <div style="font-size:13px; color:var(--text-primary); font-weight: 600; letter-spacing: 0.05em;">
+                                {{ miAgent.pan_number }}
+                            </div>
+                            <a href="https://agencyportal.irdai.gov.in/PublicAccess/LookUpPAN.aspx" onclick="copyPanAndNavigate('{{ miAgent.pan_number }}', event)" class="btn btn-sm btn-light border mt-1" style="font-size: 10px; border-radius: 6px; padding: 2px 6px;">
+                                <i class="fa-solid fa-magnifying-glass me-1 text-primary"></i>IRDAI Lookup
+                            </a>
+                        {% else %}
+                            <span style="font-size:12px; color:var(--text-muted);">N/A</span>
+                        {% endif %}
+                    </td>
+
+                    {# IRDAI Input #}
+                    <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
+                        <input type="text" id="irdai-input-{{ miAgent.id }}" value="{{ miAgent.license_number|default:'' }}" placeholder="AILXXXXXXXX or license..." class="form-control form-control-sm" style="border-radius: 8px; font-size: 13px; font-weight: 600; text-transform: uppercase;">
+                    </td>
+
+                    {# Badges #}
+                    <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-light border badge-btn-approval-{{ miAgent.id }}" type="button" data-toggle="dropdown"
+                                style="font-size:11px; border-radius:8px; color:var(--text-primary);">
+                                <i class="fa-solid fa-medal me-1" style="color:#f59e0b;"></i>
+                                {% if miAgent.badges|length > 0 %}
+                                    {{ miAgent.badges|length }} Badge{% if miAgent.badges|length > 1 %}s{% endif %}
+                                {% else %}
+                                    No Badges
+                                {% endif %}
+                            </button>
+                            <div class="dropdown-menu p-3 shadow" style="min-width:170px; border-radius:12px; border:1px solid var(--border-color);">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input agent-badge-chk-{{ miAgent.id }}" type="checkbox"
+                                        value="verified" id="chk-verified-{{ miAgent.id }}"
+                                        {% if 'verified' in miAgent.badges %}checked{% endif %}
+                                        onchange="collectAndUpdateBadges({{ miAgent.id }}, this)" style="cursor:pointer;">
+                                    <label class="form-check-label ms-1" for="chk-verified-{{ miAgent.id }}"
+                                        style="font-size:12px; cursor:pointer; color:var(--text-primary);">✅ Verified</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input agent-badge-chk-{{ miAgent.id }}" type="checkbox"
+                                        value="irdai" id="chk-irdai-{{ miAgent.id }}"
+                                        {% if 'irdai' in miAgent.badges %}checked{% endif %}
+                                        onchange="collectAndUpdateBadges({{ miAgent.id }}, this)" style="cursor:pointer;">
+                                    <label class="form-check-label ms-1" for="chk-irdai-{{ miAgent.id }}"
+                                        style="font-size:12px; cursor:pointer; color:var(--text-primary);">🏛 Licensed</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input agent-badge-chk-{{ miAgent.id }}" type="checkbox"
+                                        value="trusted" id="chk-trusted-{{ miAgent.id }}"
+                                        {% if 'trusted' in miAgent.badges %}checked{% endif %}
+                                        onchange="collectAndUpdateBadges({{ miAgent.id }}, this)" style="cursor:pointer;">
+                                    <label class="form-check-label ms-1" for="chk-trusted-{{ miAgent.id }}"
+                                        style="font-size:12px; cursor:pointer; color:var(--text-primary);">⭐ Trusted</label>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+
+                    {# Action Button #}
+                    <td style="padding:14px 16px; border-bottom:1px solid var(--border-light); text-align:right;">
+                        <button type="button" onclick="saveIrdaiLicense({{ miAgent.id }}, this)" class="btn btn-sm btn-success" style="font-size:12px; border-radius:8px; padding:5px 14px;">
+                            <i class="fa-solid fa-floppy-disk me-1"></i>Update
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr id="no-irdai-row">
+                    <td colspan="5" class="text-center py-5">
+                        <i class="fa-solid fa-circle-check fa-3x mb-3 opacity-25" style="color: #10b981;"></i>
+                        <h6 class="fw-bold" style="color: var(--text-muted);">All Clear! No Missing IRDAI Licenses</h6>
+                        <p style="font-size: 13px; color: var(--text-muted);">All active agents have their IRDAI license numbers set.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
 {# ═══════════════ PROFILE CHANGES DRAWER ═══════════════ #}
@@ -452,17 +569,27 @@ function rejectAgent(id, btn) {
     .catch(() => { btn.disabled = false; btn.innerHTML = orig; });
 }
 
-function collectAndUpdateBadges(agentId) {
+function collectAndUpdateBadges(agentId, chk) {
+    if (chk) {
+        // Sync checkboxes with the same value for the same agent
+        document.querySelectorAll('.agent-badge-chk-' + agentId + '[value="' + chk.value + '"]').forEach(c => {
+            c.checked = chk.checked;
+        });
+    }
+
     const badges = [];
-    document.querySelectorAll('.agent-badge-chk-' + agentId + ':checked').forEach(chk => badges.push(chk.value));
+    document.querySelectorAll('.agent-badge-chk-' + agentId + ':checked').forEach(c => {
+        if (!badges.includes(c.value)) {
+            badges.push(c.value);
+        }
+    });
     
     // Update button text locally immediately
-    const btn = document.getElementById('badge-btn-approval-' + agentId);
-    if(btn) {
+    document.querySelectorAll('.badge-btn-approval-' + agentId).forEach(btn => {
         let count = badges.length;
         let text = count > 0 ? count + ' Badge' + (count > 1 ? 's' : '') : 'No Badge';
         btn.innerHTML = '<i class="fa-solid fa-medal me-1" style="color:#f59e0b;"></i> ' + text;
-    }
+    });
 
     fetch("{% url 'admin_agents_update_badge' %}", {
         method: 'POST',
@@ -472,6 +599,118 @@ function collectAndUpdateBadges(agentId) {
         if (data.success && typeof Swal !== 'undefined') {
             Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Badge updated', showConfirmButton: false, timer: 2000 });
         }
+    });
+}
+
+function copyPanAndNavigate(pan, event) {
+    if (event) {
+        event.preventDefault();
+    }
+
+    let copied = false;
+    try {
+        const el = document.createElement('textarea');
+        el.value = pan;
+        el.setAttribute('readonly', '');
+        el.style.position = 'absolute';
+        el.style.left = '-9999px';
+        document.body.appendChild(el);
+        el.select();
+        copied = document.execCommand('copy');
+        document.body.removeChild(el);
+    } catch (err) {
+        console.error('Fallback copy failed', err);
+    }
+
+    if (!copied && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(pan).then(() => {
+            showCopySuccessToast(pan);
+        }).catch(err => {
+            console.error('Clipboard API failed', err);
+        });
+    } else if (copied) {
+        showCopySuccessToast(pan);
+    }
+
+    window.open('https://agencyportal.irdai.gov.in/PublicAccess/LookUpPAN.aspx', 'irdai_lookup', 'width=1100,height=750,scrollbars=yes,resizable=yes');
+}
+
+function showCopySuccessToast(pan) {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'PAN ' + pan + ' copied to clipboard! 📋',
+            showConfirmButton: false,
+            timer: 1500
+        });
+    }
+}
+
+function saveIrdaiLicense(id, btn) {
+    const inputEl = document.getElementById('irdai-input-' + id);
+    if (!inputEl) return;
+    const licenseNumber = inputEl.value.trim();
+    if (!licenseNumber) {
+        alert('Please enter a license number.');
+        return;
+    }
+
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+    fetch("{% url 'admin_agents_update_irdai_license' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+        body: JSON.stringify({ id: id, license_number: licenseNumber })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ 
+                    toast: true, 
+                    position: 'top-end', 
+                    icon: 'success', 
+                    title: data.message || 'IRDAI license updated successfully ✅', 
+                    showConfirmButton: false, 
+                    timer: 2500 
+                });
+            } else {
+                alert(data.message || 'IRDAI license updated successfully');
+            }
+            
+            const row = document.getElementById('irdai-row-' + id);
+            if (row) {
+                row.style.transition = 'opacity 0.4s';
+                row.style.opacity = '0';
+                setTimeout(() => {
+                    row.remove();
+                    const tableBody = document.querySelector('#missingIrdaiTable tbody');
+                    if (tableBody && tableBody.querySelectorAll('tr:not(#no-irdai-row)').length === 0) {
+                        tableBody.innerHTML = `
+                            <tr id="no-irdai-row">
+                                <td colspan="5" class="text-center py-5">
+                                    <i class="fa-solid fa-circle-check fa-3x mb-3 opacity-25" style="color: #10b981;"></i>
+                                    <h6 class="fw-bold" style="color: var(--text-muted);">All Clear! No Missing IRDAI Licenses</h6>
+                                    <p style="font-size: 13px; color: var(--text-muted);">All active agents have their IRDAI license numbers set.</p>
+                                </td>
+                            </tr>`;
+                    }
+                }, 400);
+            }
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = orig;
+            alert(data.message || 'Something went wrong.');
+        }
+    })
+    .catch((err) => { 
+        btn.disabled = false; 
+        btn.innerHTML = orig; 
+        alert('Network error. Please try again.'); 
     });
 }
 

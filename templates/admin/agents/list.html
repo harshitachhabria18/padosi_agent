@@ -315,8 +315,8 @@ function updateAgentBadge(id, badge) {
 }
 
 function exportAgentsToCSV() {
-    // Frontend only — backend wiring required later
-    console.log('exportAgentsToCSV called — backend not yet wired');
+    const statusVal = document.querySelector('select[name="status"]').value;
+    window.location.href = "{% url 'export_agents' %}?status=" + encodeURIComponent(statusVal);
 }
 
 document.getElementById('selectAll').addEventListener('change', function() {

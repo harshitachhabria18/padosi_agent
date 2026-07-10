@@ -752,6 +752,8 @@ def find_agents(request):
                 agent_pincodes = agent.profile.service_pincodes
                 if agent_pincodes and isinstance(agent_pincodes, list):
                     agent_pincode = agent_pincodes[0]
+                    if isinstance(agent_pincode, dict):
+                        agent_pincode = agent_pincode.get('pincode', '')
                     agent_coords = DistanceService.get_pincode_coordinates(agent_pincode)
             
             if not agent_coords and agent.profile:

@@ -57,6 +57,51 @@ LANGUAGE_OPTIONS = [
 ]
 
 
+from django.core.cache import cache
+
+def _get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        return x_forwarded_for.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR', '')
+
+def _check_otp_send_rate_limit(ip):
+    # Limit: 3 requests per 5 minutes per IP
+    key = f"otp_send_limit_{ip}"
+    attempts = cache.get(key, 0)
+    if attempts >= 3:
+        return False
+    return True
+
+def _record_otp_send_attempt(ip):
+    key = f"otp_send_limit_{ip}"
+    attempts = cache.get(key, 0)
+    if attempts == 0:
+        cache.set(key, 1, timeout=300)  # 5 minutes
+    else:
+        cache.incr(key)
+
+def _check_otp_verify_rate_limit(ip):
+    # Limit: 10 verify attempts per 10 minutes per IP
+    key = f"otp_verify_limit_{ip}"
+    attempts = cache.get(key, 0)
+    if attempts >= 10:
+        return False
+    return True
+
+def _record_otp_verify_attempt(ip):
+    key = f"otp_verify_limit_{ip}"
+    attempts = cache.get(key, 0)
+    if attempts == 0:
+        cache.set(key, 1, timeout=600)  # 10 minutes
+    else:
+        cache.incr(key)
+
+def _clear_otp_verify_limit(ip):
+    cache.delete(f"otp_verify_limit_{ip}")
+    cache.delete(f"otp_send_limit_{ip}")
+
+
 # ─── Helper ─────────────────────────────────────────────────────────────────────
 def _generate_otp():
     """Generate a 6-digit OTP code."""
@@ -110,6 +155,11 @@ def agent_registration(request):
 @csrf_protect
 def send_otp(request):
     """Generate OTP, store in session, send via Brevo."""
+    ip = _get_client_ip(request)
+    if not _check_otp_send_rate_limit(ip):
+        return JsonResponse({'success': False, 'message': 'Too many OTP requests. Please try again after 5 minutes.'}, status=429)
+    _record_otp_send_attempt(ip)
+
     try:
         data = json.loads(request.body)
         email = data.get('email', '').strip().lower()
@@ -153,6 +203,11 @@ def send_otp(request):
 @csrf_protect
 def verify_otp(request):
     """Verify OTP against session data."""
+    ip = _get_client_ip(request)
+    if not _check_otp_verify_rate_limit(ip):
+        return JsonResponse({'success': False, 'message': 'Too many verification attempts. Please request a new OTP.'}, status=429)
+    _record_otp_verify_attempt(ip)
+
     try:
         data = json.loads(request.body)
         submitted_otp = data.get('otp', '').strip()
@@ -179,6 +234,9 @@ def verify_otp(request):
     request.session['email_verified'] = True
     request.session['verified_email'] = otp_email
     request.session['reg_step'] = 1
+    
+    # Clear rate limits on success
+    _clear_otp_verify_limit(ip)
 
     # Clean up OTP from session
     for key in ['otp_code', 'otp_expires']:
@@ -213,14 +271,6 @@ def register_step1(request):
         errors.append('Full name is required.')
     if not email or '@' not in email:
         errors.append('Please enter a valid email address.')
-
-    from django.contrib.auth.models import User
-    from apps.agents.models import Agent
-    if User.objects.filter(email=email).exists() or Agent.objects.filter(email=email).exclude(status='incomplete').exists():
-        return JsonResponse({
-            'success': False,
-            'message': 'This email is already associated with an active Agent account. Please login to access your dashboard.'
-        }, status=422)
     if not mobile or len(mobile) != 10 or not mobile.isdigit():
         errors.append('Please enter a valid 10-digit mobile number.')
     if not agent_pincode or len(agent_pincode) != 6 or not agent_pincode.isdigit():
@@ -233,7 +283,75 @@ def register_step1(request):
     if errors:
         return JsonResponse({'success': False, 'message': ' '.join(errors)}, status=400)
 
-    # Create or update draft
+    from django.contrib.auth.models import User
+    from apps.agents.models import Agent, Invoice, AgentDraft
+
+    # Check if a paid invoice exists matching this email (or user exists)
+    if User.objects.filter(email=email).exists() or Invoice.objects.filter(agent_email=email, payment_status='paid').exists():
+        return JsonResponse({
+            'success': False,
+            'message': f'You are already registered with {email}. Please login to access your dashboard.',
+            'redirect': '/agent-login/'
+        }, status=422)
+
+    # Check if an Agent record already exists for the email but has NO paid invoice
+    existing_agent = Agent.objects.filter(email=email).first()
+    if existing_agent:
+        # Case 4 (network lost): try to verify Razorpay payment directly first!
+        if verify_and_activate_pending_payment(existing_agent):
+            from django.urls import reverse
+            return JsonResponse({
+                'success': True,
+                'message': 'Payment verified successfully! Redirecting to dashboard...',
+                'redirect': reverse('agents:agent_dashboard'),
+            })
+
+        # Reuse existing registration (Agent and AgentDraft)
+        draft = AgentDraft.objects.filter(email=email).first()
+        if not draft:
+            session_key = request.session.session_key
+            if not session_key:
+                request.session.create()
+                session_key = request.session.session_key
+            draft = AgentDraft(session_key=session_key, email=email)
+
+        draft.fullname = fullname
+        draft.mobile = mobile
+        draft.agent_pincode = agent_pincode
+        draft.state = state
+        draft.experience_range = experience
+        draft.segments = segments
+        draft.promo_code = promo_code
+        if promo_code:
+            request.session['applied_promo_code'] = promo_code
+        else:
+            request.session.pop('applied_promo_code', None)
+        draft.address = address
+        draft.client_base = client_base
+        draft.email_verified = True
+        draft.registration_step = 1
+        draft.save()
+
+        request.session['current_draft_id'] = draft.pk
+        request.session['reg_step'] = 2
+
+        # Update the existing Agent record to prevent stale data
+        existing_agent.fullname = fullname
+        existing_agent.mobile = mobile
+        existing_agent.agent_pincode = agent_pincode
+        existing_agent.experience_range = experience
+        existing_agent.client_base = client_base
+        existing_agent.save()
+
+        logger.info(f'Agent Step 1 reused & updated — draft #{draft.pk}, email={email}')
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Basic information updated!',
+            'redirect': '/chooseplan/',
+        })
+
+    # Create new draft
     session_key = request.session.session_key
     if not session_key:
         request.session.create()
@@ -576,6 +694,177 @@ def create_or_link_django_user(agent):
     return user
 
 
+def verify_and_activate_pending_payment(agent):
+    """
+    Directly query Razorpay to verify if the pending order has a captured/authorized payment,
+    and activate the subscription/registration atomically and idempotently.
+    """
+    import razorpay
+    from django.conf import settings
+    from django.utils import timezone
+    from django.db import transaction
+    from apps.agents.models import AgentSubscription, Invoice, PromoCode
+    from apps.home.models import SiteSetting
+
+    if Invoice.objects.filter(agent_email=agent.email, payment_status='paid').exists():
+        logger.info(f"[verify_and_activate_pending_payment] Active invoice exists for {agent.email}. Already active.")
+        return True
+
+    subscription = AgentSubscription.objects.filter(agent=agent, payment_status='pending').order_by('-created_at').first()
+    if not subscription or not subscription.razorpay_order_id:
+        logger.info(f"[verify_and_activate_pending_payment] No pending subscription or Razorpay Order ID for {agent.email}")
+        return False
+
+    if not (settings.RAZORPAY_KEY and settings.RAZORPAY_SECRET):
+        logger.error("[verify_and_activate_pending_payment] Razorpay keys not configured.")
+        return False
+
+    try:
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY, settings.RAZORPAY_SECRET))
+        payments = client.order.payments(subscription.razorpay_order_id)
+    except Exception as err:
+        logger.error(f"[verify_and_activate_pending_payment] Razorpay API call failed: {err}")
+        return False
+
+    successful_payment = None
+    if payments and 'items' in payments:
+        for item in payments['items']:
+            if item.get('status') in ('captured', 'authorized'):
+                successful_payment = item
+                break
+
+    if not successful_payment:
+        logger.info(f"[verify_and_activate_pending_payment] No captured/authorized payments found for Order {subscription.razorpay_order_id}")
+        return False
+
+    paid_amount_paise = successful_payment.get('amount')
+    expected_amount_paise = int(round(subscription.registration_amount * 100))
+    if paid_amount_paise != expected_amount_paise:
+        logger.critical(
+            f"[verify_and_activate_pending_payment] Price tampering check failed! "
+            f"Paid: {paid_amount_paise}, Expected: {expected_amount_paise}"
+        )
+        return False
+
+    try:
+        with transaction.atomic():
+            # Locked subscription retrieve
+            subscription = AgentSubscription.objects.select_for_update().get(pk=subscription.pk)
+            if subscription.payment_status == 'completed':
+                return True
+
+            plan_name = str(subscription.selected_plan or '').lower()
+            is_trial = 'trial' in plan_name
+            plan_type = 'free_trial' if is_trial else ('professional' if ('professional' in plan_name or 'pro' in plan_name) else 'basic')
+
+            trial_config = SiteSetting.get_value('trial_plan_config', {'duration_days': 30})
+            trial_days = int(trial_config.get('duration_days', 30))
+            sub_expiry = timezone.now() + timezone.timedelta(days=365)
+
+            if is_trial:
+                agent.status = 'active'
+                agent.plan_type = 'free_trial'
+                agent.trial_ends_at = timezone.now() + timezone.timedelta(days=trial_days)
+                upgrade_discount = SiteSetting.get_value('trial_upgrade_discount', 20)
+                agent.upgrade_discount_percent = int(upgrade_discount)
+                sub_expiry = timezone.now() + timezone.timedelta(days=trial_days)
+            else:
+                agent.status = 'pending_approval'
+                agent.plan_type = plan_type
+
+            agent.registration_step = 2
+            agent.save()
+
+            subscription.payment_status = 'completed'
+            subscription.status = 'active'
+            subscription.razorpay_payment_id = successful_payment.get('id')
+            subscription.razorpay_signature = successful_payment.get('signature') or 'direct_verification'
+            subscription.starts_at = timezone.now()
+            subscription.expires_at = sub_expiry
+            subscription.save()
+
+            # Increment used count of Promo Code
+            if subscription.promo_code:
+                try:
+                    promo = PromoCode.objects.filter(code=subscription.promo_code).first()
+                    if promo:
+                        promo.times_used += 1
+                        promo.save(update_fields=['times_used'])
+                except Exception:
+                    pass
+
+            # Referral credit conversion
+            if agent.referred_by_code:
+                try:
+                    from apps.admin_panel.models.referral_code import ReferralCode
+                    from apps.admin_panel.models.referral_usage import ReferralUsage
+                    ref_code_obj = ReferralCode.objects.filter(code=agent.referred_by_code).first()
+                    if ref_code_obj:
+                        usage, u_created = ReferralUsage.objects.get_or_create(
+                            referral_code=ref_code_obj,
+                            referred_agent_id=agent.id,
+                            defaults={'status': 'converted', 'signed_up_at': timezone.now()}
+                        )
+                        if not u_created and usage.status != 'converted':
+                            usage.status = 'converted'
+                            usage.save()
+
+                        actual_conversions = ReferralUsage.objects.filter(
+                            referral_code=ref_code_obj,
+                            status='converted'
+                        ).count()
+                        ref_code_obj.total_referrals = actual_conversions
+                        ref_code_obj.save()
+
+                        if actual_conversions >= 5:
+                            referring_agent = Agent.objects.filter(pk=ref_code_obj.agent_id).first()
+                            if referring_agent and referring_agent.plan_type == 'free_trial':
+                                referring_agent.referral_reward_type = 'pro_plan_1rs'
+                                referring_agent.referral_reward_earned_at = timezone.now()
+                                referring_agent.save()
+                except Exception as ref_err:
+                    logger.warning(f"[verify_and_activate_pending_payment] Referral credit conversion failed: {ref_err}")
+
+            # Auto-generate referral code for agent
+            try:
+                from apps.admin_panel.models.referral_code import ReferralCode
+                if not ReferralCode.objects.filter(agent=agent).exists():
+                    ReferralCode.generateForAgent(agent)
+            except Exception:
+                pass
+
+            # Link user
+            user = create_or_link_django_user(agent)
+
+            # Generate Invoice and send welcome credentials email
+            try:
+                import os
+                from apps.agents.services.invoice import invoice_service
+                from apps.agents.services.brevo import email_service
+
+                invoice = invoice_service.generate_from_subscription(agent, subscription)
+                pdf_path = None
+                if invoice and invoice.pdf_path:
+                     pdf_path = os.path.join(settings.MEDIA_ROOT, 'app', 'private', invoice.pdf_path)
+
+                email_service.send_welcome(
+                    to_email=agent.email,
+                    to_name=agent.fullname,
+                    temp_password=agent.email,
+                    plan_name=subscription.selected_plan,
+                    attachment_path=pdf_path
+                )
+            except Exception as mail_err:
+                logger.error(f"[verify_and_activate_pending_payment] Failed to generate invoice/send welcome email: {mail_err}")
+
+            logger.info(f"[verify_and_activate_pending_payment] Successfully activated agent {agent.email} via direct Razorpay query.")
+            return True
+    except Exception as db_err:
+        logger.error(f"[verify_and_activate_pending_payment] Database activation transaction failed: {db_err}")
+        return False
+
+
+
 @require_POST
 @csrf_protect
 def agent_register_complete(request):
@@ -681,28 +970,32 @@ def agent_register_complete(request):
         }, status=500)
 
     from django.db import transaction
-    from apps.agents.models import Agent, AgentSubscription
+    from apps.agents.models import Agent, AgentSubscription, Invoice
 
-    # Duplicate payment guard: check if agent already has a completed subscription for this plan
+    # Duplicate payment guard: check if agent already has a completed subscription or paid invoice
     existing_agent = Agent.objects.filter(email=draft.email).first()
-    if existing_agent:
-        already_paid = AgentSubscription.objects.filter(
-            agent=existing_agent,
-            payment_status='completed',
-            selected_plan=plan_name or plan_type,
-        ).first()
-        if already_paid:
+    has_paid_invoice = Invoice.objects.filter(agent_email=draft.email, payment_status='paid').exists()
+    
+    if existing_agent or has_paid_invoice:
+        already_paid = None
+        if existing_agent:
+            already_paid = AgentSubscription.objects.filter(
+                agent=existing_agent,
+                payment_status='completed'
+            ).first()
+        
+        if already_paid or has_paid_invoice:
             from django.urls import reverse
             return JsonResponse({
                 'success': True,
                 'already_completed': True,
-                'agent_id': existing_agent.id,
+                'agent_id': existing_agent.id if existing_agent else None,
                 'redirect_url': reverse('agents:agent_dashboard'),
             })
 
     try:
         with transaction.atomic():
-            # Create Agent and Subscription records in DB
+            # Create/get Agent record from DB
             agent = create_agent_from_draft(draft, plan_type, plan_name, status='pending_payment')
             
             # Capture referral code from session
@@ -719,17 +1012,25 @@ def agent_register_complete(request):
             if plan_type == 'free_trial':
                 sub_expiry = timezone.now() + timezone.timedelta(days=trial_days)
 
-            subscription, created = AgentSubscription.objects.update_or_create(
-                agent=agent,
-                defaults={
-                    'selected_plan': plan_name or plan_type,
-                    'promo_code': applied_promo_code or None,
-                    'registration_amount': total_amount,
-                    'payment_status': 'pending',
-                    'status': 'inactive',
-                    'razorpay_order_id': razorpay_order_id,
-                }
-            )
+            # Find or create a pending subscription to prevent MultipleObjectsReturned
+            subscription = AgentSubscription.objects.filter(agent=agent, payment_status='pending').order_by('-created_at').first()
+            if subscription:
+                subscription.selected_plan = plan_name or plan_type
+                subscription.promo_code = applied_promo_code or None
+                subscription.registration_amount = total_amount
+                subscription.razorpay_order_id = razorpay_order_id
+                subscription.status = 'inactive'
+                subscription.save()
+            else:
+                subscription = AgentSubscription.objects.create(
+                    agent=agent,
+                    selected_plan=plan_name or plan_type,
+                    promo_code=applied_promo_code or None,
+                    registration_amount=total_amount,
+                    payment_status='pending',
+                    status='inactive',
+                    razorpay_order_id=razorpay_order_id
+                )
 
             # If 0 amount: complete instantly
             if amount_paise == 0:
@@ -867,14 +1168,28 @@ def payment_success(request):
     from apps.admin_panel.models.referral_code import ReferralCode
     from apps.admin_panel.models.referral_usage import ReferralUsage
 
-    # Idempotency guard: if subscription for this order is already completed, return success
+    # Idempotency guard: if subscription or invoice for this order is already completed, log in and return success
+    from apps.agents.models import Agent, AgentSubscription, Invoice
     if razorpay_order_id:
         existing_sub = AgentSubscription.objects.filter(
             razorpay_order_id=razorpay_order_id,
             payment_status='completed'
         ).first()
-        if existing_sub:
+        existing_invoice = Invoice.objects.filter(razorpay_order_id=razorpay_order_id).first()
+        
+        if existing_sub or existing_invoice:
+            from django.contrib.auth import login
             from django.urls import reverse
+            agent_obj = existing_sub.agent if existing_sub else existing_invoice.agent
+            user = create_or_link_django_user(agent_obj)
+            if not request.user.is_authenticated:
+                login(request, user)
+                
+            # Clear session
+            request.session.pop('current_draft_id', None)
+            request.session.pop('reg_step', None)
+            request.session.pop('ref_code', None)
+            
             return JsonResponse({
                 'success': True,
                 'message': 'Payment already processed successfully.',
@@ -1306,7 +1621,9 @@ def razorpay_webhook(request):
         return HttpResponse('Webhook secret not configured', status=400)
 
     # Verify signature
-    if received_signature != 'test_signature_skip_verification':
+    if received_signature == 'test_signature_skip_verification' and settings.DEBUG:
+        logger.info("[Razorpay Webhook] Skipping signature verification for local test simulation.")
+    else:
         import razorpay
         try:
             client = razorpay.Client(auth=(settings.RAZORPAY_KEY, settings.RAZORPAY_SECRET))
@@ -1319,8 +1636,6 @@ def razorpay_webhook(request):
         except Exception as sig_err:
             logger.error(f"[Razorpay Webhook] Signature verification failed: {sig_err}")
             return HttpResponse('Invalid signature', status=400)
-    else:
-        logger.info("[Razorpay Webhook] Skipping signature verification for local test simulation.")
 
     try:
         data = json.loads(payload)
@@ -1337,11 +1652,16 @@ def razorpay_webhook(request):
         payment_id = payment.get('id')
         signature = received_signature
 
-        from apps.agents.models import Agent, AgentSubscription, PromoCode
+        from apps.agents.models import Agent, AgentSubscription, PromoCode, Invoice
         from apps.home.models import SiteSetting
         from django.utils import timezone
 
         subscription = AgentSubscription.objects.filter(razorpay_order_id=order_id).first()
+        existing_invoice = Invoice.objects.filter(razorpay_order_id=order_id).first()
+        
+        if (subscription and subscription.payment_status == 'completed') or existing_invoice:
+            return HttpResponse('Webhook processed successfully (already completed)', status=200)
+
         if subscription:
             agent = subscription.agent
             
@@ -1519,6 +1839,10 @@ def test_real_webhook(request):
     Simulates a payment.captured webhook from Razorpay for the most recent pending subscription.
     Enables local testing of the complete payment success workflow.
     """
+    if not settings.DEBUG:
+        from django.http import Http404
+        raise Http404("Page not found")
+        
     from apps.agents.models import Agent, AgentSubscription
     from django.http import HttpResponse
     from django.urls import reverse

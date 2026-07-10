@@ -98,6 +98,44 @@ def _get_admin_from_session(request):
         return None
 
 
+def _record_failed_admin_login(request, email):
+    """
+    Log failed administrative logins to SecurityThreatLog.
+    If an IP registers >= 5 failures in an hour, add to BlockedIp.
+    """
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    ip = x_forwarded_for.split(',')[0].strip() if x_forwarded_for else request.META.get('REMOTE_ADDR', '')
+    
+    try:
+        from apps.admin_panel.models.admin_auth import SecurityThreatLog
+        from apps.agents.models import BlockedIp
+        import json
+        
+        SecurityThreatLog.objects.create(
+            ip_address=ip,
+            event_type='Failed Admin Login',
+            url=request.build_absolute_uri(),
+            payload=json.dumps({'email': email}),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')[:255]
+        )
+        
+        one_hour_ago = datetime.now() - timedelta(hours=1)
+        recent_failures = SecurityThreatLog.objects.filter(
+            ip_address=ip,
+            event_type='Failed Admin Login',
+            created_at__gte=one_hour_ago
+        ).count()
+        
+        if recent_failures >= 5:
+            BlockedIp.objects.get_or_create(
+                ip_address=ip,
+                defaults={'reason': 'Auto-blocked due to recurring failed admin login attempts (Potential Brute Force).'}
+            )
+            logger.warning(f"Admin login brute force detected. IP blocked: {ip}")
+    except Exception as e:
+        logger.error(f"Error logging failed admin login threat log: {e}")
+
+
 # ---------------------------------------------------------------------------
 # Auth Views  (login / logout)  — preserved from Phase 1 stubs
 # ---------------------------------------------------------------------------
@@ -157,6 +195,7 @@ def admin_login(request):
         })
 
     if not row:
+        _record_failed_admin_login(request, email)
         return render(request, "admin/login.html", {
             "error":     "Invalid email or password.",
             "old_email": email,
@@ -179,6 +218,7 @@ def admin_login(request):
         })
 
     if not password_valid:
+        _record_failed_admin_login(request, email)
         return render(request, "admin/login.html", {
             "error":     "Invalid email or password.",
             "old_email": email,

@@ -74,6 +74,8 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'apps.admin_panel.middleware.ThreatMonitorMiddleware',
+    'apps.admin_panel.middleware.AdminIpWhitelistMiddleware',
+    'apps.admin_panel.middleware.AdminPermissionMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -248,5 +250,26 @@ LOGGING = {
 }
 
 TEST_RUNNER = 'apps.home.test_runner.ManagedModelsTestRunner'
+
+# ─── Production HTTP / SSL Hardening ─────────────────────────────────────────
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    CSRF_COOKIE_HTTPONLY = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+    
+    # Enable HSTS for 1 year
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+# ─── Admin Access Controls ───────────────────────────────────────────────────
+_whitelist_ips_env = os.environ.get('ADMIN_WHITELIST_IPS', '')
+ADMIN_WHITELIST_IPS = [ip.strip() for ip in _whitelist_ips_env.split(',') if ip.strip()]
+
 
 

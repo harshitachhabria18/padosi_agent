@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>{% block title %}{{ site_name|default:"Expert & Trusted Insurance Agent in your Padosi" }}{% endblock %}</title>
+    <title>{% block title %}PadosiAgent — Expert & Trusted Insurance Agent{% endblock %}</title>
     <link rel="icon" href="{% url 'home:favicon' %}" type="image/x-icon">
     <meta name="description" content="{% block meta_description %}Find trusted & verified insurance experts in your neighbourhood. Connect with your local PadosiAgent.{% endblock %}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -30,7 +30,7 @@
 </head>
 <body>
     <div id="app-content">
-        {% if not hide_header or request.path == '/' %}
+        {% if not hide_header or request.path == '/' or '/find-agents/' in request.path %}
             {% include 'partials/header.html' %}
         {% endif %}
         

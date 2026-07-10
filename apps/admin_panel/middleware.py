@@ -181,3 +181,196 @@ class ThreatMonitorMiddleware:
             return HttpResponseForbidden('Malicious Activity Detected.')
 
         return self.get_response(request)
+
+
+from django.shortcuts import redirect
+from django.contrib import messages
+
+class AdminIpWhitelistMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        path = request.path.rstrip('/')
+        if path.startswith('/admin') or path.startswith('/django-admin'):
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+            ip = x_forwarded_for.split(',')[0].strip() if x_forwarded_for else request.META.get('REMOTE_ADDR')
+            
+            # Fetch whitelist from settings or fallback
+            whitelist = getattr(settings, 'ADMIN_WHITELIST_IPS', [])
+            if not whitelist:
+                # Laravel fallback
+                whitelist = ['127.0.0.1', '::1', '152.58.37.11', '152.58.37.205', '171.61.166.173', '152.58.35.25', '49.36.89.253', '152.59.35.126', '152.58.36.18', '100.83.86.57']
+            
+            if ip not in whitelist:
+                logger.warning(f"Admin IP Whitelist: Blocked request from unauthorized IP: {ip} for path {request.path}")
+                return HttpResponseForbidden("Access Denied: IP address not authorized.")
+                
+        return self.get_response(request)
+
+
+class AdminPermissionMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        path = request.path.rstrip('/')
+        if not path.startswith('/admin'):
+            return self.get_response(request)
+
+        # Allow auth endpoints without session or permissions
+        if path in ['/admin', '/admin/login', '/admin/login/post', '/admin/logout']:
+            return self.get_response(request)
+
+        from apps.admin_panel.views.dashboard import _get_admin_from_session
+        from apps.admin_panel.models.admin_auth import Admin
+        
+        admin_id = _get_admin_from_session(request)
+        if not admin_id:
+            messages.error(request, "Please sign in to access the admin panel.")
+            return redirect('admin_login_page')
+
+        try:
+            admin = Admin.objects.get(pk=admin_id)
+        except Admin.DoesNotExist:
+            from apps.admin_panel.views.dashboard import admin_logout
+            messages.error(request, "Admin account not found. Logged out.")
+            return admin_logout(request)
+
+        # Super admins have full access to everything
+        if admin.role == 'super':
+            request.admin_user = admin
+            return self.get_response(request)
+
+        # Helper to redirect to first allowed route or log out
+        def get_redirect_response(message):
+            allowed_route = self.get_first_allowed_route(admin)
+            if allowed_route:
+                try:
+                    from django.urls import reverse
+                    url = reverse(allowed_route)
+                    messages.error(request, message)
+                    return redirect(url)
+                except Exception:
+                    pass
+            from apps.admin_panel.views.dashboard import admin_logout
+            messages.error(request, "Your staff account has no access permissions. Logged out.")
+            return admin_logout(request)
+
+        # 1. DELETE ACTION PROTECTION:
+        # Staff admins can never delete records.
+        url_name = request.resolver_match.url_name if request.resolver_match else ''
+        is_delete_request = (
+            request.method == 'DELETE' or
+            'delete' in url_name.lower() or
+            'destroy' in url_name.lower() or
+            'delete' in request.path.lower()
+        )
+
+        if is_delete_request:
+            if request.headers.get('accept') == 'application/json' or request.path.startswith('/api/'):
+                return JsonResponse({'success': False, 'message': 'Unauthorized. Staff accounts do not have delete permissions.'}, status=403)
+            return get_redirect_response('Unauthorized. Staff accounts do not have delete permissions.')
+
+        # 2. ADMIN USER / STAFF MANAGEMENT PROTECTION:
+        # Staff admins can never access admin management routes.
+        if url_name.startswith('admin_admins') or url_name.startswith('admin_staff') or '/admin/admins/' in request.path or '/admin/staff/' in request.path:
+            if request.headers.get('accept') == 'application/json' or request.path.startswith('/api/'):
+                return JsonResponse({'success': False, 'message': 'Unauthorized. Only Super Admins can manage administrator accounts.'}, status=403)
+            return get_redirect_response('Unauthorized. Only Super Admins can manage administrator accounts.')
+
+        # 3. SECTION/MODULE PERMISSION CHECK:
+        required_permission = self.get_required_permission(url_name)
+        if required_permission:
+            # Check permissions
+            permissions_list = admin.permissions if isinstance(admin.permissions, list) else []
+            if required_permission not in permissions_list:
+                if request.headers.get('accept') == 'application/json' or request.path.startswith('/api/'):
+                    return JsonResponse({'success': False, 'message': 'Unauthorized. You do not have permission to access this module.'}, status=403)
+                perm_name = required_permission.replace('_', ' ').title()
+                return get_redirect_response(f'Unauthorized. You do not have permission to access the {perm_name} module.')
+
+        request.admin_user = admin
+        return self.get_response(request)
+
+    def get_required_permission(self, url_name):
+        if not url_name:
+            return None
+            
+        mappings = {
+            'admin_dashboard': 'dashboard',
+            'admin_agents': 'agents',
+            'admin_approvals': 'approvals',
+            'admin_pending_registrations': 'pending_registrations',
+            'admin_distributors': 'distributors',
+            'admin_insurance': 'insurance',
+            'admin_insurance_approvals': 'insurance_approvals',
+            'admin_users': 'users',
+            'admin_events': 'events',
+            'admin_subscriptions': 'subscriptions',
+            'admin_leads': 'leads',
+            'admin_contacts': 'contacts',
+            'admin_reviews': 'reviews',
+            'admin_notifications': 'notifications',
+            'admin_broadcast': 'notifications',
+            'admin_free_trial': 'free_trial',
+            'admin_revenue': 'revenue',
+            'admin_invoices': 'invoices',
+            'admin_promo_codes': 'promo_codes',
+            'admin_referrals': 'referrals',
+            'admin_finance': 'finance_accounts',
+            'admin_export': 'export',
+            'admin_qr_files': 'qr_generator',
+            'admin_geocoding': 'geocoding',
+            'admin_pincode': 'pincode',
+            'admin_advanced_analytics': 'analytics',
+            'admin_advanced_activity_logs': 'analytics',
+            'admin_security_threat_logs': 'analytics',
+            'admin_security_blocked_ips': 'site_settings',
+            'admin_settings_general': 'site_settings',
+            'admin_settings_seo': 'site_settings',
+            'admin_settings_security': 'site_settings',
+            'admin_settings_templates': 'site_settings',
+        }
+        
+        for prefix, permission in mappings.items():
+            if url_name.startswith(prefix):
+                return permission
+        return None
+
+    def get_first_allowed_route(self, admin):
+        permission_to_route = {
+            'dashboard': 'admin_dashboard',
+            'agents': 'admin_agents',
+            'approvals': 'admin_agents',
+            'pending_registrations': 'admin_agents',
+            'distributors': 'admin_distributors',
+            'insurance': 'admin_agents',
+            'insurance_approvals': 'admin_agents',
+            'users': 'admin_agents',
+            'events': 'admin_agents',
+            'subscriptions': 'admin_agents',
+            'leads': 'admin_agents',
+            'contacts': 'admin_agents',
+            'reviews': 'admin_agents',
+            'notifications': 'admin_agents',
+            'content': 'admin_dashboard',
+            'revenue': 'admin_dashboard',
+            'invoices': 'admin_agents',
+            'promo_codes': 'admin_agents',
+            'free_trial': 'admin_agents',
+            'referrals': 'admin_agents',
+            'finance_accounts': 'admin_dashboard',
+            'export': 'admin_dashboard',
+            'qr_generator': 'admin_dashboard',
+            'geocoding': 'admin_dashboard',
+            'pincode': 'admin_dashboard',
+            'analytics': 'admin_dashboard',
+            'site_settings': 'admin_dashboard',
+        }
+        
+        permissions_list = admin.permissions if isinstance(admin.permissions, list) else []
+        for permission, route in permission_to_route.items():
+            if permission in permissions_list:
+                return route
+        return None

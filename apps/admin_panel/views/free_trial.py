@@ -29,7 +29,7 @@ from django.core.paginator import Paginator
 from django.db import connection
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.views.decorators.http import require_http_methods
 
 from .dashboard import _get_admin_from_session
@@ -639,7 +639,7 @@ def ft_update_promo(request, promo_id):
     return redirect('admin_free_trial')
 
 
-@csrf_exempt
+@csrf_protect
 @require_http_methods(["POST"])
 def ft_toggle_promo(request):
     """AJAX toggle for trial promo code active state. Returns JSON."""

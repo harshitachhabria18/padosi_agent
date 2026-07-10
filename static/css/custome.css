@@ -3881,190 +3881,205 @@ Find Agents CSS ****/
        text-[8px]/[9px]=badge, text-[10px]/[11px]=label, min-h-[1.75rem]=28px
        ========================================================================== */
     .quick-picks-section {
-        background-color: #f8fafc !important;
-        padding: 1rem 0 5rem !important;
-        width: 100% !important;
-        display: block !important;
-        box-sizing: border-box !important;
-        font-family: 'Jost', sans-serif !important;
+        font-family: 'Jost', 'Inter', sans-serif;
     }
+    /* Container — max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 */
     .qp-container {
-        max-width: 1320px !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
-        padding-left: 1.5rem !important;
-        padding-right: 1.5rem !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
+        max-width: 1280px;
+        margin-left: auto;
+        margin-right: auto;
+        padding-left: 16px;
+        padding-right: 16px;
     }
+    @media (min-width: 576px) {
+        .qp-container { padding-left: 24px; padding-right: 24px; }
+    }
+    @media (min-width: 992px) {
+        .qp-container { padding-left: 32px; padding-right: 32px; }
+    }
+
+    /* "Quick picks" eyebrow — text-[11px] sm:text-xs font-bold uppercase tracking-widest text-primary */
     .qp-subtitle {
-        font-size: 0.75rem !important;
-        font-weight: 800 !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.15em !important;
+        letter-spacing: 0.1em !important;
         color: #0d9488 !important;
-        margin: 0 0 0.5rem !important;
-        font-family: 'Jost', sans-serif !important;
+        margin: 0 0 4px 0 !important;
         line-height: 1.4 !important;
+        font-family: 'Jost', sans-serif !important;
     }
+    @media (min-width: 576px) {
+        .qp-subtitle { font-size: 12px !important; }
+    }
+
+    /* Heading — text-lg sm:text-xl md:text-2xl font-bold text-foreground tracking-tight */
     .qp-title-heading {
-        font-family: 'Urbanist', sans-serif !important;
-        font-weight: 800 !important;
-        font-size: 2.25rem !important;
+        font-family: 'Urbanist', 'Jost', sans-serif !important;
+        font-size: 18px !important;
+        font-weight: 700 !important;
         color: #0f172a !important;
         margin: 0 !important;
+        letter-spacing: -0.025em !important;
         line-height: 1.25 !important;
-        letter-spacing: -0.02em !important;
     }
+    @media (min-width: 576px) { .qp-title-heading { font-size: 20px !important; } }
+    @media (min-width: 768px) { .qp-title-heading { font-size: 24px !important; } }
+
+    /* "View all" link — text-xs sm:text-sm font-semibold text-primary */
     .qp-view-all {
-        font-size: 0.9rem !important;
-        font-weight: 700 !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
         color: #0d9488 !important;
         text-decoration: none !important;
-        font-family: 'Jost', sans-serif !important;
         white-space: nowrap !important;
+        font-family: 'Jost', sans-serif !important;
         background: none !important;
         border: none !important;
         padding: 0 !important;
-        cursor: pointer !important;
+        cursor: pointer;
     }
-    .qp-view-all:hover {
-        text-decoration: underline !important;
-        color: #0d9488 !important;
-    }
+    @media (min-width: 576px) { .qp-view-all { font-size: 14px !important; } }
+    .qp-view-all:hover { text-decoration: underline !important; color: #0d9488 !important; }
+
+    /* Outer wrapper */
     .qp-outer-wrapper {
-        margin-left: -15px !important;
-        margin-right: -15px !important;
-        padding-left: 15px !important;
-        padding-right: 15px !important;
-        overflow-x: auto !important;
-        scrollbar-width: none !important;
-        -ms-overflow-style: none !important;
+        margin-left: 0;
+        margin-right: 0;
+        overflow-x: visible;
     }
-    .qp-outer-wrapper::-webkit-scrollbar {
-        display: none !important;
-    }
+    .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+
+    /* Grid — mobile: 4 columns vertical grid
+              sm: 5 columns
+              md+: 7 columns */
     .qp-grid {
-        display: flex !important;
-        flex-direction: row !important;
-        gap: 8px !important;
-        padding-top: 12px !important;
-        padding-bottom: 12px !important;
-        scroll-behavior: smooth !important;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px; /* gap-2 */
+        padding-bottom: 8px;
     }
+    @media (max-width: 350px) {
+        .qp-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+    @media (min-width: 576px) {
+        .qp-grid {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 12px; /* gap-3 */
+        }
+    }
+    @media (min-width: 768px) {
+        .qp-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+    }
+
+    /* Button card — group relative flex flex-col items-center gap-1.5 pt-4 pb-2 px-1.5 rounded-lg bg-card border border-border/50 hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5 transition-all */
     .qp-btn {
         position: relative !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
-        justify-content: center !important;
-        gap: 0.5rem !important;
-        padding: 1.5rem 0.5rem 1rem !important;
-        border-radius: 16px !important;
+        gap: 6px !important; /* gap-1.5 */
+        padding: 16px 6px 8px !important; /* pt-4 pb-2 px-1.5 */
+        border-radius: 8px !important; /* rounded-lg */
         background-color: #ffffff !important;
-        border: 1px solid rgba(226, 232, 240, 0.6) !important;
+        border: 1px solid rgba(226, 232, 240, 0.5) !important; /* border border-border/50 */
         text-decoration: none !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        flex-shrink: 0 !important;
-        width: 88px !important;
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px -1px rgba(0, 0, 0, 0.02) !important;
+        color: inherit !important;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease !important;
+        cursor: pointer;
         box-sizing: border-box !important;
-        cursor: pointer !important;
+        width: 100%;
+        font-family: 'Jost', sans-serif !important;
+        /* Override Bootstrap <a> link styles */
+        outline: none;
     }
-    .qp-btn:hover {
-        border-color: rgba(13, 148, 136, 0.3) !important;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
-        transform: translateY(-2px) !important;
+    .qp-btn:hover,
+    .qp-btn:focus {
+        border-color: rgba(13, 148, 136, 0.4) !important; /* hover:border-primary/40 */
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1) !important; /* hover:shadow-md */
+        transform: translateY(-2px) !important; /* hover:-translate-y-0.5 */
         text-decoration: none !important;
         color: inherit !important;
     }
+
+    /* Badge pill — absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded-full text-[8px] sm:text-[9px] font-bold whitespace-nowrap */
     .qp-badge-pill {
         position: absolute !important;
-        top: -0.55rem !important;
+        top: 0 !important;
         left: 50% !important;
-        transform: translate(-50%, 0) !important;
-        padding: 0.15rem 0.5rem !important;
-        border-radius: 999px !important;
-        font-size: 0.65rem !important;
+        transform: translate(-50%, -50%) !important;
+        padding: 2px 6px !important; /* py-0.5 px-1.5 */
+        border-radius: 9999px !important; /* rounded-full */
+        font-size: 8px !important; /* text-[8px] */
         font-weight: 700 !important;
         white-space: nowrap !important;
+        line-height: 1.4 !important;
+        z-index: 2;
         font-family: 'Jost', sans-serif !important;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02) !important;
-        z-index: 2 !important;
-        pointer-events: none !important;
+        pointer-events: none;
     }
-    .qp-icon-box {
-        width: 36px !important;
-        height: 36px !important;
-        border-radius: 10px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        min-width: 36px !important;
-        margin-bottom: 2px !important;
-        transition: transform 0.2s ease !important;
-    }
-    .qp-btn:hover .qp-icon-box {
-        transform: scale(1.08) !important;
-    }
-    .qp-icon-box svg {
-        width: 16px !important;
-        height: 16px !important;
-        flex-shrink: 0 !important;
-    }
-    .qp-label {
-        font-size: 10px !important;
-        font-weight: 700 !important;
-        color: #0f172a !important;
-        font-family: 'Instrument Sans', sans-serif !important;
-        text-align: center !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        min-height: 28px !important;
-        line-height: 1.2 !important;
-        margin: 0 !important;
-        word-break: break-word !important;
+    @media (min-width: 576px) {
+        .qp-badge-pill { font-size: 9px !important; } /* sm:text-[9px] */
     }
 
+    /* Icon box — w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center */
+    .qp-icon-box {
+        width: 32px !important; /* w-8 */
+        height: 32px !important; /* h-8 */
+        border-radius: 12px !important; /* rounded-xl */
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex-shrink: 0;
+    }
     @media (min-width: 576px) {
-        .qp-outer-wrapper {
-            margin-left: 0 !important;
-            margin-right: 0 !important;
-            padding-left: 0 !important;
-            padding-right: 0 !important;
-            overflow: visible !important;
-        }
-        .qp-grid {
-            display: grid !important;
-            grid-template-columns: repeat(5, 1fr) !important;
-            gap: 12px !important;
-            overflow-x: visible !important;
-            padding-top: 0 !important;
-            padding-bottom: 0 !important;
-        }
-        .qp-btn {
-            width: auto !important;
-            flex-shrink: 1 !important;
-        }
         .qp-icon-box {
-            width: 40px !important;
-            height: 40px !important;
-        }
-        .qp-badge-pill {
-            font-size: 9px !important;
-            padding: 2px 8px !important;
-        }
-        .qp-label {
-            font-size: 11px !important;
+            width: 40px !important; /* sm:w-10 */
+            height: 40px !important; /* sm:h-10 */
         }
     }
-    @media (min-width: 768px) {
-        .qp-grid {
-            grid-template-columns: repeat(7, 1fr) !important;
-            column-gap: 1rem !important;
-            row-gap: 1.5rem !important;
+    /* Icon SVG — h-4 w-4 sm:h-5 sm:w-5 */
+    .qp-icon-box svg {
+        width: 16px !important; /* w-4 */
+        height: 16px !important; /* h-4 */
+        flex-shrink: 0;
+    }
+    @media (min-width: 576px) {
+        .qp-icon-box svg {
+            width: 20px !important; /* sm:w-5 */
+            height: 20px !important; /* sm:h-5 */
         }
+    }
+
+    /* Label — text-[10px] sm:text-[11px] font-semibold text-foreground leading-tight text-center min-h-[1.75rem] flex items-center */
+    .qp-label {
+        font-size: 10px !important; /* text-[10px] */
+        font-weight: 600 !important; /* font-semibold */
+        color: #0f172a !important; /* text-foreground */
+        line-height: 1.25 !important; /* leading-tight */
+        text-align: center !important;
+        min-height: 28px !important; /* min-h-[1.75rem] */
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-family: 'Jost', sans-serif !important;
+        word-break: break-word;
+        margin: 0 !important;
+    }
+    @media (min-width: 576px) {
+        .qp-label { font-size: 11px !important; } /* sm:text-[11px] */
+    }
+
+    /* Micro-animations */
+    @keyframes scaleIn {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    .animate-scale-in {
+        animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     }
 
     /* ==========================================================================
@@ -5228,3 +5243,11 @@ Find Agents CSS ****/
         color: #0d3c78 !important;
         text-decoration: underline !important;
     }
+
+/* Fix header stacking context for dropdowns and overlaps */
+.header {
+    z-index: 1050 !important;
+}
+.navbar-collapse {
+    z-index: 1060 !important;
+}

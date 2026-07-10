@@ -91,7 +91,7 @@
                 "badge_color": "#0369a1",
                 "icon_bg": "#f0f9ff",
                 "icon_color": "#0284c7",
-                "icon": "clock",
+                "icon": "shield",
                 "url": "/find-agents?ServiceType=New%20Policy&InsuranceType=Life%20Insurance&InsuranceCompany=Term%20Plan&openFilter=1"
             },
             {
@@ -111,7 +111,7 @@
                 "badge_color": "#be123c",
                 "icon_bg": "#ecfdf5",
                 "icon_color": "#059669",
-                "icon": "bike",
+                "icon": "scooter",
                 "url": "/find-agents?ServiceType=New%20Policy&InsuranceType=Motor%20Insurance&InsuranceCompany=Two%20Wheeler&openFilter=1"
             },
             {
@@ -121,7 +121,7 @@
                 "badge_color": "#a21caf",
                 "icon_bg": "#fdf4ff",
                 "icon_color": "#c026d3",
-                "icon": "alert-triangle",
+                "icon": "stethoscope",
                 "url": "/find-agents?ServiceType=New%20Policy&InsuranceType=Health%20Insurance&InsuranceCompany=Critical%20Illness&openFilter=1"
             },
             {
@@ -131,7 +131,7 @@
                 "badge_color": "#be123c",
                 "icon_bg": "#fff7ed",
                 "icon_color": "#ea580c",
-                "icon": "user-check",
+                "icon": "activity",
                 "url": "/find-agents?ServiceType=New%20Policy&InsuranceType=Health%20Insurance&InsuranceCompany=Personal%20Accident&openFilter=1"
             },
             {
@@ -141,7 +141,7 @@
                 "badge_color": "#0f766e",
                 "icon_bg": "#f0fdfa",
                 "icon_color": "#0d9488",
-                "icon": "trending-up",
+                "icon": "arrow-up-circle",
                 "url": "/find-agents?ServiceType=New%20Policy&InsuranceType=Health%20Insurance&InsuranceCompany=Super%20Top-up&openFilter=1"
             },
             {
@@ -151,7 +151,7 @@
                 "badge_color": "#be123c",
                 "icon_bg": "#f5f3ff",
                 "icon_color": "#7c3aed",
-                "icon": "bar-chart-3",
+                "icon": "trending-up",
                 "url": "/find-agents?ServiceType=New%20Policy&InsuranceType=Life%20Insurance&InsuranceCompany=ULIP%20Plan&openFilter=1"
             },
             {
@@ -161,7 +161,7 @@
                 "badge_color": "#4338ca",
                 "icon_bg": "#eef2ff",
                 "icon_color": "#4f46e5",
-                "icon": "landmark",
+                "icon": "clock",
                 "url": "/find-agents?ServiceType=New%20Policy&InsuranceType=Life%20Insurance&InsuranceCompany=Pension%20Plan&openFilter=1"
             },
             {
@@ -191,7 +191,7 @@
                 "badge_color": "#be123c",
                 "icon_bg": "#fef2f2",
                 "icon_color": "#dc2626",
-                "icon": "flame",
+                "icon": "store",
                 "url": "/find-agents?ServiceType=New%20Policy&InsuranceType=SME%20Insurance&InsuranceCompany=Fire%20(SME)&openFilter=1"
             },
             {
@@ -201,7 +201,7 @@
                 "badge_color": "#0e7490",
                 "icon_bg": "#ecfeff",
                 "icon_color": "#0891b2",
-                "icon": "lock",
+                "icon": "monitor",
                 "url": "/find-agents?ServiceType=New%20Policy&InsuranceType=SME%20Insurance&InsuranceCompany=Cyber%20(SME)&openFilter=1"
             },
             {
@@ -211,7 +211,7 @@
                 "badge_color": "#be123c",
                 "icon_bg": "#f1f5f9",
                 "icon_color": "#475569",
-                "icon": "scale",
+                "icon": "briefcase",
                 "url": "/find-agents?ServiceType=New%20Policy&InsuranceType=SME%20Insurance&InsuranceCompany=Liability%20(SME)&openFilter=1"
             }
         ]

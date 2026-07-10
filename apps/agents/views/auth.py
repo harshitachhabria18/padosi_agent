@@ -105,10 +105,42 @@ def agent_login(request):
                 if is_agent:
                     agent = Agent.objects.get(user=authenticated_user)
                     if agent.status != 'active':
-                        record_login_attempt(ip)
-                        logger.warning(f"Login rejected for agent {email}: Account status is '{agent.status}' (not active)")
-                        messages.error(request, "Your agent account is not yet active. Please complete registration or contact support.")
-                        return render(request, 'agents/login.html', {'email': email})
+                        # Try verifying pending payment first (Case 4 - network lost recovery)
+                        from apps.agents.views.registration import verify_and_activate_pending_payment
+                        if verify_and_activate_pending_payment(agent):
+                            # Reload agent state
+                            agent.refresh_from_db()
+                            if agent.status == 'active':
+                                # Payment verified and account active - proceed to login!
+                                pass
+                            else:
+                                messages.info(request, "Your payment has been verified. Your account is pending admin approval.")
+                                return render(request, 'agents/login.html', {'email': email})
+                        else:
+                            # Not paid yet (or verification failed) - resume Choose Plan
+                            from apps.agents.models import AgentDraft
+                            draft = AgentDraft.objects.filter(email=agent.email).first()
+                            if not draft:
+                                # Create a draft representing their details
+                                session_key = request.session.session_key
+                                if not session_key:
+                                    request.session.create()
+                                    session_key = request.session.session_key
+                                draft = AgentDraft.objects.create(
+                                    session_key=session_key,
+                                    email=agent.email,
+                                    fullname=agent.fullname,
+                                    mobile=agent.mobile,
+                                    agent_pincode=agent.agent_pincode,
+                                    experience_range=agent.experience_range,
+                                    client_base=agent.client_base,
+                                    email_verified=True,
+                                    registration_step=2
+                                )
+                            request.session['current_draft_id'] = draft.pk
+                            request.session['reg_step'] = 3
+                            messages.info(request, "Please complete plan selection and payment to activate your account.")
+                            return redirect('/chooseplan/')
 
                 if is_agent or is_admin:
                     # Successful login
@@ -146,6 +178,39 @@ def agent_logout(request):
     Log out the agent, invalidate session, and redirect to the login page.
     """
     logout(request)
+    messages.success(request, "You have been logged out successfully.")
+    return redirect('agents:agent_login')
+
+@never_cache
+def logout_view(request):
+    """
+    General logout view mirroring Laravel's AuthController@logout.
+    Handles logout for all user roles (agent, admin, client, distributor).
+    """
+    # 1. Determine user role before logout
+    role = 'agent'
+    if request.user.is_authenticated:
+        role = request.user.role
+
+    # 2. Handle admin logout specifically to ensure session token and DB record cleanup
+    if role == 'admin':
+        from apps.admin_panel.views.dashboard import admin_logout
+        return admin_logout(request)
+
+    # 3. Log out regular users (agents, clients, distributors)
+    logout(request)
+
+    # 4. Role-based redirect logic
+    if role == 'client':
+        referer = request.META.get('HTTP_REFERER')
+        host = request.get_host()
+        if referer and host in referer:
+            return redirect(referer)
+        return redirect('home:find_agents')
+
+    if role == 'distributor':
+        return redirect('/distributor-login')
+
     messages.success(request, "You have been logged out successfully.")
     return redirect('agents:agent_login')
 

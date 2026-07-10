@@ -43,6 +43,7 @@ from .views.agents import (
     save_agent_notes,
     update_visibility,
     update_achievement_limit,
+    update_irdai_license,
     update_plan,
     toggle_review_approval,
     update_profile,
@@ -206,12 +207,13 @@ urlpatterns = [
     # Phase 3B: Agents List
     path("admin/agents/", agent_list, name="admin_agents"),
     
-    # Phase 3C: Manage Agent
     path("admin/agents/<int:id>/manage/", manage_agent, name="admin_agents_manage"),
+    path("admin/agents/manage/<int:id>/", manage_agent, name="admin_agents_manage_alt"),
 
     # Phase 4A: Agent Mutations
     path("admin/agents/toggle-status/", toggle_status, name="admin_agents_toggle_status"),
     path("admin/agents/update-badge/", update_badge, name="admin_agents_update_badge"),
+    path("admin/agents/update-irdai-license/", update_irdai_license, name="admin_agents_update_irdai_license"),
     path("admin/agents/save-notes/", save_agent_notes, name="admin_agents_save_notes"),
     path("admin/agents/bulk-action/", bulk_action_agents, name="admin_agents_bulk_action"),
     path("admin/delete/", admin_delete, name="admin_agents_delete"),

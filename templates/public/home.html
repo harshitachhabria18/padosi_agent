@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ settings.hero_heading|default:"Expert & Trusted Insurance Agent in your Padosi" }}{% endblock %}
+{% block title %}PadosiAgent — Expert & Trusted Insurance Agent{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/owl.carousel.min.css' %}">
@@ -23,7 +23,7 @@
 
 <!-- Did You Know? Section -->
 {% if settings.show_dyk %}
-<section class="dyk-section py-5 bg-transparent" >
+<section class="dyk-section py-5 bg-transparent">
     <div class="container">
         <div class="d-flex align-items-end justify-content-between mb-4 mb-sm-5">
             <div>
@@ -81,17 +81,15 @@
 
 <!-- Quick Picks Section -->
 {% if settings.show_quickpicks %}
-<section class="quick-picks-section py-4 bg-transparent" >
+<section class="quick-picks-section py-4 bg-transparent">
     <div class="qp-container">
         <div class="d-flex align-items-end justify-content-between mb-4 mb-sm-5">
             <div>
-                <p class="qp-subtitle">Quick picks</p>
-                <h2 class="qp-title-heading">Also buy / renew shortcuts
-                </h2>
+                <p class="qp-subtitle">{{ settings.quickpicks_label|default:"Quick picks" }}</p>
+                <h2 class="qp-title-heading">{{ settings.quickpicks_title|default:"Also buy / renew shortcuts" }}</h2>
             </div>
-            <a href="/find-agents?ServiceType=New%20Policy&openFilter=1"
-                class="d-none d-sm-inline qp-view-all">
-                View all products →
+            <a href="{{ settings.quickpicks_view_all_url|default:'/find-agents?ServiceType=New%20Policy&openFilter=1' }}" class="d-none d-sm-inline qp-view-all">
+                {{ settings.quickpicks_view_all_text|default:"View all products →" }}
             </a>
         </div>
 
@@ -104,38 +102,9 @@
                         style="background-color:{{ qpItem.badge_bg_color|default:'#ffe4e6' }};color:{{ qpItem.badge_text_color|default:'#be123c' }};">{{ qpItem.badge_text }}</span>
                     {% endif %}
                     <div class="qp-icon-box" style="background-color:{{ qpItem.icon_bg_color|default:'#fff1f2' }};">
-                        <span style="color:{{ qpItem.icon_color|default:'#f43f5e' }}; width: 16px; height: 16px; display: inline-flex;">
-                            {% if qpItem.label == 'Mediclaim' %}
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
-                            {% elif qpItem.label == 'Term Plan' %}
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                            {% elif qpItem.label == 'Private Car' %}
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
-                            {% elif qpItem.label == 'Two Wheeler' %}
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="17.5" r="2.5"/><path d="M15 6h1a2 2 0 0 1 2 2v2"/><path d="M12 17.5V14H8.5L5.5 9.5H2"/><path d="m18.5 17.5-3.5-6h-3"/></svg>
-                            {% elif qpItem.label == 'Critical Illness' %}
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                            {% elif qpItem.label == 'Personal Accident' %}
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-                            {% elif qpItem.label == 'Super Top-up' %}
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-                            {% elif qpItem.label == 'ULIP Plan' %}
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-7"/></svg>
-                            {% elif qpItem.label == 'Pension Plan' %}
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="2" y1="22" x2="22" y2="22"/><path d="M3 14h18V9L12 2 3 9v5Z"/></svg>
-                            {% elif qpItem.label == 'Saving Plan' %}
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 5c-1.5 0-2.8 1.4-3 3-1-.6-2.2-1-3.5-1A6.5 6.5 0 0 0 6 13.5c0 .3.1.5.1.8L3 17.5l2 2 2.7-2.7c.3.1.5.2.8.2H19c2.8 0 5-2.2 5-5s-2.2-5-5-5Z"/></svg>
-                            {% elif qpItem.label == 'Commercial Vehicle' %}
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="16" height="10" x="2" y="6" rx="2"/><circle cx="7.5" cy="18.5" r="2.5"/><circle cx="16.5" cy="18.5" r="2.5"/></svg>
-                            {% elif qpItem.label == 'Fire (SME)' %}
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
-                            {% elif qpItem.label == 'Cyber (SME)' %}
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                            {% elif qpItem.label == 'Liability (SME)' %}
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m16 16 3-8 3 8c-.7.7-1.7 1-3 1s-2.3-.3-3-1z"/><path d="m2 16 3-8 3 8c-.7.7-1.7 1-3 1s-2.3-.3-3-1z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h18"/></svg>
-                            {% else %}
-                                {% include 'components/hero-icon.html' with name=qpItem.icon|default:'heart' sw='2' %}
-                            {% endif %}
+                        <span
+                            style="color:{{ qpItem.icon_color|default:'#f43f5e' }}; width: 16px; height: 16px; display: inline-flex;">
+                            {% include 'components/hero-icon.html' with name=qpItem.icon|default:'heart' sw='2' %}
                         </span>
                     </div>
                     <span class="qp-label">{{ qpItem.label }}</span>
@@ -145,9 +114,8 @@
         </div>
 
         <div class="d-block d-sm-none text-center mt-3">
-            <a href="/find-agents?ServiceType=New%20Policy&openFilter=1"
-                class="qp-view-all">
-                View all products →
+            <a href="{{ settings.quickpicks_view_all_url|default:'/find-agents?ServiceType=New%20Policy&openFilter=1' }}" class="qp-view-all">
+                {{ settings.quickpicks_view_all_text|default:"View all products →" }}
             </a>
         </div>
     </div>
@@ -178,11 +146,10 @@
                         </h2>
 
                         <p class="text-muted mb-4" style="max-width: 320px;">
-                            No spam, no platform fees and only licensed agents — built around your privacy, your time and your money.
+                            {{ settings.why_choose_description|default:"No Spam / No Platform Fee / Licensed PadosiAgents" }}
                         </p>
                         <div>
-                            <a href="/find-agents?openFilter=1"
-                                class="find-agent-btn text-decoration-none">
+                            <a href="/find-agents?openFilter=1" class="find-agent-btn text-decoration-none">
                                 Find My PadosiAgent
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
@@ -250,11 +217,10 @@
                 {% endfor %}
             </div>
             <div class="text-center px-3 mb-2">
-                <p class="why-mobile-description">No spam, no platform fees and only licensed agents — built around your privacy, your time and your money.</p>
+                <p class="why-mobile-description">{{ settings.why_choose_description|default:"No Spam / No Platform Fee / Licensed PadosiAgents" }}</p>
             </div>
             <div class="text-center mt-3">
-                <a href="/find-agents?openFilter=1"
-                    class="find-agent-btn text-decoration-none">
+                <a href="/find-agents?openFilter=1" class="find-agent-btn text-decoration-none">
                     Find My PadosiAgent
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
@@ -271,11 +237,12 @@
 
 <!-- How It Works Section (4 Steps) -->
 {% if settings.show_how_it_works %}
-<section class="how-works-section py-5 bg-transparent overflow-hidden" >
+<section class="how-works-section py-5 bg-transparent overflow-hidden">
     <div class="container">
         <div class="text-center mb-5">
             <p class="section-subtitle-small">How It Works</p>
-            <h2 class="font-weight-bold mb-2 text-dark" style="font-size:1.75rem; letter-spacing:-0.02em;">Find My PadosiAgent in 4 Simple Steps</h2>
+            <h2 class="font-weight-bold mb-2 text-dark" style="font-size:1.75rem; letter-spacing:-0.02em;">Find My
+                PadosiAgent in 4 Simple Steps</h2>
             <p class="text-muted" style="font-size:15px;">{{ settings.works_subtitle }}</p>
         </div>
 
@@ -286,8 +253,8 @@
                 <div class="col-md-3">
                     <div class="step-card-desktop text-center px-3">
                         <div class="step-icon-wrapper-container mb-4">
-                            <div class="step-icon-wrap {{ step.accent_class|default:'accent-primary' }}" data-toggle="tooltip"
-                                data-placement="top" title="{{ step.tooltip }}">
+                            <div class="step-icon-wrap {{ step.accent_class|default:'accent-primary' }}"
+                                data-toggle="tooltip" data-placement="top" title="{{ step.tooltip }}">
                                 <span style="width: 32px; height: 32px; display: inline-flex;">
                                     {% include 'components/hero-icon.html' with name=step.icon|default:'search' sw='1.8' %}
                                 </span>
@@ -319,8 +286,8 @@
                 {% for step in works_steps %}
                 <div class="step-card-grid-mobile">
                     <div class="step-icon-wrapper-container-mobile">
-                        <div class="step-icon-wrap {{ step.accent_class|default:'accent-primary' }}" data-toggle="tooltip"
-                            data-placement="top" title="{{ step.tooltip }}">
+                        <div class="step-icon-wrap {{ step.accent_class|default:'accent-primary' }}"
+                            data-toggle="tooltip" data-placement="top" title="{{ step.tooltip }}">
                             <span style="width: 24px; height: 24px; display: inline-flex;">
                                 {% include 'components/hero-icon.html' with name=step.icon|default:'search' sw='1.8' %}
                             </span>
@@ -335,8 +302,7 @@
         </div>
 
         <div class="text-center mt-5">
-            <a href="{{ settings.works_button_url }}"
-                class="find-agent-btn-steps text-decoration-none">
+            <a href="{{ settings.works_button_url }}" class="find-agent-btn-steps text-decoration-none">
                 {{ settings.works_button_text }}
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
@@ -352,11 +318,12 @@
 
 <!-- Testimonials Section -->
 {% if settings.show_testimonials %}
-<section class="testimonials-slider-section py-5 bg-transparent overflow-hidden" >
+<section class="testimonials-slider-section py-5 bg-transparent overflow-hidden">
     <div class="container">
         <div class="text-center mb-5">
             <p class="section-subtitle-small">Testimonials</p>
-            <h2 class="font-weight-bold mb-2 text-dark" style="font-size: 1.75rem; letter-spacing:-0.02em;">What Users Say About Their PadosiAgent</h2>
+            <h2 class="font-weight-bold mb-2 text-dark" style="font-size: 1.75rem; letter-spacing:-0.02em;">What Users
+                Say About Their PadosiAgent</h2>
             <p class="text-muted" style="font-size: 15px;">{{ settings.testimonials_subtitle }}</p>
         </div>
 

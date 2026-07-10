@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse, Http404
 from django.db import connection
 from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_protect
 
 from .dashboard import _get_admin_from_session
 
@@ -34,7 +34,7 @@ def promo_code_list(request):
 
     return render(request, "admin/promo_codes/index.html", context)
 
-@csrf_exempt
+@csrf_protect
 @require_http_methods(["POST"])
 def toggle_promo_code_status(request, promo_id):
     admin = _get_admin_from_session(request)

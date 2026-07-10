@@ -22,6 +22,7 @@ urlpatterns = [
     path('forgot-password/',    auth.forgot_password,            name='forgot_password'),
     path('reset-password/<str:uidb64>/<str:token>/', auth.reset_password, name='reset_password'),
     path('agent-logout/',       auth.agent_logout,               name='agent_logout'),
+    path('logout/',             auth.logout_view,                name='logout'),
     path('agent/dashboard/',    dashboard.agent_dashboard,       name='agent_dashboard'),
     path('agent/referral/',     dashboard.referral,              name='agent_referral'),
     path('profile/<str:slug>/', dashboard.agent_public_profile,  name='agent_public_profile'),

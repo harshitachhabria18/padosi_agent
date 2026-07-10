@@ -19,7 +19,10 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+from apps.agents.views.dashboard import serve_private_file
+
 urlpatterns = [
+    path('media/app/private/<path:file_path>', serve_private_file, name='serve_private_file'),
     path('django-admin/', admin.site.urls),
     path('', include('apps.admin_panel.urls')),
     path('', include('apps.agents.urls')),

@@ -156,14 +156,15 @@
           <span class="info-value">{{ agent.expires_at|date:"d M Y"|default:'N/A' }}</span>
         </div>
 
-        <form method="POST" action="{% url 'admin_agents_update_plan' %}" style="margin-top:14px;">
+        <form id="changePlanForm" method="POST" action="{% url 'admin_agents_update_plan' %}" style="margin-top:14px;">
           {% csrf_token %}
           <input type="hidden" name="id" value="{{ agent.id }}">
+          <input type="hidden" name="selected_plan" id="selectedPlanInput" value="">
           <p style="font-size:13px;font-weight:600;margin:0 0 10px;">Change Plan:</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button type="submit" name="selected_plan" value="Starter's Plan" class="plan-btn {% if agent.selected_plan == "Starter's Plan" %}selected{% endif %}">Starter's</button>
-            <button type="submit" name="selected_plan" value="Professional's Plan" class="plan-btn {% if agent.selected_plan == "Professional's Plan" %}selected{% endif %}">Professional's</button>
-            <button type="submit" name="selected_plan" value="" class="plan-btn {% if not agent.selected_plan %}selected{% endif %}">No Plan</button>
+            <button type="button" data-plan="Starter's Plan" class="plan-btn btn-change-plan {% if agent.selected_plan == "Starter's Plan" %}selected{% endif %}">Starter's</button>
+            <button type="button" data-plan="Professional's Plan" class="plan-btn btn-change-plan {% if agent.selected_plan == "Professional's Plan" %}selected{% endif %}">Professional's</button>
+            <button type="button" data-plan="" class="plan-btn btn-change-plan {% if not agent.selected_plan %}selected{% endif %}">No Plan</button>
           </div>
         </form>
 
@@ -483,6 +484,36 @@ function updateVisibility(id, field, btnElement) {
         }
     });
 }
+
+$(document).ready(function() {
+    $('.btn-change-plan').on('click', function(e) {
+        e.preventDefault();
+        var selectedPlan = $(this).attr('data-plan');
+        
+        // If already selected, do nothing
+        if ($(this).hasClass('selected')) {
+            return;
+        }
+
+        var planDisplayName = selectedPlan ? selectedPlan : "No Plan";
+
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "Are you sure to change the plan to " + planDisplayName + "?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#1d7d5d',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, change it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#selectedPlanInput').val(selectedPlan);
+                $('#changePlanForm').submit();
+            }
+        });
+    });
+});
 </script>
 
 <style>

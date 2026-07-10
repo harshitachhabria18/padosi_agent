@@ -3,6 +3,7 @@ import math
 import json
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import never_cache
 from django.contrib.auth import logout
 from django.contrib import messages
 from django.utils import timezone
@@ -605,9 +606,15 @@ def store_review(request, slug):
     })
 
 
-@login_required(login_url='agents:agent_login')
+@never_cache
 def edit_profile(request):
-    is_admin = request.user.is_staff or request.user.is_superuser
+    from apps.admin_panel.views.dashboard import _get_admin_from_session
+    admin_id = _get_admin_from_session(request)
+    is_admin = bool(admin_id) or request.user.is_staff or request.user.is_superuser
+    
+    if not is_admin and not request.user.is_authenticated:
+        return redirect('agents:agent_login')
+
     agent_id = request.GET.get('agent_id')
     
     if is_admin and agent_id:
@@ -620,7 +627,7 @@ def edit_profile(request):
     if not agent:
         if is_admin:
             messages.error(request, "Agent not found.")
-            return redirect('admin:dashboard')
+            return redirect('admin_dashboard')
         else:
             messages.error(request, "Please complete your registration.")
             return redirect('agents:agent_registration')
@@ -655,7 +662,7 @@ def edit_profile(request):
         'agent': agent,
         'profile': profile,
         'isAdminView': is_admin_view,
-        'base_template': 'admin/layout.html' if is_admin_view else 'base.html',
+        'base_template': 'admin/base.html' if is_admin_view else 'base.html',
         'main_cities': main_cities,
         'agent_cities': agent_cities,
         'extra_cities': extra_cities,
@@ -665,7 +672,7 @@ def edit_profile(request):
     return render(request, 'agents/edit_profile.html', context)
 
 
-@login_required(login_url='agents:agent_login')
+@never_cache
 def update_profile(request):
     from django.http import JsonResponse
     from django.db import transaction
@@ -681,7 +688,13 @@ def update_profile(request):
     import uuid
     import json
     
-    is_admin = request.user.is_staff or request.user.is_superuser
+    from apps.admin_panel.views.dashboard import _get_admin_from_session
+    admin_id = _get_admin_from_session(request)
+    is_admin = bool(admin_id) or request.user.is_staff or request.user.is_superuser
+    
+    if not is_admin and not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'Authentication required'}, status=401)
+        
     agent_id = request.POST.get('agent_id')
     
     if is_admin and agent_id:
@@ -755,7 +768,35 @@ def update_profile(request):
                 # Profile Photo upload
                 profile_photo = request.FILES.get('profile_photo')
                 if profile_photo:
-                    file_ext = os.path.splitext(profile_photo.name)[1]
+                    allowed_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+                    file_ext = os.path.splitext(profile_photo.name)[1].lower()
+                    if file_ext not in allowed_extensions:
+                        return JsonResponse({
+                            'status': 'error',
+                            'message': 'Validation failed',
+                            'errors': {'profile_photo': ['Only JPG, JPEG, PNG, GIF, and WEBP files are allowed.']}
+                        }, status=422)
+
+                    if profile_photo.size > 5 * 1024 * 1024:
+                        return JsonResponse({
+                            'status': 'error',
+                            'message': 'Validation failed',
+                            'errors': {'profile_photo': ['Profile photo must be less than 5MB.']}
+                        }, status=422)
+
+                    from PIL import Image
+                    try:
+                        profile_photo.seek(0)
+                        img = Image.open(profile_photo)
+                        img.verify()
+                        profile_photo.seek(0)
+                    except Exception:
+                        return JsonResponse({
+                            'status': 'error',
+                            'message': 'Validation failed',
+                            'errors': {'profile_photo': ['Invalid or corrupted image file.']}
+                        }, status=422)
+
                     file_name = f"app/public/profile/agent_{agent.id}_{int(time.time())}{file_ext}"
                     saved_path = default_storage.save(file_name, profile_photo)
                     profile.profile_photo_path = saved_path
@@ -1010,8 +1051,36 @@ def update_profile(request):
                     agent.achievementPhotos.filter(id__in=remove_photo_ids).delete()
                     
                 # Process photo uploads
+                allowed_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
                 for photo_file in new_photos:
-                    file_ext = os.path.splitext(photo_file.name)[1]
+                    file_ext = os.path.splitext(photo_file.name)[1].lower()
+                    if file_ext not in allowed_extensions:
+                        return JsonResponse({
+                            'status': 'error',
+                            'message': 'Invalid file extension. Only JPG, JPEG, PNG, GIF, and WEBP are allowed.',
+                            'errors': {'achievement_photos': ['Invalid file extension. Only images are allowed.']}
+                        }, status=422)
+
+                    if photo_file.size > 5 * 1024 * 1024:
+                        return JsonResponse({
+                            'status': 'error',
+                            'message': 'File size exceeds the 5MB limit.',
+                            'errors': {'achievement_photos': ['Image size must be less than 5MB.']}
+                        }, status=422)
+
+                    from PIL import Image
+                    try:
+                        photo_file.seek(0)
+                        img = Image.open(photo_file)
+                        img.verify()
+                        photo_file.seek(0)
+                    except Exception:
+                        return JsonResponse({
+                            'status': 'error',
+                            'message': 'The uploaded file is not a valid image.',
+                            'errors': {'achievement_photos': ['Invalid or corrupted image file.']}
+                        }, status=422)
+
                     file_name = f"app/public/achievement/achievement_{agent.id}_{int(time.time())}_{uuid.uuid4().hex[:6]}{file_ext}"
                     saved_path = default_storage.save(file_name, photo_file)
                     AgentAchievementPhoto.objects.create(agent=agent, photo_path=saved_path)
@@ -1744,4 +1813,46 @@ def agent_og_image(request, agent_id):
         response = HttpResponse(fallback_data, content_type='image/jpeg')
         response['Cache-Control'] = 'no-store'
         return response
+
+
+def serve_private_file(request, file_path):
+    """
+    Secure serving of private invoices and uploaded files.
+    """
+    from django.http import FileResponse, HttpResponseForbidden, Http404
+    from django.conf import settings
+    from apps.admin_panel.views.dashboard import _get_admin_from_session
+
+    # 1. Access checks
+    admin_id = _get_admin_from_session(request)
+    is_admin = admin_id is not None
+
+    is_owner = False
+    if request.user.is_authenticated:
+        from apps.agents.models import Agent, Invoice
+        agent = Agent.objects.filter(user=request.user).first()
+        if agent:
+            normalized_path = file_path.replace('\\', '/')
+            invoice_exists = Invoice.objects.filter(agent=agent, pdf_path=normalized_path).exists()
+            if invoice_exists:
+                is_owner = True
+            elif str(agent.id) in normalized_path:
+                is_owner = True
+
+    if not is_admin and not is_owner:
+        return HttpResponseForbidden("Access Denied: You do not have permission to access this file.")
+
+    # 2. Path normalization to prevent path traversal
+    full_path = os.path.join(settings.MEDIA_ROOT, 'app', 'private', file_path)
+    normalized_full_path = os.path.abspath(full_path)
+    private_root = os.path.abspath(os.path.join(settings.MEDIA_ROOT, 'app', 'private'))
+    
+    if not normalized_full_path.startswith(private_root):
+        return HttpResponseForbidden("Access Denied: Invalid path traversal attempt.")
+
+    if not os.path.exists(normalized_full_path):
+        raise Http404("File not found")
+
+    return FileResponse(open(normalized_full_path, 'rb'))
+
 

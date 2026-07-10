@@ -1992,3 +1992,94 @@ input:disabled+.toggle-slider {
     border-radius: 20px;
     font-weight: 600;
 }
+
+/* ==========================================================================
+   PADOSIAGENT AGENT DASHBOARD RESPONSIVE OVERRIDES
+   ========================================================================== */
+
+@media screen and (max-width: 991px) {
+    .dashboard-header-con {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 16px !important;
+        margin-bottom: 24px !important;
+    }
+    .dashboard-top-actions {
+        width: 100% !important;
+        margin-top: 12px !important;
+        justify-content: flex-start !important;
+    }
+    .dashboard-main-tabs {
+        overflow-x: auto !important;
+        flex-wrap: nowrap !important;
+        padding-bottom: 8px !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    .dashboard-main-tabs .nav-link {
+        flex-shrink: 0 !important;
+        white-space: nowrap !important;
+        padding: 8px 14px !important;
+        font-size: 14px !important;
+    }
+    .mini-stat-big-num {
+        font-size: 22px !important;
+    }
+    .insight-value {
+        font-size: 20px !important;
+    }
+}
+
+@media screen and (max-width: 575px) {
+    .agent-dashboard-wrapper,
+    .edit-profile-wrapper {
+        padding-bottom: 30px !important;
+    }
+    .container {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+    .agent-avatar-circle {
+        width: 50px !important;
+        height: 50px !important;
+        min-width: 50px !important;
+    }
+    .avatar-letter {
+        font-size: 22px !important;
+    }
+    .agent-name-text {
+        font-size: 20px !important;
+    }
+    .agent-role-text {
+        font-size: 14px !important;
+    }
+    .premium-dashboard-card {
+        border-radius: 12px !important;
+        margin-bottom: 16px !important;
+    }
+    .card-body {
+        padding: 16px !important;
+    }
+    .card-section-title {
+        font-size: 15px !important;
+    }
+    #upgradeTrialBanner {
+        padding: 16px 16px !important;
+        border-radius: 12px !important;
+    }
+    #upgradeTrialBanner h4 {
+        font-size: 1.15rem !important;
+    }
+    #upgradeTrialBanner p {
+        font-size: 13px !important;
+    }
+    /* Stack form layout columns */
+    .timeline-container {
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+    .photo-preview-item {
+        width: 80px !important;
+        height: 80px !important;
+    }
+}
+

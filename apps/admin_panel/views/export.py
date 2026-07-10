@@ -83,6 +83,8 @@ def export_agents(request):
         return redirect('admin_login_page')
 
     status_filter = request.GET.get('status', 'all')
+    if status_filter == 'All Status':
+        status_filter = 'all'
 
     with connection.cursor() as cursor:
         base_sql = """
