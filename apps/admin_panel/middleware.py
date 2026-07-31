@@ -26,7 +26,9 @@ class ThreatMonitorMiddleware:
         ip = x_forwarded_for.split(',')[0].strip() if x_forwarded_for else request.META.get('REMOTE_ADDR')
 
         # 2. Whitelist local/trusted IPs from ANY security checks (same as PHP)
-        if ip in ['127.0.0.1', '::1']:
+        from django.conf import settings
+        whitelisted_ips = getattr(settings, 'SECURITY_WHITELISTED_IPS', ['127.0.0.1', '::1'])
+        if ip in whitelisted_ips:
             return self.get_response(request)
 
         # 3. Check if IP is already explicitly Blocked

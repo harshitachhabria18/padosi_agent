@@ -9,7 +9,7 @@
             <div class="container position-relative">
                 <div class="row">
                     <div class="col-xl-8 col-lg-9 col-12 mx-auto">
-                        <div class="sub_banner_content" >
+                        <div class="sub_banner_content" data-aos="fade-up">
                             <h1 class="text-white">{{ about.banner_title|default:"About Us" }}</h1>
                             <p class="text-white text-size-18">{{ about.banner_subtitle|default:"Connecting you with trusted insurance agents in your neighborhood" }}</p>                            
                         </div>
@@ -39,7 +39,7 @@
                 <div class="about_content" >
                     <h2>Who We Are</h2>
                     <div class="text text-size-16">
-                        {{ about.who_we_are|default:"<strong><span style='color: #18529d;'>Padosi</span><span style='color: #0f5634;'>Agent</span></strong> is a digital-first platform built to simplify how people connect with trusted insurance professionals in their locality."|safe }}
+                        {{ about.who_we_are|default:"<strong><span style='color: #18529d;'>Padosi</span><span style='color: #0f5634;'>Agent</span></strong> is a digital-first platform built to simplify how people connect with trusted insurance professionals in their locality. <br><br> In India, insurance is not just about policies - it's about trust, service, and long-term relationships. We believe every customer deserves access to a verified, responsive, and knowledgeable insurance advisor who stands by them not only at the time of purchase, but especially during claims and service. Padosi Agent bridges the gap between Insurance Seekers and Licensed Insurance Agents, making the discovery process transparent, structured, and location-based."|safe }}
                     </div>
                 </div>
             </div>
@@ -112,7 +112,7 @@
                             <span>Service expectations are clearly defined</span>
                         </li>
                     </ul>
-                    <div class="text text-size-16">{{ about.what_we_do|default:"We focus on empowering agents with digital presence."|safe }}</div>
+                    <div class="text text-size-16">{{ about.what_we_do|default:"We focus on empowering agents with <strong>digital presence</strong> while helping customers make informed decisions."|safe }}</div>
                 </div>
             </div>
             <div class="col-lg-6 text-center">
@@ -129,14 +129,26 @@
             <div class="col-lg-10 mx-auto">
                 <div class="benefit_content mb-5" >
                     <h2 class="mb-3">Our Vision</h2>
-                    <div class="text text-size-18 px-lg-5">{{ about.vision|default:"To build India’s most trusted hyperlocal insurance discovery and service platform."|safe }}</div>
+                    <div class="text text-size-18 px-lg-5">{{ about.vision|default:"To build India's most trusted hyperlocal insurance discovery and service platform - where every policy comes with assurance of responsible guidance and ongoing support."|safe }}</div>
                 </div>
                 <div class="benefit_content" >
                     <h2 class="mb-4">Our Mission</h2>
                     <ul class="list-unstyled d-inline-block text-left mx-auto">
                         <li class="mb-3 d-flex align-items-center">
                             <i class="fa-solid fa-circle-dot text-primary mr-3"></i>
-                            <span class="text-size-18">{{ about.mission|default:"Digitally empower insurance agents."|safe }}</span>
+                            <span class="text-size-18">Digitally empower insurance agents.</span>
+                        </li>
+                        <li class="mb-3 d-flex align-items-center">
+                            <i class="fa-solid fa-circle-dot text-primary mr-3"></i>
+                            <span class="text-size-18">Promote transparency and accountability.</span>
+                        </li>
+                        <li class="mb-3 d-flex align-items-center">
+                            <i class="fa-solid fa-circle-dot text-primary mr-3"></i>
+                            <span class="text-size-18">Strengthen trust in insurance advisory.</span>
+                        </li>
+                        <li class="mb-0 d-flex align-items-center">
+                            <i class="fa-solid fa-circle-dot text-primary mr-3"></i>
+                            <span class="text-size-18">Enable better access to insurance knowledge and service.</span>
                         </li>
                     </ul>
                 </div>

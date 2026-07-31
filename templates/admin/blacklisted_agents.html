@@ -1,0 +1,311 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Blacklisted Agents — PadosiAgent{% endblock %}
+{% block breadcrumb_title %}Blacklisted Agents{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-6">
+        <h2 class="h4 mb-0 fw-bold">Blacklisted Agents</h2>
+        <p class="text-muted mb-0" style="font-size:14px;">Manage IRDAI flagged agents and platform blacklists.</p>
+    </div>
+</div>
+
+<!-- Nav Tabs -->
+<ul class="nav nav-tabs mb-4" id="blacklistTabs" role="tablist">
+    <li class="nav-item">
+        <a class="nav-link {% if active_tab == 'flagged' %}active fw-bold{% endif %}" id="flagged-tab" data-toggle="tab" data-bs-toggle="tab" href="#flagged" role="tab" aria-controls="flagged" aria-selected="{% if active_tab == 'flagged' %}true{% else %}false{% endif %}" style="cursor: pointer; text-decoration: none;">
+            ⚠️ IRDAI Flagged ({{ flagged_with_match|length }})
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if active_tab == 'manual' %}active fw-bold{% endif %}" id="manual-tab" data-toggle="tab" data-bs-toggle="tab" href="#manual" role="tab" aria-controls="manual" aria-selected="{% if active_tab == 'manual' %}true{% else %}false{% endif %}" style="cursor: pointer; text-decoration: none;">
+            🚫 Manually Blacklisted ({{ manually_blacklisted|length }})
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if active_tab == 'master' %}active fw-bold{% endif %}" id="master-tab" data-toggle="tab" data-bs-toggle="tab" href="#master" role="tab" aria-controls="master" aria-selected="{% if active_tab == 'master' %}true{% else %}false{% endif %}" style="cursor: pointer; text-decoration: none;">
+            📋 IRDAI Master List
+        </a>
+    </li>
+</ul>
+
+<!-- Tab Content -->
+<div class="tab-content" id="blacklistTabsContent">
+    {% csrf_token %}
+
+    <!-- Tab 1: IRDAI Flagged -->
+    <div class="tab-pane fade {% if active_tab == 'flagged' %}show active{% endif %}" id="flagged" role="tabpanel" aria-labelledby="flagged-tab">
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">ID</th>
+                            <th>Agent Name</th>
+                            <th>Email</th>
+                            <th>PAN</th>
+                            <th>IRDAI Insurer</th>
+                            <th>IRDAI Blacklisted Date</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in flagged_with_match %}
+                        <tr>
+                            <td class="ps-4">#{{ item.agent.id }}</td>
+                            <td><div class="fw-bold text-dark">{{ item.agent.fullname }}</div></td>
+                            <td>{{ item.agent.email }}</td>
+                            <td><code>{{ item.agent.profile.pan_number }}</code></td>
+                            <td>{{ item.irdai_match.insurer|default:'-' }}</td>
+                            <td>{{ item.irdai_match.blacklisted_date|date:"d M Y"|default:'-' }}</td>
+                            <td class="text-end pe-4">
+                                <div class="d-flex gap-2 justify-content-end">
+                                    <button class="btn btn-sm btn-success px-3 py-2 fw-semibold action-btn" data-action="approve" data-id="{{ item.agent.id }}" style="border-radius:8px;">
+                                        <i class="fas fa-check me-1"></i> Approve
+                                    </button>
+                                    <button class="btn btn-sm btn-danger px-3 py-2 fw-semibold action-btn" data-action="blacklist" data-id="{{ item.agent.id }}" style="border-radius:8px;">
+                                        <i class="fas fa-ban me-1"></i> Blacklist
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">No pending IRDAI flagged agents found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 2: Manually Blacklisted -->
+    <div class="tab-pane fade {% if active_tab == 'manual' %}show active{% endif %}" id="manual" role="tabpanel" aria-labelledby="manual-tab">
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">ID</th>
+                            <th>Agent Name</th>
+                            <th>Email</th>
+                            <th>PAN</th>
+                            <th>Reason</th>
+                            <th>Blacklisted Date</th>
+                            <th>Blacklisted By</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for agent in manually_blacklisted %}
+                        <tr>
+                            <td class="ps-4">#{{ agent.id }}</td>
+                            <td><div class="fw-bold text-dark">{{ agent.fullname }}</div></td>
+                            <td>{{ agent.email }}</td>
+                            <td><code>{{ agent.profile.pan_number }}</code></td>
+                            <td>{{ agent.blacklist_reason|default:'-' }}</td>
+                            <td>{{ agent.blacklisted_at|date:"d M Y"|default:'-' }}</td>
+                            <td><span class="badge bg-dark">{{ agent.blacklist_source|default:'Admin' }}</span></td>
+                            <td class="text-end pe-4">
+                                <button class="btn btn-sm btn-outline-secondary px-3 py-2 fw-semibold action-btn" data-action="remove" data-id="{{ agent.id }}" style="border-radius:8px;">
+                                    <i class="fas fa-undo me-1"></i> Remove Blacklist
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">No manually blacklisted agents found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 3: IRDAI Master List -->
+    <div class="tab-pane fade {% if active_tab == 'master' %}show active{% endif %}" id="master" role="tabpanel" aria-labelledby="master-tab">
+        
+        <div class="card border-0 shadow-sm mb-4 p-3">
+            <form method="GET" action="{% url 'admin_blacklisted_agents' %}">
+                <input type="hidden" name="tab" value="master">
+                <div class="row gx-2 gy-2">
+                    <div class="col-md-4">
+                        <input type="text" name="q" class="form-control" placeholder="Search..." value="{{ irdai_query }}">
+                    </div>
+                    <div class="col-md-3">
+                        <select name="field" class="form-select">
+                            <option value="all" {% if irdai_field == 'all' %}selected{% endif %}>All Fields</option>
+                            <option value="pan" {% if irdai_field == 'pan' %}selected{% endif %}>PAN</option>
+                            <option value="agent_name" {% if irdai_field == 'agent_name' %}selected{% endif %}>Agent Name</option>
+                            <option value="agency_code" {% if irdai_field == 'agency_code' %}selected{% endif %}>Agency Code</option>
+                            <option value="insurer" {% if irdai_field == 'insurer' %}selected{% endif %}>Insurer</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select name="type" class="form-select">
+                            <option value="">All Insurer Types</option>
+                            {% for itype in insurer_types %}
+                            <option value="{{ itype }}" {% if irdai_type == itype %}selected{% endif %}>{{ itype }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search"></i> Filter</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Sr No</th>
+                            <th>Agent Name</th>
+                            <th>PAN</th>
+                            <th>Agency Code</th>
+                            <th>Insurer</th>
+                            <th>Type</th>
+                            <th>Blacklisted Date</th>
+                            <th class="text-center pe-4">On Platform</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in irdai_page_obj %}
+                        <tr>
+                            <td class="ps-4">{{ entry.sr_no }}</td>
+                            <td><div class="fw-bold text-dark">{{ entry.agent_name }}</div></td>
+                            <td><code>{{ entry.pan|default:'N/A' }}</code></td>
+                            <td>{{ entry.agency_code|default:'N/A' }}</td>
+                            <td>{{ entry.insurer|default:'N/A' }}</td>
+                            <td><span class="badge bg-info text-dark">{{ entry.insurer_type|default:'-' }}</span></td>
+                            <td>{{ entry.blacklisted_date|date:"d M Y"|default:'-' }}</td>
+                            <td class="text-center pe-4">
+                                {% if entry.pan and entry.pan in registered_pans %}
+                                <span class="badge bg-success">Yes</span>
+                                {% else %}
+                                <span class="badge bg-secondary">No</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">No IRDAI entries found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if irdai_page_obj.has_other_pages %}
+            <div class="card-footer bg-white border-0 py-3">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if irdai_page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?tab=master&q={{ irdai_query }}&field={{ irdai_field }}&type={{ irdai_type }}&page={{ irdai_page_obj.previous_page_number }}">Previous</a></li>
+                        {% endif %}
+                        <li class="page-item active"><span class="page-link">Page {{ irdai_page_obj.number }} of {{ irdai_page_obj.paginator.num_pages }}</span></li>
+                        {% if irdai_page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?tab=master&q={{ irdai_query }}&field={{ irdai_field }}&type={{ irdai_type }}&page={{ irdai_page_obj.next_page_number }}">Next</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    document.querySelectorAll('.action-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const action = this.getAttribute('data-action');
+            const agentId = this.getAttribute('data-id');
+            
+            let title = '';
+            let text = '';
+            let confirmButtonText = '';
+            let confirmButtonColor = '';
+            let url = '';
+
+            if (action === 'approve') {
+                title = 'Approve Agent?';
+                text = 'This will clear the IRDAI flag and allow the agent to operate normally.';
+                confirmButtonText = 'Yes, Approve';
+                confirmButtonColor = '#28a745';
+                url = "{% url 'ajax_blacklist_approve' %}";
+            } else if (action === 'blacklist') {
+                title = 'Blacklist Agent?';
+                text = 'This will confirm the IRDAI flag and blacklist the agent on this platform.';
+                confirmButtonText = 'Yes, Blacklist';
+                confirmButtonColor = '#dc3545';
+                url = "{% url 'ajax_blacklist_confirm' %}";
+            } else if (action === 'remove') {
+                title = 'Remove Blacklist?';
+                text = 'This will remove the blacklist status for this agent.';
+                confirmButtonText = 'Yes, Remove';
+                confirmButtonColor = '#6c757d';
+                url = "{% url 'ajax_blacklist_remove' %}";
+            }
+
+            Swal.fire({
+                title: title,
+                text: text,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: confirmButtonColor,
+                cancelButtonColor: '#d33',
+                confirmButtonText: confirmButtonText
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const formData = new FormData();
+                    formData.append('agent_id', agentId);
+                    formData.append('csrfmiddlewaretoken', csrfToken);
+                    if (action === 'blacklist') {
+                        formData.append('reason', 'PAN found in IRDAI blacklist');
+                    }
+
+                    fetch(url, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire(
+                                'Success!',
+                                data.message,
+                                'success'
+                            ).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            Swal.fire(
+                                'Error!',
+                                data.message || 'Something went wrong.',
+                                'error'
+                            );
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire('Error!', 'Network request failed.', 'error');
+                    });
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

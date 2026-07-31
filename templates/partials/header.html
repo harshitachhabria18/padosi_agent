@@ -29,6 +29,19 @@
                         <li class="nav-item {% if request.path == '/contact/' %}active{% endif %}">
                             <a class="nav-link" href="/contact/">Contact Us</a>
                         </li>
+                        {% if not request.user.is_authenticated %}
+                        {# Mobile-only Find PadosiAgent for guests with location detection badge #}
+                        <li class="nav-item d-lg-none">
+                            <a class="nav-link d-flex flex-column" href="/find-agents/?openFilter=1">
+                                <span class="mobile-find-brand">Find <span class="brand-padosi">Padosi</span><span class="brand-agent">Agent</span></span>
+                                {% if request.session.detected_area %}
+                                    <span class="header-location-status mt-1" style="font-size: 11px; color: #059669; font-weight: 600;">
+                                        <i class="fas fa-location-arrow mr-1"></i> {{ request.session.detected_area }}
+                                    </span>
+                                {% endif %}
+                            </a>
+                        </li>
+                        {% endif %}
                     {% endif %}
                     
                     {% if request.user.is_authenticated %}
@@ -52,7 +65,7 @@
                         {% endif %}
 
                         <li class="nav-item d-lg-none">
-                             <form action="/logout/" method="POST" id="logout-form-mobile" class="m-0">
+                             <form action="/logout/" method="POST" id="logout-form-mobile" class="m-0" hx-boost="false">
                                 {% csrf_token %}
                                 <button type="submit" class="nav-link text-danger border-0 bg-transparent w-100 text-left">
                                     <i class="fas fa-sign-out-alt mr-2"></i>Sign Out
@@ -90,7 +103,7 @@
                                 </a>
                                 {% endif %}
                                 <div class="dropdown-divider"></div>
-                                <form action="/logout/" method="POST" id="logout-form" class="m-0">
+                                <form action="/logout/" method="POST" id="logout-form" class="m-0" hx-boost="false">
                                     {% csrf_token %}
                                     <button type="submit" class="dropdown-item py-2 text-danger">
                                         <i class="fas fa-sign-out-alt mr-2"></i>Sign Out

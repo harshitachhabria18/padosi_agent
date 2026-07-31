@@ -14,6 +14,8 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
+SECURITY_WHITELISTED_IPS = ['127.0.0.1', '::1']
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -63,7 +65,9 @@ INSTALLED_APPS = [
     'apps.home',
     'apps.admin_panel',
     'apps.agents',
+    'chatbot',
     'rest_framework',
+    'django_apscheduler',
     'django.contrib.humanize',
 ]
 
@@ -110,9 +114,12 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'padosiagent',
         'USER': 'root',
-        'PASSWORD': '',
+        'PASSWORD': '12PassworD!@',
         'HOST': '127.0.0.1',
         'PORT': '3306',
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+        },
     }
 }
 
@@ -235,9 +242,15 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'django.log'),
+            'formatter': 'verbose',
+            'level': 'WARNING',
+        },
     },
     'root': {
-        'handlers': ['console'],
+        'handlers': ['console', 'file'],
         'level': 'INFO',
     },
     'loggers': {

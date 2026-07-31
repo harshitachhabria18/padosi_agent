@@ -1448,6 +1448,10 @@ def client_quick_register(request):
     mobile = (data.get('mobile') or '').strip()
     pincode = (data.get('pincode') or '').strip() or None
 
+    # Chatbot 2-field form support (replicates legacy Laravel behavior)
+    if not email and mobile:
+        email = f"{mobile}@padosiagent.com"
+
     # Validation
     errors = {}
     if not fullname:

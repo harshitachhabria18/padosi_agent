@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Blacklisted Agents — PadosiAgent{% endblock %}
+
+{% block content %}
+<div style="background-color: #f8fafc; min-height: 100vh; padding-top: 30px; padding-bottom: 50px; font-family: 'Inter', system-ui, -apple-system, sans-serif;">
+    <div class="container">
+        
+        <!-- Header Section -->
+        <div class="mb-4">
+            <h2 class="fw-bold mb-2 text-dark d-flex align-items-center" style="font-size: 24px;">
+                <i class="fa-solid fa-triangle-exclamation me-2" style="color: #ef4444; background-color: #fee2e2; padding: 6px 8px; border-radius: 6px; font-size: 16px;"></i>
+                Blacklisted Agents
+            </h2>
+            <p style="color: #64748b; font-size: 14px; margin-bottom: 0;">Search and verify insurance agents blacklisted by our verification team. Data updated as on 13 Jul 2026.</p>
+        </div>
+
+        <!-- Main Card -->
+        <div class="card bg-white shadow-sm" style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+            <div class="card-body p-0">
+                
+                <form method="GET" action="{% url 'home:blacklisted_agents' %}">
+                    <!-- Search and Filter Section -->
+                    <div class="p-4" style="border-bottom: 1px solid #f1f5f9;">
+                        <!-- Top Row: Search and All Fields -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-9">
+                                <div class="input-group" style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background-color: #f8fafc;">
+                                    <span class="input-group-text bg-transparent border-0 ps-3 pe-2" style="color: #94a3b8;">
+                                        <i class="fa-solid fa-magnifying-glass" style="font-size: 14px;"></i>
+                                    </span>
+                                    <input type="text" name="q" id="search-input" class="form-control border-0 bg-transparent shadow-none ps-1" placeholder="Search agents..." value="{{ query }}" style="color: #475569; font-size: 14px;">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select name="field" id="field-select" class="form-select shadow-none h-100" style="border: 1px solid #e2e8f0; border-radius: 8px; color: #475569; font-size: 14px; background-color: #f8fafc; cursor: pointer;" onchange="this.form.submit()">
+                                    <option value="all" {% if field == 'all' %}selected{% endif %}>All Fields</option>
+                                    <option value="agent_name" {% if field == 'agent_name' %}selected{% endif %}>Agent Name</option>
+                                    <option value="pan" {% if field == 'pan' %}selected{% endif %}>PAN</option>
+                                    <option value="agency_code" {% if field == 'agency_code' %}selected{% endif %}>Agency Code</option>
+                                    <option value="insurer" {% if field == 'insurer' %}selected{% endif %}>Insurer</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Bottom Row: Filter By -->
+                        <div class="d-flex align-items-center" style="font-size: 14px;">
+                            <i class="fa-solid fa-filter me-2" style="color: #94a3b8;"></i>
+                            <span class="me-3" style="color: #94a3b8;">Filter by:</span>
+                            <select name="type" id="type-select" class="form-select form-select-sm shadow-none" style="width: 160px; border: 1px solid #e2e8f0; border-radius: 8px; color: #475569; background-color: #f8fafc; cursor: pointer;" onchange="this.form.submit()">
+                                <option value="">All Types</option>
+                                {% for type in insurer_types %}
+                                <option value="{{ type }}" {% if type_filter == type %}selected{% endif %}>{{ type }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="d-none">Submit</button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Results Counter -->
+                <div class="px-4 py-3 bg-white" style="border-bottom: 1px solid #f1f5f9;">
+                    <span id="results-counter" style="font-size: 13px; color: #64748b;">Showing <strong style="color: #334155;">{{ page_obj.start_index|default:0 }}</strong> of <strong style="color: #334155;">{{ total_count }}</strong> results</span>
+                </div>
+
+                <!-- Table Section -->
+                <div class="table-responsive" id="results-container">
+                    <table class="table mb-0 align-middle" style="font-size: 13px; color: #475569;">
+                        <thead style="background-color: #f8fafc;">
+                            <tr>
+                                <th class="border-0 py-3 ps-4 fw-medium text-nowrap" style="color: #64748b; width: 60px;">Sr.<br>No</th>
+                                <th class="border-0 py-3 fw-medium text-nowrap" style="color: #64748b;">Agent Name</th>
+                                <th class="border-0 py-3 fw-medium text-nowrap" style="color: #64748b;">PAN</th>
+                                <th class="border-0 py-3 fw-medium text-nowrap" style="color: #64748b;">Agency Code</th>
+                                <th class="border-0 py-3 fw-medium text-nowrap" style="color: #64748b;">Insurer</th>
+                                <th class="border-0 py-3 fw-medium text-nowrap" style="color: #64748b;">Type</th>
+                                <th class="border-0 py-3 pe-4 fw-medium text-nowrap" style="color: #64748b;">Blacklisted<br>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody class="border-top-0">
+                            {% for agent in agents %}
+                            <tr style="background-color: {% cycle '#ffffff' '#fafafb' %}; border-bottom: 1px solid #f1f5f9;">
+                                <td class="ps-4 py-3 text-muted">{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                                <td class="py-3">
+                                    <a href="#" class="text-decoration-none fw-medium" style="color: #0d9488;">{{ agent.agent_name }}</a>
+                                </td>
+                                <td class="py-3" style="color: #334155;">{% if agent.pan and agent.pan != 'nan' %}{{ agent.pan }}{% endif %}</td>
+                                <td class="py-3" style="color: #334155;">{% if agent.agency_code and agent.agency_code != 'nan' %}{{ agent.agency_code }}{% endif %}</td>
+                                <td class="py-3" style="color: #0d9488;">{% if agent.insurer and agent.insurer != 'nan' %}{{ agent.insurer }}{% endif %}</td>
+                                <td class="py-3">
+                                    {% if agent.insurer_type and agent.insurer_type != 'nan' %}
+                                        {% if agent.insurer_type|lower == 'health' %}
+                                            <span class="badge" style="border: 1px solid #22c55e; color: #22c55e; background-color: transparent; border-radius: 12px; font-size: 10px; font-weight: 600; padding: 4px 10px; letter-spacing: 0.5px;">{{ agent.insurer_type|upper }}</span>
+                                        {% elif agent.insurer_type|lower == 'life' %}
+                                            <span class="badge" style="border: 1px solid #3b82f6; color: #3b82f6; background-color: transparent; border-radius: 12px; font-size: 10px; font-weight: 600; padding: 4px 10px; letter-spacing: 0.5px;">{{ agent.insurer_type|upper }}</span>
+                                        {% else %}
+                                            <span class="badge" style="border: 1px solid #f59e0b; color: #f59e0b; background-color: transparent; border-radius: 12px; font-size: 10px; font-weight: 600; padding: 4px 10px; letter-spacing: 0.5px;">{{ agent.insurer_type|upper }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="py-3 pe-4 text-muted">
+                                    {% if agent.blacklisted_date %}
+                                        {{ agent.blacklisted_date|date:"d-M-Y" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-5 text-muted" style="background-color: #ffffff;">
+                                    <i class="fa-regular fa-folder-open fs-2 mb-3 d-block opacity-25"></i>
+                                    No blacklisted agents found matching your criteria.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination Section -->
+                {% if page_obj.has_other_pages %}
+                <div class="d-flex justify-content-between align-items-center px-4 py-3 bg-white" style="border-top: 1px solid #f1f5f9;">
+                    <div style="font-size: 13px; color: #64748b;">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </div>
+                    <div>
+                        <div class="btn-group" role="group">
+                            {% if page_obj.has_previous %}
+                                <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if field != 'all' %}&field={{ field }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}" class="btn btn-outline-secondary btn-sm bg-white text-decoration-none" style="border-color: #e2e8f0; color: #475569; font-size: 13px; border-radius: 6px 0 0 6px;">
+                                    <i class="fa-solid fa-angle-left me-1"></i> Previous
+                                </a>
+                            {% else %}
+                                <button class="btn btn-outline-secondary btn-sm bg-white disabled" style="border-color: #e2e8f0; color: #94a3b8; font-size: 13px; border-radius: 6px 0 0 6px;">
+                                    <i class="fa-solid fa-angle-left me-1"></i> Previous
+                                </button>
+                            {% endif %}
+
+                            {% if page_obj.has_next %}
+                                <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if field != 'all' %}&field={{ field }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}" class="btn btn-outline-secondary btn-sm bg-white text-decoration-none" style="border-color: #e2e8f0; color: #475569; font-size: 13px; margin-left: -1px; border-radius: 0 6px 6px 0;">
+                                    Next <i class="fa-solid fa-angle-right ms-1"></i>
+                                </a>
+                            {% else %}
+                                <button class="btn btn-outline-secondary btn-sm bg-white disabled" style="border-color: #e2e8f0; color: #94a3b8; font-size: 13px; margin-left: -1px; border-radius: 0 6px 6px 0;">
+                                    Next <i class="fa-solid fa-angle-right ms-1"></i>
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="mt-4 p-3 mb-5" style="background-color: #fffbeb; border: 1px solid #fef3c7; font-size: 12px; color: #92400e; border-radius: 8px;">
+            <strong style="color: #b45309;">Disclaimer:</strong> This data is maintained by our internal verification team's blacklisted agents registry. PadosiAgent recommends verifying agent credentials before engaging in any insurance transactions. For the most up-to-date information, please contact our support team.
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const searchInput = document.getElementById('search-input');
+const fieldSelect = document.getElementById('field-select');
+const typeSelect = document.getElementById('type-select');
+const resultsContainer = document.getElementById('results-container');
+const resultsCounter = document.getElementById('results-counter');
+
+let debounceTimer;
+
+function fetchResults() {
+    const q = searchInput.value.trim();
+    const field = fieldSelect.value;
+    const type = typeSelect.value;
+    
+    const params = new URLSearchParams({ q, field, type });
+    
+    fetch(`?${params.toString()}`)
+        .then(res => res.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newTable = doc.getElementById('results-container');
+            const newCounter = doc.getElementById('results-counter');
+            if (newTable) resultsContainer.innerHTML = newTable.innerHTML;
+            if (newCounter) resultsCounter.innerHTML = newCounter.innerHTML;
+        });
+}
+
+searchInput.addEventListener('keyup', function() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(fetchResults, 300);
+});
+
+fieldSelect.addEventListener('change', fetchResults);
+typeSelect.addEventListener('change', fetchResults);
+</script>
+{% endblock %}

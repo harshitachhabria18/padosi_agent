@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.core.cache import cache
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_POST
 import re
@@ -482,6 +483,7 @@ def find_agents(request):
     should_gate_guest = False
     service_type_input = request.GET.getlist('ServiceType')
     service_type = service_type_input[0] if service_type_input else ''
+    insurance_type_input = request.GET.getlist('InsuranceType')
     
     has_any_filter = bool(
         request.GET.get('ServiceType') or
@@ -531,270 +533,14 @@ def find_agents(request):
         context['portfolioCompaniesByType'] = portfolio_companies_by_type
         return render(request, 'public/find-agents.html', context)
 
-    # Core query build
-    query = Agent.objects.filter(status='active', user__isnull=False)
-    query = query.select_related('profile', 'performanceStats').prefetch_related(
-        'insuranceSegments', 'reviews', 'serviceableCities', 'productExpertise'
+    all_agents, max_smart_rank, invalid_pincode, detected_area = build_agent_query(
+        pincode, location, lat, lng, detected_area, 
+        service_type_input, insurance_type_input, 
+        request.GET.getlist('InsuranceCompany'), 
+        request.GET.get('ClaimInsuranceCompany', '').strip(), 
+        request.GET.get('search', '').strip(), 
+        sort_by
     )
-
-    type_mapping = {
-        'Health Insurance': 'health', 'Health': 'health',
-        'Life Insurance': 'life', 'Life': 'life',
-        'Motor Insurance': 'motor', 'Motor': 'motor',
-        'SME Insurance': 'sme', 'SME': 'sme',
-        'Travel Insurance': 'travel', 'Travel': 'travel',
-        'Fire Insurance': 'fire', 'Fire': 'fire',
-        'Marine Insurance': 'marine', 'Marine': 'marine',
-        'Liability Insurance': 'liability', 'Liability': 'liability',
-        'Other General Insurance': 'other', 'Transport': 'transport',
-        'Workmen Compensation': 'workmen_compensation', 'GPA / GMC': 'gpa_gmc',
-        'Group Term Insurance': 'group_term', 'Cyber': 'cyber'
-    }
-
-    db_types = []
-    insurance_type_input = request.GET.getlist('InsuranceType')
-    if insurance_type_input:
-        for t in insurance_type_input:
-            mapped_t = type_mapping.get(t, t.lower().replace(' insurance', ''))
-            db_types.append(mapped_t)
-        query = query.filter(insuranceSegments__segment_type__in=db_types).distinct()
-
-    if service_type_input:
-        q_pref = Q()
-        if any(s in ['New Policy', 'Buying new insurance'] for s in service_type_input):
-            q_pref |= Q(leadPreferences__leads_new_business=True)
-        if any(s in ['Claim Assistance', 'Claim'] for s in service_type_input):
-            q_pref |= Q(leadPreferences__leads_claims_support=True)
-        if any(s in ['Policy Review', 'Insurance audit', 'Port / transfer'] for s in service_type_input):
-            q_pref |= Q(leadPreferences__leads_portfolio_analysis=True)
-            
-        q_spec = Q()
-        if db_types:
-            q_spec = Q(insuranceSegments__segment_type__in=db_types)
-            
-        q_no_pref = Q(leadPreferences__isnull=True)
-        query = query.filter(q_pref | q_spec | q_no_pref).distinct()
-
-    if location:
-        query = query.filter(
-            Q(profile__address__icontains=location) |
-            Q(profile__office_address__icontains=location) |
-            Q(profile__state__icontains=location) |
-            Q(serviceableCities__name__icontains=location)
-        ).distinct()
-
-    insurance_company_input = request.GET.getlist('InsuranceCompany')
-    if insurance_company_input:
-        q_company = Q(productExpertise__product_name__in=insurance_company_input)
-        if db_types:
-            q_company &= Q(productExpertise__segment_type__in=db_types)
-        query = query.filter(q_company).distinct()
-
-    claim_company_input = request.GET.get('ClaimInsuranceCompany', '').strip()
-    if claim_company_input:
-        query = query.filter(
-            Q(portfolios__primary_companies__icontains=claim_company_input) |
-            Q(portfolios__secondary_companies__icontains=claim_company_input)
-        ).distinct()
-
-    search_val = request.GET.get('search', '').strip()
-    if search_val:
-        query = query.filter(
-            Q(fullname__icontains=search_val) |
-            Q(profile__city__icontains=search_val) |
-            Q(profile__state__icontains=search_val)
-        ).distinct()
-
-    # Location check and API geocoding Fallback
-    user_lat = None
-    user_lng = None
-    if lat and lng:
-        try:
-            user_lat = float(lat)
-            user_lng = float(lng)
-        except (ValueError, TypeError):
-            pass
-
-    if not user_lat and not user_lng and pincode:
-        if not re.match(r'^[1-9]\d{5}$', pincode):
-            invalid_pincode = True
-        else:
-            try:
-                geo_svc = GeocodingService()
-                coords = geo_svc.resolve_coordinates(pincode)
-                if coords:
-                    user_lat = coords['lat']
-                    user_lng = coords['lng']
-                else:
-                    invalid_pincode = True
-            except Exception:
-                coords = DistanceService.get_pincode_coordinates(pincode)
-                if coords:
-                    user_lat = coords['lat']
-                    user_lng = coords['lng']
-                else:
-                    invalid_pincode = True
-
-    if invalid_pincode:
-        query = query.none()
-
-    # Proximity reverse-geocoding for detectedArea area name
-    needs_area_res = (
-        not detected_area or
-        bool(re.match(r'^(Area|Region)\s+\d', detected_area, re.IGNORECASE)) or
-        detected_area.startswith('PIN:') or
-        bool(re.match(r'^\d{6}$', detected_area))
-    )
-    if user_lat and user_lng and needs_area_res:
-        try:
-            pincode_match = Pincode.objects.annotate(
-                distance=RawSQL(
-                    "(6371 * acos(cos(radians(%s)) * cos(radians(latitude)) * cos(radians(longitude) - radians(%s)) + sin(radians(%s)) * sin(radians(latitude))))",
-                    (user_lat, user_lng, user_lat)
-                )
-            ).order_by('distance').first()
-            
-            resolved_from_db = False
-            if pincode_match and pincode_match.distance < 50:
-                candidate = pincode_match.office_name or pincode_match.district
-                if candidate and not re.match(r'^(Area|Region)\s+\d', candidate, re.IGNORECASE):
-                    detected_area = pincode_match.formatted_location
-                    resolved_from_db = True
-            
-            if not resolved_from_db:
-                geo_svc = GeocodingService()
-                detected_area = geo_svc.reverse_geocode(user_lat, user_lng)
-        except Exception as e:
-            logger.warning(f"find_agents: reverse geocoding failed: {e}")
-            
-        if detected_area:
-            request.session['detected_area'] = detected_area
-
-    if not detected_area and pincode:
-        try:
-            pincode_row = Pincode.objects.filter(pincode=pincode).first()
-            if pincode_row:
-                detected_area = pincode_row.formatted_location
-            else:
-                detected_area = f"PIN: {pincode}"
-        except Exception:
-            detected_area = f"PIN: {pincode}"
-        request.session['detected_area'] = detected_area
-
-    if user_lat and user_lng:
-        request.session['lat'] = str(user_lat)
-        request.session['lng'] = str(user_lng)
-
-    if not sort_by:
-        sort_by = 'distance' if (user_lat is not None and user_lng is not None) else 'match'
-
-    # Inject Padosi Smart Rank score calculation (MySQL-specific)
-    if db_types:
-        placeholders = ", ".join(["%s"] * len(db_types))
-        filter_match_sql = f"(SELECT COUNT(*) FROM agent_insurance_segments WHERE agent_insurance_segments.agent_id = agents.id AND agent_insurance_segments.segment_type IN ({placeholders}))"
-        filter_match_params = tuple(db_types)
-    else:
-        filter_match_sql = "(SELECT COUNT(*) FROM agent_insurance_segments WHERE agent_insurance_segments.agent_id = agents.id AND 1=0)"
-        filter_match_params = ()
-
-    smart_rank_expr = f"""
-        (CASE 
-            WHEN CAST(COALESCE(NULLIF(agents.experience_range, ''), NULLIF((SELECT experience_years FROM agent_profiles WHERE agent_profiles.agent_id = agents.id), 0), 0) AS UNSIGNED) >= 15 THEN 20 
-            ELSE (CAST(COALESCE(NULLIF(agents.experience_range, ''), NULLIF((SELECT experience_years FROM agent_profiles WHERE agent_profiles.agent_id = agents.id), 0), 0) AS UNSIGNED) / 15) * 20 
-        END) +
-        (CASE WHEN agents.client_base >= 500 THEN 20 ELSE (IFNULL(agents.client_base, 0) / 500) * 20 END) +
-        (CASE 
-            WHEN (SELECT IFNULL(claims_processed, 0) FROM agent_performance_stats WHERE agent_performance_stats.agent_id = agents.id) >= 100 THEN 20 
-            ELSE (SELECT IFNULL(claims_processed, 0) FROM agent_performance_stats WHERE agent_performance_stats.agent_id = agents.id) / 100 * 20 
-        END) +
-        (CASE WHEN agents.badge IS NOT NULL AND agents.badge != 'none' AND agents.badge != '' THEN 15 ELSE 0 END) +
-        (CASE WHEN (SELECT AVG(rating) FROM agent_reviews WHERE agent_reviews.agent_id = agents.id AND agent_reviews.is_approved = 1) >= 4.5 THEN 10 ELSE 0 END) +
-        (CASE 
-            WHEN COALESCE(
-                (SELECT last_login_at FROM users WHERE users.id = agents.user_id),
-                (SELECT last_login FROM auth_user WHERE auth_user.id = agents.user_id)
-            ) >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 DAY) THEN 50
-            WHEN COALESCE(
-                (SELECT last_login_at FROM users WHERE users.id = agents.user_id),
-                (SELECT last_login FROM auth_user WHERE auth_user.id = agents.user_id)
-            ) >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 14 DAY) THEN 25
-            WHEN COALESCE(
-                (SELECT last_login_at FROM users WHERE users.id = agents.user_id),
-                (SELECT last_login FROM auth_user WHERE auth_user.id = agents.user_id)
-            ) >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 30 DAY) THEN 10
-            ELSE 0
-        END) +
-        ((
-            (CASE WHEN (SELECT profile_photo_path FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) IS NOT NULL AND (SELECT profile_photo_path FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) != '' THEN 1 ELSE 0 END) +
-            (CASE WHEN (SELECT address FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) IS NOT NULL AND (SELECT address FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) != '' THEN 1 ELSE 0 END) +
-            (CASE WHEN (agents.experience_range IS NOT NULL AND agents.experience_range != '') OR (SELECT experience_years FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) > 0 THEN 1 ELSE 0 END) +
-            (CASE WHEN (SELECT whatsapp FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) IS NOT NULL AND (SELECT whatsapp FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) != '' THEN 1 ELSE 0 END) +
-            (CASE WHEN (SELECT license_number FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) IS NOT NULL AND (SELECT license_number FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) != '' THEN 1 ELSE 0 END) +
-            (CASE WHEN (SELECT languages FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) IS NOT NULL AND (SELECT languages FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) != '' THEN 1 ELSE 0 END)
-        ) * 5) +
-        ({filter_match_sql} * 30)
-    """
-
-    query = query.annotate(padosi_smart_rank=RawSQL(smart_rank_expr, filter_match_params))
-
-    # Fetch and process/sort in memory
-    all_agents = list(query)
-
-    for agent in all_agents:
-        agent.distance = None
-        # Proximity distance calculation
-        if user_lat is not None and user_lng is not None:
-            agent_coords = None
-            if agent.latitude and agent.longitude:
-                agent_coords = {'lat': float(agent.latitude), 'lng': float(agent.longitude)}
-            
-            if not agent_coords and agent.profile:
-                agent_pincodes = agent.profile.service_pincodes
-                if agent_pincodes and isinstance(agent_pincodes, list):
-                    agent_pincode = agent_pincodes[0]
-                    if isinstance(agent_pincode, dict):
-                        agent_pincode = agent_pincode.get('pincode', '')
-                    agent_coords = DistanceService.get_pincode_coordinates(agent_pincode)
-            
-            if not agent_coords and agent.profile:
-                first_city = agent.serviceableCities.first()
-                if first_city:
-                    agent_coords = DistanceService.get_city_coordinates(first_city.name)
-
-            if agent_coords:
-                agent.distance = DistanceService.calculate(user_lat, user_lng, agent_coords['lat'], agent_coords['lng'])
-            else:
-                agent.distance = 999999
-
-    # Filter to 50km radius if user coords are present
-    if user_lat is not None and user_lng is not None:
-        all_agents = [a for a in all_agents if a.distance is not None and a.distance <= 50]
-
-    # In-memory sorting matching Laravel's logic
-    if user_lat is not None and user_lng is not None and sort_by == 'distance':
-        all_agents.sort(key=lambda x: (x.distance if x.distance is not None else 999999, -(x.padosi_smart_rank or 0)))
-    elif sort_by == 'rating':
-        all_agents.sort(key=lambda x: (-x.average_rating, -(x.padosi_smart_rank or 0)))
-    elif sort_by == 'experience':
-        all_agents.sort(key=lambda x: (-x.experience_years, -(x.padosi_smart_rank or 0)))
-    else:
-        # Default: best match % (smart_rank desc), tiebreaker: distance asc
-        all_agents.sort(key=lambda x: (
-            -(x.padosi_smart_rank or 0), 
-            x.distance if x.distance is not None else 999999
-        ))
-
-    # Calculate match percentage and attach reviews/stats properties
-    max_smart_rank = max([a.padosi_smart_rank or 0 for a in all_agents]) if all_agents else 165
-    if max_smart_rank <= 0:
-        max_smart_rank = 165
-
-    for a in all_agents:
-        rank = a.padosi_smart_rank or 0
-        a.match_percent = int(min(99.0, max(80.0, 80.0 + (rank / max_smart_rank) * 19.0)))
-        # Attach helper attributes for templates
-        a.review_count_val = a.review_count
-
     # Paginate results
     page = request.GET.get('page', 1)
     paginator = Paginator(all_agents, 10)
@@ -927,3 +673,354 @@ def custom_page(request, slug):
         
     return render(request, 'public/page.html', {'page': page})
 
+
+def blacklisted_agents(request):
+    from apps.home.models.blacklisted_agent import BlacklistedAgent
+    from django.db.models import Q
+    from django.core.paginator import Paginator
+    
+    query = request.GET.get('q', '').strip()
+    field = request.GET.get('field', 'all')
+    type_filter = request.GET.get('type', '').strip()
+    page = request.GET.get('page', 1)
+    
+    agents = BlacklistedAgent.objects.all()
+    
+    if query:
+        if field == 'pan':
+            agents = agents.filter(pan__icontains=query)
+        elif field == 'agency_code':
+            agents = agents.filter(agency_code__icontains=query)
+        elif field == 'agent_name':
+            agents = agents.filter(agent_name__icontains=query)
+        elif field == 'insurer':
+            agents = agents.filter(insurer__icontains=query)
+        else:
+            agents = agents.filter(
+                Q(agent_name__icontains=query) |
+                Q(pan__icontains=query) |
+                Q(agency_code__icontains=query) |
+                Q(insurer__icontains=query)
+            )
+            
+    if type_filter:
+        agents = agents.filter(insurer_type__iexact=type_filter)
+        
+    total_count = agents.count()
+    
+    # Get unique insurer types for filter dropdown
+    insurer_types = BlacklistedAgent.objects.values_list(
+        'insurer_type', flat=True
+    ).distinct().exclude(
+        insurer_type__isnull=True
+    ).exclude(
+        insurer_type=''
+    ).order_by('insurer_type')
+    
+    paginator = Paginator(agents.order_by('agent_name'), 25)
+    page_obj = paginator.get_page(page)
+    
+    return render(request, 'public/blacklisted_agents.html', {
+        'agents': page_obj,
+        'query': query,
+        'field': field,
+        'type_filter': type_filter,
+        'total_count': total_count,
+        'insurer_types': insurer_types,
+        'page_obj': page_obj,
+    })
+
+def build_agent_query(pincode, location, lat, lng, detected_area, service_type_input, insurance_type_input, insurance_company_input, claim_company_input, search_val, sort_by, request=None):
+    invalid_pincode = False
+    # Core query build
+    query = Agent.objects.filter(status='active', user__isnull=False)
+    query = query.select_related('profile', 'performanceStats').prefetch_related(
+        'insuranceSegments', 'reviews', 'serviceableCities', 'productExpertise'
+    )
+    
+    type_mapping = {
+        'Health Insurance': 'health', 'Health': 'health',
+        'Life Insurance': 'life', 'Life': 'life',
+        'Motor Insurance': 'motor', 'Motor': 'motor',
+        'SME Insurance': 'sme', 'SME': 'sme',
+        'Travel Insurance': 'travel', 'Travel': 'travel',
+        'Fire Insurance': 'fire', 'Fire': 'fire',
+        'Marine Insurance': 'marine', 'Marine': 'marine',
+        'Liability Insurance': 'liability', 'Liability': 'liability',
+        'Other General Insurance': 'other', 'Transport': 'transport',
+        'Workmen Compensation': 'workmen_compensation', 'GPA / GMC': 'gpa_gmc',
+        'Group Term Insurance': 'group_term', 'Cyber': 'cyber'
+    }
+    
+    db_types = []
+    insurance_type_input = insurance_type_input
+    if insurance_type_input:
+        for t in insurance_type_input:
+            mapped_t = type_mapping.get(t, t.lower().replace(' insurance', ''))
+            db_types.append(mapped_t)
+        query = query.filter(insuranceSegments__segment_type__in=db_types).distinct()
+    
+    if service_type_input:
+        q_pref = Q()
+        if any(s in ['New Policy', 'Buying new insurance'] for s in service_type_input):
+            q_pref |= Q(leadPreferences__leads_new_business=True)
+        if any(s in ['Claim Assistance', 'Claim'] for s in service_type_input):
+            q_pref |= Q(leadPreferences__leads_claims_support=True)
+        if any(s in ['Policy Review', 'Insurance audit', 'Port / transfer'] for s in service_type_input):
+            q_pref |= Q(leadPreferences__leads_portfolio_analysis=True)
+            
+        q_spec = Q()
+        if db_types:
+            q_spec = Q(insuranceSegments__segment_type__in=db_types)
+            
+        q_no_pref = Q(leadPreferences__isnull=True)
+        query = query.filter(q_pref | q_spec | q_no_pref).distinct()
+    
+    if location:
+        query = query.filter(
+            Q(profile__address__icontains=location) |
+            Q(profile__office_address__icontains=location) |
+            Q(profile__state__icontains=location) |
+            Q(serviceableCities__name__icontains=location)
+        ).distinct()
+    
+    insurance_company_input = insurance_company_input
+    if insurance_company_input:
+        q_company = Q(productExpertise__product_name__in=insurance_company_input)
+        if db_types:
+            q_company &= Q(productExpertise__segment_type__in=db_types)
+        query = query.filter(q_company).distinct()
+    
+    claim_company_input = claim_company_input.strip()
+    if claim_company_input:
+        query = query.filter(
+            Q(portfolios__primary_companies__icontains=claim_company_input) |
+            Q(portfolios__secondary_companies__icontains=claim_company_input)
+        ).distinct()
+    
+    search_val = search_val.strip()
+    if search_val:
+        query = query.filter(
+            Q(fullname__icontains=search_val) |
+            Q(profile__city__icontains=search_val) |
+            Q(profile__state__icontains=search_val)
+        ).distinct()
+    
+    # Location check and API geocoding Fallback
+    user_lat = None
+    user_lng = None
+    if lat and lng:
+        try:
+            user_lat = float(lat)
+            user_lng = float(lng)
+        except (ValueError, TypeError):
+            pass
+    
+    if not user_lat and not user_lng and pincode:
+        if not re.match(r'^[1-9]\d{5}$', pincode):
+            invalid_pincode = True
+        else:
+            # Cache check first: pincode→coords never changes, safe to cache 24 h.
+            _geo_cache_key = f"geocode_pincode_{pincode}"
+            _cached = cache.get(_geo_cache_key)
+            if _cached:
+                user_lat = _cached['lat']
+                user_lng = _cached['lng']
+            else:
+                try:
+                    geo_svc = GeocodingService()
+                    coords = geo_svc.resolve_coordinates(pincode)
+                    if coords:
+                        user_lat = coords['lat']
+                        user_lng = coords['lng']
+                        cache.set(_geo_cache_key, coords, timeout=86400)  # 24 h
+                    else:
+                        invalid_pincode = True
+                except Exception:
+                    coords = DistanceService.get_pincode_coordinates(pincode)
+                    if coords:
+                        user_lat = coords['lat']
+                        user_lng = coords['lng']
+                        cache.set(_geo_cache_key, coords, timeout=86400)  # 24 h
+                    else:
+                        invalid_pincode = True
+    
+    if invalid_pincode:
+        query = query.none()
+    
+    # Proximity reverse-geocoding for detectedArea area name
+    needs_area_res = (
+        not detected_area or
+        bool(re.match(r'^(Area|Region)\s+\d', detected_area, re.IGNORECASE)) or
+        detected_area.startswith('PIN:') or
+        bool(re.match(r'^\d{6}$', detected_area))
+    )
+    if user_lat and user_lng and needs_area_res:
+        try:
+            pincode_match = Pincode.objects.annotate(
+                distance=RawSQL(
+                    "(6371 * acos(cos(radians(%s)) * cos(radians(latitude)) * cos(radians(longitude) - radians(%s)) + sin(radians(%s)) * sin(radians(latitude))))",
+                    (user_lat, user_lng, user_lat)
+                )
+            ).order_by('distance').first()
+            
+            resolved_from_db = False
+            if pincode_match and pincode_match.distance < 50:
+                candidate = pincode_match.office_name or pincode_match.district
+                if candidate and not re.match(r'^(Area|Region)\s+\d', candidate, re.IGNORECASE):
+                    detected_area = pincode_match.formatted_location
+                    resolved_from_db = True
+            
+            if not resolved_from_db:
+                geo_svc = GeocodingService()
+                detected_area = geo_svc.reverse_geocode(user_lat, user_lng)
+        except Exception as e:
+            logger.warning(f"find_agents: reverse geocoding failed: {e}")
+            
+        if detected_area and request:
+            request.session['detected_area'] = detected_area
+    
+    if not detected_area and pincode:
+        try:
+            pincode_row = Pincode.objects.filter(pincode=pincode).first()
+            if pincode_row:
+                detected_area = pincode_row.formatted_location
+            else:
+                detected_area = f"PIN: {pincode}"
+        except Exception:
+            detected_area = f"PIN: {pincode}"
+        if request:
+            request.session['detected_area'] = detected_area
+    
+    if user_lat and user_lng and request:
+        request.session['lat'] = str(user_lat)
+        request.session['lng'] = str(user_lng)
+    
+    if not sort_by:
+        sort_by = 'distance' if (user_lat is not None and user_lng is not None) else 'match'
+    
+    # Inject Padosi Smart Rank score calculation (MySQL-specific)
+    if db_types:
+        placeholders = ", ".join(["%s"] * len(db_types))
+        filter_match_sql = f"(SELECT COUNT(*) FROM agent_insurance_segments WHERE agent_insurance_segments.agent_id = agents.id AND agent_insurance_segments.segment_type IN ({placeholders}))"
+        filter_match_params = tuple(db_types)
+    else:
+        filter_match_sql = "(SELECT COUNT(*) FROM agent_insurance_segments WHERE agent_insurance_segments.agent_id = agents.id AND 1=0)"
+        filter_match_params = ()
+    
+    smart_rank_expr = f"""
+        (CASE 
+            WHEN CAST(COALESCE(NULLIF(agents.experience_range, ''), NULLIF((SELECT experience_years FROM agent_profiles WHERE agent_profiles.agent_id = agents.id), 0), 0) AS UNSIGNED) >= 15 THEN 20 
+            ELSE (CAST(COALESCE(NULLIF(agents.experience_range, ''), NULLIF((SELECT experience_years FROM agent_profiles WHERE agent_profiles.agent_id = agents.id), 0), 0) AS UNSIGNED) / 15) * 20 
+        END) +
+        (CASE WHEN agents.client_base >= 500 THEN 20 ELSE (IFNULL(agents.client_base, 0) / 500) * 20 END) +
+        (CASE 
+            WHEN (SELECT IFNULL(claims_processed, 0) FROM agent_performance_stats WHERE agent_performance_stats.agent_id = agents.id) >= 100 THEN 20 
+            ELSE (SELECT IFNULL(claims_processed, 0) FROM agent_performance_stats WHERE agent_performance_stats.agent_id = agents.id) / 100 * 20 
+        END) +
+        (CASE WHEN agents.badge IS NOT NULL AND agents.badge != 'none' AND agents.badge != '' THEN 15 ELSE 0 END) +
+        (CASE WHEN (SELECT AVG(rating) FROM agent_reviews WHERE agent_reviews.agent_id = agents.id AND agent_reviews.is_approved = 1) >= 4.5 THEN 10 ELSE 0 END) +
+        (CASE 
+            WHEN COALESCE(
+                (SELECT last_login_at FROM users WHERE users.id = agents.user_id),
+                (SELECT last_login FROM auth_user WHERE auth_user.id = agents.user_id)
+            ) >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 DAY) THEN 50
+            WHEN COALESCE(
+                (SELECT last_login_at FROM users WHERE users.id = agents.user_id),
+                (SELECT last_login FROM auth_user WHERE auth_user.id = agents.user_id)
+            ) >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 14 DAY) THEN 25
+            WHEN COALESCE(
+                (SELECT last_login_at FROM users WHERE users.id = agents.user_id),
+                (SELECT last_login FROM auth_user WHERE auth_user.id = agents.user_id)
+            ) >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 30 DAY) THEN 10
+            ELSE 0
+        END) +
+        ((
+            (CASE WHEN (SELECT profile_photo_path FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) IS NOT NULL AND (SELECT profile_photo_path FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) != '' THEN 1 ELSE 0 END) +
+            (CASE WHEN (SELECT address FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) IS NOT NULL AND (SELECT address FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) != '' THEN 1 ELSE 0 END) +
+            (CASE WHEN (agents.experience_range IS NOT NULL AND agents.experience_range != '') OR (SELECT experience_years FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) > 0 THEN 1 ELSE 0 END) +
+            (CASE WHEN (SELECT whatsapp FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) IS NOT NULL AND (SELECT whatsapp FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) != '' THEN 1 ELSE 0 END) +
+            (CASE WHEN (SELECT license_number FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) IS NOT NULL AND (SELECT license_number FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) != '' THEN 1 ELSE 0 END) +
+            (CASE WHEN (SELECT languages FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) IS NOT NULL AND (SELECT languages FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) != '' THEN 1 ELSE 0 END)
+        ) * 5) +
+        ({filter_match_sql} * 30)
+    """
+    
+    query = query.annotate(padosi_smart_rank=RawSQL(smart_rank_expr, filter_match_params))
+    
+    # Fetch and process/sort in memory
+    all_agents = list(query)
+    
+    for agent in all_agents:
+        agent.distance = None
+        # Proximity distance calculation
+        if user_lat is not None and user_lng is not None:
+            agent_coords = None
+            if agent.latitude and agent.longitude:
+                agent_coords = {'lat': float(agent.latitude), 'lng': float(agent.longitude)}
+            
+            if not agent_coords and agent.profile:
+                agent_pincodes = agent.profile.service_pincodes
+                if agent_pincodes and isinstance(agent_pincodes, list):
+                    agent_pincode = agent_pincodes[0]
+                    if isinstance(agent_pincode, dict):
+                        agent_pincode = agent_pincode.get('pincode', '')
+                    agent_coords = DistanceService.get_pincode_coordinates(agent_pincode)
+            
+            if not agent_coords and agent.profile:
+                first_city = agent.serviceableCities.first()
+                if first_city:
+                    agent_coords = DistanceService.get_city_coordinates(first_city.name)
+    
+            if agent_coords:
+                agent.distance = DistanceService.calculate(user_lat, user_lng, agent_coords['lat'], agent_coords['lng'])
+            else:
+                agent.distance = 999999
+    
+    # Filter to 50km radius if user coords are present
+    if user_lat is not None and user_lng is not None:
+        all_agents = [a for a in all_agents if a.distance is not None and a.distance <= 50]
+    
+    # In-memory sorting matching Laravel's logic
+    if sort_by == 'composite':
+        for agent in all_agents:
+            dist = agent.distance if agent.distance is not None else 50.0
+            distance_score = max(0.0, 100.0 - (dist * 2.0))
+            rank = agent.padosi_smart_rank or 0
+            smart_rank_score = min(100.0, (rank / 165.0) * 100.0)
+            rating = getattr(agent, 'average_rating', 0.0)
+            rating_score = (rating / 5.0) * 100.0 if rating > 0 else 80.0
+            exp = getattr(agent, 'experience_years', 0)
+            exp_score = min(100.0, (exp / 15.0) * 100.0) if exp > 0 else 50.0
+            agent.composite_score = (distance_score * 0.45) + (smart_rank_score * 0.25) + (rating_score * 0.15) + (exp_score * 0.15)
+            
+        all_agents.sort(key=lambda x: (
+            -getattr(x, 'composite_score', 0),
+            x.distance if x.distance is not None else 999999,
+            -(x.padosi_smart_rank or 0)
+        ))
+    elif user_lat is not None and user_lng is not None and sort_by == 'distance':
+        all_agents.sort(key=lambda x: (x.distance if x.distance is not None else 999999, -(x.padosi_smart_rank or 0)))
+    elif sort_by == 'rating':
+        all_agents.sort(key=lambda x: (-x.average_rating, -(x.padosi_smart_rank or 0)))
+    elif sort_by == 'experience':
+        all_agents.sort(key=lambda x: (-x.experience_years, -(x.padosi_smart_rank or 0)))
+    else:
+        # Default: best match % (smart_rank desc), tiebreaker: distance asc
+        all_agents.sort(key=lambda x: (
+            -(x.padosi_smart_rank or 0), 
+            x.distance if x.distance is not None else 999999
+        ))
+    
+    # Calculate match percentage and attach reviews/stats properties
+    max_smart_rank = max([a.padosi_smart_rank or 0 for a in all_agents]) if all_agents else 165
+    if max_smart_rank <= 0:
+        max_smart_rank = 165
+    
+    for a in all_agents:
+        rank = a.padosi_smart_rank or 0
+        a.match_percent = int(min(99.0, max(80.0, 80.0 + (rank / max_smart_rank) * 19.0)))
+        # Attach helper attributes for templates
+        a.review_count_val = a.review_count
+    
+    return all_agents, max_smart_rank, invalid_pincode, detected_area

@@ -754,64 +754,6 @@
         .skeleton-agent-card .sac-pic { width: 100%; min-width: unset; }
     }
     /* --- Sticky Filter FAB --- */
-    .filter-fab-container {
-        position: fixed;
-        bottom: 25px;
-        left: 50%;
-        transform: translateX(-50%) translateY(0);
-        z-index: 1500;
-        transition: all 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-        pointer-events: none;
-    }
-    /* Hide FAB when registration popup (SweetAlert) is open */
-    body.swal2-shown .filter-fab-container {
-        display: none !important;
-    }
-    .filter-fab-container.pushed-up {
-        bottom: 180px; /* Elevated to completely clear the compare bar on all devices */
-    }
-    .btn-filter-fab {
-        background: linear-gradient(90deg, #1e40af 0%, #0f766e 100%);
-        color: #fff;
-        border: none;
-        border-radius: 50px;
-        width: auto;
-        height: auto;
-        padding: 14px 28px;
-        font-weight: 700;
-        font-size: 16px;
-        box-shadow: 0 12px 35px rgba(15, 118, 110, 0.35);
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        white-space: nowrap;
-        pointer-events: auto;
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .btn-filter-fab:hover {
-        transform: translateY(-2px) scale(1.02);
-        box-shadow: 0 15px 45px rgba(15, 118, 110, 0.45);
-        filter: brightness(1.1);
-    }
-    .btn-filter-fab:active {
-        transform: scale(0.92);
-    }
-    .filter-badge-dot {
-        width: 8px;
-        height: 8px;
-        background: #818cf8;
-        border-radius: 50%;
-        box-shadow: 0 0 10px rgba(129, 140, 248, 0.8);
-    }
-    @media (max-width: 991px) {
-        .btn-filter-fab {
-            padding: 14px 28px; /* Restore pill Shape */
-        }
-    }
-    @media (min-width: 1181px) {
-        .filter-fab-container { display: flex; } 
-    }
 
     /* --- Mobile Filter Floating Card (Redesigned Dark Premium) --- */
     @media (max-width: 1180px) {
@@ -934,13 +876,10 @@
         }
 
         .find-agents-filter .filter-actions-container {
-            position: sticky;
-            bottom: -30px;
             background: #ffffff;
-            padding: 16px 0 24px;
-            margin: 20px 0 -30px !important;
+            padding-top: 16px;
+            margin-top: 20px !important;
             border-top: 1px solid #e2e8f0;
-            z-index: 20;
             display: flex !important;
             width: 100% !important;
             gap: 10px;
@@ -1335,12 +1274,12 @@
             <!-- Filter Icon Button -->
             <button type="button" class="compact-filter-btn position-relative" id="toggle-compact-filter" title="Toggle Sidebar Filters">
                 <i class="fas fa-sliders-h"></i>
-                {% if request.GET.ServiceType or request.GET.InsuranceType or request.GET.InsuranceCompany or request.session.last_pincode %}
+                {% if request.GET.ServiceType or request.GET.pincode or request.GET.InsuranceType or request.GET.InsuranceCompany %}
                     <div class="filter-badge-dot" style="position: absolute; top: 6px; right: 6px;"></div>
                 {% endif %}
             </button>
 
-            <!-- Service Type Custom Dropdown -->
+<!-- Service Type Custom Dropdown -->
             <div class="custom-pill-dropdown-container" id="ServiceType-compact-container">
                 <button type="button" class="custom-pill-dropdown-btn">
                     <span class="btn-text">Service</span>
@@ -1734,16 +1673,6 @@
 <!-- Mobile Filter Overlay Backdrop -->
 <div class="filter-overlay d-lg-none"></div>
 
-<!-- Floating Action Button for Filters on Mobile -->
-<div class="filter-fab-container d-lg-none">
-    <button class="btn-filter-fab" onclick="window.openMobileFilter()">
-        <i class="fas fa-sliders-h"></i>
-        <span>Filters</span>
-        {% if request.GET.ServiceType or request.GET.InsuranceType or request.GET.InsuranceCompany or request.session.last_pincode %}
-            <div class="filter-badge-dot"></div>
-        {% endif %}
-    </button>
-</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -2397,15 +2326,26 @@
         let locationPopupTimer = null;
 
         $(document).ready(function() {
-            if (!hasLocation) {
-                locationPopupTimer = setTimeout(() => {
-                    if (!isFindAgentsPage()) {
-                        return;
-                    }
-                    if (typeof window.showLocationPopup === 'function') {
+            if (!hasLocation && isFindAgentsPage()) {
+                const triggerPincodePopup = () => {
+                    if (typeof window.showLocationPopup === 'function' && isFindAgentsPage()) {
                         window.showLocationPopup('{% url 'home:find_agents' %}');
                     }
-                }, 5000);
+                };
+
+                if (typeof window.showGpsPopup === 'function') {
+                    // Show GPS popup first
+                    window.showGpsPopup('{% url 'home:find_agents' %}', () => {
+                        // On dismiss or fail: wait 5 seconds, then show pincode popup
+                        if (locationPopupTimer) {
+                            clearTimeout(locationPopupTimer);
+                        }
+                        locationPopupTimer = setTimeout(triggerPincodePopup, 5000);
+                    });
+                } else {
+                    // Fallback to pincode popup after 5 seconds
+                    locationPopupTimer = setTimeout(triggerPincodePopup, 5000);
+                }
             }
         });
 
@@ -2415,6 +2355,8 @@
                 locationPopupTimer = null;
             }
         });
+
+        
 
         // Agent Comparison Logic
         const _compareUserId = '{{ request.user.id|default:"guest" }}';
@@ -2428,10 +2370,10 @@
 
         // Hide filter FAB when comparison modal opens, restore when it closes
         $('#comparisonModal').on('show.bs.modal', function() {
-            $('.filter-fab-container').hide();
+            
         });
         $('#comparisonModal').on('hidden.bs.modal', function() {
-            $('.filter-fab-container').show();
+            
         });
 
         // Dedicated lead capture for comparison modal buttons.
@@ -2563,11 +2505,11 @@
 
             if (selectedCompareAgents.length > 0) {
                 bar.addClass('show');
-                $('.filter-fab-container').addClass('pushed-up');
+                
                 compareBtn.prop('disabled', selectedCompareAgents.length < 2);
             } else {
                 bar.removeClass('show');
-                $('.filter-fab-container').removeClass('pushed-up');
+                
             }
         }
 
@@ -2848,7 +2790,96 @@
             }
         };
 
+        window.showGpsPopup = function(baseUrl, onDismiss) {
+            if (Swal.isVisible()) return;
+            if (typeof window.closeMobileFilter === 'function') window.closeMobileFilter();
+            const isMobilePopup = window.matchMedia('(max-width: 576px)').matches;
+            let isRedirecting = false;
+
+            Swal.fire({
+                title: '',
+                html: `
+                    <div class="swal-welcome-content" style="font-family: 'Urbanist', sans-serif;">
+                        <div class="guest-gate-brand" style="text-align: center;">
+                            <img src="{% static 'img/logo.png' %}" alt="PadosiAgent" style="width: 120px; display: block; margin: 0 auto 10px;">
+                        </div>
+                        <h3 class="guest-gate-heading" style="font-size: 22px; font-weight: 800; color: #1e3a8a; text-align: center; margin-top: 15px; margin-bottom: 5px;">Find Agents Near You</h3>
+                        <p class="guest-gate-subtext" style="color: #64748b; font-size: 13px; text-align: center; margin-bottom: 20px;">"Agents can serve you better when they are your Padosi"</p>
+                        <div class="guest-gate-form mt-4">
+                            <div id="swal-error-container-gps" class="alert alert-danger d-none" style="font-size: 13px; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: none; background-color: #fef2f2; color: #991b1b; text-align: left;">
+                                <i class="fas fa-exclamation-circle mr-2"></i> <span id="swal-error-message-gps"></span>
+                            </div>
+                            <div class="padosi-location-flow mt-2" style="font-family: 'Urbanist', sans-serif;">
+                                <button id="allow-gps-btn" type="button" style="width: 100%; height: 60px; background: #fff; color: #273c8e; border: 2px solid #273c8e; border-radius: 16px; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s;">
+                                    <i class="fas fa-location-arrow"></i> Use Current Location
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                showConfirmButton: false,
+                showCancelButton: true,
+                cancelButtonText: 'Cancel',
+                focusConfirm: false,
+                padding: isMobilePopup ? '1rem' : '1.5rem',
+                width: isMobilePopup ? '92vw' : '450px',
+                customClass: { 
+                    popup: 'guest-gate-popup',
+                    cancelButton: 'btn btn-outline-secondary rounded-pill px-4 mt-2'
+                },
+                buttonsStyling: false,
+                didOpen: () => {
+                    let gpsRequestActive = false;
+                    $('#allow-gps-btn').on('click', function() {
+                        if (gpsRequestActive) return;
+                        gpsRequestActive = true;
+                        const btn = $(this);
+                        const origHtml = btn.html();
+                        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Accessing GPS...');
+
+                        if (!navigator.geolocation) {
+                            $('#swal-error-message-gps').text('Geolocation is not supported by your browser.');
+                            $('#swal-error-container-gps').removeClass('d-none');
+                            btn.prop('disabled', false).html(origHtml);
+                            gpsRequestActive = false;
+                            return;
+                        }
+
+                        navigator.geolocation.getCurrentPosition((pos) => {
+                            isRedirecting = true;
+                            let targetUrl;
+                            try {
+                                targetUrl = new URL(baseUrl, window.location.origin);
+                            } catch(err) {
+                                targetUrl = new URL(window.location.origin + baseUrl);
+                            }
+                            targetUrl.searchParams.set('lat', pos.coords.latitude);
+                            targetUrl.searchParams.set('lng', pos.coords.longitude);
+                            targetUrl.searchParams.delete('page');
+                            window.location.href = targetUrl.toString();
+                        }, (err) => {
+                            let errorMsg = 'Location access denied.';
+                            if (err.code === err.PERMISSION_DENIED) errorMsg = 'Permission denied. Please enable location access.';
+                            else if (err.code === err.POSITION_UNAVAILABLE) errorMsg = 'Location information is unavailable.';
+                            else if (err.code === err.TIMEOUT) errorMsg = 'Location request timed out.';
+                            $('#swal-error-message-gps').text(errorMsg);
+                            $('#swal-error-container-gps').removeClass('d-none');
+                            btn.prop('disabled', false).html(origHtml);
+                            gpsRequestActive = false;
+                            setTimeout(() => { Swal.close(); }, 1500);
+                        }, { timeout: 10000 });
+                    });
+                }
+            }).then((result) => {
+                if (!isRedirecting && typeof onDismiss === 'function') {
+                    onDismiss();
+                }
+            });
+        };
+
+
         window.showLocationPopup = function(baseUrl) {
+
             if (Swal.isVisible()) return;
             if (typeof window.closeMobileFilter === 'function') window.closeMobileFilter();
             const isMobilePopup = window.matchMedia('(max-width: 576px)').matches;
@@ -2978,289 +3009,9 @@
             });
         };
 
-        window.showQuickRegisterPopup = function(redirectUrl, onSuccessCallback) {
-            if (Swal.isVisible()) return;
-
-            const isMobilePopup = window.matchMedia('(max-width: 576px)').matches;
-
-            let welcomeHtml = `
-                <div class="swal-welcome-content" style="font-family: 'Urbanist', sans-serif; text-align: left;">
-                    <div class="guest-gate-brand" style="text-align: center;">
-                        <img src="{% static 'img/logo.png' %}" alt="PadosiAgent" style="width: 120px; display: block; margin: 0 auto 10px;">
-                    </div>
-                    <h3 class="guest-gate-heading" style="font-size: 22px; font-weight: 800; color: #1e3a8a; text-align: center; margin-top: 15px; margin-bottom: 5px;">Welcome to PadosiAgent! 👋</h3>
-                    <p class="guest-gate-subtext" style="color: #64748b; font-size: 13px; text-align: center; margin-bottom: 20px;">
-                        "Agents can serve you better when they are your Padosi"
-                    </p>
-
-                    <div id="swal-error-container" class="alert alert-danger d-none" style="font-size: 13px; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: none; background-color: #fef2f2; color: #991b1b; text-align: left;">
-                        <i class="fas fa-exclamation-circle mr-2"></i> <span id="swal-error-message"></span>
-                    </div>
-
-                    <div class="guest-gate-form">
-                        <div class="guest-gate-group" style="margin-bottom: 15px;">
-                            <label class="guest-gate-label" style="font-weight: 700; font-size: 12px; color: #475569; display: block; margin-bottom: 5px;">
-                                <i class="far fa-user mr-2"></i> Name *
-                            </label>
-                            <input type="text" id="swal-fullname" class="form-control guest-gate-input" placeholder="Enter your full name" style="height: 48px; border-radius: 12px; border: 1.5px solid #cbd5e1; outline: none; padding: 10px 14px; font-size: 14px; font-weight: 600; width: 100%;">
-                        </div>
-                        
-                        <div class="guest-gate-group" style="margin-bottom: 15px;">
-                            <label class="guest-gate-label" style="font-weight: 700; font-size: 12px; color: #475569; display: block; margin-bottom: 5px;">
-                                <i class="far fa-envelope mr-2"></i> Email *
-                            </label>
-                            <input type="email" id="swal-email" class="form-control guest-gate-input" placeholder="your.email@example.com" style="height: 48px; border-radius: 12px; border: 1.5px solid #cbd5e1; outline: none; padding: 10px 14px; font-size: 14px; font-weight: 600; width: 100%;">
-                        </div>
-                        
-                        <div class="guest-gate-group" style="margin-bottom: 20px;">
-                            <label class="guest-gate-label" style="font-weight: 700; font-size: 12px; color: #475569; display: block; margin-bottom: 5px;">
-                                <i class="fas fa-phone-volume mr-2"></i> Mobile Number *
-                            </label>
-                            <div class="guest-gate-mobile-wrap" style="position: relative; display: flex; align-items: center; border: 1.5px solid #cbd5e1; border-radius: 12px; height: 48px; overflow: hidden; background: #fff; width: 100%;">
-                                <span class="guest-gate-prefix" style="padding: 0 14px; background: #f1f5f9; border-right: 1.5px solid #cbd5e1; font-weight: 700; color: #475569; font-size: 14px; height: 100%; display: flex; align-items: center;">+91</span>
-                                <input type="tel" id="swal-mobile" class="form-control guest-gate-mobile" placeholder="98765 43210" maxlength="10" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" style="flex: 1; border: none; outline: none; padding: 0 14px; font-size: 14px; font-weight: 600; background: transparent; height: 100%;">
-                            </div>
-                        </div>
-                        
-                        <input type="hidden" id="swal-pincode" value="${new URLSearchParams(window.location.search).get('pincode') || ''}">
-                    </div>
-                </div>
-            `;
-
-            Swal.fire({
-                title: '',
-                html: welcomeHtml,
-                showCancelButton: false,
-                confirmButtonText: 'Get Started',
-                confirmButtonColor: '#273c8e',
-                padding: isMobilePopup ? '0.75rem' : '1.25rem',
-                width: isMobilePopup ? '88vw' : '430px',
-                customClass: {
-                    popup: 'guest-gate-popup',
-                    confirmButton: 'btn btn-primary btn-lg rounded-pill px-5 w-100',
-                    title: 'p-0 mb-2'
-                },
-                preConfirm: () => {
-                    const fullname = $('#swal-fullname').val().trim();
-                    const email = $('#swal-email').val().trim();
-                    const mobile = $('#swal-mobile').val().trim();
-                    const pincode = $('#swal-pincode').val().trim();
-
-                    const showError = (msg) => {
-                        $('#swal-error-message').text(msg);
-                        $('#swal-error-container').removeClass('d-none').hide().fadeIn();
-                        setTimeout(() => {
-                            $('#swal-error-container').fadeOut(function() {
-                                $(this).addClass('d-none');
-                            });
-                        }, 3000);
-                    };
-
-                    $('#swal-error-container').addClass('d-none');
-
-                    if (!fullname) { showError('Full Name is required'); return false; }
-                    if (!email) { showError('Email Address is required'); return false; }
-                    if (!/^\S+@\S+\.\S+$/.test(email)) { showError('Please enter a valid email address'); return false; }
-                    if (!mobile) { showError('Mobile Number is required'); return false; }
-                    if (mobile.length < 10) { showError('Please enter a valid 10-digit mobile number'); return false; }
-
-                    return { fullname, email, mobile, pincode };
-                },
-                allowOutsideClick: true,
-                allowEscapeKey: true,
-                backdrop: `rgba(0,0,0,0.6)`
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire({
-                        title: 'Connecting you...',
-                        allowOutsideClick: false,
-                        allowEscapeKey: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-                            $.ajax({
-                                url: "{% url 'agents:client_quick_register' %}",
-                                type: "POST",
-                                headers: { 'X-CSRFToken': "{{ csrf_token }}" },
-                                contentType: "application/json",
-                                dataType: "json",
-                                timeout: 30000,
-                                data: JSON.stringify({
-                                    ...result.value,
-                                    redirect_url: redirectUrl || (function() {
-                                        var u = new URL(window.location.href);
-                                        u.searchParams.set('openFilter', '1');
-                                        return u.pathname + u.search;
-                                    })()
-                                }),
-                                success: function(response) {
-                                    if (response.status === 'success' || response.success) {
-                                        Swal.fire({
-                                            icon: 'success',
-                                            title: 'Welcome!',
-                                            text: 'We found matching agents for you.',
-                                            timer: 2500,
-                                            showConfirmButton: false,
-                                            padding: '2rem'
-                                        }).then(() => {
-                                            if (typeof onSuccessCallback === 'function') {
-                                                onSuccessCallback(response);
-                                            } else {
-                                                window.location.reload();
-                                            }
-                                        });
-                                    } else {
-                                        Swal.fire('Oops!', response.message || 'Something went wrong. Please try again.', 'warning');
-                                    }
-                                },
-                                error: function(xhr) {
-                                    const message = xhr.status === 0
-                                        ? 'Request timed out. Please check your internet and try again.'
-                                        : (xhr.responseJSON ? xhr.responseJSON.message : 'An error occurred');
-                                    Swal.fire('Oops!', message || 'We couldn\'t process that. Please refresh and try again.', 'warning');
-                                }
-                            });
-                        }
-                    });
-                }
-            });
-        };
-
-        window.proceedToDestination = function(url, target) {
-            if (target === '_blank') {
-                window.open(url, '_blank', 'noopener');
-                return;
-            }
-            window.location.href = url;
-        };
-
-        window.handleAgentContactClick = function(event, element, interactionType) {
-            if (!element) return true;
-            event.preventDefault();
-
-            const isAuth = {{ request.user.is_authenticated|yesno:"true,false" }};
-            const href = element.getAttribute('href');
-            const agentId = element.getAttribute('data-agent-id');
-            const serviceType = element.getAttribute('data-service-type') || '';
-            const insuranceType = element.getAttribute('data-insurance-type') || '';
-            const insuranceCompany = element.getAttribute('data-insurance-company') || '';
-            const target = element.getAttribute('target');
-
-            const captureLeadAndProceed = (guestData) => {
-                var postData = {
-                    agent_id: agentId,
-                    interaction_type: interactionType,
-                    service_type: serviceType,
-                    insurance_type: insuranceType,
-                    insurance_company: insuranceCompany,
-                    source_page: window.location.pathname
-                };
-
-                if (guestData) {
-                    postData.fullname = guestData.fullname;
-                    postData.email = guestData.email;
-                    postData.mobile = guestData.mobile;
-                }
-
-                const captureLead = function() {
-                    $.ajax({
-                        url: "{% url 'agents:agent_leads_capture' %}",
-                        type: "POST",
-                        headers: { 'X-CSRFToken': "{{ csrf_token }}" },
-                        data: postData,
-                        success: function(resp) {
-                            Swal.close();
-                            if (resp.success && resp.url && resp.url !== '#') {
-                                window.proceedToDestination(resp.url, target);
-                            } else if (resp.message) {
-                                const errMsg = resp.message || 'This agent has not provided contact details for this format.';
-                                Swal.fire('Notice', errMsg, 'info');
-                            }
-                        },
-                        error: function(xhr) {
-                            Swal.close();
-                            let msg = 'Something went wrong. Please refresh the page and try again.';
-                            if (xhr.status === 403) {
-                                msg = 'Access denied. Suspicious activity has been detected from your IP.';
-                            }
-                            Swal.fire('Oops!', msg, 'warning');
-                        }
-                    });
-                };
-
-                Swal.fire({
-                    title: 'Connecting you...',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                        if (!isAuth && guestData) {
-                            $.ajax({
-                                url: "{% url 'agents:client_quick_register' %}",
-                                type: "POST",
-                                headers: { 'X-CSRFToken': "{{ csrf_token }}" },
-                                contentType: "application/json",
-                                dataType: "json",
-                                data: JSON.stringify(guestData),
-                                success: function() {
-                                    captureLead();
-                                },
-                                error: function() {
-                                    Swal.close();
-                                    Swal.fire('Almost there!', 'We had a small hiccup during registration. Please try again.', 'info');
-                                }
-                            });
-                        } else {
-                            captureLead();
-                        }
-                    }
-                });
-            };
-
-            if (!isAuth) {
-                window.showQuickRegisterPopup(window.location.pathname + window.location.search, function(response) {
-                    var postData = {
-                        agent_id: agentId,
-                        interaction_type: interactionType,
-                        service_type: serviceType,
-                        insurance_type: insuranceType,
-                        insurance_company: insuranceCompany,
-                        source_page: window.location.pathname
-                    };
-                    
-                    Swal.fire({
-                        title: 'Connecting you...',
-                        allowOutsideClick: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-                            $.ajax({
-                                url: "{% url 'agents:agent_leads_capture' %}",
-                                type: "POST",
-                                headers: { 'X-CSRFToken': "{{ csrf_token }}" },
-                                data: postData,
-                                success: function(resp) {
-                                    Swal.close();
-                                    if (resp.success && resp.url && resp.url !== '#') {
-                                        window.proceedToDestination(resp.url, target);
-                                        setTimeout(() => { window.location.reload(); }, 1500);
-                                    } else if (resp.message) {
-                                        const errMsg = resp.message || 'This agent has not provided contact details for this format.';
-                                        Swal.fire('Notice', errMsg, 'info').then(() => { window.location.reload(); });
-                                    } else {
-                                        window.location.reload();
-                                    }
-                                },
-                                error: function() {
-                                    Swal.close();
-                                    window.location.reload();
-                                }
-                            });
-                        }
-                    });
-                });
-            } else {
-                captureLeadAndProceed();
-            }
-        };
-
     });
 </script>
 {% endblock %}
+
+
+

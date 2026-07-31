@@ -27,6 +27,7 @@ urlpatterns = [
     path('', include('apps.admin_panel.urls')),
     path('', include('apps.agents.urls')),
     path('', include('apps.home.urls')),
+    path('api/chatbot/', include('chatbot.urls')),
 ]
 
 # Serve media files in development

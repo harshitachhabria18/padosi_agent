@@ -1,4 +1,4 @@
-{% load static %}
+{% load static %}{% load static_v %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,6 +7,138 @@
     <meta name="description" content="{% block meta_description %}Find trusted & verified insurance experts in your neighbourhood. Connect with your local PadosiAgent.{% endblock %}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="utf-8">
+    <meta name="theme-color" content="#ffffff">
+
+    <!-- Critical inline CSS: eliminates FOUC, zero render-blocking for above-fold -->
+    <style>
+        *,*::before,*::after{box-sizing:border-box}
+        body{margin:0;font-family:'Outfit',system-ui,sans-serif;background:#fff;color:#1a1a1a}
+        .loader-mask{position:fixed;inset:0;z-index:99999;background:#fff;display:flex;align-items:center;justify-content:center;transition:opacity 0.3s ease}
+        .loader-mask.hidden{opacity:0;pointer-events:none}
+        .spinner{width:40px;height:40px;border:3px solid rgba(39,60,142,.15);border-top-color:#273c8e;border-radius:50%;animation:spin 0.7s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .header{position:sticky;top:0;z-index:1050;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+        /* Animate.css replacements */
+        @keyframes fadeInDown{from{opacity:0;transform:translate3d(0,-30px,0)}to{opacity:1;transform:none}}
+        @keyframes fadeOutUp{from{opacity:1;transform:none}to{opacity:0;transform:translate3d(0,-30px,0)}}
+        .animate__animated{animation-duration:.5s;animation-fill-mode:both}
+        .animate__fadeInDown{animation-name:fadeInDown}
+        .animate__fadeOutUp{animation-name:fadeOutUp}
+
+        /* SweetAlert backdrop blur */
+        .swal2-backdrop-show{backdrop-filter:blur(8px)!important;-webkit-backdrop-filter:blur(8px)!important}
+
+        /* AOS: prevent invisible elements before library loads */
+        [data-aos]{opacity:1!important;transform:none!important;visibility:visible!important}
+        .aos-init [data-aos]{opacity:inherit;transform:inherit;visibility:inherit}
+
+        /* Banner responsive fixes */
+        @media screen and (min-width: 992px) {
+            .banner-con .banner_content { padding-top: 100px !important; }
+        }
+        @media screen and (max-width: 991px) {
+            .banner-con .banner_content { padding: 40px 20px !important; }
+            .banner-con .banner_content h1:first-child { margin-bottom: 5px !important; line-height: 1.2 !important; }
+            .banner-con .banner_content h1.text-size-16 { margin-bottom: 10px !important; }
+            .banner-con .banner_content p { margin-bottom: 15px !important; font-size: 16px !important; line-height: 1.4 !important; }
+        }
+        .banner-con .owl-carousel,
+        .banner-con .owl-carousel .owl-stage-outer,
+        .banner-con .owl-carousel .owl-item { overflow: hidden !important; }
+        .banner-top-text-block { z-index: 10 !important; pointer-events: none; }
+        .banner-top-text-box { pointer-events: auto; }
+        .header { z-index: 1050 !important; }
+        .navbar-collapse { z-index: 1060 !important; }
+
+        /* Guest Gate Popup Styles */
+        .swal2-container .swal2-popup.guest-gate-popup {
+            width: min(430px, 92vw) !important; border-radius: 20px;
+            padding: 28px 24px 20px !important; box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+            border: 1px solid #dbeafe; background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%); overflow: hidden;
+        }
+        .swal2-container .swal2-popup.guest-gate-popup .swal2-html-container { margin: 0 0 4px; padding: 0 !important; }
+        .swal2-container .swal2-popup.guest-gate-popup .swal2-actions { margin: 12px 0 0 0 !important; padding: 0 !important; width: 100%; }
+        .swal2-container .swal2-popup.guest-gate-popup .swal2-confirm {
+            width: 100%; border-radius: 12px !important; height: 48px; font-weight: 700 !important;
+            font-size: 16px !important; letter-spacing: 0.3px;
+            background: linear-gradient(135deg, #1d4ed8 0%, #0ea5e9 100%) !important;
+            box-shadow: 0 6px 20px rgba(29, 78, 216, 0.3); border: none !important; transition: all 0.3s ease;
+        }
+        .swal2-container .swal2-popup.guest-gate-popup .swal2-confirm:hover { box-shadow: 0 8px 25px rgba(29, 78, 216, 0.4); transform: translateY(-1px); }
+        .guest-gate-form { text-align: left; }
+        .guest-gate-brand { display: flex; justify-content: center; margin-bottom: 6px; }
+        .guest-gate-brand img { width: 110px; height: auto; }
+        .guest-gate-heading { font-weight: 800; color: #1e293b; text-align: center; margin: 0 0 4px 0; font-size: 26px; line-height: 1.2; }
+        .guest-gate-subtext { color: #2563eb; font-style: italic; font-weight: 600; font-size: 15px; text-align: center; margin-bottom: 16px; line-height: 1.4; }
+        .guest-gate-group { margin-bottom: 12px; }
+        .guest-gate-label { font-size: 13px; font-weight: 700; color: #334155; display: block; margin-bottom: 5px; }
+        .guest-gate-input, .guest-gate-prefix, .guest-gate-mobile {
+            border: 1.5px solid #e2e8f0 !important; background: #f8fafc !important; min-height: 42px;
+            font-size: 14px; transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        }
+        .guest-gate-input:focus, .guest-gate-mobile:focus {
+            border-color: #2563eb !important; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important; background: #ffffff !important;
+        }
+        .guest-gate-input { border-radius: 10px !important; padding: 10px 14px !important; width: 100%; }
+        .guest-gate-mobile-wrap { display: flex; gap: 0; }
+        .guest-gate-prefix { border-right: 0 !important; border-radius: 10px 0 0 10px; padding: 10px 12px; color: #64748b; font-weight: 700; display: inline-flex; align-items: center; background: #f1f5f9 !important; }
+        .guest-gate-mobile { border-radius: 0 10px 10px 0 !important; padding: 10px 14px !important; flex: 1; width: 100%; }
+        @media (max-width: 576px) {
+            .swal2-container .swal2-popup.guest-gate-popup { width: min(360px, 92vw) !important; padding: 22px 18px 16px !important; }
+            .guest-gate-heading { font-size: 20px; }
+            .guest-gate-subtext { font-size: 13px; margin-bottom: 12px; }
+            .guest-gate-group { margin-bottom: 8px !important; }
+            .guest-gate-input, .guest-gate-prefix, .guest-gate-mobile { min-height: 38px !important; font-size: 13px !important; }
+            .guest-gate-prefix { padding: 8px 10px !important; }
+            .guest-gate-mobile, .guest-gate-input { padding: 8px 12px !important; }
+            .swal2-container .swal2-popup.guest-gate-popup .swal2-confirm { height: 42px !important; font-size: 15px !important; }
+            .swal2-container .swal2-popup.guest-gate-popup { padding: 20px 16px 16px !important; border-radius: 16px; }
+            .guest-gate-brand img { width: 90px; }
+            .guest-gate-heading { font-size: 22px; margin-bottom: 4px; }
+        }
+
+        /* Padosi Guest Popup (Connect with Agent) */
+        .swal2-container .swal2-popup.padosi-guest-popup {
+            width: min(500px, 94vw) !important; border-radius: 24px; padding: 24px 30px !important;
+            box-shadow: 0 25px 80px rgba(15, 23, 42, 0.3); border: 1px solid #e2e8f0; background: #ffffff;
+        }
+        .swal2-container .swal2-popup.padosi-guest-popup .swal2-title { padding: 0 !important; margin: 0 0 16px 0 !important; }
+        .swal2-container .swal2-popup.padosi-guest-popup .swal2-html-container { margin: 0 !important; padding: 0 !important; overflow: visible !important; }
+        .padosi-popup-form { text-align: left; }
+        .padosi-popup-brand { display: flex; flex-direction: column; align-items: center; margin-bottom: 12px; }
+        .padosi-popup-brand img { width: 100px; height: auto; }
+        .padosi-popup-brand-text { font-size: 12px; font-weight: 700; color: #0f3a66; margin-top: 4px; }
+        .padosi-popup-title { font-size: 24px; font-weight: 800; color: #1e293b; text-align: center; margin-bottom: 2px; }
+        .padosi-popup-subtext { font-size: 14px; color: #64748b; text-align: center; margin-bottom: 20px; }
+        .padosi-popup-group { margin-bottom: 15px; }
+        .padosi-popup-label { font-size: 13px; font-weight: 700; color: #1e293b; display: block; margin-bottom: 5px; }
+        .padosi-popup-input {
+            width: 100%; border-radius: 12px !important; border: 1.5px solid #e2e8f0 !important;
+            padding: 10px 14px !important; font-size: 15px !important; background: #f8fafc !important; transition: all 0.2s ease;
+        }
+        .padosi-popup-input:focus { border-color: #0d9488 !important; background: #fff !important; box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1) !important; }
+        .swal2-container .swal2-popup.padosi-guest-popup .swal2-actions { margin-top: 8px !important; width: 100%; gap: 10px; }
+        .swal2-container .swal2-popup.padosi-guest-popup .swal2-confirm {
+            flex: 1; border-radius: 10px !important; height: 46px; font-weight: 700 !important;
+            background: #0d9488 !important; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.2) !important;
+        }
+        .swal2-container .swal2-popup.padosi-guest-popup .swal2-cancel {
+            flex: 1; border-radius: 10px !important; height: 46px; font-weight: 600 !important;
+            background: #f1f5f9 !important; color: #475569 !important;
+        }
+        @media (max-width: 576px) {
+            .swal2-container .swal2-popup.padosi-guest-popup { padding: 16px 16px 10px !important; width: min(340px, 92vw) !important; }
+            .padosi-popup-title { font-size: 16px; margin-bottom: 2px !important; }
+            .padosi-popup-subtext { font-size: 11px; margin-bottom: 8px; }
+            .padosi-popup-brand { margin-bottom: 8px !important; }
+            .padosi-popup-brand img { width: 70px !important; }
+            .padosi-popup-group { margin-bottom: 6px !important; }
+            .padosi-popup-input { padding: 7px 10px !important; font-size: 13px !important; }
+            .swal2-container .swal2-popup.padosi-guest-popup .swal2-actions { margin-top: 2px !important; }
+            .swal2-container .swal2-popup.padosi-guest-popup .swal2-confirm,
+            .swal2-container .swal2-popup.padosi-guest-popup .swal2-cancel { height: 40px !important; font-size: 14px !important; }
+        }
+    </style>
     
     <!-- Outfit Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,17 +150,46 @@
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" href="{% static 'css/custome.css' %}">
     <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preload" href="{% static 'css/owl.carousel.min.css' %}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="{% static 'css/owl.theme.default.min.css' %}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="{% static 'css/magnific-popup.css' %}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="{% static 'css/aos.css' %}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="{% static 'css/agent-profile-view.css' %}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" as="style"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+          onload="this.onload=null;this.rel='stylesheet'" crossorigin="anonymous">
+    <noscript>
+        <link rel="stylesheet" href="{% static 'css/owl.carousel.min.css' %}">
+        <link rel="stylesheet" href="{% static 'css/owl.theme.default.min.css' %}">
+        <link rel="stylesheet" href="{% static 'css/magnific-popup.css' %}">
+        <link rel="stylesheet" href="{% static 'css/aos.css' %}">
+        <link rel="stylesheet" href="{% static 'css/agent-profile-view.css' %}">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    </noscript>
+    <!-- Global Django Variables for JS -->
+    <script>
+        window.PADOSI_GLOBALS = {
+            isAuthenticated: {{ request.user.is_authenticated|yesno:"true,false" }},
+            csrfToken: "{{ csrf_token|escapejs }}",
+            logoUrl: "{% static 'img/logo.png' %}",
+            quickRegisterUrl: "{% url 'agents:client_quick_register' %}",
+            leadsCaptureUrl: "{% url 'agents:agent_leads_capture' %}"
+        };
+    </script>
     
-    <!-- SweetAlert2 -->
+    <!-- Core framework scripts -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{% static 'js/jquery-3.7.1.min.js' %}"></script>
-    <script src="{% static 'js/htmx.min.js' %}"></script>
     <script src="{% static 'js/popper.min.js' %}"></script>
     <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/htmx.min.js' %}"></script>
+    <script src="{% static_v 'js/guest-gate.js' %}"></script>
+    <script src="{% static 'js/owl.carousel.js' %}"></script>
+    <script src="{% static 'js/carousel.js' %}"></script>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+    <div class="loader-mask"><div class="spinner"></div></div>
     <div id="app-content">
         {% if not hide_header or request.path == '/' or '/find-agents/' in request.path %}
             {% include 'partials/header.html' %}
@@ -40,6 +201,9 @@
     </div>
     
     <script src="{% static 'js/preloader.js' %}"></script>
+    {% block chatbot_widget %}
+        {% include 'chatbot/widget.html' %}
+    {% endblock %}
     {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -15,12 +15,9 @@
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
 
-    <!-- CSS styles loaded in layouts.app page specifically -->
-    <link rel="stylesheet" href="{% static 'css/owl.carousel.min.css' %}">
-    <link rel="stylesheet" href="{% static 'css/owl.theme.default.min.css' %}">
-    <link rel="stylesheet" href="{% static 'css/magnific-popup.css' %}">
-    <link rel="stylesheet" href="{% static 'css/aos.css' %}">
+    <!-- CSS styles loaded in base.html via preload -->
     <link rel="stylesheet" href="{% static 'css/agent-profile-view.css' %}">
+
 {% endblock %}
 
 {% block content %}
@@ -84,8 +81,7 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'js/owl.carousel.js' %}"></script>
-    <script src="{% static 'js/carousel.js' %}"></script>
+    <!-- owl carousel and carousel.js already loaded in base.html -->
     
     <script>
         function shareProfile() {

@@ -1,11 +1,10 @@
-{% for si in "012" %}
 <div class="skeleton-agent-card">
     <div class="sac-pic">
         <div class="sac-match">
-            <div class="sk {% if noAnimate %}no-animate{% endif %} sk-white" style="height:12px;width:75px;"></div>
+            <div class="sk sk-white" style="height:12px;width:75px;"></div>
         </div>
         <div class="sac-avatar-area">
-            <div class="sk {% if noAnimate %}no-animate{% endif %} sk-white sk-round" style="width:130px;height:130px;"></div>
+            <div class="sk sk-white sk-round" style="width:130px;height:130px;"></div>
         </div>
         <div class="sac-like-bar">
             <div class="sac-like-btn"></div>
@@ -15,30 +14,115 @@
 
     <div class="sac-body">
         <div class="sac-row">
-            <div class="sk {% if noAnimate %}no-animate{% endif %} sk-light" style="height:20px;width:{% if forloop.first %}44%{% elif forloop.counter == 2 %}50%{% else %}38%{% endif %};"></div>
-            <div class="sk {% if noAnimate %}no-animate{% endif %} sk-green" style="height:20px;width:65px;margin-left:6px;"></div>
+            <div class="sk sk-light" style="height:20px;width:44%;"></div>
+            <div class="sk sk-green" style="height:20px;width:65px;margin-left:6px;"></div>
         </div>
-        <div class="sk {% if noAnimate %}no-animate{% endif %} sk-light" style="height:14px;width:40%;"></div>
+        <div class="sk sk-light" style="height:14px;width:40%;"></div>
         <div class="sac-row">
-            <div class="sk {% if noAnimate %}no-animate{% endif %} sk-amber" style="height:26px;width:88px;"></div>
-            <div class="sk {% if noAnimate %}no-animate{% endif %} sk-muted" style="height:26px;width:76px;margin-left:4px;"></div>
+            <div class="sk sk-amber" style="height:26px;width:88px;"></div>
+            <div class="sk sk-muted" style="height:26px;width:76px;margin-left:4px;"></div>
         </div>
         <div class="sac-row" style="border-left:1px solid #ddd;margin-left:12px;padding-left:10px;">
-            <div class="sk {% if noAnimate %}no-animate{% endif %} sk-muted" style="height:26px;width:82px;"></div>
-            <div class="sk {% if noAnimate %}no-animate{% endif %} sk-muted" style="height:26px;width:92px;"></div>
-            <div class="sk {% if noAnimate %}no-animate{% endif %} sk-muted" style="height:26px;width:76px;"></div>
+            <div class="sk sk-muted" style="height:26px;width:82px;"></div>
+            <div class="sk sk-muted" style="height:26px;width:92px;"></div>
+            <div class="sk sk-muted" style="height:26px;width:76px;"></div>
         </div>
         <div class="sac-row">
-            <div class="sk {% if noAnimate %}no-animate{% endif %} sk-green" style="height:26px;width:60px;"></div>
-            <div class="sk {% if noAnimate %}no-animate{% endif %} sk-green" style="height:26px;width:52px;"></div>
-            <div class="sk {% if noAnimate %}no-animate{% endif %} sk-green" style="height:26px;width:70px;"></div>
+            <div class="sk sk-green" style="height:26px;width:60px;"></div>
+            <div class="sk sk-green" style="height:26px;width:52px;"></div>
+            <div class="sk sk-green" style="height:26px;width:70px;"></div>
         </div>
         <div class="sac-divider"></div>
         <div class="sac-row">
-            <div class="sk {% if noAnimate %}no-animate{% endif %} sk-call" style="height:40px;width:82px;"></div>
-            <div class="sk {% if noAnimate %}no-animate{% endif %} sk-wa"   style="height:40px;width:92px;"></div>
-            <div class="sk {% if noAnimate %}no-animate{% endif %} sk-green sk-pill" style="height:40px;width:110px;margin-left:auto;"></div>
+            <div class="sk sk-call" style="height:40px;width:82px;"></div>
+            <div class="sk sk-wa"   style="height:40px;width:92px;"></div>
+            <div class="sk sk-green sk-pill" style="height:40px;width:110px;margin-left:auto;"></div>
         </div>
     </div>
 </div>
-{% endfor %}
+
+<div class="skeleton-agent-card">
+    <div class="sac-pic">
+        <div class="sac-match">
+            <div class="sk sk-white" style="height:12px;width:75px;"></div>
+        </div>
+        <div class="sac-avatar-area">
+            <div class="sk sk-white sk-round" style="width:130px;height:130px;"></div>
+        </div>
+        <div class="sac-like-bar">
+            <div class="sac-like-btn"></div>
+            <div class="sac-like-btn"></div>
+        </div>
+    </div>
+
+    <div class="sac-body">
+        <div class="sac-row">
+            <div class="sk sk-light" style="height:20px;width:50%;"></div>
+            <div class="sk sk-green" style="height:20px;width:65px;margin-left:6px;"></div>
+        </div>
+        <div class="sk sk-light" style="height:14px;width:40%;"></div>
+        <div class="sac-row">
+            <div class="sk sk-amber" style="height:26px;width:88px;"></div>
+            <div class="sk sk-muted" style="height:26px;width:76px;margin-left:4px;"></div>
+        </div>
+        <div class="sac-row" style="border-left:1px solid #ddd;margin-left:12px;padding-left:10px;">
+            <div class="sk sk-muted" style="height:26px;width:82px;"></div>
+            <div class="sk sk-muted" style="height:26px;width:92px;"></div>
+            <div class="sk sk-muted" style="height:26px;width:76px;"></div>
+        </div>
+        <div class="sac-row">
+            <div class="sk sk-green" style="height:26px;width:60px;"></div>
+            <div class="sk sk-green" style="height:26px;width:52px;"></div>
+            <div class="sk sk-green" style="height:26px;width:70px;"></div>
+        </div>
+        <div class="sac-divider"></div>
+        <div class="sac-row">
+            <div class="sk sk-call" style="height:40px;width:82px;"></div>
+            <div class="sk sk-wa"   style="height:40px;width:92px;"></div>
+            <div class="sk sk-green sk-pill" style="height:40px;width:110px;margin-left:auto;"></div>
+        </div>
+    </div>
+</div>
+
+<div class="skeleton-agent-card">
+    <div class="sac-pic">
+        <div class="sac-match">
+            <div class="sk sk-white" style="height:12px;width:75px;"></div>
+        </div>
+        <div class="sac-avatar-area">
+            <div class="sk sk-white sk-round" style="width:130px;height:130px;"></div>
+        </div>
+        <div class="sac-like-bar">
+            <div class="sac-like-btn"></div>
+            <div class="sac-like-btn"></div>
+        </div>
+    </div>
+
+    <div class="sac-body">
+        <div class="sac-row">
+            <div class="sk sk-light" style="height:20px;width:38%;"></div>
+            <div class="sk sk-green" style="height:20px;width:65px;margin-left:6px;"></div>
+        </div>
+        <div class="sk sk-light" style="height:14px;width:40%;"></div>
+        <div class="sac-row">
+            <div class="sk sk-amber" style="height:26px;width:88px;"></div>
+            <div class="sk sk-muted" style="height:26px;width:76px;margin-left:4px;"></div>
+        </div>
+        <div class="sac-row" style="border-left:1px solid #ddd;margin-left:12px;padding-left:10px;">
+            <div class="sk sk-muted" style="height:26px;width:82px;"></div>
+            <div class="sk sk-muted" style="height:26px;width:92px;"></div>
+            <div class="sk sk-muted" style="height:26px;width:76px;"></div>
+        </div>
+        <div class="sac-row">
+            <div class="sk sk-green" style="height:26px;width:60px;"></div>
+            <div class="sk sk-green" style="height:26px;width:52px;"></div>
+            <div class="sk sk-green" style="height:26px;width:70px;"></div>
+        </div>
+        <div class="sac-divider"></div>
+        <div class="sac-row">
+            <div class="sk sk-call" style="height:40px;width:82px;"></div>
+            <div class="sk sk-wa"   style="height:40px;width:92px;"></div>
+            <div class="sk sk-green sk-pill" style="height:40px;width:110px;margin-left:auto;"></div>
+        </div>
+    </div>
+</div>

@@ -137,7 +137,7 @@
 {% endblock %}
 
 {% block content %}
-{{-- HERO --}}
+{# HERO #}
 <div class="referral-hero">
     <div class="container position-relative" style="z-index:2;">
         <a href="{% url 'agents:agent_dashboard' %}" class="btn-back">
@@ -158,7 +158,7 @@
 
 <div class="container pb-5">
 
-    {{-- STATS --}}
+    {# STATS #}
     <div class="row g-3 ref-stats-row mb-5">
         <div class="col-md-4">
             <div class="stat-pill">
@@ -183,13 +183,13 @@
         </div>
     </div>
 
-    {{-- MAIN GRID --}}
+    {# MAIN GRID #}
     <div class="row g-4">
 
-        {{-- LEFT --}}
+        {# LEFT #}
         <div class="col-lg-7">
 
-            {{-- Referral Link --}}
+            {# Referral Link #}
             <div class="ref-link-card mb-4">
                 <div class="d-flex align-items-center gap-2 mb-3">
                     <span style="font-size:1.5rem;">🔗</span>
@@ -206,17 +206,17 @@
                     </button>
                 </div>
                 <div class="d-flex flex-wrap gap-2">
-                    {{-- WhatsApp --}}
+                    {# WhatsApp #}
                     <a href="https://api.whatsapp.com/send?text={{ waMsg }}" target="_blank"
                        class="share-btn" style="background:#25D366; color:#fff; border-color:#25D366;">
                         <i class="fab fa-whatsapp"></i> WhatsApp
                     </a>
-                    {{-- Email --}}
+                    {# Email #}
                     <a href="mailto:?subject={{ emailSub }}&body={{ emailBody }}"
                        class="share-btn" style="background:#fff; color:#1e293b; border-color:#e2e8f0;">
                         <i class="fas fa-envelope"></i> Email
                     </a>
-                    {{-- LinkedIn --}}
+                    {# LinkedIn #}
                     <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ referralUrl|urlencode }}"
                        target="_blank"
                        class="share-btn" style="background:#0077b5; color:#fff; border-color:#0077b5;">
@@ -225,7 +225,7 @@
                 </div>
             </div>
 
-            {{-- Reward Tiers --}}
+            {# Reward Tiers #}
             <div class="mb-2">
                 <div class="section-title"><i class="fas fa-layer-group me-2" style="color:#7c3aed;"></i>Reward Tiers</div>
                 <div class="section-sub">Track your milestones and unlock bigger rewards</div>
@@ -259,17 +259,17 @@
 
         </div>
 
-        {{-- RIGHT --}}
+        {# RIGHT #}
         <div class="col-lg-5">
 
-            {{-- Progress --}}
+            {# Progress #}
             <div class="progress-tracker mb-4">
                 <div class="fw-bold mb-1" style="font-size:1.05rem; color:#1e293b;">
                     <i class="fas fa-route me-2" style="color:#7c3aed;"></i>Your Progress
                 </div>
                 <div class="text-muted mb-4" style="font-size:13px;">Next milestone tracker</div>
 
-                {{-- Step 1 --}}
+                {# Step 1 #}
                 <div class="progress-step">
                     <div class="step-num" style="background: {% if total >= 5 %}#10b981{% else %}#7c3aed{% endif %}; color:#fff;">
                         {% if total >= 5 %}<i class="fas fa-check" style="font-size:11px;"></i>{% else %} 1 {% endif %}
@@ -282,7 +282,7 @@
                     </div>
                 </div>
 
-                {{-- Step 2 --}}
+                {# Step 2 #}
                 <div class="progress-step">
                     <div class="step-num" style="background: {% if total >= 10 %}#10b981{% elif total >= 5 %}#7c3aed{% else %}#f1f5f9{% endif %}; color: {% if total < 5 %}#94a3b8{% else %}#fff{% endif %};">
                         {% if total >= 10 %}<i class="fas fa-check" style="font-size:11px;"></i>{% else %} 2 {% endif %}
@@ -295,7 +295,7 @@
                     </div>
                 </div>
 
-                {{-- Step 3 --}}
+                {# Step 3 #}
                 <div class="progress-step">
                     <div class="step-num" style="background: {% if total >= 15 %}#10b981{% elif total >= 10 %}#7c3aed{% else %}#f1f5f9{% endif %}; color: {% if total < 10 %}#94a3b8{% else %}#fff{% endif %};">
                         {% if total >= 15 %}<i class="fas fa-check" style="font-size:11px;"></i>{% else %} 3 {% endif %}
@@ -328,7 +328,7 @@
                 </div>
             </div>
 
-            {{-- How It Works --}}
+            {# How It Works #}
             <div class="section-title mb-3"><i class="fas fa-map-signs me-2" style="color:#2563eb;"></i>How It Works</div>
             <div>
                 <div class="how-step">
@@ -371,7 +371,7 @@
         </div>
     </div>
 
-    {{-- ── Referred Agents Table ── --}}
+    {# ── Referred Agents Table ── #}
     <div class="mt-5 mb-3">
         <div style="font-size:1.3rem; font-weight:800; color:#1e293b; margin-bottom:6px;">
             <i class="fas fa-users me-2" style="color:#7c3aed;"></i>Agents Who Joined via Your Link

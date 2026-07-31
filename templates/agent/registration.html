@@ -1,282 +1,169 @@
 {% extends 'partials/base.html' %}
 
-{% block content %}
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+    .become-a-padosi-agent-con {
+        font-family: 'Outfit', sans-serif;
+        background: radial-gradient(circle at 10% 20%, rgb(240, 247, 255) 0%, rgb(255, 255, 255) 90%);
+        padding: 80px 20px;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+    }
+    .registration-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        border-radius: 24px;
+        box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05);
+        padding: 50px;
+        max-width: 800px;
+        margin: 0 auto;
+        transition: transform 0.3s ease;
+    }
+    .registration-card h2 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 8px;
+    }
+    .registration-card p.subtitle {
+        font-size: 15px;
+        color: #64748b;
+        margin-bottom: 35px;
+    }
+    .form-group {
+        margin-bottom: 24px;
+    }
+    .form-group label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 8px;
+    }
+    .form-control-input, .form-control-select {
+        width: 100%;
+        padding: 14px 18px;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 12px;
+        font-size: 15px;
+        color: #1e293b;
+        background: #f8fafc;
+        outline: none;
+        transition: all 0.3s ease;
+    }
+    .form-control-input:focus, .form-control-select:focus {
+        border-color: #273c8e;
+        background: #ffffff;
+        box-shadow: 0 0 0 4px rgba(39, 60, 142, 0.1);
+    }
+    .btn-verify {
+        background: #273c8e;
+        color: #ffffff;
+        border: none;
+        padding: 0 24px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .btn-verify:hover {
+        background: #1e2e6d;
+    }
+    .btn-submit {
+        background: linear-gradient(135deg, #273c8e 0%, #1e2e6d 100%);
+        color: #ffffff;
+        border: none;
+        padding: 16px 40px;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        width: 100%;
+        box-shadow: 0 10px 20px -5px rgba(39, 60, 142, 0.3);
+        transition: all 0.3s ease;
+    }
+    .btn-submit:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 15px 25px -5px rgba(39, 60, 142, 0.4);
+    }
+    .segment-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+    .segment-checkbox {
+        position: relative;
+    }
+    .segment-checkbox input {
+        display: none;
+    }
+    .segment-checkbox label {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        border: 2px solid #e2e8f0;
+        border-radius: 14px;
+        cursor: pointer;
+        font-weight: 600;
+        color: #475569;
+        background: #f8fafc;
+        transition: all 0.3s ease;
+        margin-bottom: 0;
+    }
+    .segment-checkbox label i {
+        font-size: 20px;
+        color: #94a3b8;
+    }
+    .segment-checkbox input:checked + label {
+        border-color: #273c8e;
+        background: #f0f4ff;
+        color: #273c8e;
+    }
+    .segment-checkbox input:checked + label i {
+        color: #273c8e;
+    }
+    .custom-alert {
+        display: none;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        margin-bottom: 25px;
+        line-height: 1.5;
+        border: 1px solid transparent;
+    }
+    .alert-success-custom {
+        align-items: center;
+        gap: 8px;
+        color: #065f46;
+        background: #ecfdf5;
+        border-color: #a7f3d0;
+    }
+    .alert-danger-custom {
+        align-items: center;
+        gap: 8px;
+        color: #991b1b;
+        background: #fef2f2;
+        border-color: #fca5a5;
+    }
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="YOUR_CSRF_TOKEN_HERE">
-    <title>Agent Registration - Basic Information</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            font-family: 'Outfit', sans-serif;
-        }
-
-        .become-a-padosi-agent-con {
-            font-family: 'Outfit', sans-serif;
-            background: radial-gradient(circle at 10% 20%, rgb(240, 247, 255) 0%, rgb(255, 255, 255) 90%);
-            padding: 80px 20px;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 15px;
-        }
-
+    @media (max-width: 768px) {
         .registration-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            border-radius: 24px;
-            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05);
-            padding: 50px;
-            max-width: 800px;
-            margin: 0 auto;
-            transition: transform 0.3s ease;
+            padding: 30px 20px;
         }
-
-        .registration-card h2 {
-            font-size: 28px;
-            font-weight: 700;
-            color: #0f172a;
-            margin-bottom: 8px;
-        }
-
-        .registration-card p.subtitle {
-            font-size: 15px;
-            color: #64748b;
-            margin-bottom: 35px;
-        }
-
-        .form-group {
-            margin-bottom: 24px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            color: #334155;
-            margin-bottom: 8px;
-        }
-
-        .form-control-input,
-        .form-control-select {
-            width: 100%;
-            padding: 14px 18px;
-            border: 1.5px solid #cbd5e1;
-            border-radius: 12px;
-            font-size: 15px;
-            color: #1e293b;
-            background: #f8fafc;
-            outline: none;
-            transition: all 0.3s ease;
-            font-family: 'Outfit', sans-serif;
-        }
-
-        .form-control-input:focus,
-        .form-control-select:focus {
-            border-color: #273c8e;
-            background: #ffffff;
-            box-shadow: 0 0 0 4px rgba(39, 60, 142, 0.1);
-        }
-
-        .form-control-input.is-invalid {
-            border-color: #ef4444;
-            background: #fff5f5;
-        }
-
-        .btn-verify {
-            background: #273c8e;
-            color: #ffffff;
-            border: none;
-            padding: 0 24px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: 'Outfit', sans-serif;
-            white-space: nowrap;
-        }
-
-        .btn-verify:hover {
-            background: #1e2e6d;
-        }
-
-        .btn-verify:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .btn-submit {
-            background: linear-gradient(135deg, #273c8e 0%, #1e2e6d 100%);
-            color: #ffffff;
-            border: none;
-            padding: 16px 40px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            width: 100%;
-            box-shadow: 0 10px 20px -5px rgba(39, 60, 142, 0.3);
-            transition: all 0.3s ease;
-            font-family: 'Outfit', sans-serif;
-        }
-
-        .btn-submit:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 15px 25px -5px rgba(39, 60, 142, 0.4);
-        }
-
-        .btn-submit:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-            transform: none;
-        }
-
         .segment-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
+            grid-template-columns: 1fr;
         }
+    }
+</style>
+{% endblock %}
 
-        .segment-checkbox {
-            position: relative;
-        }
-
-        .segment-checkbox input {
-            display: none;
-        }
-
-        .segment-checkbox label {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 14px;
-            cursor: pointer;
-            font-weight: 600;
-            color: #475569;
-            background: #f8fafc;
-            transition: all 0.3s ease;
-            margin-bottom: 0;
-            font-family: 'Outfit', sans-serif;
-        }
-
-        .segment-checkbox label i {
-            font-size: 20px;
-            color: #94a3b8;
-        }
-
-        .segment-checkbox input:checked + label {
-            border-color: #273c8e;
-            background: #f0f4ff;
-            color: #273c8e;
-        }
-
-        .segment-checkbox input:checked + label i {
-            color: #273c8e;
-        }
-
-        .custom-alert {
-            display: none;
-            border-radius: 12px;
-            padding: 12px 16px;
-            font-size: 13px;
-            font-weight: 500;
-            margin-bottom: 25px;
-            line-height: 1.5;
-            border: 1px solid transparent;
-        }
-
-        .alert-success-custom {
-            align-items: center;
-            gap: 8px;
-            color: #065f46;
-            background: #ecfdf5;
-            border-color: #a7f3d0;
-        }
-
-        .alert-danger-custom {
-            align-items: center;
-            gap: 8px;
-            color: #991b1b;
-            background: #fef2f2;
-            border-color: #fca5a5;
-        }
-
-        /* Row / Col grid */
-        .row {
-            display: flex;
-            flex-wrap: wrap;
-            margin: 0 -8px;
-        }
-
-        .col-md-6 {
-            flex: 0 0 50%;
-            max-width: 50%;
-            padding: 0 8px;
-        }
-
-        .d-flex { display: flex; }
-        .gap-2 { gap: 8px; }
-        .mt-2 { margin-top: 8px; }
-        .mt-4 { margin-top: 24px; }
-        .pt-3 { padding-top: 16px; }
-        .mb-4 { margin-bottom: 24px; }
-        .text-center { text-align: center; }
-
-        .login-footer {
-            border-top: 1px solid #e2e8f0;
-            padding-top: 16px;
-            margin-top: 24px;
-            text-align: center;
-        }
-
-        .login-footer p {
-            color: #64748b;
-            font-size: 15px;
-            margin: 0;
-        }
-
-        .login-footer a {
-            color: #0d9488;
-            font-weight: 600;
-            text-decoration: none;
-        }
-
-        .login-footer a:hover {
-            text-decoration: underline;
-        }
-
-        @media (max-width: 768px) {
-            .registration-card {
-                padding: 30px 20px;
-            }
-            .segment-grid {
-                grid-template-columns: 1fr;
-            }
-            .col-md-6 {
-                flex: 0 0 100%;
-                max-width: 100%;
-            }
-        }
-    </style>
-</head>
-<body>
+{% block content %}
 {% load static %}
 
 <section class="benefit-con become-a-padosi-agent-con position-relative">
@@ -296,9 +183,7 @@
                 <!-- Full Name -->
                 <div class="form-group">
                     <label>Full Name *</label>
-                    <input type="text" name="fullname" class="form-control-input"
-                        placeholder="Enter your full name" required maxlength="70"
-                        oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '');">
+                    <input type="text" name="fullname" class="form-control-input" placeholder="Enter your full name" required maxlength="70" oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '');">
                 </div>
 
                 <!-- Email + Mobile -->
@@ -306,18 +191,13 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label>Email Address *</label>
-                            <input type="email" name="email" id="regEmail" class="form-control-input"
-                                placeholder="your.email@example.com" required
-                                onblur="validateEmailOnBlur(this)">
+                            <input type="email" name="email" id="regEmail" class="form-control-input" placeholder="your.email@example.com" required onblur="validateEmailOnBlur(this)">
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
                             <label>Mobile Number *</label>
-                            <input type="tel" name="mobile" class="form-control-input"
-                                placeholder="10-digit mobile number"
-                                oninput="this.value = this.value.replace(/[^0-9]/g,'')"
-                                maxlength="10" pattern="[0-9]{10}" required>
+                            <input type="tel" name="mobile" class="form-control-input" placeholder="10-digit mobile number" oninput="this.value = this.value.replace(/[^0-9]/g,'')" maxlength="10" pattern="[0-9]{10}" required>
                         </div>
                     </div>
                 </div>
@@ -325,11 +205,7 @@
                 <!-- Pincode -->
                 <div class="form-group">
                     <label for="agent_pincode">Service Pincode *</label>
-                    <input type="text" id="agent_pincode" name="agent_pincode" class="form-control-input"
-                        placeholder="Enter 6-digit pincode" maxlength="6" inputmode="numeric"
-                        pattern="[1-9][0-9]{5}"
-                        {% comment %} <!-- validateAgentPincode(this); temporarily disabled --> {% endcomment %}
-                        oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                    <input type="text" id="agent_pincode" name="agent_pincode" class="form-control-input" placeholder="Enter 6-digit pincode" maxlength="6" inputmode="numeric" pattern="[1-9][0-9]{5}" oninput="this.value = this.value.replace(/[^0-9]/g, ''); validateAgentPincode(this);">
                     <div id="pincode-feedback" style="font-size:13px; margin-top:6px; display:none;"></div>
                 </div>
 
@@ -338,11 +214,42 @@
                     <label>State *</label>
                     <select name="state" id="agent_state" class="form-control-select" required>
                         <option value="">Select your state</option>
+                        <option value="Andhra Pradesh">Andhra Pradesh</option>
+                        <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                        <option value="Assam">Assam</option>
+                        <option value="Bihar">Bihar</option>
+                        <option value="Chhattisgarh">Chhattisgarh</option>
+                        <option value="Goa">Goa</option>
                         <option value="Gujarat">Gujarat</option>
-                        <option value="Maharashtra">Maharashtra</option>
-                        <option value="Rajasthan">Rajasthan</option>
+                        <option value="Haryana">Haryana</option>
+                        <option value="Himachal Pradesh">Himachal Pradesh</option>
+                        <option value="Jharkhand">Jharkhand</option>
+                        <option value="Karnataka">Karnataka</option>
+                        <option value="Kerala">Kerala</option>
                         <option value="Madhya Pradesh">Madhya Pradesh</option>
+                        <option value="Maharashtra">Maharashtra</option>
+                        <option value="Manipur">Manipur</option>
+                        <option value="Meghalaya">Meghalaya</option>
+                        <option value="Mizoram">Mizoram</option>
+                        <option value="Nagaland">Nagaland</option>
+                        <option value="Odisha">Odisha</option>
+                        <option value="Punjab">Punjab</option>
+                        <option value="Rajasthan">Rajasthan</option>
+                        <option value="Sikkim">Sikkim</option>
+                        <option value="Tamil Nadu">Tamil Nadu</option>
+                        <option value="Telangana">Telangana</option>
+                        <option value="Tripura">Tripura</option>
+                        <option value="Uttar Pradesh">Uttar Pradesh</option>
+                        <option value="Uttarakhand">Uttarakhand</option>
+                        <option value="West Bengal">West Bengal</option>
+                        <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
+                        <option value="Chandigarh">Chandigarh</option>
+                        <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra and Nagar Haveli and Daman and Diu</option>
                         <option value="Delhi">Delhi</option>
+                        <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+                        <option value="Ladakh">Ladakh</option>
+                        <option value="Lakshadweep">Lakshadweep</option>
+                        <option value="Puducherry">Puducherry</option>
                         <option value="Other">Other</option>
                     </select>
                 </div>
@@ -350,9 +257,7 @@
                 <!-- Experience -->
                 <div class="form-group">
                     <label>Years of Experience</label>
-                    <input name="experience_range" type="number" class="form-control-input"
-                        placeholder="e.g. 5" min="0" max="60"
-                        oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                    <input name="experience_range" type="number" class="form-control-input" placeholder="e.g. 5" min="0" max="60" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
                 </div>
 
                 <!-- Insurance Segments -->
@@ -394,26 +299,24 @@
 
                 <!-- Promo Code -->
                 <div class="form-group mb-4">
-                    <a href="javascript:void(0)" id="togglePromoBtn"
-                        style="color:#273C8E;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:8px;font-size:15px;">
+                    <a href="javascript:void(0)" id="togglePromoBtn" style="color: #273C8E; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 15px;">
                         <i class="fas fa-tag"></i> I Have a promo code
                     </a>
-                    <div id="promoFieldContainer" style="display:none; margin-top:15px;">
+                    <div id="promoFieldContainer" style="display: none; margin-top: 15px;">
                         <div class="d-flex gap-2">
                             <input type="text" id="promoCodeInput" class="form-control-input" placeholder="Enter promo code">
                             <button type="button" id="verifyPromoBtn" class="btn-verify" onclick="verifyPromoCode()">Verify</button>
                         </div>
-                        <div id="promoMessage" class="mt-2" style="font-weight:500;font-size:13px;"></div>
+                        <div id="promoMessage" class="mt-2" style="font-weight: 500; font-size: 13px;"></div>
                     </div>
                     <input type="hidden" name="promo_code" id="appliedPromoCode">
                 </div>
 
                 <button type="submit" id="mainSubmitBtn" class="btn-submit">Continue to Plans</button>
             </form>
-
-            <!-- Login link (shown for non-distributor users) -->
-            <div class="login-footer">
-                <p>Already have an account? <a href="/agent-login">Login here</a></p>
+            
+            <div class="text-center mt-4 pt-3" style="border-top: 1px solid #e2e8f0;">
+                <p style="color: #64748b; font-size: 15px; margin: 0;">Already have an account? <a href="/agent-login" style="color: #0d9488; font-weight: 600; text-decoration: none;">Login here</a></p>
             </div>
 
         </div>

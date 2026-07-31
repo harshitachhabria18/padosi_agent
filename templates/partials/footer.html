@@ -32,6 +32,8 @@
                                             class="text-decoration-none">Contact Us</a></li>
                                     <li><i class="fa-solid fa-circle"></i><a href="/faq/"
                                             class="text-decoration-none">FAQs</a></li>
+                                    <li><i class="fa-solid fa-circle"></i><a href="{% url 'home:blacklisted_agents' %}"
+                                            class="text-decoration-none">Blacklisted Agents</a></li>
                                     <li><i class="fa-solid fa-circle"></i><a href="#"
                                             class="text-decoration-none">Insurance Blog</a></li>
                                     <li><i class="fa-solid fa-circle"></i><a href="/calculator/"
@@ -48,6 +50,10 @@
                                 <h4 class="heading">Contact Info</h4>
                                 <ul class="list-unstyled mb-0">
                                     <li class="text">
+                                        <i class="fa-solid fa-phone"></i>
+                                        <a href="tel:+919898555837" class="text-decoration-none">+91 9898555837</a>
+                                    </li>
+                                    <li class="text">
                                         <i class="fa-solid fa-envelope"></i>
                                         <a href="mailto:{{ footer_settings.contact_email|default:'support@padosiagent.com' }}" id="footer-email-link"
                                             target="_blank" class="text-decoration-none">{{ footer_settings.contact_email|default:'support@padosiagent.com' }}</a>
@@ -59,45 +65,26 @@
                                 </ul>
                             </div>
                         </div>
-                        {% if footer_settings.social_links.facebook or footer_settings.social_links.twitter or footer_settings.social_links.instagram or footer_settings.social_links.linkedin %}
                         <div class="col-lg-3 col-md-3 col-sm-4 col-12">
                             <div class="icon">
                                 <h4 class="heading">Social Networks</h4>
                                 <ul class="list-unstyled mb-0 social-icons">
-                                    {% if footer_settings.social_links.facebook and footer_settings.social_links.facebook != '#' %}
-                                    <li><a href="{{ footer_settings.social_links.facebook }}" target="_blank"
-                                            rel="noopener noreferrer" class="text-decoration-none"><i
-                                                class="fa-brands fa-facebook-f social-networks"></i></a></li>
-                                    {% endif %}
-                                    {% if footer_settings.social_links.twitter and footer_settings.social_links.twitter != '#' %}
-                                    <li><a href="{{ footer_settings.social_links.twitter }}" target="_blank"
-                                            rel="noopener noreferrer" class="text-decoration-none"><i
-                                                class="fa-brands fa-x-twitter social-networks"
-                                                aria-hidden="true"></i></a></li>
-                                    {% endif %}
-                                    {% if footer_settings.social_links.instagram and footer_settings.social_links.instagram != '#' %}
-                                    <li><a href="{{ footer_settings.social_links.instagram }}" target="_blank"
-                                            rel="noopener noreferrer" class="text-decoration-none"><i
-                                                class="fa-brands fa-instagram social-networks"></i></a></li>
-                                    {% endif %}
-                                    {% if footer_settings.social_links.linkedin and footer_settings.social_links.linkedin != '#' %}
-                                    <li><a href="{{ footer_settings.social_links.linkedin }}" target="_blank"
-                                            rel="noopener noreferrer" class="text-decoration-none"><i
-                                                class="fa-brands fa-linkedin-in social-networks"></i></a></li>
-                                    {% endif %}
+                                    <li><a href="{% if footer_settings.social_links.facebook and footer_settings.social_links.facebook != '#' %}{{ footer_settings.social_links.facebook }}{% else %}#{% endif %}" {% if footer_settings.social_links.facebook and footer_settings.social_links.facebook != '#' %}target="_blank" rel="noopener noreferrer"{% endif %} class="text-decoration-none"><i class="fa-brands fa-facebook-f social-networks"></i></a></li>
+                                    <li><a href="{% if footer_settings.social_links.twitter and footer_settings.social_links.twitter != '#' %}{{ footer_settings.social_links.twitter }}{% else %}#{% endif %}" {% if footer_settings.social_links.twitter and footer_settings.social_links.twitter != '#' %}target="_blank" rel="noopener noreferrer"{% endif %} class="text-decoration-none"><i class="fa-brands fa-x-twitter social-networks" aria-hidden="true"></i></a></li>
+                                    <li><a href="{% if footer_settings.social_links.instagram and footer_settings.social_links.instagram != '#' %}{{ footer_settings.social_links.instagram }}{% else %}#{% endif %}" {% if footer_settings.social_links.instagram and footer_settings.social_links.instagram != '#' %}target="_blank" rel="noopener noreferrer"{% endif %} class="text-decoration-none"><i class="fa-brands fa-instagram social-networks"></i></a></li>
+                                    <li><a href="{% if footer_settings.social_links.linkedin and footer_settings.social_links.linkedin != '#' %}{{ footer_settings.social_links.linkedin }}{% else %}#{% endif %}" {% if footer_settings.social_links.linkedin and footer_settings.social_links.linkedin != '#' %}target="_blank" rel="noopener noreferrer"{% endif %} class="text-decoration-none"><i class="fa-brands fa-linkedin-in social-networks"></i></a></li>
                                 </ul>
                             </div>
                         </div>
-                        {% endif %}
                     </div>
                 </div>
             </div>
         </div>
     </div>
     <div class="copyright">
-        <p class="mb-0">© {% now "Y" %} {{ footer_settings.site_name|default:"PadosiAgent" }} ServTech Private Limited.
+        <p class="mb-0">© 2025 PadosiAgent ServTech Private Limited.
             All rights reserved. | <a href="/privacy/" class="text-decoration-none">Privacy Policy</a> | <a
-                href="/terms/" class="text-decoration-none">Terms & Conditions</a></p>
+                href="/terms/" class="text-decoration-none">Terms &amp; Conditions</a></p>
     </div>
 
     {% if footer_settings.contact_email %}
@@ -119,3 +106,4 @@
     </script>
     {% endif %}
 </section>
+

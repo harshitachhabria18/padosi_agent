@@ -419,6 +419,14 @@
             {% endif %}
         </a>
 
+        <a href="{% url 'admin_blacklisted_agents' %}"
+           class="menu-item {% if request.path == '/padosi-admin/blacklisted-agents/' %}active{% endif %}">
+            <i class="fa-solid fa-user-slash"></i> Blacklisted Agents
+            {% if flagged_count > 0 %}
+                <span class="badge bg-danger ms-auto">{{ flagged_count }}</span>
+            {% endif %}
+        </a>
+
         <a href="/admin/pending-registrations/"
            class="menu-item {% if '/admin/pending-registrations/' in request.path %}active{% endif %}">
             <i class="fa-solid fa-user-clock"></i> Registration Pending

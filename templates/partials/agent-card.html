@@ -1,3 +1,4 @@
+{% load static %}
 <div class="react-agent-card find-agents-list-item">
     {% with profile=agent.profile performance=agent.performanceStats display_name=agent.display_name active_sub=agent.activeSubscription is_trusted=agent.is_trusted is_approved_by_admin=agent.is_approved_by_admin is_verified_agent=agent.is_verified_agent agent_slug=agent.agent_slug whatsapp_digits=agent.profile.whatsapp_digits whatsapp_raw=agent.whatsapp_raw exp_years=agent.experience_years client_base=agent.client_base claims_processed=performance.claims_processed|default:0 display_dist=agent.distance|default:0 has_distance=agent.has_distance rating=agent.average_rating smart_rank=agent.padosi_smart_rank calculated_match_percent=agent.calculated_match_percent badge=agent.badge|lower agent_city_display=agent.agent_city_display %}
 
@@ -55,40 +56,59 @@
                     <span class="rac-rating-count">({{ agent.review_count }} reviews)</span>
                 </div>
 
-                {% if has_distance %}
-                    <div class="rac-dist-pill">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10" />
-                            <path d="m4.93 4.93 4.24 4.24" />
-                            <path d="M14.83 9.17 19.07 4.93" />
-                            <path d="M14.83 14.83l4.24 4.24" />
-                            <path d="M9.17 14.83 4.93 19.07" />
-                            <circle cx="12" cy="12" r="4" />
-                        </svg>
-                        {% if display_dist < 1 %}
-                            Nearby
-                        {% elif display_dist > 100 %}
-                            <span style="color:#b45309;font-weight:700;">📡 Far Away</span>
-                        {% else %}
-                            {{ display_dist|floatformat:1 }}km away
+                                {% if has_distance or request.GET.pincode or request.GET.location or request.GET.lat or request.session.last_pincode or request.session.last_lat %}
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:2px;">
+                        {% if has_distance %}
+                            <div class="rac-dist-pill">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                                    <circle cx="12" cy="10" r="3" />
+                                </svg>
+                                {% if display_dist < 1 %}
+                                    Nearby
+                                {% elif display_dist > 100 %}
+                                    <span style="color:#b45309;font-weight:700;">?? Far Away</span>
+                                {% else %}
+                                    {{ display_dist|floatformat:1 }}km away
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                        {% if request.GET.pincode or request.GET.location or request.GET.lat or request.session.last_pincode or request.session.last_lat or request.session.last_location %}
+                            <div class="rac-match-pill {% if calculated_match_percent > 90 %}rac-match--green{% elif calculated_match_percent >= 51 %}rac-match--amber{% else %}rac-match--red{% endif %}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                                <span>{{ calculated_match_percent }}% Match</span>
+                            </div>
                         {% endif %}
                     </div>
                 {% endif %}
 
-                {% if agent_city_display %}
-                    <div class="rac-location">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                            <circle cx="12" cy="10" r="3" />
-                        </svg>
-                        <span>{{ agent_city_display }}</span>
+                
+
+                <div class="rac-stats-grid" style="margin-top: 8px;">
+                    <div class="rac-stat-box">
+                        <div class="rac-stat-num">{{ exp_years }}+</div>
+                        <div class="rac-stat-lbl">YEARS</div>
                     </div>
-                {% endif %}
+                    <div class="rac-stat-box">
+                        <div class="rac-stat-num">{{ agent.formatted_client_base }}</div>
+                        <div class="rac-stat-lbl">CLIENTS</div>
+                    </div>
+                    <div class="rac-stat-box">
+                        <div class="rac-stat-num">₹{{ performance.formatted_claims_amount|default:"0" }}</div>
+                        <div class="rac-stat-lbl">CLAIMS</div>
+                    </div>
+                    <div class="rac-stat-box">
+                        <div class="rac-stat-num">{{ performance.formatted_claims_processed|default:"0" }}</div>
+                        <div class="rac-stat-lbl">SETTLED</div>
+                    </div>
+                </div>
 
                 {% if agent.ordered_insurance_segments %}
-                    <div class="rac-tags">
+                    <div class="rac-tags" style="margin-top: 10px; flex-wrap: nowrap;">
                         {% for seg in agent.ordered_insurance_segments|slice:":4" %}
                             <span class="rac-tag {% if 'health' in seg %}rac-tag--health{% elif 'life' in seg %}rac-tag--life{% elif 'motor' in seg %}rac-tag--motor{% elif 'sme' in seg %}rac-tag--sme{% else %}rac-tag--default{% endif %}">
                                 <i class="fas {% if 'health' in seg %}fa-heartbeat{% elif 'life' in seg %}fa-user-shield{% elif 'motor' in seg %}fa-car{% elif 'sme' in seg %}fa-store{% else %}fa-shield-alt{% endif %}" style="font-size: 8px; margin-right: 3px;"></i>
@@ -97,30 +117,6 @@
                         {% endfor %}
                     </div>
                 {% endif %}
-            </div>
-
-            <div class="rac-stats-col">
-                {% if request.GET.pincode or request.GET.location or request.GET.lat or request.session.last_pincode or request.session.last_lat or request.session.last_location %}
-                    <div class="rac-stat rac-stat--match {% if calculated_match_percent > 90 %}rac-match--green {% if calculated_match_percent > 90 %}rac-stat--match.rac-match--green{% endif %}{% elif calculated_match_percent >= 51 %}rac-match--amber{% else %}rac-match--red{% endif %}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                        </svg>
-                        <span class="rac-stat-num">{{ calculated_match_percent }}%</span>
-                        <span class="rac-stat-lbl">Match</span>
-                    </div>
-                {% endif %}
-                <div class="rac-stat">
-                    <span class="rac-stat-num">{{ exp_years }}+</span>
-                    <span class="rac-stat-lbl">yrs exp</span>
-                </div>
-                <div class="rac-stat">
-                    <span class="rac-stat-num">{{ agent.formatted_client_base }}</span>
-                    <span class="rac-stat-lbl">clients</span>
-                </div>
-                <div class="rac-stat">
-                    <span class="rac-stat-num">{{ performance.formatted_claims_processed|default:"0" }}</span>
-                    <span class="rac-stat-lbl">claims</span>
-                </div>
             </div>
         </div>
 
@@ -265,33 +261,24 @@
                     </div>
                 {% endif %}
 
-                {% if agent_city_display %}
-                    <div class="rac-d-location">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                            <circle cx="12" cy="10" r="3" />
-                        </svg>
-                        <span>{{ agent_city_display }}</span>
-                    </div>
-                {% endif %}
+                
 
-                <div class="rac-d-stats-grid">
-                    <div class="rac-d-stat-box">
-                        <div class="rac-d-stat-num">{{ exp_years }}+</div>
-                        <div class="rac-d-stat-lbl">YEARS</div>
+                <div class="rac-stats-grid">
+                    <div class="rac-stat-box">
+                        <div class="rac-stat-num">{{ exp_years }}+</div>
+                        <div class="rac-stat-lbl">YEARS</div>
                     </div>
-                    <div class="rac-d-stat-box">
-                        <div class="rac-d-stat-num">{{ agent.formatted_client_base }}</div>
-                        <div class="rac-d-stat-lbl">CLIENTS</div>
+                    <div class="rac-stat-box">
+                        <div class="rac-stat-num">{{ agent.formatted_client_base }}</div>
+                        <div class="rac-stat-lbl">CLIENTS</div>
                     </div>
-                    <div class="rac-d-stat-box">
-                        <div class="rac-d-stat-num">{{ performance.formatted_claims_processed|default:"0" }}</div>
-                        <div class="rac-d-stat-lbl">CLAIMS</div>
+                    <div class="rac-stat-box">
+                        <div class="rac-stat-num">{{ performance.formatted_claims_processed|default:"0" }}</div>
+                        <div class="rac-stat-lbl">CLAIMS</div>
                     </div>
-                    <div class="rac-d-stat-box">
-                        <div class="rac-d-stat-num">₹{{ performance.formatted_claims_amount|default:"0" }}</div>
-                        <div class="rac-d-stat-lbl">SETTLED</div>
+                    <div class="rac-stat-box">
+                        <div class="rac-stat-num">₹{{ performance.formatted_claims_amount|default:"0" }}</div>
+                        <div class="rac-stat-lbl">SETTLED</div>
                     </div>
                 </div>
 
@@ -752,49 +739,32 @@
         }
 
         /* ── Distance pill (mobile) ── */
-        .rac-dist-pill {
+                .rac-match-pill {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            background: linear-gradient(135deg, #16a34a, #15803d);
-            color: #fff;
-            font-size: 10px;
-            font-weight: 800;
-            padding: 3px 8px;
-            border-radius: 999px;
+            gap: 3px;
+            padding: 3px 6px;
+            border-radius: 12px;
+            font-size: 9.5px;
+            font-weight: 700;
+            line-height: 1;
+            border: 1px solid transparent;
             white-space: nowrap;
-            letter-spacing: 0.2px;
-            box-shadow: 0 1px 4px rgba(22, 163, 74, 0.35);
-            width: fit-content;
         }
+        .rac-match--green { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+        .rac-match--amber { background: #fffbeb; color: #d97706; border-color: #fde68a; }
+        .rac-match--red { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+
+        .rac-dist-pill { display: inline-flex; align-items: center; gap: 4px; background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 999px; white-space: nowrap; width: auto; }
 
         .rac-dist-pill svg {
             flex-shrink: 0;
             opacity: 0.9;
         }
 
-        .rac-tags {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 3px;
-            margin-top: 2px;
-        }
+        .rac-tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
 
-        .rac-tag {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2px 4px;
-            border-radius: 999px;
-            border: 1px solid;
-            font-size: 9px;
-            font-weight: 700;
-            text-align: center;
-            line-height: 1.3;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+        .rac-tag { display: inline-flex; align-items: center; justify-content: center; padding: 4px 10px; border-radius: 999px; border: 1px solid; font-size: 10px; font-weight: 700; line-height: 1; white-space: nowrap; }
 
         /* Mobile stats sidebar */
         .rac-stats-col {
@@ -1095,14 +1065,14 @@
         }
 
         /* Desktop stats grid (4 cols: Years · Clients · Claims · Settled) */
-        .rac-d-stats-grid {
+        .rac-stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 8px;
             margin-top: 2px;
         }
 
-        .rac-d-stat-box {
+        .rac-stat-box {
             background: rgba(0, 0, 0, 0.03);
             border: 1px solid rgba(0, 0, 0, 0.07);
             border-radius: 8px;
@@ -1110,14 +1080,14 @@
             text-align: center;
         }
 
-        .rac-d-stat-num {
+        .rac-stat-num {
             font-size: 14px;
             font-weight: 800;
             color: #111827;
             line-height: 1;
         }
 
-        .rac-d-stat-lbl {
+        .rac-stat-lbl {
             font-size: 8px;
             font-weight: 600;
             color: #9ca3af;
@@ -1280,3 +1250,5 @@
 
     {% endwith %}
 </div>
+
+

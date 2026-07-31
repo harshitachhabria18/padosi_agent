@@ -6,3 +6,4 @@ from .homepage import (
     HomePageSettings, HeroTrustBadge, HeroStatistic, HeroProductTile,
     HeroSlide, DidYouKnowSlide, QuickPickItem, WhyChooseCard, HowItWorksStep
 )
+from .blacklisted_agent import BlacklistedAgent

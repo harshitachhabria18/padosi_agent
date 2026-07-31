@@ -4,10 +4,6 @@
 {% block title %}PadosiAgent — Expert & Trusted Insurance Agent{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/owl.carousel.min.css' %}">
-<link rel="stylesheet" href="{% static 'css/owl.theme.default.min.css' %}">
-<link rel="stylesheet" href="{% static 'css/magnific-popup.css' %}">
-<link rel="stylesheet" href="{% static 'css/aos.css' %}">
 <style>
     .header {
         background: transparent !important;
@@ -23,7 +19,7 @@
 
 <!-- Did You Know? Section -->
 {% if settings.show_dyk %}
-<section class="dyk-section py-5 bg-transparent">
+<section class="dyk-section py-5 bg-transparent" data-aos="fade-up">
     <div class="container">
         <div class="d-flex align-items-end justify-content-between mb-4 mb-sm-5">
             <div>
@@ -81,7 +77,7 @@
 
 <!-- Quick Picks Section -->
 {% if settings.show_quickpicks %}
-<section class="quick-picks-section py-4 bg-transparent">
+<section class="quick-picks-section py-4 bg-transparent" data-aos="fade-up">
     <div class="qp-container">
         <div class="d-flex align-items-end justify-content-between mb-4 mb-sm-5">
             <div>
@@ -237,7 +233,7 @@
 
 <!-- How It Works Section (4 Steps) -->
 {% if settings.show_how_it_works %}
-<section class="how-works-section py-5 bg-transparent overflow-hidden">
+<section class="how-works-section py-5 bg-transparent overflow-hidden" data-aos="fade-up">
     <div class="container">
         <div class="text-center mb-5">
             <p class="section-subtitle-small">How It Works</p>

@@ -1475,13 +1475,17 @@ def agent_capture_lead(request):
             client_ip = request.META.get('REMOTE_ADDR')
 
         # 1. Explicit IP Block Check
-        from apps.agents.models import BlockedIp
-        if BlockedIp.objects.filter(ip_address=client_ip).exists():
-            return JsonResponse({
-                'success': False,
-                'url': '#',
-                'message': 'Access denied. Your IP address has been blocked due to suspicious activity.'
-            })
+        from django.conf import settings
+        whitelisted_ips = getattr(settings, 'SECURITY_WHITELISTED_IPS', ['127.0.0.1', '::1'])
+        
+        if client_ip not in whitelisted_ips:
+            from apps.agents.models import BlockedIp
+            if BlockedIp.objects.filter(ip_address=client_ip).exists():
+                return JsonResponse({
+                    'success': False,
+                    'url': '#',
+                    'message': 'Access denied. Your IP address has been blocked due to suspicious activity.'
+                })
 
         # Check Agent exists
         agent = Agent.objects.filter(id=agent_id).first()

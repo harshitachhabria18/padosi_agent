@@ -182,10 +182,20 @@ from .views.pages import (
     pages_update,
     pages_delete,
 )
+from apps.admin_panel.views.blacklisted import (
+    blacklisted_agents_view,
+    ajax_blacklist_approve,
+    ajax_blacklist_confirm,
+    ajax_blacklist_remove,
+)
 
 # app_name = "admin_panel"
 
 urlpatterns = [
+    path('padosi-admin/blacklisted-agents/', blacklisted_agents_view, name='admin_blacklisted_agents'),
+    path('admin/ajax/blacklist/approve/', ajax_blacklist_approve, name='ajax_blacklist_approve'),
+    path('admin/ajax/blacklist/confirm/', ajax_blacklist_confirm, name='ajax_blacklist_confirm'),
+    path('admin/ajax/blacklist/remove/', ajax_blacklist_remove, name='ajax_blacklist_remove'),
     # GET  /admin/          — redirect to login (convenience root)
     # Maps to Laravel: Route::get('/login', ...) inside prefix('admin')
     path("admin/", show_login_form, name="admin_login"),

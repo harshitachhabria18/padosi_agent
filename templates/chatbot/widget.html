@@ -1,0 +1,81 @@
+{% load static static_v %}
+<link rel="stylesheet" href="{% static_v 'chatbot/css/widget.css' %}">
+
+<!-- Chatbot Trigger Button -->
+<button id="chatbot-trigger" class="chatbot-trigger" aria-label="Ask AI">
+    <div class="chatbot-trigger-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+        </svg>
+    </div>
+    <span class="chatbot-trigger-text">Ask AI</span>
+    <span class="chatbot-status-dot"></span>
+</button>
+
+<!-- Chatbot Panel -->
+<div id="chatbot-panel" class="chatbot-panel hidden">
+    <!-- Header -->
+    <div class="chatbot-header">
+        <div class="chatbot-header-left">
+            <div class="chatbot-header-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"></path>
+                </svg>
+            </div>
+            <div class="chatbot-header-title-wrapper">
+                <div class="chatbot-header-title">PadosiAgent Assistant</div>
+                <div class="chatbot-header-subtitle">AI · Voice · 12 languages</div>
+            </div>
+        </div>
+        <div class="chatbot-header-right">
+
+            <button class="chatbot-action-btn" id="chatbot-header-icon" aria-label="Start New Chat" title="Start New Chat">
+                New Chat
+            </button>
+            <button id="chatbot-close" class="chatbot-close-btn" aria-label="Close Chat">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Body -->
+    <div class="chatbot-body" id="chatbot-messages">
+        <!-- Initial Bot Message -->
+        <div class="chatbot-message bot-message">
+            Hi! I'm PadosiAgent Assistant. Ask me anything about insurance, investments, or finding the right agent.
+        </div>
+        
+        <!-- Suggestions Container -->
+        <div class="chatbot-suggestions" id="chatbot-suggestions">
+            <div class="chatbot-suggestions-row">
+                <button class="chatbot-chip">Which health plan is right for me?</button>
+            </div>
+            <div class="chatbot-suggestions-row">
+                <button class="chatbot-chip">Difference between Term & ULIP?</button>
+            </div>
+            <div class="chatbot-suggestions-row">
+                <button class="chatbot-chip">How to compare agents near me?</button>
+                <button class="chatbot-chip">Explain SIP vs Lumpsum</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer / Input -->
+    <div class="chatbot-footer">
+        <button class="chatbot-mic-btn" aria-label="Use voice input">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+            </svg>
+        </button>
+        <input type="text" id="chatbot-input" class="chatbot-input" placeholder="Ask a question..." autocomplete="off">
+        <button id="chatbot-send" class="chatbot-send-btn" aria-label="Send message">
+            <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+            </svg>
+        </button>
+    </div>
+</div>
+
+<script src="{% static_v 'chatbot/js/widget.js' %}"></script>

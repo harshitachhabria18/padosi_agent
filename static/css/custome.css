@@ -5244,10 +5244,3 @@ Find Agents CSS ****/
         text-decoration: underline !important;
     }
 
-/* Fix header stacking context for dropdowns and overlaps */
-.header {
-    z-index: 1050 !important;
-}
-.navbar-collapse {
-    z-index: 1060 !important;
-}
