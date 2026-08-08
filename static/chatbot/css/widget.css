@@ -390,6 +390,20 @@
     margin-right: -2px; /* slight visual balance for paper plane */
 }
 
+/* Waiting / disabled state */
+.chatbot-input:disabled {
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.chatbot-send-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none !important;
+    background-color: #78a594;
+}
+
 /* Responsive */
 @media (max-width: 480px) {
     .chatbot-panel {

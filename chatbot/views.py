@@ -123,7 +123,8 @@ def send_message(request):
                 import traceback
                 traceback.print_exc()
                 logger.error(f"Error in SSE event_stream: {e}")
-                yield f"data: {json.dumps({'type': 'error', 'message': 'I am having trouble connecting right now. Please try again later.'})}\n\n"
+                error_msg = {"type": "error", "message": "I'm here to help you with insurance and investment related questions — finding the right policy, understanding coverage, or connecting you with a licensed agent. What would you like to know?"}
+                yield f"data: {json.dumps(error_msg)}\n\n"
 
         response = StreamingHttpResponse(event_stream(), content_type='text/event-stream; charset=utf-8')
         response['Cache-Control'] = 'no-cache'

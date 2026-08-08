@@ -306,12 +306,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const toDisplayHtml = (text) => {
         let html = text.replace(/\n/g, '<br>');
         html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #2563eb; text-decoration: underline; font-weight: 500;">$1</a>');
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         return html;
+    };
+
+    // ---- Input lock helpers (Issue 2: disable while waiting) ----
+    let isWaiting = false;
+
+    const setWaiting = (waiting) => {
+        isWaiting = waiting;
+        input.disabled = waiting;
+        sendBtn.disabled = waiting;
+        if (waiting) {
+            input.placeholder = 'Waiting for response...';
+            sendBtn.classList.remove('send-btn--active');
+        } else {
+            input.placeholder = 'Ask a question...';
+            updateSendBtnState();
+        }
     };
 
     // Send message functionality
     const sendMessage = async (text) => {
         if (!text || text.trim() === '') return;
+        if (isWaiting) return;  // drop rapid re-sends while a response is in-flight
 
         // Hide suggestions if they exist
         const currentSuggestions = document.getElementById('chatbot-suggestions');
@@ -341,6 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const botMsgDiv = document.createElement('div');
         botMsgDiv.className = 'chatbot-message bot-message';
 
+        setWaiting(true);
         try {
             const response = await fetch('/api/chatbot/message/', {
                 method: 'POST',
@@ -425,7 +444,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!messagesContainer.contains(botMsgDiv)) {
                 messagesContainer.appendChild(botMsgDiv);
             }
-            botMsgDiv.textContent = 'Error connecting to assistant.';
+            botMsgDiv.textContent = 'I\'m here to help you with insurance and investment related questions — finding the right policy, understanding coverage, or connecting you with a licensed agent. What would you like to know?';
+        } finally {
+            setWaiting(false);
         }
         scrollToBottom();
     };
