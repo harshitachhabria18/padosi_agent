@@ -3,7 +3,8 @@
 /* Trigger Button */
 .chatbot-trigger {
     position: fixed;
-    bottom: 24px;
+    /* C1: sit above iOS home-indicator bar on notch-era iPhones */
+    bottom: max(24px, env(safe-area-inset-bottom, 24px));
     right: 24px;
     z-index: 9999;
     display: flex;
@@ -115,6 +116,9 @@
     font-size: 15px;
     line-height: 1.2;
     white-space: nowrap;
+    /* C4: prevent long title from pushing header buttons off-screen */
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .chatbot-header-subtitle {
@@ -390,18 +394,42 @@
     margin-right: -2px; /* slight visual balance for paper plane */
 }
 
-/* Responsive */
+/* Responsive — small phones */
 @media (max-width: 480px) {
     .chatbot-panel {
         width: calc(100% - 32px);
-        bottom: 16px;
+        /* C1: respect iOS home bar — panel bottom must clear safe area */
+        bottom: max(16px, env(safe-area-inset-bottom, 16px));
         right: 16px;
         max-height: calc(100vh - 32px);
     }
-    
+
     .chatbot-trigger {
-        bottom: 16px;
+        /* C1: match panel — use safe area on mobile breakpoint too */
+        bottom: max(16px, env(safe-area-inset-bottom, 16px));
         right: 16px;
+    }
+
+    /* C1: push footer input above the home indicator bar */
+    .chatbot-footer {
+        padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
+    }
+
+    /* C2: slightly narrower cards on 320px budget phones */
+    .chatbot-agent-card {
+        flex: 0 0 240px;
+        width: 240px;
+    }
+}
+
+/* C3: Landscape phones — taller panel so chat isn’t cramped */
+@media (orientation: landscape) and (max-height: 500px) {
+    .chatbot-panel {
+        max-height: 90vh;
+        bottom: 8px;
+    }
+    .chatbot-trigger {
+        bottom: 8px;
     }
 }
 

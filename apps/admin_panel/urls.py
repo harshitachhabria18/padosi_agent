@@ -228,6 +228,7 @@ from apps.admin_panel.views.system import (
     run_backup,
     download_backup,
 )
+from apps.admin_panel.views.chatbot_stats import chatbot_stats, chatbot_session_detail, load_more_messages
 
 # app_name = "admin_panel"
 
@@ -527,4 +528,9 @@ urlpatterns = [
     path("admin/system/backups/", backups, name="admin_system_backups"),
     path("admin/system/backups/run/", run_backup, name="admin_system_run_backup"),
     path("admin/system/backups/download/<str:filename>/", download_backup, name="admin_system_download_backup"),
+
+    # Chatbot Analytics
+    path("admin/chatbot/", chatbot_stats, name="admin_chatbot_stats"),
+    path("admin/chatbot/load-more-messages/", load_more_messages, name="admin_chatbot_load_more_messages"),
+    path("admin/chatbot/session/<str:session_id>/", chatbot_session_detail, name="admin_chatbot_session_detail"),
 ]

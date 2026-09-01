@@ -360,11 +360,17 @@ document.addEventListener('DOMContentLoaded', () => {
         botMsgDiv.className = 'chatbot-message bot-message';
 
         try {
+            // B1: Abort the request after 25 seconds so the UI never spins forever
+            const controller = new AbortController();
+            const abortTimer = setTimeout(() => controller.abort(), 25000);
+
             const response = await fetch('/chatbot-api/message/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text, session_id: sessionId })
+                body: JSON.stringify({ message: text, session_id: sessionId }),
+                signal: controller.signal
             });
+            clearTimeout(abortTimer); // response arrived in time — cancel abort timer
 
             if (messagesContainer.contains(typingDiv)) {
                 messagesContainer.removeChild(typingDiv);
@@ -375,7 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (response.status === 429) {
                     botMsgDiv.textContent = "You're sending messages too quickly, please wait a moment and try again.";
                 } else {
-                    botMsgDiv.textContent = "Hi! I'm PadosiAgent Assistant. Ask me anything about insurance, investments, or finding the right agent.";
+                    botMsgDiv.textContent = "Something went wrong. Please try again.";
                 }
                 scrollToBottom();
                 return;
@@ -430,7 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         scrollToBottom();
 
                     } else if (event.type === 'error') {
-                        botMsgDiv.textContent = event.message || "Hi! I'm PadosiAgent Assistant. Ask me anything about insurance, investments, or finding the right agent.";
+                        botMsgDiv.textContent = event.message || "Something went wrong. Please try again.";
                         scrollToBottom();
                     }
                 }
@@ -443,7 +449,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!messagesContainer.contains(botMsgDiv)) {
                 messagesContainer.appendChild(botMsgDiv);
             }
-            botMsgDiv.textContent = "Hi! I'm PadosiAgent Assistant. Ask me anything about insurance, investments, or finding the right agent.";
+            // B1: Show specific message for timeout vs generic network error
+            if (err.name === 'AbortError') {
+                botMsgDiv.textContent = "This is taking longer than expected. Please try again.";
+            } else {
+                botMsgDiv.textContent = "Something went wrong. Please try again.";
+            }
         } finally {
             setWaiting(false);
         }

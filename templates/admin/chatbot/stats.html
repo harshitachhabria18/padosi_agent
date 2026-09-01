@@ -1,0 +1,735 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Chatbot Analytics — PadosiAgent Admin{% endblock %}
+{% block breadcrumb %}Advanced › Chatbot Analytics{% endblock %}
+
+{% block content %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- Flatpickr (date-range picker for custom timeframe) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<!-- ── Page header ──────────────────────────────────────────────────────── -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h5 class="fw-bold mb-1">
+            <i class="fa-solid fa-robot me-2" style="color:#1f7b68;"></i>Chatbot Analytics
+        </h5>
+        <span class="text-muted" style="font-size:13px;">
+            Live stats from LatencyLog, ChatMessage &amp; ChatSession — excluding test traffic
+        </span>
+    </div>
+    <form method="GET" action="" class="d-flex align-items-center gap-2 position-relative" id="timeframeForm">
+        <!-- Hidden ISO inputs sent to Django for filtering -->
+        <input type="hidden" name="start_date"    id="hiddenStartDate"    value="{{ request.GET.start_date }}">
+        <input type="hidden" name="end_date"      id="hiddenEndDate"      value="{{ request.GET.end_date }}">
+        <!-- Human-readable display labels passed back via URL so they survive page reload -->
+        <input type="hidden" name="start_display" id="hiddenStartDisplay" value="{{ request.GET.start_display }}">
+        <input type="hidden" name="end_display"   id="hiddenEndDisplay"   value="{{ request.GET.end_display }}">
+
+        <label class="text-muted me-1" style="font-size:13px;">Timeframe:</label>
+        <select name="timeframe" id="timeframeSelect" class="form-select form-select-sm" style="width:160px;">
+            <option value="60m"  {% if timeframe == '60m'  %}selected{% endif %}>Last 60 Minutes</option>
+            <option value="12h"  {% if timeframe == '12h'  %}selected{% endif %}>Last 12 Hours</option>
+            <option value="24h"  {% if timeframe == '24h'  %}selected{% endif %}>Last 24 Hours</option>
+            <option value="7d"   {% if timeframe == '7d'   %}selected{% endif %}>Last 7 Days</option>
+            <option value="30d"  {% if timeframe == '30d'  %}selected{% endif %}>Last 30 Days</option>
+            <option value="90d"  {% if timeframe == '90d'  %}selected{% endif %}>Last 90 Days</option>
+            <option value="365d" {% if timeframe == '365d' %}selected{% endif %}>Last Year</option>
+            <option value="custom" {% if timeframe == 'custom' %}selected{% endif %}>Custom Range...</option>
+        </select>
+
+        <!-- Clean human-readable label shown when a custom range is active (Clickable to edit!) -->
+        {% if timeframe == 'custom' %}
+        <span onclick="openCustomModal()" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;background:#f0f4ff;border:1px solid #c7d2fe;border-radius:6px;padding:4px 10px;font-size:12px;color:#3730a3;white-space:nowrap;transition:0.2s;" onmouseover="this.style.background='#e0e7ff'" onmouseout="this.style.background='#f0f4ff'">
+            <i class="fa-solid fa-calendar-days" style="font-size:11px;"></i>
+            <strong>{{ request.GET.start_display|default:request.GET.start_date|slice:":16" }}</strong>
+            <span style="color:#6366f1;">→</span>
+            <strong>{{ request.GET.end_display|default:request.GET.end_date|slice:":16" }}</strong>
+            <i class="fa-solid fa-pen ms-1" style="font-size:10px;color:#6366f1;"></i>
+        </span>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Custom Date Range Modal -->
+<div id="customDateModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(2px);">
+    <div style="background:white; padding:24px; border-radius:12px; width:320px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+        <h6 class="fw-bold mb-3" style="color:#1f2937;">Select Custom Range</h6>
+        
+        <div class="mb-3">
+            <label class="form-label text-muted mb-1" style="font-size:12px;font-weight:600;">Start Date & Time</label>
+            <input type="text" id="modalStart" class="form-control form-control-sm" placeholder="Select start..." style="background:#f9fafb;">
+        </div>
+        
+        <div class="mb-4">
+            <label class="form-label text-muted mb-1" style="font-size:12px;font-weight:600;">End Date & Time</label>
+            <input type="text" id="modalEnd" class="form-control form-control-sm" placeholder="Select end..." style="background:#f9fafb;">
+        </div>
+        
+        <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-light btn-sm" onclick="closeCustomModal()" style="border:1px solid #d1d5db;">Cancel</button>
+            <button type="button" class="btn btn-sm" id="modalApply" style="background:#4f46e5;color:white;border:none;">Apply Range</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Expose modal functions to the global scope for the onclick handler
+window.openCustomModal = null;
+window.closeCustomModal = null;
+
+(function () {
+    const select = document.getElementById('timeframeSelect');
+    const form   = document.getElementById('timeframeForm');
+    const modal  = document.getElementById('customDateModal');
+    
+    // Separate pickers for Start and End to easily support same-day time ranges
+    let fpStart = flatpickr('#modalStart', { enableTime: true, time_24hr: true, dateFormat: 'Y-m-d H:i' });
+    let fpEnd   = flatpickr('#modalEnd',   { enableTime: true, time_24hr: true, dateFormat: 'Y-m-d H:i' });
+
+    // ISO format for Python parsing
+    function fmtISO(d) {
+        return d.getFullYear() + '-' +
+            String(d.getMonth() + 1).padStart(2, '0') + '-' +
+            String(d.getDate()).padStart(2, '0') + 'T' +
+            String(d.getHours()).padStart(2, '0') + ':' +
+            String(d.getMinutes()).padStart(2, '0') + ':00';
+    }
+
+    // Pretty display format e.g. "01 Sep, 14:30"
+    function fmtPretty(d) {
+        const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return String(d.getDate()).padStart(2, '0') + ' ' +
+            MONTHS[d.getMonth()] + ', ' +
+            String(d.getHours()).padStart(2, '0') + ':' +
+            String(d.getMinutes()).padStart(2, '0');
+    }
+
+    window.openCustomModal = function() {
+        // Pre-fill the modal with the currently active dates if they exist
+        const currStart = document.getElementById('hiddenStartDate').value;
+        const currEnd   = document.getElementById('hiddenEndDate').value;
+        if (currStart && currEnd) {
+            fpStart.setDate(currStart.replace('T', ' '));
+            fpEnd.setDate(currEnd.replace('T', ' '));
+        }
+        modal.style.display = 'flex';
+    };
+
+    window.closeCustomModal = function() {
+        modal.style.display = 'none';
+        // If they cancelled but they were trying to switch to custom, revert to 30d
+        if (select.value === 'custom' && !document.getElementById('hiddenStartDate').value) {
+            select.value = '30d';
+        }
+    };
+
+    // Apply button logic
+    document.getElementById('modalApply').addEventListener('click', function() {
+        const startDate = fpStart.selectedDates[0];
+        const endDate   = fpEnd.selectedDates[0];
+        
+        if (!startDate || !endDate) {
+            alert('Please select both a start and end date.');
+            return;
+        }
+        if (endDate <= startDate) {
+            alert('End date must be after the start date.');
+            return;
+        }
+
+        document.getElementById('hiddenStartDate').value    = fmtISO(startDate);
+        document.getElementById('hiddenEndDate').value      = fmtISO(endDate);
+        document.getElementById('hiddenStartDisplay').value = fmtPretty(startDate);
+        document.getElementById('hiddenEndDisplay').value   = fmtPretty(endDate);
+        
+        modal.style.display = 'none';
+        form.submit();
+    });
+
+    // Dropdown change logic
+    select.addEventListener('change', function () {
+        if (this.value === 'custom') {
+            window.openCustomModal();
+        } else {
+            form.submit();
+        }
+    });
+})();
+</script>
+
+<!-- ── Row 1: Conversation overview ─────────────────────────────────────── -->
+<div class="row g-3 mb-3">
+
+    <!-- 1. Live Sessions -->
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left:4px solid #6366f1 !important;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="text-muted mb-1" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;">Live Sessions</div>
+                        <div class="fw-bold" style="font-size:24px;">{{ live_sessions_count|default:0 }}</div>
+                        <div class="text-muted" style="font-size:12px;">Active in last 15m</div>
+                    </div>
+                    <div style="width:40px;height:40px;background:#eef2ff;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                        <i class="fa-solid fa-users-rays" style="color:#6366f1;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Total Sessions -->
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left:4px solid #1f7b68 !important;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="text-muted mb-1" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;">Total Sessions</div>
+                        <div class="fw-bold" style="font-size:24px;">{{ total_sessions }}</div>
+                        <div class="text-muted" style="font-size:12px;">{{ sessions_today }} today</div>
+                    </div>
+                    <div style="width:40px;height:40px;background:#ecfdf5;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                        <i class="fa-solid fa-comments" style="color:#1f7b68;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Avg Response Time -->
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left:4px solid #10b981 !important;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="text-muted mb-1" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;">Avg Response Time</div>
+                        <div class="fw-bold" style="font-size:24px;">{{ avg_latency }}s</div>
+                        <div class="text-muted" style="font-size:12px;">TTFT: {{ avg_ttft }}s</div>
+                    </div>
+                    <div style="width:40px;height:40px;background:#d1fae5;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                        <i class="fa-solid fa-bolt" style="color:#10b981;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Questions Asked -->
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left:4px solid #3b82f6 !important;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="text-muted mb-1" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;">Questions Asked</div>
+                        <div class="fw-bold" style="font-size:24px;">{{ total_questions }}</div>
+                        <div class="text-muted" style="font-size:12px;">User messages</div>
+                    </div>
+                    <div style="width:40px;height:40px;background:#eff6ff;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                        <i class="fa-solid fa-message" style="color:#3b82f6;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ── Row 2: Performance & token overview ──────────────────────────────── -->
+<div class="row g-3 mb-4">
+
+    <!-- 5. Answers Given -->
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left:4px solid #8b5cf6 !important;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="text-muted mb-1" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;">Answers Given</div>
+                        <div class="fw-bold" style="font-size:24px;">{{ total_answers }}</div>
+                        <div class="text-muted" style="font-size:12px;">Bot responses</div>
+                    </div>
+                    <div style="width:40px;height:40px;background:#f5f3ff;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                        <i class="fa-solid fa-robot" style="color:#8b5cf6;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. Agent Searches -->
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left:4px solid #f59e0b !important;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="text-muted mb-1" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;">Agent Searches</div>
+                        <div class="fw-bold" style="font-size:24px;">{{ total_agent_searches }}</div>
+                        <div class="text-muted" style="font-size:12px;">find_agents calls</div>
+                    </div>
+                    <div style="width:40px;height:40px;background:#fffbeb;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                        <i class="fa-solid fa-magnifying-glass" style="color:#f59e0b;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. Total API Calls -->
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left:4px solid #ec4899 !important;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="text-muted mb-1" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;">Total API Calls</div>
+                        <div class="fw-bold" style="font-size:24px;">{{ total_api_calls }}</div>
+                        <div class="text-muted" style="font-size:12px;">LLM requests</div>
+                    </div>
+                    <div style="width:40px;height:40px;background:#fdf2f8;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                        <i class="fa-solid fa-tower-broadcast" style="color:#ec4899;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 8. Completion Tokens -->
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left:4px solid #0ea5e9 !important;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="text-muted mb-1" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;">Completion Tokens</div>
+                        <div class="fw-bold" style="font-size:24px;">{{ total_completion_tokens|default:0 }}</div>
+                        <div class="text-muted" style="font-size:12px;">Output tokens used</div>
+                    </div>
+                    <div style="width:40px;height:40px;background:#f0f9ff;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                        <i class="fa-solid fa-arrow-right-from-bracket" style="color:#0ea5e9;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ── Row 3: Charts ────────────────────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3" style="font-size:13px;">
+                    <i class="fa-solid fa-chart-bar me-2 text-primary"></i>Questions per Day
+                </h6>
+                <canvas id="dailyQuestionsChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3" style="font-size:13px;">
+                    <i class="fa-solid fa-chart-area me-2" style="color:#8b5cf6;"></i>Token Usage per Day
+                </h6>
+                <canvas id="tokenUsageChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Row 4: Provider breakdown ────────────────────────────────────────── -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <h6 class="fw-bold mb-3" style="font-size:13px;">
+            <i class="fa-solid fa-server me-2" style="color:#10b981;"></i>Provider Breakdown
+            <span class="text-muted fw-normal ms-2" style="font-size:12px;">All API calls in timeframe, grouped by provider</span>
+        </h6>
+        {% if provider_stats %}
+        <div class="table-responsive">
+            <table class="table table-hover table-sm align-middle mb-0" style="font-size:13px;">
+                <thead style="background:var(--bg-table-header);">
+                    <tr>
+                        <th>Provider</th>
+                        <th class="text-end">API Calls</th>
+                        <th class="text-end">Prompt Tokens</th>
+                        <th class="text-end">Completion Tokens</th>
+                        <th class="text-end">Total Tokens</th>
+                        <th class="text-end">Avg Latency</th>
+                        <th class="text-end">Avg TTFT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in provider_stats %}
+                    <tr>
+                        <td>
+                            <span class="badge rounded-pill"
+                                style="background:{% if 'groq' in p.provider_name|lower %}#f59e0b{% elif 'gemini' in p.provider_name|lower %}#3b82f6{% else %}#8b5cf6{% endif %};">
+                                {{ p.provider_name }}
+                            </span>
+                        </td>
+                        <td class="text-end fw-semibold">{{ p.calls }}</td>
+                        <td class="text-end">{{ p.prompt_tokens }}</td>
+                        <td class="text-end">{{ p.completion_tokens }}</td>
+                        <td class="text-end fw-semibold">{{ p.total_tokens_used }}</td>
+                        <td class="text-end">{{ p.avg_latency_s }}s</td>
+                        <td class="text-end">{{ p.avg_ttft_s }}s</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-muted text-center py-4" style="font-size:13px;">
+            No API calls recorded in this timeframe yet.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ── Row 5: Groq rate-limit snapshot ──────────────────────────────────── -->
+{% if groq_details %}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <h6 class="fw-bold mb-3" style="font-size:13px;">
+            <i class="fa-solid fa-gauge-high me-2" style="color:#f59e0b;"></i>Groq Token Quota — Live Snapshot
+            <span class="text-muted fw-normal ms-2" style="font-size:12px;">Most recent recorded rate-limit headers per key</span>
+        </h6>
+        <div class="row g-3">
+            {% for g in groq_details %}
+            <div class="col-md-4 col-lg-3">
+                <div class="border rounded-3 p-3" style="font-size:12px;">
+                    <div class="fw-bold mb-2 text-truncate" title="{{ g.provider_name }}">
+                        <i class="fa-solid fa-key me-1 text-warning"></i>{{ g.provider_name }}
+                    </div>
+                    <div class="mb-1">
+                        <span class="text-muted">Remaining:</span>
+                        <span class="fw-semibold ms-1">{{ g.groq_remaining|default:"—" }}</span>
+                        <span class="text-muted"> / {{ g.groq_limit|default:"—" }}</span>
+                    </div>
+                    <div class="progress mb-1" style="height:6px;">
+                        <div class="progress-bar
+                            {% if g.pct_remaining > 50 %}bg-success
+                            {% elif g.pct_remaining > 20 %}bg-warning
+                            {% else %}bg-danger{% endif %}"
+                            style="width:{{ g.pct_remaining }}%;">
+                        </div>
+                    </div>
+                    <div class="text-muted">
+                        Reset: {{ g.groq_reset_time|default:"—" }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- ── Row 6: Recent API calls ──────────────────────────────────────────── -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <h6 class="fw-bold mb-3" style="font-size:13px;">
+            <i class="fa-solid fa-clock-rotate-left me-2" style="color:#6366f1;"></i>Recent API Calls
+            <span class="text-muted fw-normal ms-2" style="font-size:12px;">Latest 50 LLM requests</span>
+        </h6>
+        {% if recent_calls %}
+        <div class="table-responsive">
+            <table class="table table-hover table-sm align-middle mb-0" style="font-size:12px;">
+                <thead style="background:var(--bg-table-header);">
+                    <tr>
+                        <th>Time</th>
+                        <th>Provider</th>
+                        <th>Endpoint</th>
+                        <th class="text-end">Prompt</th>
+                        <th class="text-end">Completion</th>
+                        <th class="text-end">Total</th>
+                        <th class="text-end">TTFT</th>
+                        <th class="text-end">Total Time</th>
+                        <th class="text-end">Remaining</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in recent_calls %}
+                    <tr>
+                        <td class="text-muted" style="white-space:nowrap;">
+                            {{ c.created_at|date:"d M H:i:s" }}
+                        </td>
+                        <td>
+                            <span class="badge rounded-pill"
+                                style="font-size:10px;background:{% if c.provider_name and 'groq' in c.provider_name|lower %}#f59e0b{% elif c.provider_name and 'gemini' in c.provider_name|lower %}#3b82f6{% else %}#8b5cf6{% endif %};">
+                                {{ c.provider_name|default:"—"|truncatechars:16 }}
+                            </span>
+                        </td>
+                        <td class="text-muted">{{ c.endpoint|default:"—"|truncatechars:24 }}</td>
+                        <td class="text-end">{{ c.used_prompt_tokens|default:0 }}</td>
+                        <td class="text-end">{{ c.used_completion_tokens|default:0 }}</td>
+                        <td class="text-end fw-semibold">{{ c.total_tokens }}</td>
+                        <td class="text-end {% if c.ttft > 2 %}text-warning{% endif %}">
+                            {% if c.ttft %}{{ c.ttft }}s{% else %}—{% endif %}
+                        </td>
+                        <td class="text-end {% if c.total_time > 5 %}text-danger{% elif c.total_time > 3 %}text-warning{% else %}text-success{% endif %}">
+                            {{ c.total_time }}s
+                        </td>
+                        <td class="text-end text-muted">
+                            {% if c.groq_remaining_tokens %}
+                                {{ c.groq_remaining_tokens }} / {{ c.groq_limit_tokens|default:"?" }}
+                            {% else %}—{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-muted text-center py-4" style="font-size:13px;">No API calls recorded yet.</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ── Row 7: Recent sessions ───────────────────────────────────────────── -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <h6 class="fw-bold mb-3" style="font-size:13px;">
+            <i class="fa-solid fa-users me-2" style="color:#1f7b68;"></i>Recent Sessions
+            <span class="text-muted fw-normal ms-2" style="font-size:12px;">Latest 20 conversations — click View to read the full thread</span>
+        </h6>
+        {% if recent_sessions %}
+        <div class="table-responsive">
+            <table class="table table-hover table-sm align-middle mb-0" style="font-size:12px;">
+                <thead style="background:var(--bg-table-header);">
+                    <tr>
+                        <th>Session ID</th>
+                        <th>Started</th>
+                        <th>Last Activity</th>
+                        <th class="text-end">Messages</th>
+                        <th class="text-end">Thread</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in recent_sessions %}
+                    <tr>
+                        <td>
+                            <code style="font-size:11px;color:#64748b;">
+                                {{ s.session_id|truncatechars:20 }}
+                            </code>
+                        </td>
+                        <td class="text-muted">{{ s.created_at|date:"d M H:i" }}</td>
+                        <td class="text-muted">{{ s.updated_at|date:"d M H:i" }}</td>
+                        <td class="text-end">
+                            <span class="badge rounded-pill px-2 py-1" style="background-color: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; font-size: 12px; min-width: 24px;">{{ s.message_count }}</span>
+                        </td>
+                        <td class="text-end">
+                            <a href="/admin/chatbot/session/{{ s.session_id }}/"
+                               class="btn btn-sm btn-outline-primary py-0 px-2"
+                               style="font-size:11px;">
+                                <i class="fa-solid fa-eye me-1"></i>View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-muted text-center py-4" style="font-size:13px;">No sessions recorded yet.</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ── Row 8: Recent Messages (actual Q&A content) ──────────────────────── -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <h6 class="fw-bold mb-3" style="font-size:13px;">
+            <i class="fa-solid fa-message me-2" style="color:#3b82f6;"></i>Recent Conversations
+            <span class="text-muted fw-normal ms-2" style="font-size:12px;">Last 30 messages — actual questions asked &amp; answers given</span>
+        </h6>
+        {% if recent_messages %}
+        <div class="table-responsive">
+            <table class="table table-hover table-sm align-middle mb-0" style="font-size:12px;">
+                <thead style="background:var(--bg-table-header);">
+                    <tr>
+                        <th style="width:130px;">Time</th>
+                        <th style="width:80px;">Role</th>
+                        <th>Message</th>
+                        <th style="width:80px;">Session</th>
+                    </tr>
+                </thead>
+                <tbody id="recentMessagesBody">
+                    {% for msg in recent_messages %}
+                    <tr>
+                        <td class="text-muted" style="white-space:nowrap;">{{ msg.timestamp|date:"d M H:i:s" }}</td>
+                        <td>
+                            {% if msg.role == 'user' %}
+                            <span class="badge" style="background:#3b82f6;font-size:10px;">User</span>
+                            {% else %}
+                            <span class="badge" style="background:#1f7b68;font-size:10px;">Bot</span>
+                            {% endif %}
+                        </td>
+                        <td style="max-width:420px;">
+                            <span title="{{ msg.content }}" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                {{ msg.content|truncatechars:120 }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="/admin/chatbot/session/{{ msg.session__session_id }}/"
+                               class="btn btn-sm btn-outline-secondary py-0 px-2"
+                               style="font-size:10px;">
+                                <i class="fa-solid fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="text-center mt-3">
+            <button id="loadMoreMessagesBtn" class="btn btn-sm btn-light border fw-medium px-4" style="font-size:12px; color:#475569;">
+                Load More Messages
+            </button>
+        </div>
+        
+        <script>
+            let currentOffset = 30;
+            document.getElementById('loadMoreMessagesBtn').addEventListener('click', async function() {
+                const btn = this;
+                const originalText = btn.innerText;
+                btn.innerText = 'Loading...';
+                btn.disabled = true;
+
+                try {
+                    const response = await fetch(`/admin/chatbot/load-more-messages/?offset=${currentOffset}`);
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    const data = await response.json();
+                    
+                    if (data.messages && data.messages.length > 0) {
+                        const tbody = document.getElementById('recentMessagesBody');
+                        data.messages.forEach(msg => {
+                            const tr = document.createElement('tr');
+                            
+                            const roleBadge = msg.role === 'user' 
+                                ? `<span class="badge" style="background:#3b82f6;font-size:10px;">User</span>`
+                                : `<span class="badge" style="background:#1f7b68;font-size:10px;">Bot</span>`;
+                            
+                            tr.innerHTML = `
+                                <td class="text-muted" style="white-space:nowrap;">${msg.timestamp_str}</td>
+                                <td>${roleBadge}</td>
+                                <td style="max-width:420px;">
+                                    <span title="${msg.content}" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                        ${msg.content_trunc}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="/admin/chatbot/session/${msg.session_id}/"
+                                       class="btn btn-sm btn-outline-secondary py-0 px-2"
+                                       style="font-size:10px;">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                </td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                        
+                        currentOffset += 30;
+                        
+                        // If fewer than 30 messages were returned, we hit the end
+                        if (data.messages.length < 30) {
+                            btn.style.display = 'none';
+                        }
+                    } else {
+                        // No more messages
+                        btn.style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error('Error loading more messages:', error);
+                    alert("Failed to load more messages. Please try again.");
+                } finally {
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }
+            });
+        </script>
+        {% else %}
+        <div class="text-muted text-center py-4" style="font-size:13px;">No messages recorded yet.</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ── Chart.js setup ───────────────────────────────────────────────────── -->
+<script>
+(function () {
+    const isDark = document.body.classList.contains('dark-mode');
+    const gridColor  = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+    const labelColor = isDark ? '#94a3b8' : '#64748b';
+
+    const commonScales = {
+        x: { grid: { color: gridColor }, ticks: { color: labelColor, maxTicksLimit: 10 } },
+        y: { grid: { color: gridColor }, ticks: { color: labelColor }, beginAtZero: true },
+    };
+
+    // Daily questions chart
+    const qLabels = {{ chart_labels_json|safe }};
+    const qValues = {{ chart_values_json|safe }};
+    new Chart(document.getElementById('dailyQuestionsChart'), {
+        type: 'bar',
+        data: {
+            labels: qLabels,
+            datasets: [{
+                label: 'Questions',
+                data: qValues,
+                backgroundColor: 'rgba(59,130,246,0.7)',
+                borderColor: '#3b82f6',
+                borderWidth: 1,
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: commonScales,
+        }
+    });
+
+    // Token usage chart
+    const tLabels     = {{ token_chart_labels_json|safe }};
+    const tPrompt     = {{ token_chart_prompt_json|safe }};
+    const tCompletion = {{ token_chart_completion_json|safe }};
+    new Chart(document.getElementById('tokenUsageChart'), {
+        type: 'bar',
+        data: {
+            labels: tLabels,
+            datasets: [
+                {
+                    label: 'Prompt Tokens',
+                    data: tPrompt,
+                    backgroundColor: 'rgba(99,102,241,0.75)',
+                    borderColor: '#6366f1',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                },
+                {
+                    label: 'Completion Tokens',
+                    data: tCompletion,
+                    backgroundColor: 'rgba(16,185,129,0.65)',
+                    borderColor: '#10b981',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: { color: labelColor, font: { size: 11 } }
+                }
+            },
+            scales: commonScales,
+        }
+    });
+})();
+</script>
+
+{% endblock %}

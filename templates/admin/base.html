@@ -827,6 +827,11 @@
                 <i class="fa-solid fa-chart-line"></i> Analytics
             </a>
 
+            <a href="/admin/chatbot/"
+                class="menu-item {% if '/admin/chatbot/' in request.path %}active{% endif %}">
+                <i class="fa-solid fa-robot" style="color:#1f7b68;"></i> Chatbot Analytics
+            </a>
+
             {% if is_super_admin or 'error_logs' in admin_permissions %}
             <a href="{% url 'admin_error_logs_index' %}"
                 class="menu-item {% if '/admin/advanced/error-logs/' in request.path %}active{% endif %}">

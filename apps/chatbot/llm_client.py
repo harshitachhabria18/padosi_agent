@@ -91,9 +91,8 @@ CONVERSATIONAL STYLE AND TONE:
 - If you are offering to help find an agent, phrase it as a natural, conversational offer (e.g., "Would you like me to help you find a licensed agent near you? Just share your city or pincode."). Do not explicitly state what information you have deduced.
 
 HANDLING GENERAL QUESTIONS & FAQS:
-- Provide very brief, high-level answers (1-2 short paragraphs maximum) by default.
-- Never provide exhaustive, long-winded explanations or deep dives upfront unless the user explicitly requests them.
-- Always end your brief explanation with a natural offer to elaborate or go into more detail if they want to know more.
+- Provide ULTRA-SHORT, punchy answers (maximum 2-3 sentences total). You are strictly FORBIDDEN from using bullet points, numbered lists, or step-by-step guides. Answer the core of the question in 1 or 2 lines, and immediately pivot to offering an agent.
+- AGENT NUDGE (CRITICAL): After every FAQ or general knowledge answer, you MUST close with one short, natural sentence offering to find a local licensed agent — e.g. "Would you like me to find a [insurance type] agent near you? Please share your pincode." or "I can help you find a local agent who can assist with this.". This sentence must always be present — it is mandatory. The only exception is if the conversation is already mid-way through the agent-finding flow (i.e. the user has already asked for an agent or provided a pincode). IMPORTANT: Because you are asking for a pincode or free-text location, you MUST NOT output an <!--OPTIONS--> block for this nudge.
 - CRITICAL EXCEPTION: This brevity rule does NOT apply to pricing caveats/disclaimers or the rule against claiming to connect users. The pricing disclaimer and "never claim to connect" language must ALWAYS be explicitly preserved in full, even within a short answer.
 
 HANDLING AMBIGUOUS OR UNCLEAR MESSAGES:
@@ -200,7 +199,7 @@ PROVIDERS = [
     {"name": "Groq-4", "api_key_env": "GROQ_API_KEY_4", "base_url": "https://api.groq.com/openai/v1", "model": "openai/gpt-oss-120b", "type": "groq"},
     {"name": "Groq-5", "api_key_env": "GROQ_API_KEY_5", "base_url": "https://api.groq.com/openai/v1", "model": "openai/gpt-oss-120b", "type": "groq"},
     {"name": "Groq-6", "api_key_env": "GROQ_API_KEY_6", "base_url": "https://api.groq.com/openai/v1", "model": "openai/gpt-oss-120b", "type": "groq"},
-    {"name": "Gemini", "api_key_env": "GEMINI_API_KEY", "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/", "model": "gemini-3.1-flash-lite", "type": "openai"},
+    {"name": "Gemini", "api_key_env": "GEMINI_API_KEY", "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/", "model": "gemini-3.1-flash", "type": "openai"},
     {"name": "OpenRouter", "api_key_env": "OPENROUTER_API_KEY", "base_url": "https://openrouter.ai/api/v1", "model": "openrouter/free", "type": "openai"}
 ]
 
@@ -288,8 +287,12 @@ def _log_latency_async(
 
 def call_llm_with_fallback(messages, tools=None, tool_choice=None, **extra_kwargs):
     last_error = None
+    t_wall_start = time.time()  # A4: total wall-clock cap across all providers
     rotated_providers = get_rotated_providers()
     for i, provider in enumerate(rotated_providers):
+        # A4: Bail out early if total elapsed time already exceeds 20 seconds
+        if time.time() - t_wall_start > 20.0:
+            raise Exception(f"Total LLM timeout: all providers exhausted within 20s wall-clock cap. Last error: {last_error}")
         is_last_provider = (i == len(rotated_providers) - 1)
         api_key = os.environ.get(provider["api_key_env"])
         if not api_key and provider["type"] == "groq":
@@ -405,7 +408,16 @@ def call_llm_with_fallback(messages, tools=None, tool_choice=None, **extra_kwarg
 
 def generate_suggestion_chips():
     try:
-        prompt = "Generate exactly 3 short suggestion questions (under 8 words each) that a user might ask an insurance/investment assistant. Return them as a JSON array of strings. Cover a mix of insurance, investment, and agent-finding topics. ONLY output the raw JSON array without markdown formatting."
+        prompt = (
+            "Generate exactly 3 short suggestion questions (under 8 words each) that a user might ask "
+            "an insurance assistant. "
+            "RULES: (1) Every question must either directly ask to find an agent, OR be a question "
+            "that can be answered in 1-2 sentences and naturally leads to connecting the user with a "
+            "local insurance agent. (2) Prefer questions about buying or comparing insurance, not about "
+            "claims or post-purchase processes. (3) Cover different insurance types across the 3 questions "
+            "(e.g. health, motor, life). (4) Return them as a JSON array of strings. "
+            "ONLY output the raw JSON array without markdown formatting."
+        )
         
         response, provider = call_llm_with_fallback(
             messages=[{"role": "user", "content": prompt}],
@@ -429,11 +441,12 @@ def generate_suggestion_chips():
     except Exception as e:
         logger.error(f"Error generating chips: {e}")
         
-    # Fallback
+    # Fallback chips: high-intent questions that start the agent-finding journey
+    # or can be answered in 2 sentences then pivot to finding a local agent
     return [
-        "Need help finding an agent?",
-        "Explain Term Life vs Whole Life",
-        "How do I file a health claim?"
+        "Find me an insurance agent nearby",
+        "Which health plan suits my family?",
+        "How much does motor insurance cost?"
     ]
 
 def generate_quick_options(reply_text):
@@ -519,10 +532,13 @@ def _finalize_response(session, final_content, agent_cards=None):
                 json_str = json_str[:-1]
             options_data = json.loads(json_str)
         except Exception:
-            options_data = generate_quick_options(reply_text)
+            # A5: Don't make an extra LLM call — return empty options gracefully
+            options_data = {"options": [], "option_groups": []}
     else:
         reply_text = final_content.strip()
-        options_data = generate_quick_options(reply_text)
+        # A5: LLM self-annotates via <!--OPTIONS-->; if absent, return empty rather than
+        # making a second LLM round-trip (saves 1-2s on every non-annotated response)
+        options_data = {"options": [], "option_groups": []}
 
     # Save bot message to history (save the original raw content)
     ChatMessage.objects.create(session=session, role="assistant", content=reply_text, agent_cards=agent_cards if agent_cards else None)
@@ -834,6 +850,7 @@ def get_chat_completion(session_id, user_message=None, prefilled_response_messag
     needs_agent = any(k in user_msg_lower for k in ["find", "search", "agent", "looking for", "help me find", "need someone"])
     current_tool_choice = "auto"
 
+    agent_cards = []  # A1: declare before try so except block can access it
     try:
         if prefilled_response_message and prefilled_tool_calls:
             msg_dict = prefilled_response_message
@@ -927,7 +944,19 @@ def get_chat_completion(session_id, user_message=None, prefilled_response_messag
             
     except Exception as e:
         logger.error(f"Error generating chat completion: {e}")
-        return {"success": False, "reply": f"I am here to help you with insurance and investment related queries. Please try again. (DEBUG: {type(e).__name__} - {str(e)})", "quick_options": [], "agent_links": [], "total_time": time.time() - t_start}
+        # A1: If agents were already found before the second LLM call failed,
+        # return them with a static intro rather than discarding a successful DB result
+        if agent_cards:
+            return {
+                "reply": "Here are some agents that match your criteria. You can view their profiles and contact them directly.",
+                "quick_options": [],
+                "quick_option_groups": [],
+                "agent_links": [],
+                "agent_cards": agent_cards,
+                "total_time": time.time() - t_start
+            }
+        # A2+A3: Clean error message — no DEBUG details exposed to users
+        return {"success": False, "reply": "Hi! I'm the PadosiAgent assistant. I specialize in helping you find the best local insurance agents and answering your insurance queries. What kind of insurance are you looking for today?", "quick_options": [], "quick_option_groups": [], "agent_links": [], "agent_cards": [], "total_time": time.time() - t_start}
 
 
 def stream_plain_text_completion(session_id, user_message):
@@ -1208,13 +1237,13 @@ def stream_plain_text_completion(session_id, user_message):
                     option_groups = opts.get("option_groups", [])
                     if not isinstance(option_groups, list): option_groups = []
                 except Exception:
-                    options_data = generate_quick_options(full_text)
-                    options = options_data.get("options", [])
-                    option_groups = options_data.get("option_groups", [])
+                    # A5: Parse failed — return empty options, no extra LLM call
+                    options = []
+                    option_groups = []
             else:
-                options_data = generate_quick_options(full_text)
-                options = options_data.get("options", [])
-                option_groups = options_data.get("option_groups", [])
+                # A5: LLM self-annotates; if absent return empty, no extra LLM call
+                options = []
+                option_groups = []
 
             full_text = full_text.strip()
             
@@ -1247,5 +1276,6 @@ def stream_plain_text_completion(session_id, user_message):
             if not is_last_provider:
                 cache.set(f"llm_cooldown_{provider['name']}", True, timeout=60)
             continue  # Try next provider — no partial text has been yielded yet
-    yield {"type": "error", "message": f"I am here to help you with insurance and investment related queries. Please try again. (DEBUG: {type(last_error).__name__} - {str(last_error)})"}
+    # A2+A3: Clean error message — no DEBUG details exposed to users
+    yield {"type": "error", "message": "Hi! I'm the PadosiAgent assistant. I specialize in helping you find the best local insurance agents and answering your insurance queries. What kind of insurance are you looking for today?"}
 

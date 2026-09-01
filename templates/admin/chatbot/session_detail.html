@@ -1,0 +1,122 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Conversation Thread — PadosiAgent Admin{% endblock %}
+{% block breadcrumb %}
+    <a href="/admin/chatbot/" class="text-decoration-none text-muted">Chatbot Analytics</a>
+    &rsaquo; Session Thread
+{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h5 class="fw-bold mb-1">
+            <i class="fa-solid fa-comments me-2" style="color:#1f7b68;"></i>Conversation Thread
+        </h5>
+        <div class="text-muted" style="font-size:12px;">
+            Session:&nbsp;<code style="font-size:11px;">{{ session_id }}</code>
+            &nbsp;&bull;&nbsp;Started: {{ session.created_at|date:"d M Y H:i" }}
+            &nbsp;&bull;&nbsp;{{ messages|length }} messages
+        </div>
+    </div>
+    <a href="/admin/chatbot/" class="btn btn-sm btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-1"></i>Back
+    </a>
+</div>
+
+<!-- Chat thread -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+        {% if chat_messages %}
+        <div style="display:flex;flex-direction:column;gap:12px;max-width:760px;margin:0 auto;">
+
+            {% for msg in chat_messages %}
+
+            {% if msg.is_tool_call %}
+            <!-- Tool call indicator (neutral, centred) -->
+            <div style="text-align:center;margin:4px 0;">
+                <span class="badge rounded-pill"
+                      style="background:#f1f5f9;color:#64748b;font-size:11px;font-weight:500;padding:5px 12px;border:1px solid #e2e8f0;">
+                    <i class="fa-solid fa-magnifying-glass me-1"></i>
+                    {{ msg.display_content }}
+                    <span class="text-muted ms-2" style="font-size:10px;">{{ msg.timestamp|date:"H:i:s" }}</span>
+                </span>
+            </div>
+
+            {% elif msg.is_tool %}
+            <!-- Tool result (neutral, centred) -->
+            <div style="text-align:center;margin:4px 0;">
+                <div class="d-inline-block border rounded-3 px-3 py-2 text-start"
+                     style="background:#fffbeb;border-color:#fde68a !important;font-size:11px;max-width:90%;color:#92400e;">
+                    <div class="fw-semibold mb-1" style="font-size:11px;">
+                        <i class="fa-solid fa-database me-1"></i>
+                        Tool result{% if msg.tool_name %}: {{ msg.tool_name }}{% endif %}
+                    </div>
+                    <pre style="margin:0;white-space:pre-wrap;word-break:break-all;font-size:11px;color:#78350f;">{{ msg.display_content }}</pre>
+                    <div class="text-muted mt-1" style="font-size:10px;">{{ msg.timestamp|date:"H:i:s" }}</div>
+                </div>
+            </div>
+
+            {% elif msg.is_user %}
+            <!-- User message (right side, blue) -->
+            <div style="display:flex;justify-content:flex-end;">
+                <div style="max-width:72%;">
+                    <div style="background:#3b82f6;color:white;border-radius:16px 16px 4px 16px;
+                                padding:10px 14px;font-size:13px;line-height:1.5;word-break:break-word;">
+                        {{ msg.display_content }}
+                    </div>
+                    <div style="text-align:right;font-size:10px;color:#94a3b8;margin-top:3px;">
+                        {{ msg.timestamp|date:"H:i:s" }}
+                    </div>
+                </div>
+            </div>
+
+            {% elif msg.is_assistant %}
+            <!-- Bot message (left side, white card) -->
+            <div style="display:flex;justify-content:flex-start;gap:8px;">
+                <div style="width:28px;height:28px;background:linear-gradient(135deg,#1f7b68,#215bc6);
+                            border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;">
+                    <i class="fa-solid fa-robot" style="color:white;font-size:11px;"></i>
+                </div>
+                <div style="max-width:72%;">
+                    <div style="background:white;border:1px solid #e2e8f0;border-radius:4px 16px 16px 16px;
+                                padding:10px 14px;font-size:13px;line-height:1.5;word-break:break-word;
+                                box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+                        {{ msg.display_content }}
+                        {% if msg.agent_cards %}
+                        <div class="mt-2 pt-2" style="border-top:1px solid #f1f5f9;font-size:11px;color:#64748b;">
+                            <i class="fa-solid fa-id-card me-1"></i>
+                            {{ msg.agent_cards|length }} agent card{{ msg.agent_cards|length|pluralize }} attached
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div style="font-size:10px;color:#94a3b8;margin-top:3px;">
+                        PadosiBot &bull; {{ msg.timestamp|date:"H:i:s" }}
+                    </div>
+                </div>
+            </div>
+
+            {% endif %}
+
+            {% endfor %}
+
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-5" style="font-size:13px;">
+            <i class="fa-solid fa-comment-slash fa-2x mb-3 d-block" style="color:#cbd5e1;"></i>
+            No messages found in this session.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Bottom back button -->
+<div class="mt-3 text-center">
+    <a href="/admin/chatbot/" class="btn btn-sm btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-1"></i>Back to Chatbot Analytics
+    </a>
+</div>
+
+{% endblock %}

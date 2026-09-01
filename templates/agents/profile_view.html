@@ -230,5 +230,15 @@
                 prompt('Copy this profile link:', shareUrl);
             }
         }
+        
+        {% if isOwnerView and agent_plan and not agent_plan.show_edit_profile_full %}
+        $(document).ready(function() {
+            var editProfileUrl = "{% url 'agents:agent_edit_profile' %}";
+            $('a[href="' + editProfileUrl + '"]').addClass('disabled')
+                .css({'pointer-events': 'none', 'opacity': '0.5'})
+                .attr('title', 'Edit Profile is set to private by the administrator.')
+                .html('<i class="fas fa-lock mr-2"></i>Locked');
+        });
+        {% endif %}
     </script>
 {% endblock %}
