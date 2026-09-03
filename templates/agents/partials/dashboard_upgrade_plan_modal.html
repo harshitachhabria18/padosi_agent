@@ -1,0 +1,50 @@
+<div class="modal fade" id="professionalUpgradeModal" tabindex="-1" aria-labelledby="professionalUpgradeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered pa-dash-upgrade-dialog">
+        <div class="modal-content pa-dash-upgrade-modal">
+            <div class="pa-dash-plan-card recommended-theme">
+                <button type="button" class="pa-dash-upgrade-close" aria-label="Close" onclick="closeProfessionalUpgradeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="pa-dash-plan-ribbon">Recommended</div>
+                <div class="pa-dash-plan-header text-center">
+                    <div class="pa-dash-plan-icon professional-icon mx-auto mb-2">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <div class="pa-dash-plan-name">{{ prof_name|default:"Professional's Plan" }}</div>
+                    <div class="pa-dash-plan-price" id="dashProfPriceDisplay">
+                        {% if review_upgrade_price %}
+                        <span class="pa-dash-plan-strike">₹{{ review_upgrade_price.full_excl_gst|floatformat:0 }}</span>
+                        <span>₹{{ review_upgrade_price.promo_excl_gst|floatformat:0 }}/-</span>
+                        {% elif prof_full and prof_base and prof_base < prof_full %}
+                        <span class="pa-dash-plan-strike">₹{{ prof_full|floatformat:0 }}</span>
+                        <span>₹{{ prof_base|floatformat:0 }}/-</span>
+                        {% else %}
+                        <span>₹{{ prof_base|default:profDisc|floatformat:0 }}/-</span>
+                        {% endif %}
+                        <span class="pa-dash-plan-term">1st Year Only</span>
+                    </div>
+                    <div class="text-muted" style="font-size:11px;font-weight:600;">+ 18% GST applicable at checkout</div>
+                    <div class="pa-dash-plan-subtitle">{{ prof_desc|default:"Unlock every remaining dashboard section instantly." }}</div>
+                </div>
+                <div class="pa-dash-plan-includes">
+                    <i class="fas fa-check-circle"></i> Everything in Starter Plan, plus:
+                </div>
+                <div class="pa-dash-plan-feature-grid">
+                    {% for feature in professional_plan_features %}
+                    <div class="pa-dash-feature-tile">
+                        <div class="pa-dash-feature-icon" style="color:{{ feature.color }};background:{{ feature.bg_color }};">
+                            <i class="fa-solid {{ feature.icon }}"></i>
+                        </div>
+                        <div class="pa-dash-feature-text">{{ feature.name|safe }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button type="button" class="pa-dash-plan-select-btn" id="dashProfUpgradePayBtn"
+                    onclick="initiateDashboardProfessionalUpgrade()">
+                    <i class="fas fa-crown"></i> Select Professional's Plan
+                </button>
+                <div class="pa-dash-plan-footer-note">Secure payment via Razorpay</div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -10,6 +10,7 @@ Flow:
 """
 
 import json
+import os
 import random
 import time
 import logging
@@ -126,12 +127,12 @@ _STARTER_PLAN_UI_FEATURES = [
 ]
 
 _PROFESSIONAL_PLAN_UI_FEATURES = [
-    {'name': 'Trusted<br>Badge', 'icon': 'fa-shield-halved', 'color': '#f59e0b', 'bg_color': '#fffbeb'},
+    {'name': 'Trusted<br>Badge', 'icon': 'fa-award', 'color': '#f59e0b', 'bg_color': '#fffbeb'},
+    {'name': 'Lead<br>Preferences', 'icon': 'fa-filter', 'color': '#6366f1', 'bg_color': '#eef2ff'},
     {'name': 'SEO - Google<br>will know you', 'icon': 'fa-magnifying-glass', 'color': '#3b82f6', 'bg_color': '#eff6ff'},
     {'name': 'AIO &<br>GEO', 'icon': 'fa-robot', 'color': '#6d28d9', 'bg_color': '#f3e8ff'},
     {'name': 'Profile<br>Analytics', 'icon': 'fa-chart-column', 'color': '#0d9488', 'bg_color': '#f0fdfa'},
     {'name': 'Gallery', 'icon': 'fa-images', 'color': '#e11d48', 'bg_color': '#fff1f2'},
-    {'name': 'Lead<br>Preferences', 'icon': 'fa-sliders', 'color': '#6366f1', 'bg_color': '#eef2ff'},
     {'name': 'AI Auto-fill &<br>Suggestions', 'icon': 'fa-wand-magic-sparkles', 'color': '#8b5cf6', 'bg_color': '#f5f3ff'},
 ]
 
@@ -891,35 +892,25 @@ def register_step1(request):
                 session_key = request.session.session_key
             draft = AgentDraft(session_key=session_key, email=email)
 
-        draft.fullname = fullname
-        draft.mobile = mobile
-        draft.agent_pincode = agent_pincode
-        draft.state = state
-        draft.experience_range = experience
-        draft.segments = segments
-        draft.investment_types = investment_types
-        draft.promo_code = promo_code
-        if promo_code:
-            request.session['applied_promo_code'] = promo_code
-        else:
-            if not request.session.get('distributor_led_registration') and not request.session.get('distributor_id'):
-                request.session.pop('applied_promo_code', None)
-        draft.address = address
-        draft.client_base = client_base
-        draft.slug = slug
+        _assign_step1_draft_fields(draft, request)
+        draft.email = email
         draft.email_verified = True
         draft.registration_step = 1
+        if draft.promo_code:
+            request.session['applied_promo_code'] = draft.promo_code
+        elif not request.session.get('distributor_led_registration') and not request.session.get('distributor_id'):
+            request.session.pop('applied_promo_code', None)
         draft.save()
 
         request.session['current_draft_id'] = draft.pk
         request.session['reg_step'] = 2
 
         # Update the existing Agent record to prevent stale data
-        existing_agent.fullname = fullname
-        existing_agent.mobile = mobile
-        existing_agent.agent_pincode = agent_pincode
-        existing_agent.experience_range = experience
-        existing_agent.client_base = client_base
+        existing_agent.fullname = draft.fullname
+        existing_agent.mobile = draft.mobile
+        existing_agent.agent_pincode = draft.agent_pincode
+        existing_agent.experience_range = draft.experience_range
+        existing_agent.client_base = draft.client_base
         existing_agent.save()
 
         logger.info(f'Agent Step 1 reused & updated — draft #{draft.pk}, email={email}')
@@ -946,24 +937,13 @@ def register_step1(request):
         draft = AgentDraft(session_key=session_key)
 
     draft.email = email
+    _assign_step1_draft_fields(draft, request)
     draft.email_verified = True
-    draft.fullname = fullname
-    draft.mobile = mobile
-    draft.agent_pincode = agent_pincode
-    draft.state = state
-    draft.experience_range = experience
-    draft.segments = segments
-    draft.investment_types = investment_types
-    draft.promo_code = promo_code
-    if promo_code:
-        request.session['applied_promo_code'] = promo_code
-    else:
-        if not request.session.get('distributor_led_registration') and not request.session.get('distributor_id'):
-            request.session.pop('applied_promo_code', None)
-    draft.address = address
-    draft.client_base = client_base
-    draft.slug = slug
     draft.registration_step = 1
+    if draft.promo_code:
+        request.session['applied_promo_code'] = draft.promo_code
+    elif not request.session.get('distributor_led_registration') and not request.session.get('distributor_id'):
+        request.session.pop('applied_promo_code', None)
     draft.save()
 
     request.session['current_draft_id'] = draft.pk
@@ -1456,8 +1436,24 @@ def chooseplan(request):
 
 
 def create_agent_from_draft(draft, plan_type, plan_name, status='pending_payment'):
-    from apps.agents.models import Agent, AgentProfile, AgentInsuranceSegment
-    
+    import re
+    import time
+    from decimal import Decimal, InvalidOperation
+    from django.core.files.storage import default_storage
+    from django.utils.text import slugify
+    from apps.agents.models import Agent, AgentProfile, AgentInsuranceSegment, AgentPerformanceStat
+
+    def _claim_amount_from_draft(raw):
+        if not raw:
+            return Decimal('0')
+        cleaned = re.sub(r'[^\d.]', '', str(raw).strip())
+        if not cleaned:
+            return Decimal('0')
+        try:
+            return Decimal(cleaned) * Decimal('100000')
+        except InvalidOperation:
+            return Decimal('0')
+
     now = timezone.now()
     
     agent, created = Agent.objects.get_or_create(
@@ -1527,6 +1523,10 @@ def create_agent_from_draft(draft, plan_type, plan_name, status='pending_payment
                 'motor': draft.motor or 0,
             },
             'desired_services': draft.desired_services or [],
+            'whatsapp': draft.whatsapp or '',
+            'address': draft.address or '',
+            'state': draft.state or '',
+            'service_pincodes': [draft.agent_pincode] if draft.agent_pincode else [],
         }
     )
     if not p_created:
@@ -1545,7 +1545,53 @@ def create_agent_from_draft(draft, plan_type, plan_name, status='pending_payment
             'motor': draft.motor or 0,
         }
         profile.desired_services = draft.desired_services or []
+        profile.whatsapp = draft.whatsapp or profile.whatsapp or ''
+        profile.address = draft.address or profile.address or ''
+        profile.state = draft.state or profile.state or ''
+        if draft.agent_pincode:
+            profile.service_pincodes = [draft.agent_pincode]
         profile.save()
+
+    if draft.slug:
+        base_slug = slugify(draft.slug) or slugify(draft.fullname) or 'agent'
+        unique_slug = base_slug
+        count = 1
+        while AgentProfile.objects.filter(slug=unique_slug).exclude(pk=profile.pk).exists():
+            unique_slug = f'{base_slug}-{count}'
+            count += 1
+        profile.slug = unique_slug
+        profile.save(update_fields=['slug', 'updated_at'])
+
+    if draft.languages:
+        langs = draft.languages
+        if isinstance(langs, list):
+            profile.languages = ', '.join(str(l).strip() for l in langs if str(l).strip())
+        elif langs:
+            profile.languages = str(langs)
+        profile.save(update_fields=['languages', 'updated_at'])
+
+    if draft.about:
+        profile.career_highlights = draft.about
+        profile.save(update_fields=['career_highlights', 'updated_at'])
+
+    if draft.photo:
+        ext = os.path.splitext(draft.photo.name)[1].lower() or '.jpg'
+        file_name = f'app/public/profile/agent_{agent.id}_{int(time.time())}{ext}'
+        saved_path = default_storage.save(file_name, draft.photo)
+        profile.profile_photo_path = saved_path
+        profile.save(update_fields=['profile_photo_path', 'updated_at'])
+
+    claims_settled = int(draft.claims_settled or 0)
+    claims_amount = _claim_amount_from_draft(draft.claim_amount)
+    if claims_settled or claims_amount:
+        AgentPerformanceStat.objects.update_or_create(
+            agent=agent,
+            defaults={
+                'claims_settled': claims_settled,
+                'claims_processed': claims_settled,
+                'claims_amount': claims_amount,
+            },
+        )
     
     # Clear registration_draft after committing to profile (matching PHP)
     agent.registration_draft = None

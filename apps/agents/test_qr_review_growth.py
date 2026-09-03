@@ -174,8 +174,22 @@ class ReviewGrowthUnlockTests(TestCase):
     def test_resolve_plan_adds_unlocks_without_visibility(self):
         self._add_reviews(2)
         plan = _resolve_agent_plan('starter', agent=self.agent)
+        self.assertTrue(plan.show_recent_leads)
         self.assertTrue(plan.show_sales_insights)
-        self.assertFalse(plan.show_visibility_aio)
+        extra = extra_unlock_attrs(self.agent)
+        self.assertTrue(extra)
+        wrapped = overlay_plan(plan, extra)
+        self.assertFalse(wrapped.show_visibility_aio)
+
+    def test_resolve_honors_saved_starter_and_keeps_independent_locks(self):
+        plan = _resolve_agent_plan('starter', agent=self.agent)
+        self.assertTrue(plan.show_performance_stats)
+        self.assertTrue(plan.show_edit_profile_full)
+        self.assertTrue(plan.show_recent_leads)
+        self.assertTrue(plan.show_edit_profile_professional)
+        self.assertFalse(plan.show_agent_certificate)
+        self.assertFalse(plan.show_claim_support)
+        self.assertFalse(plan.show_profile_section)
 
 
 class AgentQrAndCardTests(TestCase):

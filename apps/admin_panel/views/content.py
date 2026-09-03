@@ -16,10 +16,14 @@ from apps.agents.services.feature_unlock import (
     METRIC_CATALOG,
     PLAN_LABELS,
     PLAN_SLUGS,
+    REVIEW_CONDITION_FEATURE_SLUGS,
+    STARTER_BASE_FEATURE_SLUGS,
     build_unlock_hints,
     get_unlock_rules,
+    materialize_edit_profile_steps,
     normalize_plan_slug,
     remove_plan_only_unlock_rule,
+    resolve_plan_feature_slugs,
     sanitize_unlock_rules,
     toggle_plan_feature,
     upsert_plan_unlock_rule,
@@ -460,11 +464,8 @@ def plans(request):
         'qr_config': get_qr_config(),
         'review_growth': get_review_growth_config(),
         'review_growth_unlock_choices': [
-            (k, l) for k, l in available_features
-            if k not in (
-                'visibility_aio', 'visibility_geo', 'visibility_seo',
-                'visibility_priority_ranking',
-            )
+            (k, FEATURE_LABELS.get(k, k.replace('_', ' ').title()))
+            for k in REVIEW_CONDITION_FEATURE_SLUGS
         ],
     })
 
@@ -782,17 +783,9 @@ def update_review_growth(request):
 
 DEFAULT_PLAN_FEATURES = {
     'free_trial': ['dashboard_stats', 'edit_profile'],
-    'starter': ['dashboard_stats', 'edit_profile', 'lead_management'],
-    'professional': [
-        'dashboard_stats', 'edit_profile', 'lead_management', 'sales_insights',
-        'manage_portfolio', 'upload_achievements', 'view_reviews', 'public_profile',
-        'visibility_aio', 'visibility_geo', 'visibility_seo', 'visibility_priority_ranking',
-        'lead_preferences', 'receive_leads', 'lead_portfolio_analysis', 'lead_claims_support',
-    ],
-    'exclusive': [
-        'dashboard_stats', 'edit_profile', 'lead_management', 'sales_insights',
-        'lead_preferences', 'receive_leads', 'lead_portfolio_analysis', 'lead_claims_support',
-    ],
+    'starter': list(STARTER_BASE_FEATURE_SLUGS),
+    'professional': list(FEATURE_ATTR_MAP.keys()),
+    'exclusive': list(FEATURE_ATTR_MAP.keys()),
 }
 
 
@@ -1021,7 +1014,11 @@ def _manage_agent_common_context(plan_slug):
     features_config = with_all_plan_feature_defaults(
         SiteSetting.get_value('plan_features_config', DEFAULT_PLAN_FEATURES) or DEFAULT_PLAN_FEATURES
     )
-    enabled = with_feature_defaults(plan_slug, features_config.get(plan_slug) or [], features_config)
+    enabled = materialize_edit_profile_steps(with_feature_defaults(
+        plan_slug,
+        resolve_plan_feature_slugs(plan_slug, features_config),
+        features_config,
+    ))
     rules = get_unlock_rules()
     hints = build_unlock_hints(None, plan_slug, metrics={}, rules=rules)
     context = _sample_manage_agent_context(plan_slug)

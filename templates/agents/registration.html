@@ -1528,6 +1528,7 @@
                 claimsSettled: '',
                 aum: '',
                 photoPreview: null,
+                photoFile: null,
                 segments: [],
                 mfProducts: ['sip', 'lumpsum', 'elss'],
                 promoCode: '{{ prefilledPromo|default:"" }}',
@@ -1982,6 +1983,7 @@
                             return;
                         }
                         this.photoPreview = URL.createObjectURL(file);
+                        this.photoFile = file;
                     }
                 },
 
@@ -2046,6 +2048,9 @@
 
                         // Submit via AJAX
                         const formData = new FormData(document.getElementById('step1Form'));
+                        if (this.photoFile) {
+                            formData.append('photo', this.photoFile);
+                        }
 
                         fetch("{% url 'agents:agent_register_step1' %}", {
                             method: 'POST',

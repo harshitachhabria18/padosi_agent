@@ -1,24 +1,28 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ agent.fullname }} | PadosiAgent{% endblock %}
+{% block title %}{{ agentDisplayName|default:agent.fullname }} | PadosiAgent{% endblock %}
+{% block og_title %}{{ agentDisplayName|default:agent.fullname }} | PadosiAgent{% endblock %}
+{% block og_description %}{{ profile.career_highlights|striptags|truncatechars:150|default:"View my professional insurance agent profile on PadosiAgent." }}{% endblock %}
+{% block og_url %}{{ request.scheme }}://{{ request.get_host }}{% url 'agents:agent_public_profile' profile.slug %}{% endblock %}
+{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% url 'agents:agent_og_image' agent.id %}{% endblock %}
+{% block og_type %}profile{% endblock %}
+{% block twitter_card %}summary_large_image{% endblock %}
+{% block twitter_title %}{{ agentDisplayName|default:agent.fullname }} | PadosiAgent{% endblock %}
+{% block twitter_description %}{{ profile.career_highlights|striptags|truncatechars:150|default:"View my professional insurance agent profile on PadosiAgent." }}{% endblock %}
+{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% url 'agents:agent_og_image' agent.id %}{% endblock %}
+{% block meta_description %}{{ profile.career_highlights|striptags|truncatechars:150|default:"View my professional insurance agent profile on PadosiAgent." }}{% endblock %}
+{% block canonical_url %}{{ request.scheme }}://{{ request.get_host }}{% url 'agents:agent_public_profile' profile.slug %}{% endblock %}
 
-{% block extra_css %}
-    <meta property="og:title" content="{{ agent.fullname }} | PadosiAgent">
-    <meta property="og:description" content="{{ agent.profile.career_highlights|striptags|truncatechars:150|default:"View my professional insurance agent profile on PadosiAgent." }}">
-    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}/og-image/{{ agent.id }}/preview.jpg">
-    <meta property="og:image:secure_url" content="{{ request.scheme }}://{{ request.get_host }}/og-image/{{ agent.id }}/preview.jpg">
+{% block extra_head %}
+    <meta property="og:image:secure_url" content="{{ request.scheme }}://{{ request.get_host }}{% url 'agents:agent_og_image' agent.id %}">
     <meta property="og:image:type" content="image/jpeg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{% url 'agents:agent_public_profile' agent.profile.slug %}">
-    <meta property="og:type" content="profile">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ agent.fullname }} | PadosiAgent">
-    <meta name="twitter:description" content="{{ agent.profile.career_highlights|striptags|truncatechars:150|default:"View my professional insurance agent profile on PadosiAgent." }}">
-    <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}/og-image/{{ agent.id }}/preview.jpg">
-    <link rel="canonical" href="{{ request.scheme }}://{{ request.get_host }}{% url 'agents:agent_public_profile' agent.profile.slug %}">
-    <meta name="description" content="{{ agent.profile.career_highlights|striptags|truncatechars:150|default:"View my professional insurance agent profile on PadosiAgent." }}">
+    <meta property="og:image:alt" content="{{ agentDisplayName|default:agent.fullname }} — PadosiAgent profile">
+{% endblock %}
+
+{% block extra_css %}
 
     <!-- CSS styles loaded in layouts.app page specifically -->
     <link rel="stylesheet" href="{% static 'css/owl.carousel.min.css' %}">

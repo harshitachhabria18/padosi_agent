@@ -288,6 +288,7 @@ def _log_latency_async(
 
 def call_llm_with_fallback(messages, tools=None, tool_choice=None, **extra_kwargs):
     last_error = None
+    request_timeout = float(extra_kwargs.pop('timeout', 12.0) or 12.0)
     rotated_providers = get_rotated_providers()
     for i, provider in enumerate(rotated_providers):
         is_last_provider = (i == len(rotated_providers) - 1)
@@ -319,7 +320,7 @@ def call_llm_with_fallback(messages, tools=None, tool_choice=None, **extra_kwarg
             executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
             future = executor.submit(client.chat.completions.with_raw_response.create, **kwargs)
             try:
-                raw_response = future.result(timeout=12.0)
+                raw_response = future.result(timeout=request_timeout)
             finally:
                 executor.shutdown(wait=False, cancel_futures=True)
             
@@ -361,7 +362,7 @@ def call_llm_with_fallback(messages, tools=None, tool_choice=None, **extra_kwarg
                     executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
                     future = executor.submit(client.chat.completions.with_raw_response.create, **kwargs)
                     try:
-                        raw_response = future.result(timeout=12.0)
+                        raw_response = future.result(timeout=request_timeout)
                     finally:
                         executor.shutdown(wait=False, cancel_futures=True)
                         

@@ -15,7 +15,7 @@
         <div class="pa-upgrade-banner__aside">
             {% if review_upgrade_price %}
             <button type="button"
-                    onclick="openReviewUpgradeModal()"
+                    onclick="openProfessionalUpgradeModal()"
                     class="pa-upgrade-banner__btn">
                 <span class="pa-upgrade-banner__btn-label">Professional</span>
                 <span class="pa-upgrade-banner__btn-price">₹{{ review_upgrade_price.promo_excl_gst|floatformat:0 }}</span>
@@ -26,7 +26,7 @@
             </button>
             {% else %}
             <button type="button"
-                    onclick="openUpgradeModal('professional', '{{ profDisc }}')"
+                    onclick="openProfessionalUpgradeModal()"
                     class="pa-upgrade-banner__btn">
                 <span class="pa-upgrade-banner__btn-label">Professional</span>
                 <span class="pa-upgrade-banner__btn-price">₹{{ profDisc|floatformat:0 }}</span>

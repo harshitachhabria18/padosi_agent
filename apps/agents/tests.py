@@ -1,7 +1,7 @@
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from django.contrib.auth.models import User
-from apps.agents.models import Agent, AgentProfile, AgentPerformanceStat, AgentReview
+from apps.agents.models import Agent, AgentProfile, AgentPerformanceStat, AgentReview, og_image_cache_key
 from django.core.cache import cache
 
 class AgentSharingTests(TestCase):
@@ -52,7 +52,7 @@ class AgentSharingTests(TestCase):
         self.assertEqual(response['Content-Type'], 'image/jpeg')
 
         # Check caching
-        cache_key = f'og_image_agent_card_{self.agent.id}'
+        cache_key = og_image_cache_key(self.agent.id)
         self.assertTrue(cache.get(cache_key) is not None)
 
         # Check invalidation signal works

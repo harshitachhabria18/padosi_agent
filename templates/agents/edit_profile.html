@@ -2565,36 +2565,12 @@ Overview
         }
     });
 
-    // Step item click navigation with restriction
+    // Step item click navigation — allow free movement between all steps
     $('.step-item').on('click', function () {
-        const targetStep = parseInt($(this).attr('data-step'));
-
-        // Allow going back or staying on same step
-        if (targetStep <= currentStep) {
-            currentStep = targetStep;
-            showStep(currentStep);
-            return;
-        }
-
-        // Check if all MANDATORY steps between current and target are completed
-        const mandatorySteps = [1, 2, 3];
-        let blockedStep = null;
-
-        for (let s = 1; s < targetStep; s++) {
-            if (mandatorySteps.includes(s) && !$(`.step-item[data-step="${s}"]`).hasClass('completed')) {
-                blockedStep = s;
-                break;
-            }
-        }
-
-        if (blockedStep === null) {
-            if (targetStep === currentStep + 1) {
-                nextBtn.trigger('click');
-            } else {
-                currentStep = targetStep;
-                showStep(currentStep);
-            }
-        }
+        const targetStep = parseInt($(this).attr('data-step'), 10);
+        if (!targetStep || targetStep < 1 || targetStep > totalSteps) return;
+        currentStep = targetStep;
+        showStep(currentStep);
     });
 
     // WhatsApp "Same as Mobile" Logic
@@ -4310,13 +4286,41 @@ Overview
             icon.removeClass('fa-magic').addClass('fa-spinner fa-spin');
             text.text('Generating Bio...');
 
+            var form = $('#edit-profile-form');
+            var payload = {
+                agent_id: "{{ agent.id }}",
+                full_name: form.find('[name="full_name"]').val() || '',
+                agency_name: form.find('[name="agency_name"]').val() || '',
+                experience_years: form.find('[name="experience_years"]').val() || '',
+                languages: form.find('[name="languages"]').val() || '',
+                service_pincode: form.find('[name="service_pincode"]').val() || '',
+                license_number: form.find('[name="license_number"]').val() || '',
+                client_base: form.find('[name="client_base"]').val() || '',
+                success_rate: form.find('[name="success_rate"]').val() || '',
+                csrfmiddlewaretoken: form.find('[name="csrfmiddlewaretoken"]').val() || '{{ csrf_token }}'
+            };
+            var cities = form.find('[name="serviceable_cities[]"]').val();
+            if (cities && cities.length) {
+                payload['serviceable_cities[]'] = Array.isArray(cities) ? cities.join(', ') : cities;
+            }
+            form.find('input[name="investment_types[]"]:checked').each(function() {
+                if (!payload['investment_types[]']) payload['investment_types[]'] = [];
+                payload['investment_types[]'].push($(this).val());
+            });
+            form.find('input[name="segments[]"]:checked').each(function() {
+                if (!payload['segments[]']) payload['segments[]'] = [];
+                payload['segments[]'].push($(this).val());
+            });
+
             $.ajax({
                 url: "{% url 'agents:agent_generate_bio' %}",
                 type: "POST",
                 headers: {
                     "X-CSRFToken": "{{ csrf_token }}"
                 },
-                data: $('#edit-profile-form').serialize() + "&agent_id={{ agent.id }}",
+                traditional: true,
+                timeout: 45000,
+                data: payload,
                 success: function(response) {
                     if (response.status === 'success' && response.bio) {
                         var safeBio = response.bio;
@@ -4336,10 +4340,16 @@ Overview
                         resetBtn();
                     }
                 },
-                error: function(xhr) {
+                error: function(xhr, status) {
                     var errorMsg = 'An error occurred while generating the bio.';
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                    if (status === 'timeout') {
+                        errorMsg = 'Bio generation timed out. Please try again.';
+                    } else if (xhr.responseJSON && xhr.responseJSON.message) {
                         errorMsg = xhr.responseJSON.message;
+                    } else if (xhr.status === 403) {
+                        errorMsg = 'Session expired. Please refresh the page and try again.';
+                    } else if (xhr.status === 0) {
+                        errorMsg = 'Network error. Please check your connection and try again.';
                     }
                     showError(errorMsg);
                     resetBtn();
@@ -4929,6 +4939,10 @@ Overview
 
     {% if not admin_lock_preview %}
     const featureUnlockHints = {{ feature_unlock_hints_json|default:"{}"|safe }};
+    const canOfferUpgrade = {% if show_starter_upgrade_cta %}true{% else %}false{% endif %};
+    const showReviewProgress = {% if show_starter_upgrade_progress %}true{% else %}false{% endif %};
+    const reviewGrowthStatus = {{ review_growth_status_json|default:"{}"|safe }};
+    const choosePlanUrl = "{% url 'agents:chooseplan' %}?plan=professional";
 
     function lockReason(name, hintKey) {
       const fragment = (hintKey && featureUnlockHints[hintKey]) || '';
@@ -4936,6 +4950,86 @@ Overview
         return 'Unlock ' + name + ' by: ' + fragment;
       }
       return name + ' is set to private by the administrator.';
+    }
+
+    function showLockedFeaturePopup(name, hintKey) {
+      let html = '';
+      let title = (name || 'This section') + ' is locked';
+      let confirmText = 'OK';
+      let confirmColor = '#64748b';
+      let iconHtml = '<i class="fas fa-lock" style="font-size:2rem;color:#64748b;"></i>';
+      let openUpgrade = false;
+
+      if (showReviewProgress) {
+        const needed = reviewGrowthStatus.min_reviews || 3;
+        const count = reviewGrowthStatus.review_count || 0;
+        const remaining = Math.max(needed - count, 0);
+        title = 'Complete reviews to unlock';
+        iconHtml = '<i class="fas fa-star" style="font-size:2rem;color:#f59e0b;"></i>';
+        confirmColor = '#0d9488';
+        html = '<p style="color:#334155;font-size:15px;line-height:1.55;margin:0;">Please complete the review condition to open this section.</p>'
+          + '<p style="color:#64748b;font-size:13px;line-height:1.5;margin:10px 0 0;">You have <strong>' + count + ' of ' + needed + '</strong> customer reviews'
+          + (remaining ? ' — <strong>' + remaining + ' more</strong> needed.' : '.') + '</p>';
+      } else if (canOfferUpgrade) {
+        title = 'Section locked';
+        iconHtml = '<i class="fas fa-crown" style="font-size:2rem;color:#273c8e;"></i>';
+        confirmColor = '#273c8e';
+        confirmText = 'Upgrade to Professional';
+        openUpgrade = true;
+        html = '<p style="color:#334155;font-size:15px;line-height:1.55;margin:0;"><strong>Upgrade to Professional plan</strong> to unlock this section.</p>';
+      } else {
+        html = '<p style="color:#334155;font-size:15px;line-height:1.55;margin:0;">' + (lockReason(name, hintKey) || 'This section is locked on your current plan.') + '</p>';
+      }
+
+      const opts = {
+        iconHtml: iconHtml,
+        title: title,
+        html: html,
+        confirmButtonColor: confirmColor,
+        confirmButtonText: confirmText
+      };
+      if (openUpgrade) {
+        opts.showCancelButton = true;
+        opts.cancelButtonText = 'Not now';
+        opts.cancelButtonColor = '#94a3b8';
+      }
+
+      const run = function() {
+        Swal.fire(opts).then(function(result) {
+          if (result.isConfirmed && openUpgrade) {
+            if (typeof openProfessionalUpgradeModal === 'function') {
+              openProfessionalUpgradeModal();
+            } else {
+              window.location.href = "{% url 'agents:agent_dashboard' %}?upgrade=professional";
+            }
+          }
+        });
+      };
+      if (typeof Swal === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
+        script.onload = run;
+        document.head.appendChild(script);
+        return;
+      }
+      run();
+    }
+
+    function attachLockOverlay($target, name, hintKey) {
+      if ($target.find('.locked-plan-overlay').length) return;
+      const sectionName = name || 'This section';
+      const $overlay = $(`
+        <div class="locked-plan-overlay" role="button" tabindex="0" aria-label="Unlock ${sectionName}" title="Locked — tap to see how to unlock" style="position:absolute; top:0; left:0; right:0; bottom:0; z-index:10; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:auto; text-align:center; border-radius: 8px;">
+          <i class="fas fa-lock" style="font-size: 32px; color: #64748b;"></i>
+        </div>
+      `);
+      $overlay.on('click keydown', function(e) {
+        if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        e.stopPropagation();
+        showLockedFeaturePopup(sectionName, hintKey);
+      });
+      $target.append($overlay);
     }
 
     function lockSection($el, sectionName, hintKey) {
@@ -4960,16 +5054,8 @@ Overview
           'pointer-events': 'none',
           'opacity': '1'
       });
-      
-      if ($target.find('.locked-plan-overlay').length === 0) {
-        let name = sectionName || "This section";
-        $target.append(`
-          <div class="locked-plan-overlay" style="position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(255,255,255,0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index:10; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:auto; text-align:center; border-radius: 8px;">
-            <i class="fas fa-lock mb-3" style="font-size: 32px; color: #475569;"></i>
-            <p style="font-size: 18px; color: #475569; font-weight: 600; margin: 0; max-width: 80%; line-height: 1.5; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">${lockReason(name, hintKey)}</p>
-          </div>
-        `);
-      }
+
+      attachLockOverlay($target, sectionName, hintKey);
     }
 
     // Handle SubscriptionPlan Feature Locks Dynamically
@@ -5006,12 +5092,7 @@ Overview
         });
         
         if ($card.find('.locked-plan-overlay').length === 0) {
-            $card.append(`
-              <div class="locked-plan-overlay" style="position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(255,255,255,0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:auto; text-align:center; border-radius: 8px;">
-                <i class="fas fa-lock mb-3" style="font-size: 32px; color: #475569;"></i>
-                <p style="font-size: 18px; color: #475569; font-weight: 600; margin: 0; max-width: 80%; line-height: 1.5; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">${lockReason('Edit Profile', 'show_edit_profile_full')}</p>
-              </div>
-            `);
+            attachLockOverlay($card, 'Edit Profile', 'show_edit_profile_full');
         }
     } else {
         let step1Locked = false, step2Locked = false, step3Locked = false, step4Locked = false;

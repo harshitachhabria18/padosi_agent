@@ -267,9 +267,11 @@
         const overview = document.getElementById('overview-content');
         const profile = document.getElementById('profile-content');
         const portfolio = document.getElementById('portfolio-content');
-        if (overview) overview.style.setProperty('display', 'block', 'important');
-        if (profile) profile.style.setProperty('display', 'block', 'important');
-        if (portfolio) portfolio.style.setProperty('display', 'block', 'important');
+        const leads = document.getElementById('leads-content');
+        const qr = document.getElementById('qr-content');
+        [overview, profile, portfolio, leads, qr].forEach(function(panel) {
+            if (panel) panel.style.setProperty('display', 'block', 'important');
+        });
 
         document.querySelectorAll('.form-step').forEach(function(step) {
             step.classList.add('active');
@@ -286,13 +288,25 @@
         document.querySelectorAll('[data-feature]').forEach(function(el) {
             const feature = el.getAttribute('data-feature');
             if (!feature) return;
-            el.classList.toggle('is-feature-locked', isLocked(feature));
+            const locked = isLocked(feature);
+            el.classList.toggle('is-feature-locked', locked);
+            let overlayEl = el.querySelector(':scope > .manage-agent-locked-overlay');
+            if (locked) {
+                if (!overlayEl) {
+                    overlayEl = document.createElement('div');
+                    overlayEl.className = 'manage-agent-locked-overlay';
+                    overlayEl.innerHTML = '<i class="fas fa-lock"></i>';
+                    el.appendChild(overlayEl);
+                }
+            } else if (overlayEl) {
+                overlayEl.remove();
+            }
             if (el.querySelector(':scope > .manage-agent-lock-btn')) return;
             const btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = 'manage-agent-lock-btn' + (isLocked(feature) ? ' is-locked' : '');
+            btn.className = 'manage-agent-lock-btn' + (locked ? ' is-locked' : '');
             btn.setAttribute('data-manage-feature', feature);
-            btn.title = isLocked(feature) ? 'Unlock this feature' : 'Lock this feature';
+            btn.title = locked ? 'Unlock this feature' : 'Lock this feature';
             btn.innerHTML = '<i class="fas fa-lock"></i>';
             el.appendChild(btn);
         });

@@ -427,9 +427,292 @@ body.pa-qr-preview-open .modal-backdrop {
     .pa-vis-grid { grid-template-columns: 1fr; }
     .pa-qr-dock { padding: 18px 14px; }
     .pa-qr-dock-row { grid-template-columns: 1fr; }
+}
+
+/* Review unlock status panel — compact chip banner */
+.pa-review-unlock-panel {
+    background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%);
+    border: 1px solid #bbf7d0;
+    border-radius: 14px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 14px rgba(15, 118, 110, 0.07);
+}
+.pa-review-unlock-panel__row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.pa-review-unlock-panel__icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #10b981;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+.pa-review-unlock-panel__copy { flex: 1; min-width: 0; }
+.pa-review-unlock-panel__badge {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #047857;
+    background: #d1fae5;
+    padding: 2px 7px;
+    border-radius: 20px;
+    margin-bottom: 3px;
+}
+.pa-review-unlock-panel__title {
+    font-size: 15px;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 2px;
+    line-height: 1.2;
+}
+.pa-review-unlock-panel__message {
+    font-size: 12px;
+    color: #475569;
+    margin: 0;
+    line-height: 1.4;
+}
+.pa-review-unlock-panel__cta {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+.pa-review-unlock-panel__upgrade-btn {
+    background: linear-gradient(135deg, #273c8e, #1d7d5d);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+.pa-review-unlock-panel__upgrade-btn:hover { opacity: 0.95; color: #fff; }
+.pa-review-unlock-panel__chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #cbd5e1;
+}
+.pa-review-unlock-chip-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+.pa-review-unlock-chip-label {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    margin-right: 2px;
+}
+.pa-review-unlock-chip-label--on { color: #047857; }
+.pa-review-unlock-chip-label--off { color: #64748b; margin-left: 6px; }
+.pa-review-unlock-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    padding: 4px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.pa-review-unlock-chip i { font-size: 9px; }
+.pa-review-unlock-chip--on {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+.pa-review-unlock-chip--off {
+    background: #f8fafc;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+.pa-review-unlock-chip--more {
+    background: transparent;
+    color: #273c8e;
+    border: 1px dashed #93c5fd;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    line-height: 1.2;
+}
+.pa-review-unlock-chip--more:hover {
+    background: #eff6ff;
+    color: #1e3a8a;
+}
+.pa-review-unlock-chip.is-extra { display: none; }
+.pa-review-unlock-chip-group.is-open .pa-review-unlock-chip.is-extra { display: inline-flex; }
+.pa-review-unlock-chip-group + .pa-review-unlock-chip-group { margin-left: 2px; }
+@media (max-width: 767px) {
+    .pa-review-unlock-panel__row { flex-wrap: wrap; }
+    .pa-review-unlock-panel__cta { width: 100%; align-items: stretch; }
+    .pa-review-unlock-panel__upgrade-btn { justify-content: center; }
+    .pa-review-unlock-chip-label--off { margin-left: 0; }
+}
+
+/* Dashboard professional upgrade modal — card only, no outer shell */
+#professionalUpgradeModal .modal-backdrop {
+    background-color: rgba(15, 23, 42, 0.55);
+}
+#professionalUpgradeModal .pa-dash-upgrade-dialog {
+    max-width: 440px;
+    width: calc(100% - 24px);
+    margin: 0.75rem auto;
+}
+#professionalUpgradeModal .pa-dash-upgrade-modal {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    overflow: visible;
+}
+.pa-dash-upgrade-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 5;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.96);
+    color: #64748b;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.pa-dash-upgrade-close:hover {
+    background: #fff;
+    color: #0f172a;
+}
+.pa-dash-plan-card {
+    width: 100%;
+    max-width: none;
+    background: #fff;
+    border: 2px solid #273c8e;
+    border-radius: 24px;
+    padding: 28px 24px 24px;
+    position: relative;
+    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
+    overflow: hidden;
+}
+.pa-dash-plan-ribbon {
+    position: absolute;
+    top: 18px;
+    right: -34px;
+    background: #273c8e;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 6px 40px;
+    transform: rotate(45deg);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+.pa-dash-plan-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+}
+.pa-dash-plan-icon.professional-icon { background: #fffbeb; color: #f59e0b; }
+.pa-dash-plan-name { font-size: 22px; font-weight: 800; color: #273c8e; margin-bottom: 4px; }
+.pa-dash-plan-price { font-size: 28px; font-weight: 800; color: #273c8e; }
+.pa-dash-plan-strike { font-size: 16px; color: #94a3b8; text-decoration: line-through; margin-right: 6px; font-weight: 600; }
+.pa-dash-plan-term { font-size: 13px; font-weight: 600; color: #64748b; margin-left: 4px; }
+.pa-dash-plan-subtitle { font-size: 13px; color: #64748b; margin-top: 8px; }
+.pa-dash-plan-includes {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #166534;
+    margin: 16px 0 12px;
+}
+.pa-dash-plan-feature-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 18px;
+}
+.pa-dash-feature-tile {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 8px 10px;
+    min-height: 52px;
+}
+.pa-dash-feature-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 14px;
+}
+.pa-dash-feature-text { font-size: 11px; font-weight: 700; color: #334155; line-height: 1.25; }
+.pa-dash-plan-select-btn {
+    width: 100%;
+    background: #273c8e;
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    padding: 14px;
+    font-weight: 700;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+}
+.pa-dash-plan-select-btn:hover { background: #1e3075; color: #fff; }
+.pa-dash-plan-footer-note { text-align: center; font-size: 11px; color: #94a3b8; margin-top: 8px; font-style: italic; }
+
+@media (max-width: 767px) {
     .pa-qr-mini { width: auto; }
     .pa-review-social-labels { gap: 8px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
     .pa-upgrade-banner__inner { flex-direction: column; align-items: stretch; }
     .pa-upgrade-banner__aside { width: 100%; }
     .pa-upgrade-banner__btn { width: 100%; max-width: none; }
+    .pa-dash-plan-feature-grid { grid-template-columns: 1fr; }
+    #professionalUpgradeModal .pa-dash-upgrade-dialog {
+        width: calc(100% - 16px);
+    }
+    .pa-dash-plan-card { padding: 22px 18px 20px; }
 }

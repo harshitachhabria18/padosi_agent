@@ -1,0 +1,51 @@
+{% if review_unlock_summary %}
+<div class="pa-review-unlock-panel" id="paReviewUnlockPanel" data-agent-id="{{ agent_id }}">
+    <div class="pa-review-unlock-panel__row">
+        <div class="pa-review-unlock-panel__icon" aria-hidden="true">
+            <i class="fas fa-unlock-alt"></i>
+        </div>
+        <div class="pa-review-unlock-panel__copy">
+            <span class="pa-review-unlock-panel__badge">Review milestone</span>
+            <h4 class="pa-review-unlock-panel__title">{{ review_unlock_summary.title }}</h4>
+            <p class="pa-review-unlock-panel__message">{{ review_unlock_summary.message }}</p>
+        </div>
+        <div class="pa-review-unlock-panel__cta">
+            <button type="button" class="pa-review-unlock-panel__upgrade-btn" onclick="openProfessionalUpgradeModal()">
+                <i class="fas fa-crown"></i> Upgrade to Professional
+            </button>
+        </div>
+    </div>
+
+    <div class="pa-review-unlock-panel__chips">
+        {% if review_unlock_summary.unlocked %}
+        <div class="pa-review-unlock-chip-group" data-expand-group>
+            <span class="pa-review-unlock-chip-label pa-review-unlock-chip-label--on">Unlocked</span>
+            {% for item in review_unlock_summary.unlocked %}
+            <span class="pa-review-unlock-chip pa-review-unlock-chip--on{% if forloop.counter0 >= 4 %} is-extra{% endif %}"><i class="fas fa-check"></i> {{ item.label }}</span>
+            {% endfor %}
+            {% if review_unlock_summary.unlocked_more %}
+            <button type="button" class="pa-review-unlock-chip pa-review-unlock-chip--more" data-expand-more aria-expanded="false">
+                <span data-more-label>+{{ review_unlock_summary.unlocked_more }} more</span>
+                <span data-less-label hidden>Show less</span>
+            </button>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if review_unlock_summary.still_locked %}
+        <div class="pa-review-unlock-chip-group" data-expand-group>
+            <span class="pa-review-unlock-chip-label pa-review-unlock-chip-label--off">Pro</span>
+            {% for item in review_unlock_summary.still_locked %}
+            <span class="pa-review-unlock-chip pa-review-unlock-chip--off{% if forloop.counter0 >= 5 %} is-extra{% endif %}"><i class="fas fa-lock"></i> {{ item.label }}</span>
+            {% endfor %}
+            {% if review_unlock_summary.locked_more %}
+            <button type="button" class="pa-review-unlock-chip pa-review-unlock-chip--more" data-expand-more aria-expanded="false">
+                <span data-more-label>+{{ review_unlock_summary.locked_more }} more</span>
+                <span data-less-label hidden>Show less</span>
+            </button>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}

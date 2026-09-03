@@ -38,11 +38,81 @@ EDIT_PROFILE_CHILD_FEATURES = (
     'edit_profile_additional',
 )
 
+# Nested sections inside Professional Details (step 2)
+EDIT_PROFILE_PROFESSIONAL_CHILD_FEATURES = (
+    'edit_profile_certifications',
+    'edit_profile_claim_support',
+)
+
+# Nested sections inside Product Portfolio (step 3)
+EDIT_PROFILE_PORTFOLIO_CHILD_FEATURES = (
+    'manage_portfolio',
+    'edit_profile_companies',
+)
+
+# Nested sections inside Additional Details (step 4).
+# Career timeline stays review-gated and is not included here.
+EDIT_PROFILE_ADDITIONAL_CHILD_FEATURES = (
+    'upload_achievements',
+    'edit_profile_social_media',
+    'edit_profile_professional_bio',
+)
+
 LEAD_PREFERENCE_CHILD_FEATURES = (
     'receive_leads',
     'lead_portfolio_analysis',
     'lead_claims_support',
 )
+
+# Unlocking a child also turns its parent section(s) on.
+FEATURE_PARENTS = {
+    'edit_profile_basic': ('edit_profile',),
+    'edit_profile_professional': ('edit_profile',),
+    'edit_profile_portfolio': ('edit_profile',),
+    'edit_profile_additional': ('edit_profile',),
+    'edit_profile_certifications': ('edit_profile_professional', 'edit_profile'),
+    'edit_profile_claim_support': ('edit_profile_professional', 'edit_profile'),
+    'manage_portfolio': ('edit_profile_portfolio', 'edit_profile'),
+    'edit_profile_companies': ('edit_profile_portfolio', 'edit_profile'),
+    'upload_achievements': ('edit_profile_additional', 'edit_profile'),
+    'edit_profile_social_media': ('edit_profile_additional', 'edit_profile'),
+    'edit_profile_professional_bio': ('edit_profile_additional', 'edit_profile'),
+    'edit_profile_career_timeline': ('edit_profile_additional', 'edit_profile'),
+}
+
+# Starter plan: always unlocked (no review required). Includes the edit-profile
+# form sections that used to work before granular lock flags existed.
+STARTER_BASE_FEATURE_SLUGS = (
+    'dashboard_stats',
+    'sales_insights',
+    'rank_boost_tips',
+    'view_public_profile',
+    'edit_profile',
+    'edit_profile_basic',
+    'edit_profile_professional',
+    'edit_profile_portfolio',
+    'edit_profile_additional',
+    'edit_profile_certifications',
+    'edit_profile_claim_support',
+    'manage_portfolio',
+    'edit_profile_companies',
+    'upload_achievements',
+    'edit_profile_social_media',
+    'edit_profile_professional_bio',
+    'qr_codes',
+)
+
+# Unlocked on Starter only after admin review-growth threshold (configurable in admin)
+REVIEW_CONDITION_FEATURE_SLUGS = (
+    'legacy_lead_status',
+    'lead_management',
+    'public_profile',
+    'lead_preferences',
+    'receive_leads',
+    'edit_profile_career_timeline',
+)
+
+LEAD_PREFERENCES_DEFAULT_ON = frozenset(('professional', 'exclusive'))
 
 SLUG_NORMALISE = {
     'basic': 'starter',
@@ -95,6 +165,7 @@ FEATURE_ATTR_MAP = {
     'visibility_geo': ['show_visibility_geo'],
     'visibility_seo': ['show_visibility_seo'],
     'visibility_priority_ranking': ['show_visibility_priority_ranking'],
+    'qr_codes': ['show_qr_codes'],
 }
 
 FEATURE_LABELS = {
@@ -128,6 +199,7 @@ FEATURE_LABELS = {
     'visibility_geo': 'More Visibility: GEO',
     'visibility_seo': 'More Visibility: SEO',
     'visibility_priority_ranking': 'More Visibility: Priority Ranking',
+    'qr_codes': 'QR Codes',
 }
 
 NUMERIC_OPS = ('gte', 'gt', 'lte', 'lt', 'eq')
@@ -570,6 +642,9 @@ class OverlayPlan:
             return True
         return getattr(self._base, name)
 
+    def __getitem__(self, name):
+        return getattr(self, name)
+
     def __bool__(self):
         return True
 
@@ -729,9 +804,6 @@ def sanitize_unlock_rules(raw_rules):
     return cleaned
 
 
-LEAD_PREFERENCES_DEFAULT_ON = frozenset(('professional', 'exclusive'))
-
-
 def lead_preferences_configured(config):
     """True once any plan list explicitly includes the lead_preferences feature."""
     source = config if isinstance(config, dict) else {}
@@ -740,6 +812,34 @@ def lead_preferences_configured(config):
         if isinstance(raw, (list, tuple)) and 'lead_preferences' in raw:
             return True
     return False
+
+
+def canonical_plan_feature_slugs(plan_slug):
+    """Default entitlements when admin has not saved a plan_features_config list."""
+    slug = normalize_plan_slug(plan_slug)
+    if slug == 'starter':
+        return list(STARTER_BASE_FEATURE_SLUGS)
+    if slug in ('professional', 'exclusive'):
+        return list(FEATURE_ATTR_MAP.keys())
+    if slug == 'free_trial':
+        return ['dashboard_stats', 'edit_profile']
+    return []
+
+
+def resolve_plan_feature_slugs(plan_slug, features_config=None):
+    """
+    Entitlements for a plan slug.
+
+    Admin lock/unlock writes plan_features_config; that saved list is the
+    source of truth. Missing/unknown slugs fall back to canonical defaults.
+    Review-gated extras can still be added later via overlay rules.
+    """
+    slug = normalize_plan_slug(plan_slug)
+    if isinstance(features_config, dict):
+        saved = features_config.get(slug)
+        if isinstance(saved, (list, tuple)):
+            return [feat for feat in saved if feat in FEATURE_ATTR_MAP]
+    return canonical_plan_feature_slugs(slug)
 
 
 def with_feature_defaults(plan_slug, enabled_features, features_config=None):
@@ -788,14 +888,54 @@ def plan_shows_feature(agent_plan, attr, default=True):
         return default
 
 
+def materialize_edit_profile_steps(features):
+    """
+    Legacy configs may list only edit_profile without the four step slugs.
+    Treat that as implicit full step access until an admin locks a step.
+    """
+    features = list(features or [])
+    if 'edit_profile' not in features:
+        return features
+    if any(step in features for step in EDIT_PROFILE_CHILD_FEATURES):
+        return features
+    for step in EDIT_PROFILE_CHILD_FEATURES:
+        if step not in features:
+            features.append(step)
+    return features
+
+
 def copy_plan_features_config(config):
     """Shallow-copy plan feature lists so callers cannot mutate SiteSetting data in place."""
     copied = {}
     source = config if isinstance(config, dict) else {}
     for slug in PLAN_SLUGS:
-        raw = source.get(slug) or []
-        copied[slug] = list(raw) if isinstance(raw, (list, tuple)) else []
+        raw = source.get(slug)
+        if isinstance(raw, (list, tuple)):
+            copied[slug] = list(raw)
+        else:
+            # Missing key: seed canonical defaults so locking one section
+            # does not save an empty list and lock the entire plan.
+            copied[slug] = canonical_plan_feature_slugs(slug)
     return copied
+
+
+def child_features_for(feature):
+    """Nested slugs that lock/unlock together with a parent section."""
+    children = []
+    if feature == 'edit_profile':
+        children.extend(EDIT_PROFILE_CHILD_FEATURES)
+        children.extend(EDIT_PROFILE_PROFESSIONAL_CHILD_FEATURES)
+        children.extend(EDIT_PROFILE_PORTFOLIO_CHILD_FEATURES)
+        children.extend(EDIT_PROFILE_ADDITIONAL_CHILD_FEATURES)
+    elif feature == 'edit_profile_professional':
+        children.extend(EDIT_PROFILE_PROFESSIONAL_CHILD_FEATURES)
+    elif feature == 'edit_profile_portfolio':
+        children.extend(EDIT_PROFILE_PORTFOLIO_CHILD_FEATURES)
+    elif feature == 'edit_profile_additional':
+        children.extend(EDIT_PROFILE_ADDITIONAL_CHILD_FEATURES)
+    elif feature == 'lead_preferences':
+        children.extend(LEAD_PREFERENCE_CHILD_FEATURES)
+    return children
 
 
 def toggle_plan_feature(config, plan_slug, feature, locked):
@@ -803,7 +943,8 @@ def toggle_plan_feature(config, plan_slug, feature, locked):
     Enable or disable one feature on a single plan slug.
 
     Returns a new config dict. Other plan lists are copied unchanged.
-    Locking edit_profile also drops its four child keys for that plan.
+    Locking a parent also drops its nested children. Unlocking a parent
+    restores those children; unlocking a child also turns its parents on.
     """
     slug = normalize_plan_slug(plan_slug)
     if slug not in PLAN_SLUGS:
@@ -812,25 +953,24 @@ def toggle_plan_feature(config, plan_slug, feature, locked):
         raise ValueError('Unknown feature')
 
     new_config = copy_plan_features_config(config)
-    features = list(new_config[slug])
+    features = materialize_edit_profile_steps(list(new_config[slug]))
     if locked:
         drop = {feature}
-        if feature == 'edit_profile':
-            drop.update(EDIT_PROFILE_CHILD_FEATURES)
-        if feature == 'lead_preferences':
-            drop.update(LEAD_PREFERENCE_CHILD_FEATURES)
+        drop.update(child_features_for(feature))
         features = [item for item in features if item not in drop]
+        if (
+            feature in EDIT_PROFILE_CHILD_FEATURES
+            and 'edit_profile' in features
+            and not any(step in features for step in EDIT_PROFILE_CHILD_FEATURES)
+        ):
+            features = [item for item in features if item != 'edit_profile']
     else:
-        if feature not in features:
-            features.append(feature)
-        if feature == 'edit_profile':
-            for child in EDIT_PROFILE_CHILD_FEATURES:
-                if child not in features:
-                    features.append(child)
-        if feature == 'lead_preferences':
-            for child in LEAD_PREFERENCE_CHILD_FEATURES:
-                if child not in features:
-                    features.append(child)
+        restore = [feature]
+        restore.extend(child_features_for(feature))
+        restore.extend(FEATURE_PARENTS.get(feature, ()))
+        for item in restore:
+            if item not in features and item in FEATURE_ATTR_MAP:
+                features.append(item)
         if feature in LEAD_PREFERENCE_CHILD_FEATURES and 'lead_preferences' not in features:
             features.append('lead_preferences')
     new_config[slug] = features

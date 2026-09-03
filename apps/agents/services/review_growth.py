@@ -8,8 +8,11 @@ import logging
 
 from apps.agents.services.feature_unlock import (
     FEATURE_ATTR_MAP,
+    FEATURE_LABELS,
     PLAN_SLUGS,
+    REVIEW_CONDITION_FEATURE_SLUGS,
     normalize_plan_slug,
+    plan_shows_feature,
 )
 from apps.home.models import SiteSetting
 
@@ -28,12 +31,7 @@ DEFAULT_QR_CONFIG = {
     'allow_download': True,
 }
 
-DEFAULT_UNLOCK_FEATURES = (
-    'sales_insights',
-    'view_reviews',
-    'public_profile',
-    'rank_boost_tips',
-)
+DEFAULT_UNLOCK_FEATURES = REVIEW_CONDITION_FEATURE_SLUGS
 
 DEFAULT_REVIEW_GROWTH = {
     'enabled': True,
@@ -335,6 +333,73 @@ def extra_unlock_attrs(agent):
     for feat in cfg.get('unlock_feature_slugs') or []:
         attrs.update(FEATURE_ATTR_MAP.get(feat, []))
     return attrs
+
+
+DASHBOARD_UPGRADE_SECTIONS = (
+    ('show_recent_leads', 'Leads Management'),
+    ('show_lead_status', 'Lead Status'),
+    ('show_profile_section', 'Profile Section Visibility'),
+    ('show_lead_preferences', 'Lead Preferences'),
+    ('show_new_business_leads', 'New Business Leads'),
+    ('show_career_timeline', 'Career Timeline'),
+    ('show_portfolio', 'Product Portfolio'),
+    ('show_achievement', 'Gallery / Achievements'),
+    ('show_review_management', 'Review Management'),
+    ('show_agent_certificate', 'Certifications'),
+    ('show_professional_bio', 'Professional Bio'),
+    ('show_social_media', 'Social Media'),
+    ('show_claim_support', 'Claims & Settled Stats'),
+    ('show_visibility_aio', 'AIO Visibility'),
+    ('show_visibility_geo', 'GEO Visibility'),
+    ('show_visibility_seo', 'SEO Visibility'),
+    ('show_visibility_priority_ranking', 'Priority Ranking'),
+    ('show_lead_portfolio_analysis', 'Portfolio Analysis Leads'),
+    ('show_lead_claims_support', 'Claims Support Leads'),
+)
+
+
+def build_review_unlock_summary(agent, starter_plan, professional_plan):
+    """Sections unlocked by reviews vs still locked until Professional upgrade."""
+    if not should_show_upgrade_cta(agent):
+        return None
+    cfg = get_review_growth_config()
+
+    unlocked = []
+    seen = set()
+    unlocked_attrs = set()
+    for feat in cfg.get('unlock_feature_slugs') or []:
+        unlocked_attrs.update(FEATURE_ATTR_MAP.get(feat, []))
+        label = FEATURE_LABELS.get(feat, feat.replace('_', ' ').title())
+        if label not in seen:
+            seen.add(label)
+            unlocked.append({'slug': feat, 'label': label})
+
+    still_locked = []
+    seen_locked = set()
+    for attr, label in DASHBOARD_UPGRADE_SECTIONS:
+        if attr in unlocked_attrs or label in seen:
+            continue
+        if plan_shows_feature(starter_plan, attr, default=False):
+            continue
+        if not plan_shows_feature(professional_plan, attr, default=True):
+            continue
+        if label in seen_locked:
+            continue
+        seen_locked.add(label)
+        still_locked.append({'attr': attr, 'label': label})
+
+    unlocked_preview = unlocked[:4]
+    locked_preview = still_locked[:5]
+    return {
+        'unlocked': unlocked,
+        'still_locked': still_locked,
+        'unlocked_preview': unlocked_preview,
+        'locked_preview': locked_preview,
+        'unlocked_more': max(0, len(unlocked) - len(unlocked_preview)),
+        'locked_more': max(0, len(still_locked) - len(locked_preview)),
+        'title': 'Review condition complete!',
+        'message': 'Your review goal is done. A few sections are open — upgrade to Professional for the rest.',
+    }
 
 
 def build_review_growth_hints(agent):

@@ -12,8 +12,6 @@
 .toggle::after { content:''; position:absolute; top:2px; left:2px; width:18px; height:18px; background:#fff; border-radius:50%; transition:.2s; box-shadow:0 1px 2px rgba(0,0,0,.1); }
 .toggle.on { background:#22c55e; }
 .toggle.on::after { left:20px; }
-.locked-plan-overlay { cursor: pointer; }
-.locked-plan-overlay:hover i { color: #1e3a8a !important; transform: scale(1.08); }
 </style>
 {% endblock %}
 
@@ -48,7 +46,8 @@
                 <button type="button" class="btn text-white shadow-sm px-4 d-flex align-items-center mb-2 mb-sm-0" data-feature="rank_boost_tips" data-toggle="modal" data-target="#rankingGuideModal" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none; font-weight: 700; border-radius: 8px; margin-right: 12px; height: 42px; position: relative;">
                     <i class="fas fa-rocket mr-2"></i> Rank Boost Tips
                 </button>
-                <a href="{% if admin_lock_preview %}#{% elif profile.slug %}{% url 'agents:agent_public_profile' slug=profile.slug %}{% elif agent.agent_slug %}{% url 'agents:agent_public_profile' slug=agent.agent_slug %}{% else %}#{% endif %}" class="btn btn-profile-view mb-2 mb-sm-0" data-feature="view_public_profile" style="height: 42px; display: inline-flex; align-items: center; position: relative;">View My Profile</a>
+                <a href="{% if admin_lock_preview %}#{% elif profile.slug %}{% url 'agents:agent_public_profile' slug=profile.slug %}{% elif agent.agent_slug %}{% url 'agents:agent_public_profile' slug=agent.agent_slug %}{% else %}#{% endif %}" class="btn btn-profile-view mb-2 mb-sm-0" data-feature="view_public_profile" style="height: 42px; display: inline-flex; align-items: center; position: relative;"><i class="fas fa-user mr-2"></i>View My Profile</a>
+                <a href="{% if admin_lock_preview %}#{% else %}{% url 'agents:agent_edit_profile' %}{% endif %}" class="btn btn-add-lead-top mb-2 mb-sm-0" data-feature="edit_profile" style="height: 42px; display: inline-flex; align-items: center; position: relative;"><i class="fas fa-edit mr-2"></i>Edit Profile</a>
             </div>
         </div>
 
@@ -61,8 +60,11 @@
         </div>
         {% endif %}
 
+        {% if show_starter_upgrade_cta and not review_unlock_summary %}
         {% include 'agents/partials/starter_upgrade_banner.html' %}
+        {% endif %}
         {% include 'agents/partials/starter_upgrade_progress.html' %}
+        {% include 'agents/partials/review_unlock_status_panel.html' %}
 
         {% if isOnTrial %}
         {# ──────── FREE TRIAL UPGRADE PROMOTION BANNER ──────── #}
@@ -118,7 +120,7 @@
                                 <i class="fas fa-chevron-right" style="color:#1e3a6e;"></i>
                             </div>
                         </button>
-                        <button onclick="openUpgradeModal('professional', '{{ profDisc }}')" class="btn hover-lift" style="background:linear-gradient(135deg,#10b981,#059669);color:white;text-align:left;border-radius:16px;padding:16px 20px;border:none;box-shadow:0 4px 15px rgba(16,185,129,0.3);display:flex;align-items:center;justify-content:space-between;">
+                        <button onclick="openProfessionalUpgradeModal()" class="btn hover-lift" style="background:linear-gradient(135deg,#10b981,#059669);color:white;text-align:left;border-radius:16px;padding:16px 20px;border:none;box-shadow:0 4px 15px rgba(16,185,129,0.3);display:flex;align-items:center;justify-content:space-between;">
                             <div>
                                 <div style="font-size:14px;opacity:0.9;font-weight:800;margin-bottom:2px;letter-spacing:0.5px;text-transform:uppercase;">💎 Professional</div>
                                 <div style="font-size:1.25rem;font-weight:800;line-height:1;">
@@ -825,6 +827,7 @@
     </div>
 </div>
 {% include 'agents/partials/review_share_popup.html' %}
+{% include 'agents/partials/dashboard_upgrade_plan_modal.html' %}
 {% endblock %}
 
 {% block extra_js %}
@@ -887,6 +890,7 @@
 </script>
 
 <script>
+    {% if not admin_lock_preview %}
     // Initialize dashboard tabs
     (function() {
         
@@ -964,6 +968,7 @@
             initializeDashboardTabs();
         });
     })();
+    {% endif %}
 
     // ──────── FREE TRIAL UPGRADE FLOW ────────────────────────
     function openUpgradeModal(planType, planAmount, options) {
@@ -1005,12 +1010,45 @@
         }
     }
 
+    function getProfessionalUpgradeAmount() {
+        {% if review_upgrade_price %}
+        return {{ review_upgrade_price.promo_incl_gst }};
+        {% else %}
+        return {{ profDisc|default:0 }};
+        {% endif %}
+    }
+
+    function openProfessionalUpgradeModal() {
+        const modalEl = document.getElementById('professionalUpgradeModal');
+        if (modalEl) {
+            if (typeof $ !== 'undefined' && $.fn.modal) {
+                $('#professionalUpgradeModal').modal('show');
+            } else if (typeof bootstrap !== 'undefined') {
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            }
+            return;
+        }
+        openUpgradeModal('professional', getProfessionalUpgradeAmount());
+    }
+
+    function closeProfessionalUpgradeModal() {
+        const modalEl = document.getElementById('professionalUpgradeModal');
+        if (typeof $ !== 'undefined' && $.fn.modal) {
+            $('#professionalUpgradeModal').modal('hide');
+        } else if (modalEl && typeof bootstrap !== 'undefined') {
+            const inst = bootstrap.Modal.getInstance(modalEl);
+            if (inst) inst.hide();
+        }
+    }
+
+    function initiateDashboardProfessionalUpgrade() {
+        const btn = document.getElementById('dashProfUpgradePayBtn');
+        initiateUpgradePayment('professional', getProfessionalUpgradeAmount(), btn);
+    }
+
     {% if review_upgrade_price %}
     function openReviewUpgradeModal() {
-        openUpgradeModal('professional', {{ review_upgrade_price.promo_incl_gst }}, {
-            hideDiscountBadge: true,
-            gstNote: '₹{{ review_upgrade_price.promo_excl_gst|floatformat:0 }} + 18% GST | Paid via Razorpay'
-        });
+        openProfessionalUpgradeModal();
     }
     {% endif %}
 
@@ -1037,10 +1075,12 @@
         return text;
     }
 
-    function initiateUpgradePayment(planType, planAmount) {
-        const btn = event.currentTarget;
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Please wait...';
+    function initiateUpgradePayment(planType, planAmount, sourceBtn) {
+        const btn = sourceBtn || (typeof event !== 'undefined' && event.currentTarget);
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Please wait...';
+        }
 
         fetch('{% url "agents:agent_upgrade_plan" %}', {
             method: 'POST',
@@ -1054,8 +1094,10 @@
         .then(data => {
             if (!data.success) {
                 alert(userPaymentMessage(data.message));
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-lock me-2"></i> Pay Securely & Upgrade';
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-crown me-2"></i> Select Professional\'s Plan';
+                }
                 return;
             }
 
@@ -1066,14 +1108,16 @@
 
             if (data.mock_checkout) {
                 alert('Payment is required. Razorpay checkout could not start. Dashboard stays locked until a real payment is captured.');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-lock me-2"></i> Pay Securely & Upgrade';
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-crown me-2"></i> Select Professional\'s Plan';
+                }
                 return;
             }
 
             if (!data.order_id) {
                 alert("We're unable to process your payment right now. Please try again in a few minutes.");
-                btn.disabled = false;
+                if (btn) btn.disabled = false;
                 return;
             }
 
@@ -1091,7 +1135,12 @@
                     contact: '{{ agent.mobile }}'
                 },
                 theme: { color: '#1d7d5d' },
-                modal: { ondismiss: function() { btn.disabled = false; btn.innerHTML = '<i class="fas fa-lock me-2"></i> Pay Securely & Upgrade'; } },
+                modal: { ondismiss: function() {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-crown me-2"></i> Select Professional\'s Plan';
+                    }
+                } },
             };
             if (useCallback) {
                 options.callback_url = window.location.origin + '/agent-register/payment-callback/';
@@ -1138,8 +1187,10 @@
         .catch(err => {
             console.error(err);
             alert('Network error. Please try again.');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-lock me-2"></i> Pay Securely & Upgrade';
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-crown me-2"></i> Select Professional\'s Plan';
+            }
         });
     }
 
@@ -1239,6 +1290,95 @@
 
     // Unread notifications popups (ported from Laravel dashboard.blade.php)
     document.addEventListener('DOMContentLoaded', async function() {
+        const agentStorageId = '{{ agent_id|default:"0" }}';
+        const reviewUnlockPopupKey = 'pa_review_unlock_popup_' + agentStorageId;
+        const reviewUnlockSummary = {{ review_unlock_summary_json|default:"null"|safe }};
+
+        function initReviewUnlockPanel() {
+            const panel = document.getElementById('paReviewUnlockPanel');
+            if (!panel) return;
+            panel.querySelectorAll('[data-expand-more]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const group = btn.closest('[data-expand-group]');
+                    if (!group) return;
+                    const open = group.classList.toggle('is-open');
+                    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                    const moreLabel = btn.querySelector('[data-more-label]');
+                    const lessLabel = btn.querySelector('[data-less-label]');
+                    if (moreLabel) moreLabel.hidden = open;
+                    if (lessLabel) lessLabel.hidden = !open;
+                });
+            });
+        }
+
+        function buildReviewUnlockChipHtml(summary) {
+            if (!summary) return '';
+            const unlocked = summary.unlocked_preview || (summary.unlocked || []).slice(0, 4);
+            const locked = summary.locked_preview || (summary.still_locked || []).slice(0, 5);
+            const unlockedMore = summary.unlocked_more || Math.max(0, (summary.unlocked || []).length - unlocked.length);
+            const lockedMore = summary.locked_more || Math.max(0, (summary.still_locked || []).length - locked.length);
+            let html = '<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px;">';
+            unlocked.forEach(function(item) {
+                html += '<span style="background:#dcfce7;color:#166534;border:1px solid #86efac;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:600;">' + item.label + '</span>';
+            });
+            if (unlockedMore) {
+                html += '<span style="color:#64748b;border:1px dashed #cbd5e1;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:700;">+' + unlockedMore + '</span>';
+            }
+            locked.forEach(function(item) {
+                html += '<span style="background:#f8fafc;color:#475569;border:1px solid #e2e8f0;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:600;">' + item.label + '</span>';
+            });
+            if (lockedMore) {
+                html += '<span style="color:#64748b;border:1px dashed #cbd5e1;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:700;">+' + lockedMore + ' more</span>';
+            }
+            html += '</div>';
+            return html;
+        }
+
+        async function showReviewUnlockWelcomeOnce() {
+            if (!reviewUnlockSummary || localStorage.getItem(reviewUnlockPopupKey) === '1') return;
+            const chipsHtml = buildReviewUnlockChipHtml(reviewUnlockSummary);
+            const html = '<p style="color:#334155;font-size:14px;line-height:1.5;margin:0;">Your review goal is done. A few sections are open — upgrade to Professional for the rest.</p>'
+                + chipsHtml;
+
+            await new Promise(function(resolve) {
+                const opts = {
+                    iconHtml: '<i class="fas fa-unlock-alt" style="font-size:2rem;color:#10b981;"></i>',
+                    title: 'Review milestone reached',
+                    html: html,
+                    confirmButtonColor: '#273c8e',
+                    confirmButtonText: 'Upgrade to Professional',
+                    showCancelButton: true,
+                    cancelButtonText: 'Later',
+                    cancelButtonColor: '#94a3b8',
+                    customClass: { popup: 'rounded-3 shadow-lg border-0', title: 'fw-bold text-dark' }
+                };
+                const run = function() {
+                    Swal.fire(opts).then(function(result) {
+                        localStorage.setItem(reviewUnlockPopupKey, '1');
+                        if (result.isConfirmed && typeof openProfessionalUpgradeModal === 'function') {
+                            openProfessionalUpgradeModal();
+                        }
+                        resolve();
+                    });
+                };
+                if (typeof Swal === 'undefined') {
+                    const script = document.createElement('script');
+                    script.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
+                    script.onload = run;
+                    document.head.appendChild(script);
+                } else {
+                    run();
+                }
+            });
+        }
+
+        initReviewUnlockPanel();
+        await showReviewUnlockWelcomeOnce();
+
+        if (new URLSearchParams(window.location.search).get('upgrade') === 'professional') {
+            if (typeof openProfessionalUpgradeModal === 'function') openProfessionalUpgradeModal();
+        }
+
         const notifications = {{ unread_notifications_json|safe }};
 
         async function showPopups() {
@@ -1289,6 +1429,7 @@
       editProfileFull: {% if not agent_plan or agent_plan.show_edit_profile_full %}true{% else %}false{% endif %},
       premiumSupport: {% if not agent_plan or agent_plan.premium_priority_support %}true{% else %}false{% endif %},
       claimSupport: {% if not agent_plan or agent_plan.show_claim_support %}true{% else %}false{% endif %},
+      qrCodes: {% if not agent_plan or agent_plan.show_qr_codes %}true{% else %}false{% endif %},
       visibilityAio: {% if not agent_plan or agent_plan.show_visibility_aio %}true{% else %}false{% endif %},
       visibilityGeo: {% if not agent_plan or agent_plan.show_visibility_geo %}true{% else %}false{% endif %},
       visibilitySeo: {% if not agent_plan or agent_plan.show_visibility_seo %}true{% else %}false{% endif %},
@@ -1296,49 +1437,67 @@
     };
 
     const canOfferUpgrade = {% if show_starter_upgrade_cta %}true{% else %}false{% endif %};
-    const professionalUpgradeLine = 'Upgrade to Professional for AIO, GEO, SEO & Priority Ranking.';
+    const showReviewProgress = {% if show_starter_upgrade_progress %}true{% else %}false{% endif %};
+    const reviewGrowthStatus = {{ review_growth_status_json|default:"{}"|safe }};
+    const choosePlanUrl = "{% url 'agents:chooseplan' %}?plan=professional";
 
     function lockReason(name, hintKey) {
       const fragment = (hintKey && featureUnlockHints[hintKey]) || '';
       if (fragment) {
         return 'Unlock ' + name + ' by: ' + fragment;
       }
-      if (hintKey && String(hintKey).indexOf('show_visibility') === 0) {
-        return professionalUpgradeLine;
+      if (hintKey && String(hintKey).indexOf('show_visibility') === 0 && canOfferUpgrade) {
+        return 'Upgrade to Professional for AIO, GEO, SEO & Priority Ranking.';
       }
       return name + ' is set to private by the administrator.';
     }
 
     function showLockedFeaturePopup(name, hintKey) {
-      const specific = lockReason(name, hintKey);
-      let html = '<p style="color:#334155;font-size:15px;line-height:1.55;margin:0;">' + professionalUpgradeLine + '</p>';
-      if (specific && specific !== professionalUpgradeLine) {
-        html += '<p style="color:#64748b;font-size:13px;line-height:1.5;margin:10px 0 0;">' + specific + '</p>';
+      let html = '';
+      let title = (name || 'This section') + ' is locked';
+      let confirmText = 'OK';
+      let confirmColor = '#64748b';
+      let iconHtml = '<i class="fas fa-lock" style="font-size:2rem;color:#64748b;"></i>';
+      let openUpgrade = false;
+
+      if (showReviewProgress) {
+        const needed = reviewGrowthStatus.min_reviews || 3;
+        const count = reviewGrowthStatus.review_count || 0;
+        const remaining = Math.max(needed - count, 0);
+        title = 'Complete reviews to unlock';
+        iconHtml = '<i class="fas fa-star" style="font-size:2rem;color:#f59e0b;"></i>';
+        confirmColor = '#0d9488';
+        html = '<p style="color:#334155;font-size:15px;line-height:1.55;margin:0;">Please complete the review condition to open this section.</p>'
+          + '<p style="color:#64748b;font-size:13px;line-height:1.5;margin:10px 0 0;">You have <strong>' + count + ' of ' + needed + '</strong> customer reviews'
+          + (remaining ? ' — <strong>' + remaining + ' more</strong> needed.' : '.') + '</p>';
+      } else if (canOfferUpgrade) {
+        title = 'Section locked';
+        iconHtml = '<i class="fas fa-crown" style="font-size:2rem;color:#273c8e;"></i>';
+        confirmColor = '#273c8e';
+        confirmText = 'Upgrade to Professional';
+        openUpgrade = true;
+        html = '<p style="color:#334155;font-size:15px;line-height:1.55;margin:0;"><strong>Upgrade to Professional plan</strong> to unlock this section.</p>';
+      } else {
+        html = '<p style="color:#334155;font-size:15px;line-height:1.55;margin:0;">' + (lockReason(name, hintKey) || 'This section is locked on your current plan.') + '</p>';
       }
+
       const opts = {
-        icon: 'info',
-        iconColor: '#1e3a8a',
-        title: (name || 'This feature') + ' is locked',
+        iconHtml: iconHtml,
+        title: title,
         html: html,
-        confirmButtonColor: '#1e3a8a',
-        confirmButtonText: canOfferUpgrade ? 'Upgrade to Professional' : 'OK'
+        confirmButtonColor: confirmColor,
+        confirmButtonText: confirmText
       };
-      if (canOfferUpgrade) {
+      if (openUpgrade) {
         opts.showCancelButton = true;
         opts.cancelButtonText = 'Not now';
+        opts.cancelButtonColor = '#94a3b8';
       }
+
       const run = function() {
         Swal.fire(opts).then(function(result) {
-          if (result.isConfirmed && canOfferUpgrade) {
-            {% if review_upgrade_price %}
-            if (typeof openReviewUpgradeModal === 'function') {
-              openReviewUpgradeModal();
-            }
-            {% else %}
-            if (typeof openUpgradeModal === 'function') {
-              openUpgradeModal('professional', '{{ profDisc }}');
-            }
-            {% endif %}
+          if (result.isConfirmed && openUpgrade && typeof openProfessionalUpgradeModal === 'function') {
+            openProfessionalUpgradeModal();
           }
         });
       };
@@ -1370,8 +1529,8 @@
       if ($target.find('.locked-plan-overlay').length === 0) {
         const name = sectionName || "This feature";
         const $overlay = $(`
-          <div class="locked-plan-overlay" role="button" tabindex="0" aria-label="Unlock ${name}" title="Locked — tap to see how to unlock" style="position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(255,255,255,0.55); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index:10; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:auto; text-align:center; border-radius: 12px;">
-            <i class="fas fa-lock" style="font-size: 32px; color: #475569; transition: transform .15s ease, color .15s ease;"></i>
+          <div class="locked-plan-overlay" role="button" tabindex="0" aria-label="Unlock ${name}" title="Locked — tap to see how to unlock" style="position:absolute; top:0; left:0; right:0; bottom:0; z-index:10; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:auto; text-align:center; border-radius: 12px;">
+            <i class="fas fa-lock" style="font-size: 32px; color: #64748b; transition: transform .15s ease, color .15s ease;"></i>
           </div>
         `);
         $overlay.on('click keydown', function(e) {
@@ -1402,6 +1561,22 @@
 
     if (!planPermissions.recentLeads) {
       lockSection($('#leads-content [data-feature="lead_management"]'), "Leads", "show_recent_leads");
+      lockControl(
+        $('.dashboard-main-tabs .nav-link[data-tab="leads"]'),
+        'Leads',
+        'show_recent_leads',
+        '<i class="fas fa-lock mr-2"></i>Leads'
+      );
+    }
+
+    if (!planPermissions.qrCodes) {
+      lockSection($('#qr-content'), "QR Codes", "show_qr_codes");
+      lockControl(
+        $('.dashboard-main-tabs .nav-link[data-tab="qrcodes"]'),
+        'QR Codes',
+        'show_qr_codes',
+        '<i class="fas fa-lock mr-2"></i>QR Codes'
+      );
     }
 
     if (!planPermissions.salesInsights) {

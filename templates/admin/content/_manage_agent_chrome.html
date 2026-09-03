@@ -39,11 +39,26 @@ body.admin-lock-preview .btn-submit,
 body.admin-lock-preview .dashboard-main-tabs { display: none !important; }
 body.admin-lock-preview #profile-content,
 body.admin-lock-preview #overview-content,
-body.admin-lock-preview #portfolio-content { display: block !important; }
+body.admin-lock-preview #portfolio-content,
+body.admin-lock-preview #leads-content,
+body.admin-lock-preview #qr-content { display: block !important; }
 body.admin-lock-preview [data-feature] { overflow: visible !important; }
 body.admin-lock-preview [data-feature].is-feature-locked {
     outline: 2px dashed #38bdf8;
     outline-offset: 2px;
+}
+body.admin-lock-preview [data-feature].is-feature-locked > .manage-agent-locked-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(248, 250, 252, 0.72);
+    border-radius: 12px;
+    pointer-events: none;
+    color: #64748b;
+    font-size: 28px;
 }
 body.admin-lock-preview .dashboard-header-con,
 body.admin-lock-preview .dashboard-top-actions,
