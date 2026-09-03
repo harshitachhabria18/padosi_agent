@@ -368,7 +368,10 @@ def build_review_unlock_summary(agent, starter_plan, professional_plan):
     seen = set()
     unlocked_attrs = set()
     for feat in cfg.get('unlock_feature_slugs') or []:
-        unlocked_attrs.update(FEATURE_ATTR_MAP.get(feat, []))
+        attrs = FEATURE_ATTR_MAP.get(feat, [])
+        if not any(plan_shows_feature(starter_plan, attr, default=False) for attr in attrs):
+            continue
+        unlocked_attrs.update(attrs)
         label = FEATURE_LABELS.get(feat, feat.replace('_', ' ').title())
         if label not in seen:
             seen.add(label)

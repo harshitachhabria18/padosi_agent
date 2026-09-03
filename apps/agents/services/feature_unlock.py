@@ -1063,3 +1063,33 @@ def remove_plan_only_unlock_rule(rules, plan_slug, feature):
             continue
         kept.append(rule)
     return kept
+
+
+def feature_slug_for_attr(attr):
+    """Map a show_* attribute back to its plan feature slug."""
+    for slug, attrs in FEATURE_ATTR_MAP.items():
+        if attr in attrs:
+            return slug
+    return None
+
+
+def filter_overlay_extras(plan_slug, extra_attrs, features_config=None):
+    """
+    Drop activity/review overlay attrs when admin explicitly locked the feature
+    on this plan slug in plan_features_config.
+    """
+    slug = normalize_plan_slug(plan_slug)
+    if not slug or not extra_attrs:
+        return set(extra_attrs or [])
+    source = features_config if isinstance(features_config, dict) else {}
+    saved = source.get(slug)
+    if not isinstance(saved, (list, tuple)):
+        return set(extra_attrs)
+    allowed = set(saved)
+    filtered = set()
+    for attr in extra_attrs:
+        feat = feature_slug_for_attr(attr)
+        if feat and feat not in allowed:
+            continue
+        filtered.add(attr)
+    return filtered

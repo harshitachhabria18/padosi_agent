@@ -5127,6 +5127,16 @@ Overview
                     $el.find('input[name="lead_types[]"]').prop('checked', false).prop('disabled', true);
                 });
             };
+            if (!planPermissions.leadPreferences) {
+                lockSection($('#lead-preferences-section'), "Lead Preferences", "show_lead_preferences");
+                lockControl(
+                    $('#open-lead-preferences-btn'),
+                    'Lead Preferences',
+                    'show_lead_preferences',
+                    '<i class="fas fa-lock mr-2"></i>Configure'
+                );
+                $('#lead-preferences-section').attr('data-lead-locked', '1');
+            }
             if (!planPermissions.leadPreferences || !planPermissions.newBusinessLeads) {
                 lockLeadItem($('#lead-summary-new-business, #lead-new-business'), "New Business", "show_new_business_leads");
             }

@@ -23,6 +23,7 @@ from apps.agents.services.feature_unlock import (
     FEATURE_ATTR_MAP,
     build_unlock_hints,
     evaluate_unlock_rules,
+    filter_overlay_extras,
     normalize_plan_slug,
     overlay_plan,
     plan_shows_feature,
@@ -223,12 +224,15 @@ def _resolve_agent_plan(plan_type, agent=None):
     base = _resolve_base_agent_plan(plan_type)
     if base is None or agent is None:
         return base
-    extra = set(evaluate_unlock_rules(agent, normalize_plan_slug(plan_type)))
+    plan_slug = normalize_plan_slug(plan_type)
+    features_config = SiteSetting.get_value('plan_features_config') or {}
+    extra = set(evaluate_unlock_rules(agent, plan_slug))
     try:
         from apps.agents.services.review_growth import extra_unlock_attrs
         extra |= extra_unlock_attrs(agent)
     except Exception:
         logger.exception('Review-growth unlock overlay failed')
+    extra = filter_overlay_extras(plan_slug, extra, features_config)
     return overlay_plan(base, extra)
 
 

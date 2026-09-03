@@ -3,6 +3,7 @@ from django.test import SimpleTestCase
 from apps.agents.services.feature_unlock import (
     OverlayPlan,
     evaluate_unlock_rules,
+    filter_overlay_extras,
     needs_activity_eval_for_directory,
     overlay_plan,
     remove_plan_only_unlock_rule,
@@ -585,4 +586,39 @@ class LeadPreferencesPlanDefaultTests(SimpleTestCase):
         self.assertIn('receive_leads', updated['starter'])
         self.assertIn('lead_preferences', updated['starter'])
         self.assertNotIn('lead_portfolio_analysis', updated['starter'])
+
+
+class FilterOverlayExtrasTests(SimpleTestCase):
+    def test_review_overlay_dropped_when_admin_locked_feature(self):
+        config = {
+            'starter': ['dashboard_stats', 'edit_profile', 'lead_management'],
+            'professional': ['dashboard_stats'],
+            'free_trial': [],
+            'exclusive': [],
+        }
+        extras = {
+            'show_lead_preferences',
+            'show_new_business_leads',
+            'show_recent_leads',
+        }
+        filtered = filter_overlay_extras('starter', extras, config)
+        self.assertNotIn('show_lead_preferences', filtered)
+        self.assertNotIn('show_new_business_leads', filtered)
+        self.assertIn('show_recent_leads', filtered)
+
+    def test_overlay_kept_when_feature_enabled_in_saved_plan(self):
+        config = {
+            'starter': ['dashboard_stats', 'lead_preferences', 'receive_leads'],
+            'professional': [],
+            'free_trial': [],
+            'exclusive': [],
+        }
+        extras = {'show_lead_preferences', 'show_new_business_leads'}
+        filtered = filter_overlay_extras('starter', extras, config)
+        self.assertEqual(filtered, extras)
+
+    def test_overlay_unfiltered_when_plan_has_no_saved_list(self):
+        extras = {'show_lead_preferences'}
+        filtered = filter_overlay_extras('starter', extras, {})
+        self.assertEqual(filtered, extras)
 
