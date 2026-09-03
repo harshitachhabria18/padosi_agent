@@ -20,15 +20,16 @@ from apps.agents.services.feature_unlock import (
     STARTER_BASE_FEATURE_SLUGS,
     build_unlock_hints,
     get_unlock_rules,
-    materialize_edit_profile_steps,
+    load_plan_features_config,
     normalize_plan_slug,
     remove_plan_only_unlock_rule,
     resolve_plan_feature_slugs,
+    resolve_plan_entitlements,
+    load_plan_features_config,
     sanitize_unlock_rules,
     toggle_plan_feature,
     upsert_plan_unlock_rule,
     with_all_plan_feature_defaults,
-    with_feature_defaults,
 )
 from apps.agents.views.dashboard import PlanFeatureProxy
 from apps.agents.services.review_growth import (
@@ -1011,14 +1012,9 @@ def _sample_manage_agent_context(plan_slug):
 
 
 def _manage_agent_common_context(plan_slug):
-    features_config = with_all_plan_feature_defaults(
-        SiteSetting.get_value('plan_features_config', DEFAULT_PLAN_FEATURES) or DEFAULT_PLAN_FEATURES
-    )
-    enabled = materialize_edit_profile_steps(with_feature_defaults(
-        plan_slug,
-        resolve_plan_feature_slugs(plan_slug, features_config),
-        features_config,
-    ))
+    raw_config = SiteSetting.get_value('plan_features_config') or DEFAULT_PLAN_FEATURES
+    features_config = load_plan_features_config(raw_config)
+    enabled = resolve_plan_entitlements(plan_slug, features_config)
     rules = get_unlock_rules()
     hints = build_unlock_hints(None, plan_slug, metrics={}, rules=rules)
     context = _sample_manage_agent_context(plan_slug)
@@ -1124,8 +1120,8 @@ def manage_agent_toggle(request, plan_slug):
                 'error': 'Add a valid unlock condition (choose a metric and a value).',
             }, status=400)
 
-    features_config = with_all_plan_feature_defaults(
-        SiteSetting.get_value('plan_features_config', DEFAULT_PLAN_FEATURES) or DEFAULT_PLAN_FEATURES
+    features_config = load_plan_features_config(
+        SiteSetting.get_value('plan_features_config') or DEFAULT_PLAN_FEATURES
     )
     new_config = toggle_plan_feature(features_config, slug, feature, locked)
     SiteSetting.set_value('plan_features_config', new_config, 'pricing')

@@ -167,10 +167,10 @@
                     <a class="nav-link" href="#profile" data-tab="profile"><i class="far fa-user mr-2"></i>My Profile</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#leads" data-tab="leads"><i class="far fa-list-alt mr-2"></i>Leads</a>
+                    <a class="nav-link" href="#leads" data-tab="leads" data-feature="lead_management"><i class="far fa-list-alt mr-2"></i>Leads</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#qrcodes" data-tab="qrcodes"><i class="fas fa-qrcode mr-2"></i>QR Codes</a>
+                    <a class="nav-link" href="#qrcodes" data-tab="qrcodes" data-feature="qr_codes"><i class="fas fa-qrcode mr-2"></i>QR Codes</a>
                 </li>
             </ul>
         </div>
@@ -423,7 +423,7 @@
             </div>
         </div>
 
-        <div id="qr-content" class="tab-panel" style="display: none;">
+        <div id="qr-content" class="tab-panel" data-feature="qr_codes" style="display: none;">
             {% include 'agents/partials/qr_codes_widget.html' %}
             {% if not qr_items %}
             <div class="card premium-dashboard-card mb-4 mx-2">

@@ -30,7 +30,7 @@ from apps.agents.services.feature_unlock import (
     profile_completion_percent,
     resolve_checkout_plan_slug,
     resolve_plan_feature_slugs,
-    with_feature_defaults,
+    resolve_plan_entitlements,
     EDIT_PROFILE_CHILD_FEATURES,
 )
 from apps.agents.views.registration import (
@@ -132,11 +132,11 @@ def _resolve_base_agent_plan(plan_type):
                 return None
             canonical_slug = normalize_plan_slug(slug_to_try)
             if canonical_slug in ('starter', 'professional', 'exclusive', 'free_trial'):
-                enabled = resolve_plan_feature_slugs(canonical_slug, features_config)
-                return PlanFeatureProxy(with_feature_defaults(canonical_slug, enabled, features_config))
+                enabled = resolve_plan_entitlements(canonical_slug, features_config)
+                return PlanFeatureProxy(enabled)
             enabled = features_config.get(slug_to_try)
             if isinstance(enabled, list):
-                return PlanFeatureProxy(with_feature_defaults(slug_to_try, enabled, features_config))
+                return PlanFeatureProxy(resolve_plan_entitlements(slug_to_try, features_config))
             return None
 
         # 1a: Direct normalize -- handles 'starter', 'basic', 'standard', 'professional', etc.

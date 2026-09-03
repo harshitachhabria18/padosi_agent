@@ -814,6 +814,19 @@ def lead_preferences_configured(config):
     return False
 
 
+def resolve_plan_entitlements(plan_slug, features_config=None):
+    """Saved plan list + legacy edit-profile step materialization. No auto re-unlock."""
+    return materialize_edit_profile_steps(
+        resolve_plan_feature_slugs(plan_slug, features_config)
+    )
+
+
+def load_plan_features_config(raw_config=None, default_config=None):
+    """Normalize plan_features_config for admin toggles (no product default injection)."""
+    source = raw_config if raw_config is not None else (default_config or {})
+    return copy_plan_features_config(source)
+
+
 def canonical_plan_feature_slugs(plan_slug):
     """Default entitlements when admin has not saved a plan_features_config list."""
     slug = normalize_plan_slug(plan_slug)
@@ -844,16 +857,17 @@ def resolve_plan_feature_slugs(plan_slug, features_config=None):
 
 def with_feature_defaults(plan_slug, enabled_features, features_config=None):
     """
-    Apply product defaults for features that did not exist when a config was saved.
+    Apply product defaults only when a plan slug has no saved list yet.
 
-    Starter / free trial: Lead Preferences stay locked unless admin checks the box.
-    Professional / Exclusive: unlocked until admin has configured the feature.
+    Once admin has saved an explicit list for a plan (even empty), that list
+    is the source of truth and locked features stay locked.
     """
     enabled = list(enabled_features or [])
     slug = normalize_plan_slug(plan_slug)
-    if 'lead_preferences' in enabled:
+    source = features_config if isinstance(features_config, dict) else {}
+    if slug in source and isinstance(source.get(slug), (list, tuple)):
         return enabled
-    if lead_preferences_configured(features_config):
+    if 'lead_preferences' in enabled:
         return enabled
     if slug in LEAD_PREFERENCES_DEFAULT_ON:
         if 'lead_preferences' not in enabled:

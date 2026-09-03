@@ -7,6 +7,8 @@ from apps.agents.services.feature_unlock import (
     overlay_plan,
     remove_plan_only_unlock_rule,
     resolve_plan_feature_slugs,
+    resolve_plan_entitlements,
+    load_plan_features_config,
     sanitize_unlock_rules,
     toggle_plan_feature,
     upsert_plan_unlock_rule,
@@ -475,18 +477,54 @@ class LeadPreferencesPlanDefaultTests(SimpleTestCase):
         self.assertFalse(proxy.show_lead_portfolio_analysis)
         self.assertFalse(proxy.show_lead_claims_support)
 
-    def test_professional_unlocked_before_admin_saves_the_new_feature(self):
+    def test_professional_respects_explicit_empty_list(self):
         config = {
-            'starter': ['dashboard_stats', 'lead_management'],
-            'professional': ['dashboard_stats', 'lead_management'],
+            'starter': ['dashboard_stats'],
+            'professional': [],
+            'free_trial': [],
+            'exclusive': [],
         }
         enabled = with_feature_defaults('professional', config['professional'], config)
-        self.assertIn('lead_preferences', enabled)
+        self.assertEqual(enabled, [])
         proxy = PlanFeatureProxy(enabled)
-        self.assertTrue(proxy.show_lead_preferences)
-        self.assertTrue(proxy.show_new_business_leads)
-        self.assertTrue(proxy.show_lead_portfolio_analysis)
-        self.assertTrue(proxy.show_lead_claims_support)
+        self.assertFalse(proxy.show_rank_boost_tips)
+        self.assertFalse(proxy.show_qr_codes)
+        self.assertFalse(proxy.show_lead_preferences)
+
+    def test_professional_unlock_sticks_for_header_and_qr_features(self):
+        config = {
+            'starter': ['dashboard_stats'],
+            'professional': [],
+            'free_trial': [],
+            'exclusive': [],
+        }
+        for feature in (
+            'rank_boost_tips',
+            'view_public_profile',
+            'qr_codes',
+            'manage_portfolio',
+            'lead_preferences',
+        ):
+            config = toggle_plan_feature(config, 'professional', feature, locked=False)
+            self.assertIn(feature, config['professional'])
+            proxy = PlanFeatureProxy(resolve_plan_entitlements('professional', config))
+            if feature == 'rank_boost_tips':
+                self.assertTrue(proxy.show_rank_boost_tips)
+            elif feature == 'view_public_profile':
+                self.assertTrue(proxy.show_view_public_profile_btn)
+            elif feature == 'qr_codes':
+                self.assertTrue(proxy.show_qr_codes)
+            elif feature == 'manage_portfolio':
+                self.assertTrue(proxy.show_portfolio)
+            elif feature == 'lead_preferences':
+                self.assertTrue(proxy.show_lead_preferences)
+            config = toggle_plan_feature(config, 'professional', feature, locked=True)
+
+    def test_professional_gets_lead_preferences_from_canonical_when_unconfigured(self):
+        enabled = resolve_plan_entitlements('professional', {})
+        self.assertIn('lead_preferences', enabled)
+        self.assertIn('qr_codes', enabled)
+        self.assertIn('rank_boost_tips', enabled)
 
     def test_admin_can_unlock_starter_lead_preferences(self):
         locked = {
