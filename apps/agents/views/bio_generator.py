@@ -13,6 +13,14 @@ logger = logging.getLogger(__name__)
 
 BIO_MAX_CHARS = 500
 BIO_MIN_CHARS = 180
+BIO_JSON_KEYS = (
+    "bio",
+    "professional_bio",
+    "professionalBio",
+    "text",
+    "content",
+    "summary",
+)
 
 
 @require_POST
@@ -239,30 +247,35 @@ def generate_agent_bio_logic(agent: Agent, profile: AgentProfile, payload: dict)
         "- Return ONLY: {\"bio\": \"<bio text>\"}"
     )
 
-    start_time = time.time()
-
-    response, provider = call_llm_with_fallback(
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        temperature=0.65,
-        max_tokens=450,
-        timeout=25.0,
+    plain_system_prompt = (
+        "Write a first-person professional insurance agent bio using only the supplied facts. "
+        f"Return one paragraph, {BIO_MIN_CHARS}-{BIO_MAX_CHARS} characters, with no JSON, markdown, or labels."
+    )
+    plain_user_prompt = (
+        f"Agent details:\n{agent_details_json}\n\n"
+        "Write the bio paragraph now. First person only. Return only the bio text."
     )
 
+    start_time = time.time()
+    generated_bio, raw_output, response, provider_name = _generate_bio_with_retries(
+        system_prompt,
+        user_prompt,
+        plain_system_prompt,
+        plain_user_prompt,
+    )
     generation_time = time.time() - start_time
-    raw_output = ""
-    try:
-        raw_output = (response.choices[0].message.content or "").strip()
-    except Exception:
-        raw_output = str(getattr(response, "content", "") or "").strip()
-
-    generated_bio = _extract_bio(raw_output)
 
     tokens = 0
-    if getattr(response, "usage", None):
+    if response and getattr(response, "usage", None):
         tokens = getattr(response.usage, "total_tokens", 0) or 0
+
+    if not generated_bio:
+        logger.warning(
+            "Bio generation returned empty output (provider=%s, raw_len=%s, raw_preview=%r)",
+            provider_name,
+            len(raw_output or ""),
+            (raw_output or "")[:240],
+        )
 
     try:
         AgentBioGenerationLog.objects.create(
@@ -278,18 +291,161 @@ def generate_agent_bio_logic(agent: Agent, profile: AgentProfile, payload: dict)
     return generated_bio
 
 
+def _generate_bio_with_retries(system_prompt, user_prompt, plain_system_prompt, plain_user_prompt):
+    """
+    Call the LLM with retries tuned for reasoning models (e.g. Groq gpt-oss-120b)
+    that can exhaust max_tokens on internal reasoning and return empty content.
+    """
+    attempts = (
+        {
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            "temperature": 0.65,
+            "max_tokens": 1200,
+            "reasoning_effort": "low",
+        },
+        {
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            "temperature": 0.55,
+            "max_tokens": 1600,
+            "reasoning_effort": "low",
+        },
+        {
+            "messages": [
+                {"role": "system", "content": plain_system_prompt},
+                {"role": "user", "content": plain_user_prompt},
+            ],
+            "temperature": 0.6,
+            "max_tokens": 900,
+            "reasoning_effort": "low",
+        },
+    )
+
+    last_raw = ""
+    last_response = None
+    last_provider = ""
+
+    for attempt in attempts:
+        llm_kwargs = {
+            key: value
+            for key, value in attempt.items()
+            if key != "messages"
+        }
+        try:
+            response, provider = call_llm_with_fallback(
+                messages=attempt["messages"],
+                timeout=35.0,
+                **llm_kwargs,
+            )
+        except Exception as exc:
+            logger.warning("Bio LLM attempt failed: %s", exc)
+            continue
+
+        raw_output = _read_message_text(response)
+        generated_bio = _extract_bio(raw_output)
+        last_raw = raw_output or last_raw
+        last_response = response
+        last_provider = provider.get("name", "") if isinstance(provider, dict) else str(provider or "")
+
+        if generated_bio:
+            return generated_bio, raw_output, response, last_provider
+
+        finish_reason = _finish_reason(response)
+        logger.info(
+            "Bio attempt produced empty extract (provider=%s finish_reason=%s raw_len=%s)",
+            last_provider,
+            finish_reason,
+            len(raw_output or ""),
+        )
+
+    return _extract_bio(last_raw), last_raw, last_response, last_provider
+
+
+def _finish_reason(response) -> str:
+    try:
+        return str(response.choices[0].finish_reason or "")
+    except Exception:
+        return ""
+
+
+def _read_message_text(response) -> str:
+    """Collect assistant text from standard and reasoning-model response shapes."""
+    try:
+        message = response.choices[0].message
+    except (AttributeError, IndexError, TypeError):
+        return ""
+
+    parts = []
+
+    content = getattr(message, "content", None)
+    if isinstance(content, str) and content.strip():
+        parts.append(content.strip())
+    elif isinstance(content, list):
+        for block in content:
+            if isinstance(block, dict):
+                text = block.get("text") or block.get("content") or ""
+            else:
+                text = getattr(block, "text", None) or getattr(block, "content", None) or ""
+            if text and str(text).strip():
+                parts.append(str(text).strip())
+
+    message_data = {}
+    if hasattr(message, "model_dump"):
+        try:
+            message_data = message.model_dump()
+        except Exception:
+            message_data = {}
+
+    for attr in ("reasoning", "reasoning_content"):
+        val = getattr(message, attr, None) or message_data.get(attr)
+        if isinstance(val, str) and val.strip():
+            parts.append(val.strip())
+
+    combined = "\n".join(parts).strip()
+    if combined:
+        return combined
+
+    if message_data:
+        content_val = message_data.get("content")
+        if isinstance(content_val, str) and content_val.strip():
+            return content_val.strip()
+
+    return ""
+
+
+def _bio_from_parsed(parsed) -> str:
+    if isinstance(parsed, str):
+        return parsed.strip()
+    if not isinstance(parsed, dict):
+        return ""
+
+    lowered = {str(key).lower(): value for key, value in parsed.items()}
+    for key in BIO_JSON_KEYS:
+        val = parsed.get(key)
+        if val is None:
+            val = lowered.get(key.lower())
+        if isinstance(val, str) and val.strip():
+            return val.strip()
+    return ""
+
+
 def _extract_bio(raw: str) -> str:
     """
     Extract the bio string from the LLM output.
     Handles: pure JSON, JSON wrapped in markdown fences, or plain text fallback.
     Strips markdown artefacts and enforces the character hard cap.
     """
-    bio = ""
     text = (raw or "").strip()
     if not text:
         return ""
 
     cleaned = re.sub(r"^```(?:json)?\s*|\s*```$", "", text, flags=re.MULTILINE).strip()
+    cleaned = re.sub(r"^(?:here is|here's|output:|response:)\s*", "", cleaned, flags=re.IGNORECASE).strip()
 
     parsed = None
     try:
@@ -297,25 +453,29 @@ def _extract_bio(raw: str) -> str:
     except Exception:
         json_blob = re.search(r"\{[\s\S]*\}", cleaned)
         if json_blob:
-            try:
-                parsed = json.loads(json_blob.group(0))
-            except Exception:
-                repaired = json_blob.group(0).replace("\n", " ")
+            blob_text = json_blob.group(0)
+            for candidate in (blob_text, blob_text.replace("\n", " ")):
                 try:
-                    parsed = json.loads(repaired)
+                    parsed = json.loads(candidate)
+                    break
                 except Exception:
                     parsed = None
 
-    if isinstance(parsed, dict) and parsed.get("bio"):
-        bio = parsed.get("bio")
-    elif isinstance(parsed, str):
-        bio = parsed
-    else:
-        match = re.search(r'"bio"\s*:\s*"((?:\\.|[^"\\])*)"', cleaned)
-        if match:
-            bio = match.group(1)
-        else:
-            bio = cleaned
+    bio = _bio_from_parsed(parsed)
+    if not bio:
+        for pattern in (
+            r'"(?:bio|professional_bio|professionalBio)"\s*:\s*"((?:\\.|[^"\\])*)"',
+            r"'(?:bio|professional_bio|professionalBio)'\s*:\s*'((?:\\.|[^'\\])*)'",
+        ):
+            match = re.search(pattern, cleaned, flags=re.IGNORECASE)
+            if match:
+                bio = match.group(1)
+                break
+
+    if not bio:
+        bio = cleaned
+        if bio.startswith("{") and re.search(r'"(?:bio|professional_bio)"', bio, flags=re.IGNORECASE):
+            bio = ""
 
     if not isinstance(bio, str):
         bio = str(bio)
@@ -324,8 +484,8 @@ def _extract_bio(raw: str) -> str:
     bio = re.sub(r"[*#>`]", "", bio)
     bio = " ".join(bio.split()).strip()
 
-    if bio.lower().startswith("{") and '"bio"' in bio.lower():
-        inner = re.search(r'"bio"\s*:\s*"((?:\\.|[^"\\])*)"', bio)
+    if bio.lower().startswith("{") and re.search(r'"(?:bio|professional_bio)"', bio, flags=re.IGNORECASE):
+        inner = re.search(r'"(?:bio|professional_bio)"\s*:\s*"((?:\\.|[^"\\])*)"', bio, flags=re.IGNORECASE)
         if inner:
             bio = " ".join(inner.group(1).replace("\\n", " ").split())
 
