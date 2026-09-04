@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 from types import SimpleNamespace
 from datetime import datetime, timedelta
 import json
+import re
 from apps.home.models.site_setting import SiteSetting
 from apps.home.models.faq import Faq
 from apps.admin_panel.models.admin_activity_log import AdminActivityLog
@@ -311,7 +312,137 @@ def update_banners(request):
     return redirect('admin_content_banners')
 
 
-# ─── PLANS & PRICING ──────────────────────────────────────────────────────────
+# ─── REGISTRATION SWIPE CARDS ─────────────────────────────────────────────────
+
+_HEX_COLOR = re.compile(r'^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$')
+
+_DEFAULT_REGISTRATION_SWIPE = {
+    'enabled': True,
+    'slides': [
+        {
+            'title': 'Free Digital Card',
+            'desc': 'Create your professional identity in 2 mins',
+            'icon': 'fa-solid fa-id-card',
+            'color_from': '#3b82f6',
+            'color_to': '#4f46e5',
+            'visible': True,
+        },
+        {
+            'title': 'Get Unlimited Leads',
+            'desc': 'Customers in your pincode will find you',
+            'icon': 'fa-solid fa-users',
+            'color_from': '#10b981',
+            'color_to': '#0d9488',
+            'visible': True,
+        },
+        {
+            'title': 'Zero Cost Forever',
+            'desc': 'No hidden charges. 100% Free platform.',
+            'icon': 'fa-solid fa-gift',
+            'color_from': '#a855f7',
+            'color_to': '#db2777',
+            'visible': True,
+        },
+    ],
+}
+
+
+def _safe_hex_color(value, default='#3b82f6'):
+    raw = (value or '').strip()
+    return raw if _HEX_COLOR.match(raw) else default
+
+
+def _safe_icon_class(value, default='fa-solid fa-id-card'):
+    raw = (value or '').strip()[:80]
+    if not raw:
+        return default
+    allowed = set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789- ')
+    if any(ch not in allowed for ch in raw):
+        return default
+    return raw
+
+
+def get_registration_swipe_config(visible_only=False):
+    """Load registration swipe-card config from site_settings with safe defaults."""
+    raw = SiteSetting.get_value('registration_swipe_cards', None)
+    if not isinstance(raw, dict):
+        data = {
+            'enabled': True,
+            'slides': [dict(slide) for slide in _DEFAULT_REGISTRATION_SWIPE['slides']],
+        }
+    else:
+        slides = []
+        for slide in (raw.get('slides') or []):
+            if not isinstance(slide, dict):
+                continue
+            slides.append({
+                'title': (slide.get('title') or '').strip() or 'Untitled',
+                'desc': (slide.get('desc') or slide.get('content') or '').strip(),
+                'icon': _safe_icon_class(slide.get('icon')),
+                'color_from': _safe_hex_color(slide.get('color_from'), '#3b82f6'),
+                'color_to': _safe_hex_color(slide.get('color_to') or slide.get('color'), '#4f46e5'),
+                'visible': bool(slide.get('visible', True)),
+            })
+        if not slides:
+            slides = [dict(slide) for slide in _DEFAULT_REGISTRATION_SWIPE['slides']]
+        enabled = raw.get('enabled')
+        data = {
+            'enabled': True if enabled is None else bool(enabled),
+            'slides': slides,
+        }
+
+    if visible_only:
+        data = {
+            'enabled': data['enabled'],
+            'slides': [s for s in data['slides'] if s.get('visible', True)],
+        }
+    return data
+
+
+def registration_cards(request):
+    """Admin editor for the agent-registration swipe cards."""
+    admin_id = _get_admin_from_session(request)
+    if not admin_id:
+        return redirect('admin_login')
+
+    swipe = get_registration_swipe_config()
+    return render(request, 'admin/content/registration_cards.html', {'swipe': swipe})
+
+
+def update_registration_cards(request):
+    """Save registration swipe-card config from the admin editor."""
+    admin_id = _get_admin_from_session(request)
+    if not admin_id:
+        return redirect('admin_login')
+
+    if request.method == 'POST':
+        titles = request.POST.getlist('title[]')
+        descs = request.POST.getlist('desc[]')
+        icons = request.POST.getlist('icon[]')
+        colors_from = request.POST.getlist('color_from[]')
+        colors_to = request.POST.getlist('color_to[]')
+
+        slides = []
+        for i, title in enumerate(titles):
+            slides.append({
+                'title': (title or '').strip() or 'Untitled',
+                'desc': (descs[i] if i < len(descs) else '').strip(),
+                'icon': _safe_icon_class(icons[i] if i < len(icons) else ''),
+                'color_from': _safe_hex_color(colors_from[i] if i < len(colors_from) else '', '#3b82f6'),
+                'color_to': _safe_hex_color(colors_to[i] if i < len(colors_to) else '', '#4f46e5'),
+                'visible': f'visible[{i}]' in request.POST,
+            })
+
+        payload = {
+            'enabled': 'swipe_enabled' in request.POST,
+            'slides': slides or [dict(s) for s in _DEFAULT_REGISTRATION_SWIPE['slides']],
+        }
+        SiteSetting.set_value('registration_swipe_cards', payload, 'registration')
+        AdminActivityLog.log('Updated registration swipe cards', 'SiteSetting', request=request)
+        messages.success(request, 'Registration swipe cards updated successfully.')
+
+    return redirect('admin_content_registration_cards')
+
 
 # ─── PLANS & PRICING ──────────────────────────────────────────────────────────
 
@@ -326,6 +457,7 @@ _DEFAULT_PRICING = {
         'scratch_price': 1299,
         'description': 'Perfect for New Agents',
         'badge': 'STANDARD',
+        'scratch_text': 'SCRATCH',
         'scratch_enabled': True,
     },
     'professional': {
@@ -335,6 +467,7 @@ _DEFAULT_PRICING = {
         'scratch_price': 4799,
         'description': 'For Established Professionals',
         'badge': 'RECOMMENDED',
+        'scratch_text': 'SCRATCH',
         'scratch_enabled': True,
     },
     'promo_discount_label': 'Partner Promo Applied! Once in a lifetime offer!',
@@ -369,7 +502,9 @@ def plans(request):
     pricing.setdefault('starter', dict(_DEFAULT_PRICING['starter']))
     pricing.setdefault('professional', dict(_DEFAULT_PRICING['professional']))
     pricing['starter'].setdefault('scratch_enabled', True)
+    pricing['starter'].setdefault('scratch_text', 'SCRATCH')
     pricing['professional'].setdefault('scratch_enabled', True)
+    pricing['professional'].setdefault('scratch_text', 'SCRATCH')
     pricing.setdefault('promo_discount_label', _DEFAULT_PRICING['promo_discount_label'])
     pricing.setdefault('standard_label', _DEFAULT_PRICING['standard_label'])
     pricing.setdefault('social_links', list(_DEFAULT_PRICING['social_links']))
@@ -550,6 +685,7 @@ def update_plans(request):
                 'scratch_price':   int(request.POST.get('starter_scratch_price', 1299) or 1299),
                 'description':     request.POST.get('starter_description', 'Perfect for New Agents'),
                 'badge':           request.POST.get('starter_badge', 'STANDARD'),
+                'scratch_text':    (request.POST.get('starter_scratch_text') or 'SCRATCH').strip()[:24] or 'SCRATCH',
                 'scratch_enabled': starter_scratch,
             },
             'professional': {
@@ -559,6 +695,7 @@ def update_plans(request):
                 'scratch_price':   int(request.POST.get('prof_scratch_price', 4799) or 4799),
                 'description':     request.POST.get('professional_description', 'For Established Professionals'),
                 'badge':           request.POST.get('professional_badge', 'RECOMMENDED'),
+                'scratch_text':    (request.POST.get('professional_scratch_text') or 'SCRATCH').strip()[:24] or 'SCRATCH',
                 'scratch_enabled': prof_scratch,
             },
             'promo_discount_label': request.POST.get('promo_discount_label', 'Partner Promo Applied! Once in a lifetime offer!'),

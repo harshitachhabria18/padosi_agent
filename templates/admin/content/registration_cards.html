@@ -1,0 +1,281 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Registration Cards — PadosiAgent Admin{% endblock %}
+{% block breadcrumb_title %}Content › Registration Cards{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h5 class="fw-bold mb-1">🪪 Agent Registration Swipe Cards</h5>
+        <span style="font-size:13px;color:var(--text-muted);">Control the top swipe cards on <code>/agent-registration/</code>. Toggle the whole strip, edit title, content, icon, and colors.</span>
+    </div>
+    <button type="button" class="btn btn-outline-primary btn-sm" id="addSlideBtn">
+        <i class="fa-solid fa-plus me-1"></i> Add Card
+    </button>
+</div>
+
+{% if messages %}
+<div class="mb-3">
+    {% for message in messages %}
+    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<form method="POST" action="{% url 'admin_content_registration_cards_update' %}">
+    {% csrf_token %}
+
+    <div class="card mb-4" style="border-radius:14px;">
+        <div class="card-body d-flex justify-content-between align-items-center py-3">
+            <div>
+                <label class="form-label fw-bold mb-0" for="swipeEnabled" style="cursor:pointer;">
+                    Show swipe cards on registration
+                </label>
+                <div class="text-muted" style="font-size:12px;">When off, the top swipe strip is hidden on the agent registration page.</div>
+            </div>
+            <div class="form-check form-switch m-0">
+                <input class="form-check-input" type="checkbox" name="swipe_enabled" id="swipeEnabled"
+                       style="cursor:pointer; width:2.4em; height:1.25em;"
+                       {% if swipe.enabled %}checked{% endif %}>
+            </div>
+        </div>
+    </div>
+
+    <div id="slides-container">
+        {% for slide in swipe.slides %}
+        <div class="card mb-3 slide-card" style="border-left: 4px solid {% if slide.visible %}{{ slide.color_from|default:'#10b981' }}{% else %}#f59e0b{% endif %};">
+            <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="badge bg-secondary">Card {{ forloop.counter }}</span>
+                    <span class="fw-semibold slide-title-label" style="font-size:14px;">{{ slide.title|default:'Untitled Card' }}</span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input visibility-toggle" type="checkbox"
+                               name="visible[{{ forloop.counter0 }}]" value="1"
+                               {% if slide.visible %}checked{% endif %}>
+                        <label class="form-check-label" style="font-size:12px;">Visible</label>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-light border toggle-slide-body">
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-light border text-danger remove-slide-btn">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body slide-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold" style="font-size:13px;">Title <span class="text-danger">*</span></label>
+                        <input type="text" name="title[]" value="{{ slide.title|default:'' }}"
+                               class="form-control slide-title-input" required
+                               placeholder="e.g. Free Digital Card">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold" style="font-size:13px;">Content</label>
+                        <input type="text" name="desc[]" value="{{ slide.desc|default:'' }}"
+                               class="form-control" placeholder="e.g. Create your professional identity in 2 mins">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold" style="font-size:13px;">Icon class</label>
+                        <input type="text" name="icon[]" value="{{ slide.icon|default:'fa-solid fa-id-card' }}"
+                               class="form-control" placeholder="fa-solid fa-id-card">
+                        <small class="text-muted">Font Awesome class, e.g. <code>fa-solid fa-users</code></small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold" style="font-size:13px;">Start color</label>
+                        <input type="color" name="color_from[]" class="form-control form-control-color w-100"
+                               value="{{ slide.color_from|default:'#3b82f6' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold" style="font-size:13px;">End color</label>
+                        <input type="color" name="color_to[]" class="form-control form-control-color w-100"
+                               value="{{ slide.color_to|default:'#4f46e5' }}">
+                    </div>
+                    <div class="col-12">
+                        <div class="rounded-3 p-3 text-white d-flex align-items-center gap-3 slide-preview"
+                             style="background: linear-gradient(to right, {{ slide.color_from|default:'#3b82f6' }}, {{ slide.color_to|default:'#4f46e5' }});">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center"
+                                 style="width:44px;height:44px;background:rgba(255,255,255,.2);">
+                                <i class="{{ slide.icon|default:'fa-solid fa-id-card' }}"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold preview-title">{{ slide.title|default:'Untitled Card' }}</div>
+                                <div class="small opacity-75 preview-desc">{{ slide.desc|default:'Card content' }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="d-flex justify-content-between mt-2 mb-5">
+        <button type="button" class="btn btn-outline-secondary" id="addSlideBtn2">
+            <i class="fa-solid fa-plus me-1"></i> Add New Card
+        </button>
+        <button type="submit" class="btn btn-primary px-5">
+            <i class="fa-solid fa-save me-2"></i> Save Cards
+        </button>
+    </div>
+</form>
+
+<template id="slideTemplate">
+    <div class="card mb-3 slide-card" style="border-left: 4px solid #6366f1;">
+        <div class="card-header py-2 d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge bg-info">New Card</span>
+                <span class="fw-semibold slide-title-label" style="font-size:14px;">Untitled Card</span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="form-check form-switch mb-0">
+                    <input class="form-check-input visibility-toggle" type="checkbox" name="visible[__INDEX__]" value="1" checked>
+                    <label class="form-check-label" style="font-size:12px;">Visible</label>
+                </div>
+                <button type="button" class="btn btn-sm btn-light border toggle-slide-body">
+                    <i class="fa-solid fa-chevron-down"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-light border text-danger remove-slide-btn">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body slide-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" style="font-size:13px;">Title <span class="text-danger">*</span></label>
+                    <input type="text" name="title[]" class="form-control slide-title-input" required placeholder="e.g. Free Digital Card">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" style="font-size:13px;">Content</label>
+                    <input type="text" name="desc[]" class="form-control" placeholder="e.g. Create your professional identity in 2 mins">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold" style="font-size:13px;">Icon class</label>
+                    <input type="text" name="icon[]" class="form-control" value="fa-solid fa-id-card" placeholder="fa-solid fa-id-card">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold" style="font-size:13px;">Start color</label>
+                    <input type="color" name="color_from[]" class="form-control form-control-color w-100" value="#3b82f6">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold" style="font-size:13px;">End color</label>
+                    <input type="color" name="color_to[]" class="form-control form-control-color w-100" value="#4f46e5">
+                </div>
+                <div class="col-12">
+                    <div class="rounded-3 p-3 text-white d-flex align-items-center gap-3 slide-preview"
+                         style="background: linear-gradient(to right, #3b82f6, #4f46e5);">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center"
+                             style="width:44px;height:44px;background:rgba(255,255,255,.2);">
+                            <i class="fa-solid fa-id-card"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold preview-title">Untitled Card</div>
+                            <div class="small opacity-75 preview-desc">Card content</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var slideIndex = {{ swipe.slides|length }};
+
+function addSlide() {
+    var html = document.getElementById('slideTemplate').innerHTML.replace(/__INDEX__/g, slideIndex);
+    var wrapper = document.createElement('div');
+    wrapper.innerHTML = html;
+    document.getElementById('slides-container').appendChild(wrapper.firstElementChild);
+    slideIndex++;
+    updateSlideNumbers();
+}
+
+document.getElementById('addSlideBtn').addEventListener('click', addSlide);
+document.getElementById('addSlideBtn2').addEventListener('click', addSlide);
+
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-slide-btn')) {
+        var card = e.target.closest('.slide-card');
+        card.style.opacity = '0';
+        card.style.transition = 'opacity 0.2s';
+        setTimeout(function() {
+            card.remove();
+            updateSlideNumbers();
+        }, 200);
+    }
+
+    if (e.target.closest('.toggle-slide-body')) {
+        var btn = e.target.closest('.toggle-slide-body');
+        var body = btn.closest('.card').querySelector('.slide-body');
+        var icon = btn.querySelector('i');
+        if (body.style.display === 'none') {
+            body.style.display = '';
+            icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+        } else {
+            body.style.display = 'none';
+            icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+        }
+    }
+});
+
+document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('visibility-toggle')) {
+        var card = e.target.closest('.slide-card');
+        card.style.borderLeftColor = e.target.checked ? '#10b981' : '#f59e0b';
+    }
+    if (e.target.matches('input[name="color_from[]"], input[name="color_to[]"]')) {
+        updatePreview(e.target.closest('.slide-card'));
+    }
+});
+
+document.addEventListener('input', function(e) {
+    var card = e.target.closest('.slide-card');
+    if (!card) return;
+    if (e.target.classList.contains('slide-title-input')) {
+        card.querySelector('.slide-title-label').textContent = e.target.value || 'Untitled Card';
+        var previewTitle = card.querySelector('.preview-title');
+        if (previewTitle) previewTitle.textContent = e.target.value || 'Untitled Card';
+    }
+    if (e.target.name === 'desc[]') {
+        var previewDesc = card.querySelector('.preview-desc');
+        if (previewDesc) previewDesc.textContent = e.target.value || 'Card content';
+    }
+    if (e.target.name === 'icon[]') {
+        var iconEl = card.querySelector('.slide-preview i');
+        if (iconEl) iconEl.className = e.target.value || 'fa-solid fa-id-card';
+    }
+});
+
+function updatePreview(card) {
+    if (!card) return;
+    var from = card.querySelector('input[name="color_from[]"]');
+    var to = card.querySelector('input[name="color_to[]"]');
+    var preview = card.querySelector('.slide-preview');
+    if (preview && from && to) {
+        preview.style.background = 'linear-gradient(to right, ' + from.value + ', ' + to.value + ')';
+    }
+}
+
+function updateSlideNumbers() {
+    document.querySelectorAll('.slide-card').forEach(function(card, i) {
+        var badge = card.querySelector('.badge');
+        if (badge && !badge.classList.contains('bg-info')) {
+            badge.textContent = 'Card ' + (i + 1);
+        }
+        var toggle = card.querySelector('.visibility-toggle');
+        if (toggle) toggle.setAttribute('name', 'visible[' + i + ']');
+    });
+}
+</script>
+{% endblock %}

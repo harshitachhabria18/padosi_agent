@@ -175,6 +175,13 @@
                                    placeholder="STANDARD">
                             <small class="text-muted">Shown on plan card when scratch card is disabled</small>
                         </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Scratch Ribbon Text</label>
+                            <input type="text" name="starter_scratch_text" class="form-control"
+                                   value="{{ pricing.starter.scratch_text|default:'SCRATCH' }}"
+                                   placeholder="SCRATCH" maxlength="24">
+                            <small class="text-muted">Text drawn on the diagonal scratch ribbon (e.g. SCRATCH, OFFER)</small>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -252,6 +259,13 @@
                                    value="{{ pricing.professional.badge|default:'RECOMMENDED' }}"
                                    placeholder="RECOMMENDED">
                             <small class="text-muted">Shown on plan card when scratch card is disabled</small>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" style="font-size:13px;">Scratch Ribbon Text</label>
+                            <input type="text" name="professional_scratch_text" class="form-control"
+                                   value="{{ pricing.professional.scratch_text|default:'SCRATCH' }}"
+                                   placeholder="SCRATCH" maxlength="24">
+                            <small class="text-muted">Text drawn on the diagonal scratch ribbon (e.g. SCRATCH, OFFER)</small>
                         </div>
                     </div>
                 </div>

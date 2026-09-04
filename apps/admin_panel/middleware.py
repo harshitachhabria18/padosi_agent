@@ -508,6 +508,8 @@ class AdminPermissionMiddleware:
             'admin_content_contact_update':             'content',
             'admin_content_banners':                    'content',
             'admin_content_banners_update':             'content',
+            'admin_content_registration_cards':         'content',
+            'admin_content_registration_cards_update':  'content',
             'admin_content_plans':                      'content',
             'admin_content_plans_update':               'content',
             'admin_content_plans_update_features':      'content',

@@ -201,30 +201,35 @@
 
             <!-- Registration Card -->
             <div class="w-full min-w-0">
+                {% if registration_swipe_enabled and registration_swipe_slides %}
                 <!-- Features Card Slider -->
-                <div x-data="featureSlider"
+                <div x-data="featureSlider({{ registration_swipe_slides|length }})"
                 class="w-full overflow-hidden rounded-xl shadow-lg relative mb-6">
                     <div class="flex transition-transform duration-500 ease-in-out" :style="`transform: translateX(-${currentSlide * 100}%)`">
-                        <template x-for="(slide, index) in slides" :key="index">
+                        {% for slide in registration_swipe_slides %}
                             <div class="w-full flex-shrink-0">
-                                <div :class="`bg-gradient-to-r ${slide.color} p-5 sm:p-7 text-white flex items-center gap-4`">
+                                <div class="p-5 sm:p-7 text-white flex items-center gap-4"
+                                     style="background: linear-gradient(to right, {{ slide.color_from }}, {{ slide.color_to }});">
                                     <div class="p-3 bg-white/20 rounded-full shrink-0 flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14">
-                                        <i :class="slide.icon + ' text-xl sm:text-2xl'"></i>
+                                        <i class="{{ slide.icon }} text-xl sm:text-2xl"></i>
                                     </div>
                                     <div>
-                                        <h3 class="text-base sm:text-lg font-bold" x-text="slide.title"></h3>
-                                        <p class="text-xs sm:text-sm opacity-90 mt-0.5" x-text="slide.desc"></p>
+                                        <h3 class="text-base sm:text-lg font-bold">{{ slide.title }}</h3>
+                                        <p class="text-xs sm:text-sm opacity-90 mt-0.5">{{ slide.desc }}</p>
                                     </div>
                                 </div>
                             </div>
-                        </template>
+                        {% endfor %}
                     </div>
+                    {% if registration_swipe_slides|length > 1 %}
                     <div class="absolute bottom-3 left-0 right-0 flex justify-center gap-2">
-                        <template x-for="(slide, index) in slides" :key="index">
-                            <button @click="currentSlide = index" :class="currentSlide === index ? 'w-4 bg-white' : 'w-2 bg-white/50'" class="h-2 rounded-full transition-all duration-300"></button>
-                        </template>
+                        {% for slide in registration_swipe_slides %}
+                            <button type="button" @click="currentSlide = {{ forloop.counter0 }}" :class="currentSlide === {{ forloop.counter0 }} ? 'w-4 bg-white' : 'w-2 bg-white/50'" class="h-2 rounded-full transition-all duration-300"></button>
+                        {% endfor %}
                     </div>
+                    {% endif %}
                 </div>
+                {% endif %}
 
                 <div class="rounded-xl border border-border/60 shadow-xl bg-card/95 backdrop-blur-sm overflow-hidden">
                     <div class="px-3 sm:px-6 pb-6 pt-5 sm:pt-6">
@@ -1486,16 +1491,13 @@
         })();
 
         document.addEventListener('alpine:init', () => {
-            Alpine.data('featureSlider', () => ({
+            Alpine.data('featureSlider', (count = 0) => ({
                 currentSlide: 0,
-                slides: [
-                    { title: 'Free Digital Card', desc: 'Create your professional identity in 2 mins', icon: 'fa-solid fa-id-card', color: 'from-blue-500 to-indigo-600' },
-                    { title: 'Get Unlimited Leads', desc: 'Customers in your pincode will find you', icon: 'fa-solid fa-users', color: 'from-emerald-500 to-teal-600' },
-                    { title: 'Zero Cost Forever', desc: 'No hidden charges. 100% Free platform.', icon: 'fa-solid fa-gift', color: 'from-purple-500 to-pink-600' }
-                ],
+                slideCount: Number(count) || 0,
                 init() {
+                    if (this.slideCount < 2) return;
                     setInterval(() => {
-                        this.currentSlide = (this.currentSlide + 1) % this.slides.length;
+                        this.currentSlide = (this.currentSlide + 1) % this.slideCount;
                     }, 3000);
                 }
             }));

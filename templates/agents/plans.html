@@ -37,32 +37,15 @@
 
     .header-section {
         text-align: center;
-        margin-bottom: 45px;
+        margin-bottom: 28px;
     }
 
     .header-section h1 {
         font-weight: 800;
         color: #0f172a;
-        font-size: 32px;
+        font-size: 28px;
         letter-spacing: -0.5px;
-        margin-bottom: 12px;
-    }
-
-    .header-section .subtitle {
-        color: #273c8e;
-        font-size: 15px;
-        font-weight: 700;
-        margin-bottom: 8px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .header-section .description {
-        color: #64748b;
-        font-size: 15px;
-        font-weight: 500;
-        max-width: 600px;
-        margin: 0 auto;
+        margin-bottom: 0;
     }
 
     .plans-grid {
@@ -123,6 +106,32 @@
 
     .recommended-ribbon.scratch-ribbon {
         overflow: hidden;
+        width: 148px;
+        height: 28px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .ribbon-scratch-label {
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+        pointer-events: none;
+        line-height: 1;
+        text-transform: uppercase;
+        padding: 0 6px;
+    }
+
+    .plan-gst-hint {
+        text-align: center;
+        font-size: 10px;
+        color: #94a3b8;
+        font-weight: 600;
+        margin-top: 2px;
+        letter-spacing: 0.02em;
     }
 
     .plan-header {
@@ -342,8 +351,108 @@
     }
 
     @media (max-width: 768px) {
+        .plans-container {
+            padding: 12px 12px 20px;
+            min-height: auto;
+        }
+
+        .header-section {
+            margin-bottom: 12px;
+        }
+
+        .header-section h1 {
+            font-size: 22px;
+        }
+
+        .plans-grid {
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .plan-card {
+            padding: 16px 12px 12px;
+            border-radius: 18px;
+            max-width: 100%;
+        }
+
+        .plan-header {
+            margin-bottom: 8px;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .plan-header-icon {
+            display: none;
+        }
+
+        .plan-name {
+            font-size: 18px;
+            margin-bottom: 2px;
+        }
+
+        .plan-price,
+        .plan-price-amount {
+            font-size: 24px;
+        }
+
+        .plan-price.is-discounted .plan-price-amount {
+            font-size: 24px;
+            padding: 2px 8px 1px;
+        }
+
+        .plan-price-term,
+        .plan-subtitle,
+        .plan-feature-section-title,
+        .plan-upgrade-note,
+        .footer-note,
+        .plan-includes-banner {
+            display: none;
+        }
+
+        .plan-discount-badge {
+            margin-top: 4px;
+        }
+
+        .plan-discount-pill {
+            font-size: 10px;
+            padding: 4px 8px;
+        }
+
         .plan-feature-grid {
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            margin-bottom: 8px;
+        }
+
+        .plan-feature-grid .feature-tile {
+            padding: 6px 2px 5px;
+            border-radius: 10px;
+        }
+
+        .plan-feature-grid .feature-tile .icon-wrapper {
+            width: 26px;
+            height: 26px;
+            font-size: 12px;
+            margin-bottom: 3px;
+            border-radius: 8px;
+        }
+
+        .plan-feature-grid .feature-tile .feature-text {
+            font-size: 8px;
+            line-height: 1.15;
+        }
+
+        .plan-includes-banner {
+            font-size: 10px;
+            padding: 5px 8px;
+            margin-bottom: 6px;
+        }
+
+        .btn-select-plan {
+            margin-top: 8px;
+            padding: 11px;
+            font-size: 14px;
+            border-radius: 12px;
         }
     }
 
@@ -710,14 +819,17 @@
         z-index: 1050;
         display: none;
         overflow-y: auto;
-        padding: 15px 0;
+        padding: 24px 16px;
         opacity: 0;
         transition: opacity 0.3s ease;
+        cursor: pointer;
     }
 
     .scratch-modal-overlay.active,
     .gift-modal-overlay.active {
-        display: block;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
         opacity: 1;
     }
 
@@ -790,7 +902,7 @@
         width: 92%;
         max-width: 420px;
         padding: 24px 18px 16px 18px;
-        margin: 16px auto;
+        margin: 0 auto;
         text-align: center;
         box-shadow: 0 18px 50px rgba(88, 28, 135, 0.22);
         border: 3px solid #7c3aed;
@@ -799,6 +911,7 @@
         position: relative;
         overflow: hidden;
         font-family: 'Poppins', 'Plus Jakarta Sans', sans-serif;
+        cursor: default;
     }
 
     .btn-close-gift-modal {
@@ -1199,17 +1312,17 @@
         }
 
         .plan-feature-grid {
-            gap: 6px;
+            gap: 5px;
         }
 
         .plan-feature-grid .feature-tile .icon-wrapper {
-            width: 30px;
-            height: 30px;
-            font-size: 14px;
+            width: 24px;
+            height: 24px;
+            font-size: 11px;
         }
 
         .plan-feature-grid .feature-tile .feature-text {
-            font-size: 8px;
+            font-size: 7.5px;
         }
 
         .plan-includes-banner {
@@ -1239,11 +1352,6 @@
 {% endblock %}
 
 {% block content %}
-{% if not request.user.is_authenticated or "distributor" not in request.user.user_types %}
-<div class="sub_banner position-relative">
-</div>
-{% endif %}
-
 <section class="plans-container position-relative">
     <div class="plans-wrapper">
 
@@ -1251,12 +1359,7 @@
 
         <!-- Header -->
         <div class="header-section">
-            <div class="subtitle">
-                {{ pricing_config.standard_label|default:'Get started with our standard partner plans' }}
-            </div>
-            <h1>Choose Your PadosiAgent Plan</h1>
-            <div class="description">Unlock professional features and listing visibility to reach clients instantly in
-                your neighborhood.</div>
+            <h1>Choose your plan</h1>
         </div>
 
         {% if has_promo or is_upgrade_flow and pricing_config.promo_discount_label %}
@@ -1280,8 +1383,7 @@
                         ₹{{ trial_base_price|floatformat:"0" }}/-<span class="plan-price-term">{{ trial_duration }}
                             Days</span>
                     </div>
-                    <div style="text-align:center; font-size:11px; color:#94a3b8; font-weight:600; margin-top:4px;">+
-                        18% GST applicable at checkout</div>
+                    <div class="plan-gst-hint">+18% GST</div>
                     <div class="plan-subtitle">{{ trial_config.description }}</div>
                 </div>
 
@@ -1316,10 +1418,10 @@
                 <!-- Ribbon -->
                 {% if starter_scratch_enabled %}
                 <div class="recommended-ribbon glitch-badge scratch-ribbon"
-                    style="background: #3b82f6; cursor: pointer; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); overflow: hidden; padding: 0; display: flex; align-items: center; justify-content: center; width: 140px; height: 26px; z-index: 10;">
-                    <span style="font-size: 10px; font-weight: 800; letter-spacing: 0.5px; pointer-events: none;"><i
-                            class="fa-solid fa-wand-magic-sparkles"></i></span>
+                    style="background: #3b82f6; cursor: pointer; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); z-index: 10;">
+                    <span class="ribbon-scratch-label">{{ starter_scratch_text|default:'SCRATCH' }}</span>
                     <canvas class="ribbon-scratch-canvas" data-plan="starter" data-color="#3b82f6"
+                        data-text="{{ starter_scratch_text|default:'SCRATCH' }}"
                         style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; touch-action: none;"></canvas>
                 </div>
                 {% else %}
@@ -1345,7 +1447,6 @@
                         <span id="starterStrikePrice" class="plan-price-strike" style="display:none;"></span>
                         <span id="starterDisplayPrice" class="plan-price-amount">₹{{ starter_base }}/-</span>
                         {% endif %}
-                        <span class="plan-price-term">1st Year Only</span>
                     </div>
                     <div id="starterDiscountBadge"
                         class="plan-discount-badge{% if not starter_scratch_enabled and starter_final < starter_full %} is-visible{% endif %}">
@@ -1354,8 +1455,7 @@
                             <span id="starterSaveLabel">Special Discount Applied</span>
                         </span>
                     </div>
-                    <div style="text-align:center; font-size:11px; color:#94a3b8; font-weight:600; margin-top:4px;">+
-                        18% GST applicable at checkout</div>
+                    <div class="plan-gst-hint">+18% GST</div>
                 </div>
 
                 <div class="plan-features">
@@ -1371,15 +1471,12 @@
                         </div>
                         {% endfor %}
                     </div>
-                    <p class="plan-upgrade-note">Premium growth tools (SEO, AI discovery, analytics, gallery) come with
-                        the Professional Plan — you can upgrade anytime.</p>
                 </div>
 
                 <div>
                     <button type="button" onclick="selectPlanForPayment('starter')" class="btn-select-plan starter-btn">
                         <i class="fa-solid fa-circle-check"></i> Select Starter's Plan
                     </button>
-                    <div class="footer-note">Special Launch Price</div>
                 </div>
             </div>
 
@@ -1388,10 +1485,10 @@
                 <!-- Diagonal Ribbon -->
                 {% if prof_scratch_enabled %}
                 <div class="recommended-ribbon glitch-badge scratch-ribbon"
-                    style="background: #10b981; cursor: pointer; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); overflow: hidden; padding: 0; display: flex; align-items: center; justify-content: center; width: 140px; height: 26px; z-index: 10;">
-                    <span style="font-size: 10px; font-weight: 800; letter-spacing: 0.5px; pointer-events: none;"><i
-                            class="fa-solid fa-gift"></i></span>
+                    style="background: #10b981; cursor: pointer; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); z-index: 10;">
+                    <span class="ribbon-scratch-label">{{ prof_scratch_text|default:'SCRATCH' }}</span>
                     <canvas class="ribbon-scratch-canvas" data-plan="professional" data-color="#10b981"
+                        data-text="{{ prof_scratch_text|default:'SCRATCH' }}"
                         style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; touch-action: none;"></canvas>
                 </div>
                 {% else %}
@@ -1417,7 +1514,6 @@
                         <span id="profStrikePrice" class="plan-price-strike" style="display:none;"></span>
                         <span id="profDisplayPrice" class="plan-price-amount">₹{{ prof_base }}/-</span>
                         {% endif %}
-                        <span class="plan-price-term">1st Year Only</span>
                     </div>
                     <div id="profDiscountBadge"
                         class="plan-discount-badge{% if not prof_scratch_enabled and prof_final < prof_full %} is-visible{% endif %}">
@@ -1426,8 +1522,7 @@
                             <span id="profSaveLabel">Special Discount Applied</span>
                         </span>
                     </div>
-                    <div style="text-align:center; font-size:11px; color:#94a3b8; font-weight:600; margin-top:4px;">+
-                        18% GST applicable at checkout</div>
+                    <div class="plan-gst-hint">+18% GST</div>
                     <div class="plan-subtitle">{{ prof_desc }}</div>
                 </div>
 
@@ -1454,7 +1549,6 @@
                     <button type="button" onclick="selectPlanForPayment('professional')" class="btn-select-plan">
                         <i class="fa-solid fa-crown"></i> Select Professional's Plan
                     </button>
-                    <div class="footer-note">Special Pre-Launch Price</div>
                 </div>
             </div>
 
@@ -1523,8 +1617,8 @@
 
         <!-- Urgency Banner -->
         <div class="exc-urgency text-center">
-            <div class="exc-urgency-top">🔥 Hurry! Offer valid only for the first 10000 users!</div>
-            <div class="exc-urgency-count">🔥 2964/10000 Claimed</div>
+            <div class="exc-urgency-top">🔥 Hurry! Offer valid only for the first 1000 users!</div>
+            <div class="exc-urgency-count">🔥 874/1000 Claimed</div>
         </div>
 
         <!-- Price Pill Area -->
@@ -2285,6 +2379,22 @@
         }
     };
 
+    function bindGiftModalDismiss() {
+        let overlay = document.getElementById('giftModal');
+        if (!overlay) return;
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) {
+                closeGiftModal();
+            }
+        });
+        let box = overlay.querySelector('.gift-modal');
+        if (box) {
+            box.addEventListener('click', function (e) {
+                e.stopPropagation();
+            });
+        }
+    }
+
     window.claimModalOffer = function () {
         closeGiftModal();
         selectPlanForPayment(activeRewardPlan);
@@ -2360,12 +2470,24 @@
 
         ribbonCanvases.forEach(canvas => {
             let ctx = canvas.getContext('2d', { willReadFrequently: true });
-            canvas.width = 140;
-            canvas.height = 26;
+            canvas.width = 148;
+            canvas.height = 28;
 
             let bgColor = canvas.dataset.color || '#3b82f6';
+            let ribbonText = (canvas.dataset.text || 'SCRATCH').toUpperCase();
             ctx.fillStyle = bgColor;
-            ctx.fillRect(0, 0, 140, 26);
+            ctx.fillRect(0, 0, 148, 28);
+
+            ctx.fillStyle = 'rgba(255,255,255,0.96)';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            let fontSize = 11;
+            ctx.font = '800 ' + fontSize + 'px Plus Jakarta Sans, sans-serif';
+            while (fontSize > 7 && ctx.measureText(ribbonText).width > 130) {
+                fontSize -= 1;
+                ctx.font = '800 ' + fontSize + 'px Plus Jakarta Sans, sans-serif';
+            }
+            ctx.fillText(ribbonText, 74, 15);
 
             ctx.globalCompositeOperation = 'destination-out';
             canvas.ribbonScratchCompleted = false;
@@ -2414,8 +2536,8 @@
             let rotatedX = dx * cosA - dy * sinA;
             let rotatedY = dx * sinA + dy * cosA;
 
-            x = rotatedX + 70;
-            y = rotatedY + 13;
+            x = rotatedX + 74;
+            y = rotatedY + 14;
         } else if (e.offsetX !== undefined && e.offsetY !== undefined) {
             x = e.offsetX;
             y = e.offsetY;
@@ -2481,6 +2603,7 @@
     // Initialize on DOM ready
     document.addEventListener('DOMContentLoaded', function () {
         initRibbonScratch();
+        bindGiftModalDismiss();
         try {
             var storedCheckout = sessionStorage.getItem('padosiPendingCheckout');
             if (storedCheckout) {

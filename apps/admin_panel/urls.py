@@ -314,6 +314,8 @@ urlpatterns = [
     # Phase 7A: Content — Banner Slides & Plans/Pricing
     path('admin/content/banners/',         content.banners,         name='admin_content_banners'),
     path('admin/content/banners/update/',  content.update_banners,  name='admin_content_banners_update'),
+    path('admin/content/registration-cards/',        content.registration_cards,        name='admin_content_registration_cards'),
+    path('admin/content/registration-cards/update/', content.update_registration_cards, name='admin_content_registration_cards_update'),
     path('admin/content/plans/',           content.plans,           name='admin_content_plans'),
     path('admin/content/plans/update/',    content.update_plans,    name='admin_content_plans_update'),
     path('admin/content/plans/exclusive/update/', content.update_exclusive_config, name='admin_content_exclusive_plans_update'),

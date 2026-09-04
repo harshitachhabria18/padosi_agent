@@ -694,6 +694,11 @@
                 <i class="fa-solid fa-images"></i> Banner Slides
             </a>
 
+            <a href="{% url 'admin_content_registration_cards' %}"
+                class="menu-item {% if '/admin/content/registration-cards/' in request.path %}active{% endif %}">
+                <i class="fa-solid fa-id-card"></i> Registration Cards
+            </a>
+
             <a href="/admin/content/faqs/"
                 class="menu-item {% if '/admin/content/faqs/' in request.path %}active{% endif %}">
                 <i class="fa-solid fa-circle-question"></i> FAQ Manager

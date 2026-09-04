@@ -85,6 +85,7 @@ _DEFAULT_PRICING = {
         'scratch_price': 1299,
         'description': 'Perfect for New Agents',
         'badge': 'STANDARD',
+        'scratch_text': 'SCRATCH',
         'scratch_enabled': True,
     },
     'professional': {
@@ -94,6 +95,7 @@ _DEFAULT_PRICING = {
         'scratch_price': 4799,
         'description': 'For Established Professionals',
         'badge': 'RECOMMENDED',
+        'scratch_text': 'SCRATCH',
         'scratch_enabled': True,
     },
     'promo_discount_label': 'Partner Promo Applied! Once in a lifetime offer!',
@@ -613,6 +615,9 @@ def _get_registration_context(request):
 
     prefilled_promo = request.GET.get('promo') or request.GET.get('ref') or request.session.get('ref_code', '')
 
+    from apps.admin_panel.views.content import get_registration_swipe_config
+    swipe = get_registration_swipe_config(visible_only=True)
+
     return {
         'layout_template': layout_template,
         'reg_step': reg_step,
@@ -626,6 +631,8 @@ def _get_registration_context(request):
         'agent_languages': draft.languages if draft else [],
         'active_investment_types': active_investment_types,
         'prefilledPromo': prefilled_promo,
+        'registration_swipe_enabled': bool(swipe.get('enabled')) and bool(swipe.get('slides')),
+        'registration_swipe_slides': swipe.get('slides') or [],
     }
 
 
@@ -1252,8 +1259,10 @@ def chooseplan(request):
 
     starter_name = starter_cfg.get('name', "Starter's Plan")
     starter_desc = starter_cfg.get('description', 'Perfect for New Agents')
+    starter_scratch_text = (starter_cfg.get('scratch_text') or 'SCRATCH').strip() or 'SCRATCH'
     prof_name = prof_cfg.get('name', "Professional's Plan")
     prof_desc = prof_cfg.get('description', 'For Established Professionals')
+    prof_scratch_text = (prof_cfg.get('scratch_text') or 'SCRATCH').strip() or 'SCRATCH'
 
     trial_gst = round(trial_base_price * 0.18, 2)
 
@@ -1339,13 +1348,13 @@ def chooseplan(request):
         exclusive_config['gift_subtitle'] = 'Follow us on Social Media...'
 
     try:
-        total_seats = int(exclusive_config.get('total_seats') or 10000)
+        total_seats = int(exclusive_config.get('total_seats') or 1000)
     except (TypeError, ValueError):
-        total_seats = 10000
+        total_seats = 1000
     try:
-        claimed_seats = int(exclusive_config.get('base_claimed_seats') or 0)
+        claimed_seats = int(exclusive_config.get('base_claimed_seats') or 874)
     except (TypeError, ValueError):
-        claimed_seats = 0
+        claimed_seats = 874
     spots_left = max(0, total_seats - claimed_seats)
 
     def _format_urgency(template, fallback):
@@ -1395,6 +1404,7 @@ def chooseplan(request):
         
         'starter_name': starter_name,
         'starter_desc': starter_desc,
+        'starter_scratch_text': starter_scratch_text,
         'starter_full': starter_full,
         'starter_discounted': starter_discounted,
         'starter_final': starter_final,
@@ -1405,6 +1415,7 @@ def chooseplan(request):
         
         'prof_name': prof_name,
         'prof_desc': prof_desc,
+        'prof_scratch_text': prof_scratch_text,
         'prof_full': prof_full,
         'prof_discounted': prof_discounted,
         'prof_final': prof_final,
