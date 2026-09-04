@@ -70,6 +70,53 @@
     flex-wrap: wrap;
     gap: 10px 14px;
 }
+.admin-jump-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+.admin-jump-nav a {
+    font-size: 12px;
+    font-weight: 700;
+    color: #334155;
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    padding: 6px 12px;
+    text-decoration: none;
+}
+.admin-jump-nav a:hover { background: #eff6ff; color: #1d4ed8; }
+.help-callout {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: #475569;
+    margin-bottom: 16px;
+}
+.help-callout strong { color: #0f172a; }
+.growth-tile {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+    padding: 14px;
+    height: 100%;
+}
+.growth-tile .form-text { font-size: 11px; margin-top: 4px; }
+.qr-inline-bar {
+    background: #f0fdf4;
+    border-bottom: 1px solid #d1fae5;
+    padding: 14px 20px;
+}
+#section-plan-prices,
+#section-follow-discounts,
+#section-review-growth,
+#section-feature-access,
+#section-unlock-rules {
+    scroll-margin-top: 88px;
+}
 @media (max-width: 768px) {
     .unlock-cond-row { grid-template-columns: 1fr; }
 }
@@ -78,12 +125,19 @@
 
 {% block content %}
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h5 class="fw-bold mb-1">💰 Plans & Pricing Editor</h5>
-        <span style="font-size:13px;color:var(--text-muted);">Configure the subscription plan prices shown to agents during registration.</span>
+        <h5 class="fw-bold mb-1">Plans &amp; Pricing</h5>
+        <span style="font-size:13px;color:var(--text-muted);">Set plan prices, follow discounts, review-growth offers, and which features each plan can use.</span>
     </div>
 </div>
+<nav class="admin-jump-nav" aria-label="Page sections">
+    <a href="#section-plan-prices">Plan prices</a>
+    <a href="#section-follow-discounts">Follow discounts</a>
+    <a href="#section-review-growth">Review growth</a>
+    <a href="#section-feature-access">Feature access &amp; QR</a>
+    <a href="#section-unlock-rules">Unlock rules</a>
+</nav>
 
 {% if messages %}
 <div class="mb-3">
@@ -100,7 +154,7 @@
     {% csrf_token %}
 
     <!-- Plans & Pricing Editor -->
-    <div class="row g-4 mb-4 mt-1">
+    <div class="row g-4 mb-4 mt-1" id="section-plan-prices">
 
         <!-- Starter Plan Editor -->
         <div class="col-lg-6">
@@ -274,32 +328,35 @@
     </div>
 
     <!-- Social Media Follow & Discount Tiers Configuration -->
-    <div class="plan-editor-card mb-4">
+    <div class="plan-editor-card mb-4" id="section-follow-discounts">
         <div class="plan-editor-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg,#eff6ff,#fff);">
             <div>
                 <i class="fa-solid fa-share-nodes text-primary me-2"></i>
-                <span class="fw-bold">Social Media Channels & Follow Discount Tier Rules</span>
+                <span class="fw-bold">Follow Discounts</span>
+                <div class="fw-normal text-muted" style="font-size:12px;margin-top:2px;">After scratching, agents follow social accounts to unlock extra discount prices.</div>
             </div>
             <div class="d-flex align-items-center gap-2">
-                <label class="form-label fw-bold mb-0 text-muted" for="socialDiscountSwitch" style="font-size:13px;">Active:</label>
+                <label class="form-label fw-bold mb-0 text-muted" for="socialDiscountSwitch" style="font-size:13px;">Discounts on:</label>
                 <div class="form-check form-switch m-0">
                     <input class="form-check-input" type="checkbox" name="social_discount_active" id="socialDiscountSwitch" style="cursor:pointer;" {% if pricing.social_discount_active %}checked{% endif %}>
                 </div>
             </div>
         </div>
         <div class="p-4">
-            <p class="text-muted mb-4" style="font-size:13px;">
-                Configure social media handles for agents to follow after scratching. You can set conditional pricing based on how many accounts the agent follows (e.g. 1 follow &rarr; ₹1399, 2 &rarr; ₹1299, All &rarr; ₹999).
-            </p>
+            <div class="help-callout">
+                <strong>How a tier works:</strong>
+                If an agent follows <strong>N accounts</strong>, Starter and Professional each get their own extra <strong>₹ OFF</strong>.
+                After-discount prices update automatically from scratch/standard price minus that plan’s discount. You can still override a final price.
+            </div>
 
             <!-- Social Media Channels List -->
             <div class="mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <label class="form-label fw-bold text-dark mb-0" style="font-size:14px;">
-                        <i class="fa-solid fa-link text-primary me-1"></i> Social Media Channels
+                        <i class="fa-solid fa-link text-primary me-1"></i> Social accounts agents can follow
                     </label>
                     <button type="button" class="btn btn-sm btn-outline-primary" id="addSocialChannelBtn" style="font-size:12px;">
-                        <i class="fa-solid fa-plus me-1"></i> Add Social Channel
+                        <i class="fa-solid fa-plus me-1"></i> Add channel
                     </button>
                 </div>
                 <div id="socialChannelsContainer" class="d-flex flex-column gap-2">
@@ -340,16 +397,16 @@
             </div>
 
             <!-- Follow Condition Tier Rules Table -->
-            <div class="mt-4 pt-3 border-top">
+            <div class="mt-4 pt-3 border-top" id="follow-tier-rules">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div>
                         <label class="form-label fw-bold text-dark mb-0" style="font-size:14px;">
-                            <i class="fa-solid fa-layer-group text-success me-1"></i> Follow Discount Tier Rules & Conditions
+                            <i class="fa-solid fa-layer-group text-success me-1"></i> Follow Discount Tier Rules
                         </label>
-                        <div class="text-muted" style="font-size:11px;">Define plan prices or extra discounts based on number of accounts followed</div>
+                        <div class="text-muted" style="font-size:12px;">Each row: follows → Starter discount and price → Professional discount and price.</div>
                     </div>
                     <button type="button" class="btn btn-sm btn-outline-success" id="addTierRuleBtn" style="font-size:12px;">
-                        <i class="fa-solid fa-plus me-1"></i> Add Condition Tier
+                        <i class="fa-solid fa-plus me-1"></i> Add tier
                     </button>
                 </div>
 
@@ -357,11 +414,12 @@
                     <table class="table table-hover align-middle mb-0" style="font-size:13px;" id="followTiersTable">
                         <thead class="table-light">
                             <tr>
-                                <th style="width: 180px;">Follow Accounts (N)</th>
-                                <th>Extra ₹ OFF</th>
-                                <th>Starter Price (₹)</th>
-                                <th>Professional Price (₹)</th>
-                                <th style="width: 80px;" class="text-center">Action</th>
+                                <th style="width: 120px;">Follows</th>
+                                <th style="width: 150px;">Starter ₹ OFF</th>
+                                <th>Starter after discount</th>
+                                <th style="width: 150px;">Professional ₹ OFF</th>
+                                <th>Professional after discount</th>
+                                <th style="width: 70px;" class="text-center">Remove</th>
                             </tr>
                         </thead>
                         <tbody id="followTiersContainer">
@@ -370,26 +428,37 @@
                                 <td>
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text"><i class="fa-solid fa-user-check"></i></span>
-                                        <input type="number" name="tier_follows[]" class="form-control" value="{{ tier.follows }}" min="1" max="10">
+                                        <input type="number" name="tier_follows[]" class="form-control tier-input" value="{{ tier.follows }}" min="1" max="10">
                                     </div>
+                                    <small class="text-muted">accounts followed</small>
                                 </td>
                                 <td>
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text">₹</span>
-                                        <input type="number" name="tier_discount[]" class="form-control" value="{{ tier.discount_amount }}" min="0">
+                                        <input type="number" name="tier_starter_discount[]" class="form-control tier-input" value="{{ tier.starter_discount|default:tier.discount_amount }}" min="0">
                                     </div>
+                                    <small class="text-muted">Starter extra OFF</small>
                                 </td>
                                 <td>
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text">₹</span>
-                                        <input type="number" name="tier_starter_price[]" class="form-control" value="{{ tier.starter_price|default:'' }}" placeholder="Auto if blank">
+                                        <input type="number" name="tier_starter_price[]" class="form-control tier-input" value="{{ tier.starter_price|default:'' }}" placeholder="Auto if blank">
                                     </div>
+                                    <small class="text-muted">final Starter price, excl. GST</small>
                                 </td>
                                 <td>
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text">₹</span>
-                                        <input type="number" name="tier_prof_price[]" class="form-control" value="{{ tier.prof_price|default:'' }}" placeholder="Auto if blank">
+                                        <input type="number" name="tier_prof_discount[]" class="form-control tier-input" value="{{ tier.prof_discount|default:tier.discount_amount }}" min="0">
                                     </div>
+                                    <small class="text-muted">Professional extra OFF</small>
+                                </td>
+                                <td>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">₹</span>
+                                        <input type="number" name="tier_prof_price[]" class="form-control tier-input" value="{{ tier.prof_price|default:'' }}" placeholder="Auto if blank">
+                                    </div>
+                                    <small class="text-muted">final Professional price, excl. GST</small>
                                 </td>
                                 <td class="text-center">
                                     <button type="button" class="btn btn-sm btn-outline-danger delete-tier-row-btn" title="Remove Tier">
@@ -400,16 +469,24 @@
                             {% empty %}
                             <tr class="tier-rule-row">
                                 <td>
-                                    <input type="number" name="tier_follows[]" class="form-control form-control-sm" value="1" min="1">
+                                    <input type="number" name="tier_follows[]" class="form-control form-control-sm tier-input" value="1" min="1">
+                                    <small class="text-muted">accounts followed</small>
                                 </td>
                                 <td>
-                                    <input type="number" name="tier_discount[]" class="form-control form-control-sm" value="200" min="0">
+                                    <input type="number" name="tier_starter_discount[]" class="form-control form-control-sm tier-input" value="200" min="0">
+                                    <small class="text-muted">Starter extra OFF</small>
                                 </td>
                                 <td>
-                                    <input type="number" name="tier_starter_price[]" class="form-control form-control-sm" value="1299">
+                                    <input type="number" name="tier_starter_price[]" class="form-control form-control-sm tier-input" value="1299">
+                                    <small class="text-muted">final Starter price</small>
                                 </td>
                                 <td>
-                                    <input type="number" name="tier_prof_price[]" class="form-control form-control-sm" value="4799">
+                                    <input type="number" name="tier_prof_discount[]" class="form-control form-control-sm tier-input" value="200" min="0">
+                                    <small class="text-muted">Professional extra OFF</small>
+                                </td>
+                                <td>
+                                    <input type="number" name="tier_prof_price[]" class="form-control form-control-sm tier-input" value="4799">
+                                    <small class="text-muted">final Professional price</small>
                                 </td>
                                 <td class="text-center">
                                     <button type="button" class="btn btn-sm btn-outline-danger delete-tier-row-btn"><i class="fa-solid fa-trash-can"></i></button>
@@ -434,44 +511,7 @@
                     <input type="text" name="standard_label" class="form-control"
                            value="{{ pricing.standard_label|default:'Get started with our standard partner plans' }}"
                            placeholder="Get started with our standard partner plans">
-                    <small class="text-muted">Shown above the plan cards on the pricing page.</small>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Live Preview -->
-    <div class="plan-editor-card mb-4">
-        <div class="plan-editor-header">
-            <i class="fa-solid fa-eye text-secondary"></i>
-            Live Preview
-            <span class="badge bg-light text-muted fw-normal ms-1" style="font-size:11px;">Updates as you type</span>
-        </div>
-        <div class="p-4">
-            <div class="row g-4 justify-content-center">
-                <!-- Starter Preview -->
-                <div class="col-md-5">
-                    <div class="plan-preview-card" style="background: linear-gradient(135deg,#fefce8,#fff); border: 2px solid #fde047;">
-                        <div class="plan-preview-badge" style="background:#fef08a;color:#713f12;" id="prev-starter-badge">
-                            {{ pricing.starter.badge|default:'STANDARD' }}
-                        </div>
-                        <h6 class="fw-bold mb-1" id="prev-starter-name">{{ pricing.starter.name|default:"Starter's Plan" }}</h6>
-                        <div class="plan-price-full" id="prev-starter-full">₹{{ pricing.starter.full_price|default:1999 }}</div>
-                        <div class="plan-price-promo text-warning" id="prev-starter-promo">₹{{ pricing.starter.promo_price|default:1499 }}</div>
-                        <div class="plan-price-note" id="prev-starter-desc">{{ pricing.starter.description|default:'Perfect for New Agents' }}</div>
-                    </div>
-                </div>
-                <!-- Professional Preview -->
-                <div class="col-md-5">
-                    <div class="plan-preview-card" style="background: linear-gradient(135deg,#f0fdf4,#fff); border: 2px solid #86efac;">
-                        <div class="plan-preview-badge" style="background:#bbf7d0;color:#14532d;" id="prev-pro-badge">
-                            {{ pricing.professional.badge|default:'RECOMMENDED' }}
-                        </div>
-                        <h6 class="fw-bold mb-1" id="prev-pro-name">{{ pricing.professional.name|default:"Professional's Plan" }}</h6>
-                        <div class="plan-price-full" id="prev-pro-full">₹{{ pricing.professional.full_price|default:6999 }}</div>
-                        <div class="plan-price-promo text-success" id="prev-pro-promo">₹{{ pricing.professional.promo_price|default:4999 }}</div>
-                        <div class="plan-price-note" id="prev-pro-desc">{{ pricing.professional.description|default:'For Established Professionals' }}</div>
-                    </div>
+                    <small class="text-muted">Internal label for standard plans (not shown on the public choose-plan heading).</small>
                 </div>
             </div>
         </div>
@@ -486,169 +526,147 @@
 
 <hr class="my-5">
 
-<form method="POST" action="{% url 'admin_content_plans' %}update-qr-service/">
-    {% csrf_token %}
-    <div class="plan-editor-card mb-4" style="border-top: 4px solid #1d7d5d;">
-        <div class="plan-editor-header bg-white py-3">
-            <div class="m-0 fw-bold"><i class="fa-solid fa-qrcode me-2" style="color:#1d7d5d;"></i>QR Code Service</div>
-            <p class="text-muted mb-0 mt-1 fw-normal" style="font-size:12px;">Master switch for agent profile, card, and review QR codes. When disabled, QR pages return 404.</p>
-        </div>
-        <div class="p-4">
-            <div class="form-check form-switch mb-3">
-                <input class="form-check-input" type="checkbox" id="qrEnabled" name="qr_enabled" {% if qr_config.enabled %}checked{% endif %}>
-                <label class="form-check-label fw-bold" for="qrEnabled">Enable QR service</label>
-            </div>
-            <div class="form-check form-switch mb-4">
-                <input class="form-check-input" type="checkbox" id="qrDownload" name="qr_allow_download" {% if qr_config.allow_download %}checked{% endif %}>
-                <label class="form-check-label fw-bold" for="qrDownload">Allow agents to download QR posters</label>
-            </div>
-            <div class="text-end">
-                <button type="submit" class="btn btn-primary px-5" style="background-color:#1d7d5d;border-color:#1d7d5d;">Save QR Settings</button>
-            </div>
-        </div>
-    </div>
-</form>
-
 <form method="POST" action="{% url 'admin_content_plans' %}update-review-growth/" id="reviewGrowthForm">
     {% csrf_token %}
-    <div class="plan-editor-card mb-4" style="border-top: 4px solid #f59e0b;">
-        <div class="plan-editor-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-start gap-2">
+    <div class="plan-editor-card mb-4" id="section-review-growth" style="border-top: 4px solid #f59e0b;">
+        <div class="plan-editor-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div>
                 <div class="m-0 fw-bold"><i class="fa-solid fa-star me-2" style="color:#d97706;"></i>Review Growth &amp; Starter Upgrade</div>
-                <p class="text-muted mb-0 mt-1 fw-normal" style="font-size:12px;">Control review collection popups, Starter unlocks, and the Professional upgrade banner on the agent dashboard.</p>
+                <p class="text-muted mb-0 mt-1 fw-normal" style="font-size:12px;">When Starter agents collect enough reviews, show a popup, unlock extra dashboard sections, and offer a Professional upgrade.</p>
             </div>
             <span id="reviewGrowthStatusBadge" class="badge rounded-pill px-3 py-2 {% if review_growth.enabled %}bg-success{% else %}bg-secondary{% endif %}" style="font-size:12px;">
-                {% if review_growth.enabled %}Feature Active{% else %}Feature Disabled{% endif %}
+                {% if review_growth.enabled %}On{% else %}Off{% endif %}
             </span>
         </div>
         <div class="p-4">
-            <div class="alert alert-light border mb-4" style="border-color:#fde68a !important;background:#fffbeb;">
-                <div class="form-check form-switch mb-0">
-                    <input class="form-check-input" type="checkbox" id="growthEnabled" name="growth_enabled" {% if review_growth.enabled %}checked{% endif %} style="width:3rem;height:1.5rem;">
-                    <label class="form-check-label fw-bold ms-1" for="growthEnabled" style="font-size:15px;">
-                        Enable Review Growth &amp; Starter Upgrade
-                    </label>
+            <div class="d-flex justify-content-between align-items-center border rounded-3 px-3 py-3 mb-4" style="background:#fffbeb;border-color:#fde68a !important;">
+                <div>
+                    <label class="form-label fw-bold mb-0" for="growthEnabled" style="font-size:14px;cursor:pointer;">Master switch</label>
+                    <div class="text-muted" style="font-size:12px;">Turns off popups, unlocks, the upgrade banner, and threshold notifications together.</div>
                 </div>
-                <p class="text-muted mb-0 mt-2 ms-1" style="font-size:12px;">When off, review popups, Starter unlocks, upgrade banner, and threshold notifications are all disabled for agents.</p>
+                <div class="form-check form-switch m-0">
+                    <input class="form-check-input" type="checkbox" id="growthEnabled" name="growth_enabled" {% if review_growth.enabled %}checked{% endif %} style="width:2.6rem;height:1.35rem;cursor:pointer;">
+                </div>
             </div>
 
-            <div id="reviewGrowthFields" class="row g-3">
-                <div class="col-12">
-                    <div class="fw-bold mb-2" style="font-size:13px;color:#475569;">Sub-features (only apply when master switch is on)</div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input growth-sub-toggle" type="checkbox" id="growthPopup" name="growth_popup_enabled" {% if review_growth.popup_enabled %}checked{% endif %}>
-                        <label class="form-check-label fw-bold" for="growthPopup">Collect reviews popup</label>
-                    </div>
-                    <div class="form-text">Dashboard modal asking agents to share their review link.</div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input growth-sub-toggle" type="checkbox" id="growthUpgradeCta" name="growth_upgrade_cta_enabled" {% if review_growth.upgrade_cta_enabled %}checked{% endif %}>
-                        <label class="form-check-label fw-bold" for="growthUpgradeCta">Starter upgrade banner</label>
-                    </div>
-                    <div class="form-text">Top dashboard banner + notification when review threshold is reached.</div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input growth-sub-toggle" type="checkbox" id="growthVisibility" name="growth_visibility_section" {% if review_growth.visibility_section_enabled %}checked{% endif %}>
-                        <label class="form-check-label fw-bold" for="growthVisibility">More Visibility section</label>
-                    </div>
-                    <div class="form-text">AIO / GEO / SEO / Priority Ranking tiles on agent dashboard.</div>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-bold" style="font-size:13px;">Eligible plan</label>
-                    <div class="form-check">
-                        <input class="form-check-input growth-field" type="checkbox" name="growth_eligible_plans[]" value="starter" id="eligStarter" {% if 'starter' in review_growth.eligible_plans %}checked{% endif %}>
-                        <label class="form-check-label" for="eligStarter">Starter (₹1999 plan)</label>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-bold" style="font-size:13px;">Min reviews</label>
-                    <input type="number" min="1" max="50" class="form-control growth-field" name="growth_min_reviews" value="{{ review_growth.min_reviews }}">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-bold" style="font-size:13px;">Popup delay (ms)</label>
-                    <input type="number" min="1500" max="5000" class="form-control growth-field" name="growth_popup_delay_ms" value="{{ review_growth.popup_delay_ms }}">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-bold" style="font-size:13px;">Review scroll delay (ms)</label>
-                    <input type="number" min="2000" max="5000" class="form-control growth-field" name="growth_review_scroll_delay_ms" value="{{ review_growth.review_scroll_delay_ms }}">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-bold" style="font-size:13px;">Upgrade plan</label>
-                    <input type="text" class="form-control growth-field" name="growth_upgrade_plan" value="{{ review_growth.upgrade_plan }}" readonly>
-                </div>
-                <div class="col-12">
-                    <div class="border rounded-3 p-3" style="background:#fffbeb;border-color:#fde68a !important;">
-                        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-                            <div>
-                                <div class="fw-bold" style="font-size:14px;">Review-growth upgrade pricing</div>
-                                <p class="text-muted mb-0 mt-1" style="font-size:12px;">Price shown on the dashboard upgrade banner when Starter agents reach the review threshold. Checkout uses promo price + 18% GST.</p>
+            <div id="reviewGrowthFields">
+                <div class="row g-3 mb-3">
+                    <div class="col-lg-4">
+                        <div class="growth-tile">
+                            <div class="fw-bold mb-2" style="font-size:13px;">1. Who it applies to</div>
+                            <label class="form-label fw-bold mb-1" style="font-size:12px;">Eligible plan</label>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input growth-field" type="checkbox" name="growth_eligible_plans[]" value="starter" id="eligStarter" {% if 'starter' in review_growth.eligible_plans %}checked{% endif %}>
+                                <label class="form-check-label" for="eligStarter">Starter plan</label>
                             </div>
-                            <div class="form-check form-switch mb-0">
-                                <input class="form-check-input growth-sub-toggle" type="checkbox" id="growthUpgradePrice" name="growth_upgrade_price_enabled" {% if review_growth.upgrade_price_enabled %}checked{% endif %}>
-                                <label class="form-check-label fw-bold" for="growthUpgradePrice">Use custom price</label>
-                            </div>
+                            <label class="form-label fw-bold mb-1" style="font-size:12px;">Minimum reviews needed</label>
+                            <input type="number" min="1" max="50" class="form-control growth-field" name="growth_min_reviews" value="{{ review_growth.min_reviews }}">
+                            <div class="form-text">Trigger after this many approved reviews.</div>
+                            <label class="form-label fw-bold mb-1 mt-2" style="font-size:12px;">Upgrade target</label>
+                            <input type="text" class="form-control growth-field" name="growth_upgrade_plan" value="{{ review_growth.upgrade_plan }}" readonly>
                         </div>
-                        <div id="reviewUpgradePriceFields" class="row g-3">
-                            <div class="col-md-4">
-                                <label class="form-label fw-bold" style="font-size:13px;">Promo price <small class="text-muted">(Excl. GST)</small></label>
-                                <div class="input-group">
-                                    <span class="input-group-text">₹</span>
-                                    <input type="number" min="0" class="form-control growth-field" name="growth_upgrade_promo_price" value="{{ review_growth.upgrade_promo_price|default:4999 }}">
+                    </div>
+                    <div class="col-lg-8">
+                        <div class="growth-tile">
+                            <div class="fw-bold mb-3" style="font-size:13px;">2. What agents see</div>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input growth-sub-toggle" type="checkbox" id="growthPopup" name="growth_popup_enabled" {% if review_growth.popup_enabled %}checked{% endif %}>
+                                        <label class="form-check-label fw-bold" for="growthPopup">Review popup</label>
+                                    </div>
+                                    <div class="form-text">Dashboard modal asking them to share the review link.</div>
+                                    <label class="form-label fw-bold mb-1 mt-2" style="font-size:12px;">Popup delay (ms)</label>
+                                    <input type="number" min="1500" max="5000" class="form-control growth-field" name="growth_popup_delay_ms" value="{{ review_growth.popup_delay_ms }}">
                                 </div>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-bold" style="font-size:13px;">Full price <small class="text-muted">(Excl. GST, strike-through)</small></label>
-                                <div class="input-group">
-                                    <span class="input-group-text">₹</span>
-                                    <input type="number" min="0" class="form-control growth-field" name="growth_upgrade_full_price" value="{{ review_growth.upgrade_full_price|default:6999 }}">
+                                <div class="col-md-4">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input growth-sub-toggle" type="checkbox" id="growthUpgradeCta" name="growth_upgrade_cta_enabled" {% if review_growth.upgrade_cta_enabled %}checked{% endif %}>
+                                        <label class="form-check-label fw-bold" for="growthUpgradeCta">Upgrade banner</label>
+                                    </div>
+                                    <div class="form-text">Top dashboard banner + notification when the review threshold is reached.</div>
+                                    <label class="form-label fw-bold mb-1 mt-2" style="font-size:12px;">Review scroll delay (ms)</label>
+                                    <input type="number" min="2000" max="5000" class="form-control growth-field" name="growth_review_scroll_delay_ms" value="{{ review_growth.review_scroll_delay_ms }}">
                                 </div>
-                            </div>
-                            <div class="col-md-4 d-flex align-items-end">
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input growth-field" type="checkbox" id="growthUpgradeShowFull" name="growth_upgrade_show_full_price" {% if review_growth.upgrade_show_full_price %}checked{% endif %}>
-                                    <label class="form-check-label fw-bold" for="growthUpgradeShowFull">Show full price strike-through</label>
+                                <div class="col-md-4">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input growth-sub-toggle" type="checkbox" id="growthVisibility" name="growth_visibility_section" {% if review_growth.visibility_section_enabled %}checked{% endif %}>
+                                        <label class="form-check-label fw-bold" for="growthVisibility">More Visibility tiles</label>
+                                    </div>
+                                    <div class="form-text">AIO / GEO / SEO / Priority Ranking on the agent dashboard.</div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-12">
-                    <label class="form-label fw-bold" style="font-size:13px;">Upgrade title</label>
-                    <input type="text" class="form-control growth-field" name="growth_upgrade_title" value="{{ review_growth.upgrade_title }}">
-                </div>
-                <div class="col-12">
-                    <label class="form-label fw-bold" style="font-size:13px;">Upgrade message</label>
-                    <textarea class="form-control growth-field" name="growth_upgrade_message" rows="3">{{ review_growth.upgrade_message }}</textarea>
                 </div>
 
-                <div class="col-12 mt-2">
-                    <div class="border rounded-3 p-3" style="background:#f8fafc;border-color:#e2e8f0 !important;">
-                        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-                            <div>
-                                <div class="fw-bold" style="font-size:14px;">Unlock Starter sections after min reviews</div>
-                                <p class="text-muted mb-0 mt-1" style="font-size:12px;">When enabled, Starter agents unlock the selected dashboard sections after reaching the minimum review count.</p>
-                            </div>
-                            <div class="form-check form-switch mb-0">
-                                <input class="form-check-input growth-sub-toggle" type="checkbox" id="growthStarterUnlock" name="growth_starter_unlock_enabled" {% if review_growth.starter_unlock_enabled %}checked{% endif %}>
-                                <label class="form-check-label fw-bold" for="growthStarterUnlock">Enable unlocks</label>
+                <div class="growth-tile mb-3">
+                    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+                        <div>
+                            <div class="fw-bold" style="font-size:13px;">3. Upgrade offer shown on the banner</div>
+                            <p class="text-muted mb-0 mt-1" style="font-size:12px;">Checkout still uses promo price + 18% GST. Full price is only the strike-through amount.</p>
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input growth-sub-toggle" type="checkbox" id="growthUpgradePrice" name="growth_upgrade_price_enabled" {% if review_growth.upgrade_price_enabled %}checked{% endif %}>
+                            <label class="form-check-label fw-bold" for="growthUpgradePrice">Use custom price</label>
+                        </div>
+                    </div>
+                    <div id="reviewUpgradePriceFields" class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold" style="font-size:12px;">Promo price <small class="text-muted">(excl. GST)</small></label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" min="0" class="form-control growth-field" name="growth_upgrade_promo_price" value="{{ review_growth.upgrade_promo_price|default:4999 }}">
                             </div>
                         </div>
-                        <div id="starterUnlockFields" class="row g-2">
-                            {% for f_key, f_label in review_growth_unlock_choices %}
-                            <div class="col-md-6 col-lg-4">
-                                <div class="d-flex align-items-center justify-content-between border rounded px-3 py-2 bg-white starter-unlock-row">
-                                    <label class="form-check-label mb-0 me-2" for="unlock_{{ f_key }}" style="font-size:13px;line-height:1.35;">{{ f_label }}</label>
-                                    <div class="form-check form-switch mb-0 flex-shrink-0">
-                                        <input class="form-check-input growth-field starter-unlock-toggle" type="checkbox" name="growth_unlock_features[]" value="{{ f_key }}" id="unlock_{{ f_key }}" {% if f_key in review_growth.unlock_feature_slugs %}checked{% endif %}>
-                                    </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold" style="font-size:12px;">Full price <small class="text-muted">(strike-through)</small></label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" min="0" class="form-control growth-field" name="growth_upgrade_full_price" value="{{ review_growth.upgrade_full_price|default:6999 }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input growth-field" type="checkbox" id="growthUpgradeShowFull" name="growth_upgrade_show_full_price" {% if review_growth.upgrade_show_full_price %}checked{% endif %}>
+                                <label class="form-check-label fw-bold" for="growthUpgradeShowFull">Show strike-through</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mt-1">
+                        <div class="col-12">
+                            <label class="form-label fw-bold" style="font-size:12px;">Banner title</label>
+                            <input type="text" class="form-control growth-field" name="growth_upgrade_title" value="{{ review_growth.upgrade_title }}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold" style="font-size:12px;">Banner message</label>
+                            <textarea class="form-control growth-field" name="growth_upgrade_message" rows="2">{{ review_growth.upgrade_message }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="growth-tile">
+                    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+                        <div>
+                            <div class="fw-bold" style="font-size:13px;">4. Unlock Starter sections after min reviews</div>
+                            <p class="text-muted mb-0 mt-1" style="font-size:12px;">These sections stay locked until the Starter agent hits the review count. This only adds access — it never removes plan checkboxes.</p>
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input growth-sub-toggle" type="checkbox" id="growthStarterUnlock" name="growth_starter_unlock_enabled" {% if review_growth.starter_unlock_enabled %}checked{% endif %}>
+                            <label class="form-check-label fw-bold" for="growthStarterUnlock">Enable unlocks</label>
+                        </div>
+                    </div>
+                    <div id="starterUnlockFields" class="row g-2">
+                        {% for f_key, f_label in review_growth_unlock_choices %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="d-flex align-items-center justify-content-between border rounded px-3 py-2 bg-white starter-unlock-row">
+                                <label class="form-check-label mb-0 me-2" for="unlock_{{ f_key }}" style="font-size:13px;line-height:1.35;">{{ f_label }}</label>
+                                <div class="form-check form-switch mb-0 flex-shrink-0">
+                                    <input class="form-check-input growth-field starter-unlock-toggle" type="checkbox" name="growth_unlock_features[]" value="{{ f_key }}" id="unlock_{{ f_key }}" {% if f_key in review_growth.unlock_feature_slugs %}checked{% endif %}>
                                 </div>
                             </div>
-                            {% endfor %}
                         </div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
@@ -694,7 +712,7 @@
             el.disabled = !on;
         });
         if (badge) {
-            badge.textContent = on ? 'Feature Active' : 'Feature Disabled';
+            badge.textContent = on ? 'On' : 'Off';
             badge.classList.toggle('bg-success', on);
             badge.classList.toggle('bg-secondary', !on);
         }
@@ -730,18 +748,42 @@
 <hr class="my-5">
 
 <!-- Plan Feature Permissions -->
-<form method="POST" action="{% url 'admin_content_plans_update_features' %}">
-    {% csrf_token %}
-    <div class="plan-editor-card mb-4" style="border-top: 4px solid #0284c7;">
-        <div class="plan-editor-header bg-white py-3">
-            <div class="flex-grow-1">
-                <div class="m-0 fw-bold"><i class="fa-solid fa-lock me-2" style="color: #0284c7;"></i>Plan-Based Feature Access Control</div>
-                <p class="text-muted mb-0 mt-1 fw-normal" style="font-size:12px;">Select which features are available to agents based on their active subscription plan.</p>
-            </div>
-            <button type="button" class="btn btn-sm px-3" id="manageAgentBtn" data-bs-toggle="modal" data-bs-target="#manageAgentPlanModal" style="background-color: #0284c7; border-color: #0284c7; color: #fff; font-weight: 600;">
-                <i class="fa-solid fa-user-gear me-1"></i> Manage Agent
-            </button>
+<div class="plan-editor-card mb-4" id="section-feature-access" style="border-top: 4px solid #0284c7;">
+    <div class="plan-editor-header bg-white py-3">
+        <div class="flex-grow-1">
+            <div class="m-0 fw-bold"><i class="fa-solid fa-lock me-2" style="color: #0284c7;"></i>Plan-Based Feature Access Control</div>
+            <p class="text-muted mb-0 mt-1 fw-normal" style="font-size:12px;">Turn features on per plan, and control QR pages from the same place.</p>
         </div>
+        <button type="button" class="btn btn-sm px-3" id="manageAgentBtn" data-bs-toggle="modal" data-bs-target="#manageAgentPlanModal" style="background-color: #0284c7; border-color: #0284c7; color: #fff; font-weight: 600;">
+            <i class="fa-solid fa-user-gear me-1"></i> Manage Agent
+        </button>
+    </div>
+
+    <form method="POST" action="{% url 'admin_content_plans' %}update-qr-service/">
+        {% csrf_token %}
+        <div class="qr-inline-bar">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div>
+                    <div class="fw-bold" style="font-size:13px;"><i class="fa-solid fa-qrcode me-1" style="color:#1d7d5d;"></i>QR Code Service</div>
+                    <div class="text-muted" style="font-size:12px;">Master switch for profile, card, and review QR codes. When off, QR pages return 404.</div>
+                </div>
+                <div class="d-flex flex-wrap align-items-center gap-4">
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" id="qrEnabled" name="qr_enabled" {% if qr_config.enabled %}checked{% endif %}>
+                        <label class="form-check-label fw-bold" for="qrEnabled">Enable QR service</label>
+                    </div>
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" id="qrDownload" name="qr_allow_download" {% if qr_config.allow_download %}checked{% endif %}>
+                        <label class="form-check-label fw-bold" for="qrDownload">Allow QR poster download</label>
+                    </div>
+                    <button type="submit" class="btn btn-sm px-3" style="background-color:#1d7d5d;border-color:#1d7d5d;color:#fff;font-weight:600;">Save QR</button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <form method="POST" action="{% url 'admin_content_plans_update_features' %}">
+        {% csrf_token %}
         <div class="p-0">
             <div class="table-responsive">
                 <table class="table table-hover table-bordered mb-0" style="font-size: 13px;">
@@ -847,13 +889,13 @@
                 </button>
             </div>
         </div>
-    </div>
-</form>
+    </form>
+</div>
 
 <form method="POST" action="{% url 'admin_content_plans_update_unlock_rules' %}" id="unlockRulesForm">
     {% csrf_token %}
     <input type="hidden" name="unlock_rules_json" id="unlockRulesJson" value="">
-    <div class="plan-editor-card mb-4" style="border-top: 4px solid #0284c7;">
+    <div class="plan-editor-card mb-4" id="section-unlock-rules" style="border-top: 4px solid #0284c7;">
         <div class="plan-editor-header bg-white py-3">
             <div class="m-0 fw-bold"><i class="fa-solid fa-unlock-keyhole me-2" style="color: #0284c7;"></i>Activity Unlock Rules</div>
             <p class="text-muted mb-0 mt-1 fw-normal" style="font-size:12px;">Unlock extra features when an agent meets activity conditions. Plan checkboxes stay as the base access — these rules only add features.</p>
@@ -900,28 +942,6 @@
 {% block extra_js %}
 {{ block.super }}
 <script>
-// Live preview bindings
-function bind(inputId, previewId, prefix) {
-    var el = document.querySelector('[name="' + inputId + '"]');
-    var prev = document.getElementById(previewId);
-    if (!el || !prev) return;
-    el.addEventListener('input', function() {
-        prev.textContent = (prefix || '') + this.value;
-    });
-}
-
-bind('starter_name', 'prev-starter-name');
-bind('starter_badge', 'prev-starter-badge');
-bind('starter_description', 'prev-starter-desc');
-bind('starter_full_price', 'prev-starter-full', '₹');
-bind('starter_promo_price', 'prev-starter-promo', '₹');
-
-bind('professional_name', 'prev-pro-name');
-bind('professional_badge', 'prev-pro-badge');
-bind('professional_description', 'prev-pro-desc');
-bind('professional_full_price', 'prev-pro-full', '₹');
-bind('professional_promo_price', 'prev-pro-promo', '₹');
-
 document.addEventListener('DOMContentLoaded', function() {
     // Social Channels Add / Delete
     const addSocialBtn = document.getElementById('addSocialChannelBtn');
@@ -965,38 +985,117 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    function followBasePrice(plan) {
+        if (plan === 'starter') {
+            var scratchOn = document.getElementById('starterScratchSwitch');
+            var scratchEl = document.getElementById('starterScratchPrice');
+            var promoEl = document.getElementById('starterPromoPrice');
+            var scratch = scratchEl ? parseFloat(scratchEl.value) : NaN;
+            var promo = promoEl ? parseFloat(promoEl.value) : NaN;
+            if (scratchOn && scratchOn.checked && !isNaN(scratch)) return scratch;
+            return isNaN(promo) ? 0 : promo;
+        }
+        var scratchOn = document.getElementById('profScratchSwitch');
+        var scratchEl = document.getElementById('proScratchPrice');
+        var promoEl = document.getElementById('proPromoPrice');
+        var scratch = scratchEl ? parseFloat(scratchEl.value) : NaN;
+        var promo = promoEl ? parseFloat(promoEl.value) : NaN;
+        if (scratchOn && scratchOn.checked && !isNaN(scratch)) return scratch;
+        return isNaN(promo) ? 0 : promo;
+    }
+
+    function syncTierPriceFromDiscount(row, plan) {
+        var discName = plan === 'starter' ? 'tier_starter_discount[]' : 'tier_prof_discount[]';
+        var priceName = plan === 'starter' ? 'tier_starter_price[]' : 'tier_prof_price[]';
+        var disc = row.querySelector('[name="' + discName + '"]');
+        var price = row.querySelector('[name="' + priceName + '"]');
+        if (!disc || !price) return;
+        var off = parseFloat(disc.value);
+        if (isNaN(off)) return;
+        price.value = Math.max(0, Math.round(followBasePrice(plan) - off));
+    }
+
+    function syncTierDiscountFromPrice(row, plan) {
+        var discName = plan === 'starter' ? 'tier_starter_discount[]' : 'tier_prof_discount[]';
+        var priceName = plan === 'starter' ? 'tier_starter_price[]' : 'tier_prof_price[]';
+        var disc = row.querySelector('[name="' + discName + '"]');
+        var price = row.querySelector('[name="' + priceName + '"]');
+        if (!disc || !price) return;
+        var charged = parseFloat(price.value);
+        if (isNaN(charged)) return;
+        disc.value = Math.max(0, Math.round(followBasePrice(plan) - charged));
+    }
+
+    function refreshAllTierPricesFromDiscounts() {
+        document.querySelectorAll('.tier-rule-row').forEach(function(row) {
+            syncTierPriceFromDiscount(row, 'starter');
+            syncTierPriceFromDiscount(row, 'professional');
+        });
+    }
+
+    const followTiersTable = document.getElementById('followTiersTable');
+    if (followTiersTable) {
+        followTiersTable.addEventListener('input', function(e) {
+            var row = e.target.closest('.tier-rule-row');
+            if (row && e.target.name === 'tier_starter_discount[]') {
+                syncTierPriceFromDiscount(row, 'starter');
+            } else if (row && e.target.name === 'tier_prof_discount[]') {
+                syncTierPriceFromDiscount(row, 'professional');
+            } else if (row && e.target.name === 'tier_starter_price[]') {
+                syncTierDiscountFromPrice(row, 'starter');
+            } else if (row && e.target.name === 'tier_prof_price[]') {
+                syncTierDiscountFromPrice(row, 'professional');
+            }
+        });
+    }
+
     // Follow Tiers Add / Delete
     const addTierBtn = document.getElementById('addTierRuleBtn');
     const tiersContainer = document.getElementById('followTiersContainer');
     if (addTierBtn && tiersContainer) {
         addTierBtn.addEventListener('click', function() {
             const count = tiersContainer.querySelectorAll('.tier-rule-row').length + 1;
+            const starterOff = count * 100;
+            const profOff = count * 100;
+            const starterPrice = Math.max(0, Math.round(followBasePrice('starter') - starterOff));
+            const profPrice = Math.max(0, Math.round(followBasePrice('professional') - profOff));
             const tr = document.createElement('tr');
             tr.className = 'tier-rule-row';
             tr.innerHTML = `
                 <td>
                     <div class="input-group input-group-sm">
                         <span class="input-group-text"><i class="fa-solid fa-user-check"></i></span>
-                        <input type="number" name="tier_follows[]" class="form-control" value="${count}" min="1" max="10">
+                        <input type="number" name="tier_follows[]" class="form-control tier-input" value="${count}" min="1" max="10">
                     </div>
+                    <small class="text-muted">accounts followed</small>
                 </td>
                 <td>
                     <div class="input-group input-group-sm">
                         <span class="input-group-text">₹</span>
-                        <input type="number" name="tier_discount[]" class="form-control" value="${count * 100}" min="0">
+                        <input type="number" name="tier_starter_discount[]" class="form-control tier-input" value="${starterOff}" min="0">
                     </div>
+                    <small class="text-muted">Starter extra OFF</small>
                 </td>
                 <td>
                     <div class="input-group input-group-sm">
                         <span class="input-group-text">₹</span>
-                        <input type="number" name="tier_starter_price[]" class="form-control" placeholder="Auto if blank">
+                        <input type="number" name="tier_starter_price[]" class="form-control tier-input" value="${starterPrice}" placeholder="Auto if blank">
                     </div>
+                    <small class="text-muted">final Starter price, excl. GST</small>
                 </td>
                 <td>
                     <div class="input-group input-group-sm">
                         <span class="input-group-text">₹</span>
-                        <input type="number" name="tier_prof_price[]" class="form-control" placeholder="Auto if blank">
+                        <input type="number" name="tier_prof_discount[]" class="form-control tier-input" value="${profOff}" min="0">
                     </div>
+                    <small class="text-muted">Professional extra OFF</small>
+                </td>
+                <td>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">₹</span>
+                        <input type="number" name="tier_prof_price[]" class="form-control tier-input" value="${profPrice}" placeholder="Auto if blank">
+                    </div>
+                    <small class="text-muted">final Professional price, excl. GST</small>
                 </td>
                 <td class="text-center">
                     <button type="button" class="btn btn-sm btn-outline-danger delete-tier-row-btn" title="Remove Tier">
@@ -1298,7 +1397,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     document.querySelectorAll('.price-calc-input').forEach(function(input) {
-        input.addEventListener('input', updateGstPreviews);
+        input.addEventListener('input', function() {
+            updateGstPreviews();
+            if (input.id === 'starterScratchPrice' || input.id === 'starterPromoPrice' ||
+                input.id === 'proScratchPrice' || input.id === 'proPromoPrice') {
+                refreshAllTierPricesFromDiscounts();
+            }
+        });
+    });
+    ['starterScratchSwitch', 'profScratchSwitch'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('change', refreshAllTierPricesFromDiscounts);
+        }
     });
     updateGstPreviews();
 });

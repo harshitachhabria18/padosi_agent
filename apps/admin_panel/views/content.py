@@ -479,10 +479,10 @@ _DEFAULT_PRICING = {
         {'platform': 'LinkedIn', 'url': 'https://linkedin.com/company/padosiagent', 'icon': 'fa-linkedin'},
     ],
     'follow_tiers': [
-        {'follows': 1, 'discount_amount': 100, 'starter_price': 1399, 'prof_price': 4899},
-        {'follows': 2, 'discount_amount': 200, 'starter_price': 1299, 'prof_price': 4799},
-        {'follows': 3, 'discount_amount': 300, 'starter_price': 1199, 'prof_price': 4699},
-        {'follows': 4, 'discount_amount': 500, 'starter_price': 999, 'prof_price': 4499},
+        {'follows': 1, 'discount_amount': 100, 'starter_discount': 100, 'prof_discount': 100, 'starter_price': 1399, 'prof_price': 4899},
+        {'follows': 2, 'discount_amount': 200, 'starter_discount': 200, 'prof_discount': 200, 'starter_price': 1299, 'prof_price': 4799},
+        {'follows': 3, 'discount_amount': 300, 'starter_discount': 300, 'prof_discount': 300, 'starter_price': 1199, 'prof_price': 4699},
+        {'follows': 4, 'discount_amount': 500, 'starter_discount': 500, 'prof_discount': 500, 'starter_price': 999, 'prof_price': 4499},
     ],
 }
 
@@ -509,6 +509,14 @@ def plans(request):
     pricing.setdefault('standard_label', _DEFAULT_PRICING['standard_label'])
     pricing.setdefault('social_links', list(_DEFAULT_PRICING['social_links']))
     pricing.setdefault('follow_tiers', list(_DEFAULT_PRICING['follow_tiers']))
+    for tier in pricing.get('follow_tiers') or []:
+        if not isinstance(tier, dict):
+            continue
+        shared = tier.get('discount_amount')
+        if tier.get('starter_discount') in (None, ''):
+            tier['starter_discount'] = shared if shared not in (None, '') else 0
+        if tier.get('prof_discount') in (None, ''):
+            tier['prof_discount'] = shared if shared not in (None, '') else 0
 
     plan_features_config = with_all_plan_feature_defaults(SiteSetting.get_value('plan_features_config', {
         'free_trial': ['dashboard_stats', 'edit_profile'],
@@ -643,27 +651,46 @@ def update_plans(request):
         if not social_links:
             social_links = _DEFAULT_PRICING['social_links']
 
-        # Follow Tiers Parsing
+        # Follow Tiers Parsing — per-plan discounts (starter vs professional)
         tier_follows = request.POST.getlist('tier_follows[]')
-        tier_discounts = request.POST.getlist('tier_discount[]')
+        tier_starter_discounts = request.POST.getlist('tier_starter_discount[]')
+        tier_prof_discounts = request.POST.getlist('tier_prof_discount[]')
+        tier_legacy_discounts = request.POST.getlist('tier_discount[]')
         tier_starter_prices = request.POST.getlist('tier_starter_price[]')
         tier_prof_prices = request.POST.getlist('tier_prof_price[]')
-        
+
+        def _post_float_at(values, index, default=0.0):
+            if index >= len(values):
+                return default
+            try:
+                return float(values[index] or 0)
+            except (TypeError, ValueError):
+                return default
+
         follow_tiers = []
-        for f, d, sp, pp in zip(tier_follows, tier_discounts, tier_starter_prices, tier_prof_prices):
+        for i, f in enumerate(tier_follows):
             try:
                 f_int = int(f)
-                d_val = float(d or 0)
-                sp_val = float(sp or 0)
-                pp_val = float(pp or 0)
-                follow_tiers.append({
-                    'follows': f_int,
-                    'discount_amount': d_val,
-                    'starter_price': sp_val,
-                    'prof_price': pp_val,
-                })
             except (ValueError, TypeError):
                 continue
+            if tier_starter_discounts:
+                sd_val = _post_float_at(tier_starter_discounts, i)
+            else:
+                sd_val = _post_float_at(tier_legacy_discounts, i)
+            if tier_prof_discounts:
+                pd_val = _post_float_at(tier_prof_discounts, i)
+            else:
+                pd_val = _post_float_at(tier_legacy_discounts, i)
+            sp_val = _post_float_at(tier_starter_prices, i)
+            pp_val = _post_float_at(tier_prof_prices, i)
+            follow_tiers.append({
+                'follows': f_int,
+                'starter_discount': sd_val,
+                'prof_discount': pd_val,
+                'discount_amount': sd_val,
+                'starter_price': sp_val,
+                'prof_price': pp_val,
+            })
         if not follow_tiers and request.POST.get('follow_tiers_json'):
             try:
                 follow_tiers = json.loads(request.POST.get('follow_tiers_json'))

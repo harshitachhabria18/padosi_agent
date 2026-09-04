@@ -107,10 +107,10 @@ _DEFAULT_PRICING = {
         {'platform': 'LinkedIn', 'url': 'https://linkedin.com/company/padosiagent', 'icon': 'fa-linkedin'},
     ],
     'follow_tiers': [
-        {'follows': 1, 'discount_amount': 100, 'starter_price': 1399, 'prof_price': 4899},
-        {'follows': 2, 'discount_amount': 200, 'starter_price': 1299, 'prof_price': 4799},
-        {'follows': 3, 'discount_amount': 300, 'starter_price': 1199, 'prof_price': 4699},
-        {'follows': 4, 'discount_amount': 500, 'starter_price': 999, 'prof_price': 4499},
+        {'follows': 1, 'discount_amount': 100, 'starter_discount': 100, 'prof_discount': 100, 'starter_price': 1399, 'prof_price': 4899},
+        {'follows': 2, 'discount_amount': 200, 'starter_discount': 200, 'prof_discount': 200, 'starter_price': 1299, 'prof_price': 4799},
+        {'follows': 3, 'discount_amount': 300, 'starter_discount': 300, 'prof_discount': 300, 'starter_price': 1199, 'prof_price': 4699},
+        {'follows': 4, 'discount_amount': 500, 'starter_discount': 500, 'prof_discount': 500, 'starter_price': 999, 'prof_price': 4499},
     ],
 }
 
@@ -137,6 +137,47 @@ _PROFESSIONAL_PLAN_UI_FEATURES = [
     {'name': 'Gallery', 'icon': 'fa-images', 'color': '#e11d48', 'bg_color': '#fff1f2'},
     {'name': 'AI Auto-fill &<br>Suggestions', 'icon': 'fa-wand-magic-sparkles', 'color': '#8b5cf6', 'bg_color': '#f5f3ff'},
 ]
+
+
+def _tier_optional_float(tier, key):
+    """Return a float from a tier field, or None if missing/blank."""
+    if not isinstance(tier, dict) or key not in tier:
+        return None
+    val = tier.get(key)
+    if val in (None, ''):
+        return None
+    try:
+        return float(val)
+    except (TypeError, ValueError):
+        return None
+
+
+def _tier_plan_discount(tier, plan_key, default_discount=0):
+    """Extra ₹ OFF for starter or professional. Per-plan fields win over shared discount_amount."""
+    specific_key = 'starter_discount' if plan_key == 'starter' else 'prof_discount'
+    specific = _tier_optional_float(tier, specific_key)
+    if specific is not None:
+        return specific
+    shared = _tier_optional_float(tier, 'discount_amount')
+    if shared is not None:
+        return shared
+    try:
+        return float(default_discount or 0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _tier_plan_charged_price(tier, plan_key, initial_price, default_discount=0):
+    """Price charged for a plan at this follow tier (excl. GST)."""
+    price_key = 'starter_price' if plan_key == 'starter' else 'prof_price'
+    saved = _tier_optional_float(tier, price_key)
+    if saved is not None and saved > 0:
+        return saved
+    try:
+        initial = float(initial_price or 0)
+    except (TypeError, ValueError):
+        initial = 0.0
+    return max(0.0, initial - _tier_plan_discount(tier, plan_key, default_discount))
 
 
 def _get_tier_prices(pricing_config, follow_count):
@@ -167,6 +208,8 @@ def _get_tier_prices(pricing_config, follow_count):
     starter_price = starter_initial
     prof_price = prof_initial
     applied_discount = 0.0
+    starter_applied_discount = 0.0
+    prof_applied_discount = 0.0
 
     if social_active and follow_count > 0:
         if follow_tiers:
@@ -174,31 +217,25 @@ def _get_tier_prices(pricing_config, follow_count):
             matched = False
             for tier in sorted_tiers:
                 if follow_count >= _tier_follow_count(tier):
-                    if tier.get('starter_price') and float(tier.get('starter_price')) > 0:
-                        starter_price = float(tier.get('starter_price'))
-                    elif tier.get('discount_amount'):
-                        starter_price = max(0.0, starter_initial - float(tier.get('discount_amount')))
-                    else:
-                        starter_price = max(0.0, starter_initial - default_discount)
-
-                    if tier.get('prof_price') and float(tier.get('prof_price')) > 0:
-                        prof_price = float(tier.get('prof_price'))
-                    elif tier.get('discount_amount'):
-                        prof_price = max(0.0, prof_initial - float(tier.get('discount_amount')))
-                    else:
-                        prof_price = max(0.0, prof_initial - default_discount)
-
-                    applied_discount = float(tier.get('discount_amount', default_discount) or default_discount)
+                    starter_applied_discount = _tier_plan_discount(tier, 'starter', default_discount)
+                    prof_applied_discount = _tier_plan_discount(tier, 'professional', default_discount)
+                    starter_price = _tier_plan_charged_price(tier, 'starter', starter_initial, default_discount)
+                    prof_price = _tier_plan_charged_price(tier, 'professional', prof_initial, default_discount)
+                    applied_discount = starter_applied_discount
                     matched = True
                     break
             if not matched:
                 starter_price = max(0.0, starter_initial - default_discount)
                 prof_price = max(0.0, prof_initial - default_discount)
                 applied_discount = default_discount
+                starter_applied_discount = default_discount
+                prof_applied_discount = default_discount
         else:
             starter_price = max(0.0, starter_initial - default_discount)
             prof_price = max(0.0, prof_initial - default_discount)
             applied_discount = default_discount
+            starter_applied_discount = default_discount
+            prof_applied_discount = default_discount
 
     starter_base = int(round(starter_price))
     starter_gst = round(starter_base * 0.18, 2)
@@ -222,6 +259,8 @@ def _get_tier_prices(pricing_config, follow_count):
         'prof_total': prof_total,
         'prof_scratch_price': prof_scratch,
         'applied_discount': applied_discount,
+        'starter_applied_discount': starter_applied_discount,
+        'prof_applied_discount': prof_applied_discount,
         'follow_count': follow_count,
     }
 
@@ -1039,6 +1078,8 @@ def record_social_follow(request):
         'discount_unlocked': follow_count > 0,
         'follow_count': follow_count,
         'applied_discount': tier_info['applied_discount'],
+        'starter_applied_discount': tier_info.get('starter_applied_discount', 0),
+        'prof_applied_discount': tier_info.get('prof_applied_discount', 0),
         'starter_price': tier_info['starter_price'],
         'starter_base': tier_info['starter_base'],
         'starter_total': tier_info['starter_total'],
