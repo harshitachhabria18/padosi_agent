@@ -36,6 +36,7 @@ from apps.agents.views.dashboard import PlanFeatureProxy
 from apps.agents.services.review_growth import (
     get_qr_config,
     get_review_growth_config,
+    qr_plan_controls_active,
     sanitize_qr_config,
     sanitize_review_growth_config,
 )
@@ -518,7 +519,7 @@ def plans(request):
         if tier.get('prof_discount') in (None, ''):
             tier['prof_discount'] = shared if shared not in (None, '') else 0
 
-    plan_features_config = with_all_plan_feature_defaults(SiteSetting.get_value('plan_features_config', {
+    raw_plan_features = SiteSetting.get_value('plan_features_config', {
         'free_trial': ['dashboard_stats', 'edit_profile'],
         'starter': ['dashboard_stats', 'edit_profile', 'lead_management'],
         'professional': [
@@ -527,7 +528,17 @@ def plans(request):
             'visibility_aio', 'visibility_geo', 'visibility_seo', 'visibility_priority_ranking',
             'lead_preferences', 'receive_leads', 'lead_portfolio_analysis', 'lead_claims_support',
         ],
-    }))
+    })
+    plan_features_config = with_all_plan_feature_defaults(raw_plan_features)
+    if not qr_plan_controls_active(raw_plan_features if isinstance(raw_plan_features, dict) else {}):
+        qr_cfg = get_qr_config()
+        for slug in ('starter', 'professional', 'exclusive'):
+            feats = list(plan_features_config.get(slug) or [])
+            if qr_cfg.get('enabled') and 'qr_codes' not in feats:
+                feats.append('qr_codes')
+            if qr_cfg.get('allow_download') and 'qr_poster_download' not in feats:
+                feats.append('qr_poster_download')
+            plan_features_config[slug] = feats
 
     available_features = [
         ('dashboard_stats', 'Dashboard Performance & Stats'),
@@ -553,6 +564,8 @@ def plans(request):
         ('visibility_geo', 'More Visibility: GEO'),
         ('visibility_seo', 'More Visibility: SEO'),
         ('visibility_priority_ranking', 'More Visibility: Priority Ranking'),
+        ('qr_codes', 'QR Code Service'),
+        ('qr_poster_download', 'Allow QR poster download'),
     ]
 
     legacy_features = [
@@ -864,6 +877,10 @@ def update_plan_features(request):
         }
         
         SiteSetting.set_value('plan_features_config', config, 'pricing')
+        SiteSetting.set_value('qr_service_config', sanitize_qr_config({
+            'enabled': any('qr_codes' in (config.get(slug) or []) for slug in PLAN_SLUGS),
+            'allow_download': any('qr_poster_download' in (config.get(slug) or []) for slug in PLAN_SLUGS),
+        }), 'pricing')
         AdminActivityLog.log('Update plan feature access config', 'SiteSetting', request=request)
         messages.success(request, 'Plan Feature Permissions updated successfully.')
         

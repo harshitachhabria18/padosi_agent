@@ -465,16 +465,15 @@ def agent_dashboard(request):
         QR_TYPES,
         agent_review_count,
         build_review_unlock_summary,
-        get_qr_config,
         get_review_growth_config,
         get_review_growth_status,
         get_review_upgrade_pricing,
+        qr_access_for_plan,
         should_show_popup,
         should_show_upgrade_cta,
         should_show_upgrade_progress,
     )
 
-    qr_cfg = get_qr_config()
     growth_cfg = get_review_growth_config()
     growth_status = get_review_growth_status(agent)
     professional_plan = _resolve_agent_plan('professional', agent=agent)
@@ -492,7 +491,7 @@ def agent_dashboard(request):
         f"View my profile and leave a review: {profile_url}"
     )
     qr_items = []
-    if qr_cfg.get('enabled') and slug:
+    if qr_access_for_plan(agent_plan) and slug:
         for qr_type in QR_TYPES:
             target = build_qr_target_url(request, agent, qr_type)
             qr_items.append({
@@ -529,8 +528,8 @@ def agent_dashboard(request):
         'profDisc': prof_disc,
         'planName': plan_name,
         'feature_unlock_hints_json': feature_unlock_hints_json,
-        'qr_service_enabled': qr_cfg.get('enabled'),
-        'qr_allow_download': qr_cfg.get('allow_download'),
+        'qr_service_enabled': qr_access_for_plan(agent_plan),
+        'qr_allow_download': qr_access_for_plan(agent_plan, download=True),
         'qr_items': qr_items,
         'show_review_share_popup': should_show_popup(agent),
         'show_starter_upgrade_cta': should_show_upgrade_cta(agent),

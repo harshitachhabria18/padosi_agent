@@ -78,6 +78,7 @@ FEATURE_PARENTS = {
     'edit_profile_social_media': ('edit_profile_additional', 'edit_profile'),
     'edit_profile_professional_bio': ('edit_profile_additional', 'edit_profile'),
     'edit_profile_career_timeline': ('edit_profile_additional', 'edit_profile'),
+    'qr_poster_download': ('qr_codes',),
 }
 
 # Starter plan: always unlocked (no review required). Includes the edit-profile
@@ -100,6 +101,7 @@ STARTER_BASE_FEATURE_SLUGS = (
     'edit_profile_social_media',
     'edit_profile_professional_bio',
     'qr_codes',
+    'qr_poster_download',
 )
 
 # Unlocked on Starter only after admin review-growth threshold (configurable in admin)
@@ -166,6 +168,7 @@ FEATURE_ATTR_MAP = {
     'visibility_seo': ['show_visibility_seo'],
     'visibility_priority_ranking': ['show_visibility_priority_ranking'],
     'qr_codes': ['show_qr_codes'],
+    'qr_poster_download': ['show_qr_poster_download'],
 }
 
 FEATURE_LABELS = {
@@ -199,7 +202,8 @@ FEATURE_LABELS = {
     'visibility_geo': 'More Visibility: GEO',
     'visibility_seo': 'More Visibility: SEO',
     'visibility_priority_ranking': 'More Visibility: Priority Ranking',
-    'qr_codes': 'QR Codes',
+    'qr_codes': 'QR Code Service',
+    'qr_poster_download': 'Allow QR poster download',
 }
 
 NUMERIC_OPS = ('gte', 'gt', 'lte', 'lt', 'eq')
@@ -949,6 +953,8 @@ def child_features_for(feature):
         children.extend(EDIT_PROFILE_ADDITIONAL_CHILD_FEATURES)
     elif feature == 'lead_preferences':
         children.extend(LEAD_PREFERENCE_CHILD_FEATURES)
+    elif feature == 'qr_codes':
+        children.append('qr_poster_download')
     return children
 
 

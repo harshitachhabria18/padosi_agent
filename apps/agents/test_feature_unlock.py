@@ -216,6 +216,7 @@ class ResolvePlanFeatureSlugsTests(SimpleTestCase):
         self.assertIn('dashboard_stats', slugs)
         self.assertIn('sales_insights', slugs)
         self.assertIn('qr_codes', slugs)
+        self.assertIn('qr_poster_download', slugs)
         self.assertIn('edit_profile_certifications', slugs)
         self.assertIn('edit_profile_claim_support', slugs)
         self.assertNotIn('lead_management', slugs)

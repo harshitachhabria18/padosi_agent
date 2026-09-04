@@ -223,6 +223,41 @@ def is_qr_enabled():
     return bool(get_qr_config().get('enabled'))
 
 
+def qr_plan_controls_active(features_config=None):
+    """True once QR rows have been saved on at least one plan in the feature grid."""
+    source = features_config if features_config is not None else (SiteSetting.get_value('plan_features_config') or {})
+    if not isinstance(source, dict):
+        return False
+    for feats in source.values():
+        if isinstance(feats, (list, tuple)) and (
+            'qr_codes' in feats or 'qr_poster_download' in feats
+        ):
+            return True
+    return False
+
+
+def qr_access_for_plan(agent_plan, download=False, features_config=None):
+    """
+    Whether this plan can use QR pages (or poster download).
+
+    Until admin saves the QR feature rows, the global qr_service_config
+    remains the source of truth so existing sites keep working.
+    """
+    cfg = get_qr_config()
+    if not cfg.get('enabled'):
+        return False
+    source = features_config if features_config is not None else (SiteSetting.get_value('plan_features_config') or {})
+    if qr_plan_controls_active(source):
+        if not plan_shows_feature(agent_plan, 'show_qr_codes', False):
+            return False
+        if download:
+            return plan_shows_feature(agent_plan, 'show_qr_poster_download', False)
+        return True
+    if download:
+        return bool(cfg.get('allow_download'))
+    return True
+
+
 def agent_review_count(agent):
     """Approved review count — always query DB for accuracy."""
     if agent is None:

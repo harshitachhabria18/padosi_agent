@@ -105,11 +105,6 @@
     height: 100%;
 }
 .growth-tile .form-text { font-size: 11px; margin-top: 4px; }
-.qr-inline-bar {
-    background: #f0fdf4;
-    border-bottom: 1px solid #d1fae5;
-    padding: 14px 20px;
-}
 #section-plan-prices,
 #section-follow-discounts,
 #section-review-growth,
@@ -135,7 +130,7 @@
     <a href="#section-plan-prices">Plan prices</a>
     <a href="#section-follow-discounts">Follow discounts</a>
     <a href="#section-review-growth">Review growth</a>
-    <a href="#section-feature-access">Feature access &amp; QR</a>
+    <a href="#section-feature-access">Feature access</a>
     <a href="#section-unlock-rules">Unlock rules</a>
 </nav>
 
@@ -752,35 +747,12 @@
     <div class="plan-editor-header bg-white py-3">
         <div class="flex-grow-1">
             <div class="m-0 fw-bold"><i class="fa-solid fa-lock me-2" style="color: #0284c7;"></i>Plan-Based Feature Access Control</div>
-            <p class="text-muted mb-0 mt-1 fw-normal" style="font-size:12px;">Turn features on per plan, and control QR pages from the same place.</p>
+            <p class="text-muted mb-0 mt-1 fw-normal" style="font-size:12px;">Turn features on per plan. QR Code Service and poster download are plan features — when QR is off for a plan, those QR pages return 404.</p>
         </div>
         <button type="button" class="btn btn-sm px-3" id="manageAgentBtn" data-bs-toggle="modal" data-bs-target="#manageAgentPlanModal" style="background-color: #0284c7; border-color: #0284c7; color: #fff; font-weight: 600;">
             <i class="fa-solid fa-user-gear me-1"></i> Manage Agent
         </button>
     </div>
-
-    <form method="POST" action="{% url 'admin_content_plans' %}update-qr-service/">
-        {% csrf_token %}
-        <div class="qr-inline-bar">
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-                <div>
-                    <div class="fw-bold" style="font-size:13px;"><i class="fa-solid fa-qrcode me-1" style="color:#1d7d5d;"></i>QR Code Service</div>
-                    <div class="text-muted" style="font-size:12px;">Master switch for profile, card, and review QR codes. When off, QR pages return 404.</div>
-                </div>
-                <div class="d-flex flex-wrap align-items-center gap-4">
-                    <div class="form-check form-switch mb-0">
-                        <input class="form-check-input" type="checkbox" id="qrEnabled" name="qr_enabled" {% if qr_config.enabled %}checked{% endif %}>
-                        <label class="form-check-label fw-bold" for="qrEnabled">Enable QR service</label>
-                    </div>
-                    <div class="form-check form-switch mb-0">
-                        <input class="form-check-input" type="checkbox" id="qrDownload" name="qr_allow_download" {% if qr_config.allow_download %}checked{% endif %}>
-                        <label class="form-check-label fw-bold" for="qrDownload">Allow QR poster download</label>
-                    </div>
-                    <button type="submit" class="btn btn-sm px-3" style="background-color:#1d7d5d;border-color:#1d7d5d;color:#fff;font-weight:600;">Save QR</button>
-                </div>
-            </div>
-        </div>
-    </form>
 
     <form method="POST" action="{% url 'admin_content_plans_update_features' %}">
         {% csrf_token %}
@@ -819,7 +791,14 @@
                     <tbody>
                         {% for f_key, f_label in available_features %}
                             <tr>
-                                <td class="px-4 align-middle fw-medium text-dark">{{ f_label }}</td>
+                                <td class="px-4 align-middle fw-medium text-dark">
+                                    {{ f_label }}
+                                    {% if f_key == 'qr_codes' %}
+                                    <div class="text-muted fw-normal mt-1" style="font-size:11px;line-height:1.4;">Profile, card, and review QR codes. When off for a plan, QR pages return 404.</div>
+                                    {% elif f_key == 'qr_poster_download' %}
+                                    <div class="text-muted fw-normal mt-1" style="font-size:11px;line-height:1.4;">Lets agents download QR posters. Requires QR Code Service on the same plan.</div>
+                                    {% endif %}
+                                </td>
                                 <td class="text-center align-middle">
                                     <div class="form-check d-flex justify-content-center m-0">
                                         <input class="form-check-input" type="checkbox" name="features_free_trial[]" value="{{ f_key }}" {% if f_key in features_config.free_trial %}checked{% endif %} style="width: 18px; height: 18px; cursor: pointer;">
@@ -1150,6 +1129,28 @@ document.addEventListener('DOMContentLoaded', function() {
             syncEditProfileChildren(this);
         });
         syncEditProfileChildren(master); // Run on load
+    });
+
+    const qrMasterInputs = document.querySelectorAll('input[value="qr_codes"]');
+    function syncQrChildren(masterInput) {
+        const isChecked = masterInput.checked;
+        const colName = masterInput.name;
+        const childInput = document.querySelector('input[name="' + colName + '"][value="qr_poster_download"]');
+        if (childInput) {
+            childInput.disabled = !isChecked;
+            if (!isChecked) {
+                childInput.checked = false;
+                childInput.closest('td').style.opacity = '0.4';
+            } else {
+                childInput.closest('td').style.opacity = '1';
+            }
+        }
+    }
+    qrMasterInputs.forEach(function(master) {
+        master.addEventListener('change', function() {
+            syncQrChildren(this);
+        });
+        syncQrChildren(master);
     });
 
     (function initUnlockRulesBuilder() {
