@@ -100,6 +100,7 @@ _DEFAULT_PRICING = {
     },
     'promo_discount_label': 'Partner Promo Applied! Once in a lifetime offer!',
     'standard_label': 'Get started with our standard partner plans',
+    'choose_plan_heading': 'Start your digital journey',
     'social_links': [
         {'platform': 'Instagram', 'url': 'https://instagram.com/padosiagent', 'icon': 'fa-instagram'},
         {'platform': 'Facebook', 'url': 'https://facebook.com/padosiagent', 'icon': 'fa-facebook'},
@@ -1201,6 +1202,7 @@ def chooseplan(request):
     pricing_config = SiteSetting.get_value('pricing_config', _DEFAULT_PRICING)
     if not isinstance(pricing_config, dict):
         pricing_config = dict(_DEFAULT_PRICING)
+    pricing_config.setdefault('choose_plan_heading', _DEFAULT_PRICING['choose_plan_heading'])
 
     starter_cfg = pricing_config.get('starter', _DEFAULT_PRICING['starter'])
     prof_cfg = pricing_config.get('professional', _DEFAULT_PRICING['professional'])

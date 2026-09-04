@@ -494,6 +494,13 @@
             </div>
 
             <div class="row g-3 mt-3 pt-3 border-top">
+                <div class="col-12">
+                    <label class="form-label fw-semibold" style="font-size:13px;">Choose-plan page title</label>
+                    <input type="text" name="choose_plan_heading" class="form-control"
+                           value="{{ pricing.choose_plan_heading|default:'Start your digital journey' }}"
+                           placeholder="Start your digital journey" maxlength="80">
+                    <small class="text-muted">Main heading on /chooseplan/ (for example: Start your digital journey).</small>
+                </div>
                 <div class="col-lg-6">
                     <label class="form-label fw-semibold" style="font-size:13px;">Promo Discount Label</label>
                     <input type="text" name="promo_discount_label" class="form-control"

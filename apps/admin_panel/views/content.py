@@ -473,6 +473,7 @@ _DEFAULT_PRICING = {
     },
     'promo_discount_label': 'Partner Promo Applied! Once in a lifetime offer!',
     'standard_label': 'Get started with our standard partner plans',
+    'choose_plan_heading': 'Start your digital journey',
     'social_links': [
         {'platform': 'Instagram', 'url': 'https://instagram.com/padosiagent', 'icon': 'fa-instagram'},
         {'platform': 'Facebook', 'url': 'https://facebook.com/padosiagent', 'icon': 'fa-facebook'},
@@ -508,6 +509,7 @@ def plans(request):
     pricing['professional'].setdefault('scratch_text', 'SCRATCH')
     pricing.setdefault('promo_discount_label', _DEFAULT_PRICING['promo_discount_label'])
     pricing.setdefault('standard_label', _DEFAULT_PRICING['standard_label'])
+    pricing.setdefault('choose_plan_heading', _DEFAULT_PRICING['choose_plan_heading'])
     pricing.setdefault('social_links', list(_DEFAULT_PRICING['social_links']))
     pricing.setdefault('follow_tiers', list(_DEFAULT_PRICING['follow_tiers']))
     for tier in pricing.get('follow_tiers') or []:
@@ -740,6 +742,7 @@ def update_plans(request):
             },
             'promo_discount_label': request.POST.get('promo_discount_label', 'Partner Promo Applied! Once in a lifetime offer!'),
             'standard_label':       request.POST.get('standard_label', 'Get started with our standard partner plans'),
+            'choose_plan_heading':  (request.POST.get('choose_plan_heading') or 'Start your digital journey').strip()[:80] or 'Start your digital journey',
             'social_links':         social_links,
             'follow_tiers':         follow_tiers,
         }

@@ -1359,7 +1359,7 @@
 
         <!-- Header -->
         <div class="header-section">
-            <h1>Choose your plan</h1>
+            <h1>{{ pricing_config.choose_plan_heading|default:"Start your digital journey" }}</h1>
         </div>
 
         {% if has_promo or is_upgrade_flow and pricing_config.promo_discount_label %}
