@@ -686,6 +686,45 @@ Overview
                             </div>
                         </div>
 
+                        <!-- Lead Preferences Section -->
+                        <div class="lead-preferences-section mb-5 pt-4 border-top" id="lead-preferences-section" data-feature="lead_preferences" data-lead-locked="{% if agent_plan and not agent_plan.show_lead_preferences %}1{% else %}0{% endif %}">
+                            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+                                <div>
+                                    <h5 class="mb-1"><i class="fas fa-chart-line mr-2"></i>Lead Preferences</h5>
+                                    <p class="text-muted small mb-0">Choose the customer leads you want to receive. Admin can lock or unlock this section per plan.</p>
+                                </div>
+                                <button type="button" class="btn btn-outline-primary mt-2 mt-md-0" id="open-lead-preferences-btn">
+                                    <i class="fas fa-sliders-h mr-2"></i>Configure
+                                </button>
+                            </div>
+                            <div class="border rounded p-3 bg-light">
+                                <p class="mb-2 small text-muted">Current selection</p>
+                                <div class="lead-pref-summary-grid">
+                                    <div class="lead-pref-summary-card" id="lead-summary-new-business" data-feature="receive_leads" data-plan-locked="{% if agent_plan and not agent_plan.show_lead_preferences or agent_plan and not agent_plan.show_new_business_leads %}1{% else %}0{% endif %}">
+                                        <span class="lead-pref-summary-num">1</span>
+                                        <div>
+                                            <p class="lead-pref-summary-title">New Business</p>
+                                            <span class="badge badge-pill {% if agent.leadPreferences.leads_new_business|default:True %}badge-success{% else %}badge-secondary{% endif %} px-3 py-2">New Business</span>
+                                        </div>
+                                    </div>
+                                    <div class="lead-pref-summary-card" id="lead-summary-portfolio" data-feature="lead_portfolio_analysis" data-plan-locked="{% if agent_plan and not agent_plan.show_lead_preferences or agent_plan and not agent_plan.show_lead_portfolio_analysis %}1{% else %}0{% endif %}">
+                                        <span class="lead-pref-summary-num">2</span>
+                                        <div>
+                                            <p class="lead-pref-summary-title">Portfolio Analysis</p>
+                                            <span class="badge badge-pill {% if agent.leadPreferences.leads_portfolio_analysis %}badge-success{% else %}badge-secondary{% endif %} px-3 py-2">Portfolio Analysis</span>
+                                        </div>
+                                    </div>
+                                    <div class="lead-pref-summary-card" id="lead-summary-claims" data-feature="lead_claims_support" data-plan-locked="{% if agent_plan and not agent_plan.show_lead_preferences or agent_plan and not agent_plan.show_lead_claims_support %}1{% else %}0{% endif %}">
+                                        <span class="lead-pref-summary-num">3</span>
+                                        <div>
+                                            <p class="lead-pref-summary-title">Claims Support</p>
+                                            <span class="badge badge-pill {% if agent.leadPreferences.leads_claims_support %}badge-success{% else %}badge-secondary{% endif %} px-3 py-2">Claims Support</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Agency Name -->
                         <div class="row">
                             <div class="col-md-12 mb-4">
@@ -1098,44 +1137,6 @@ Overview
                             <!-- Photos Preview Area -->
                             <div class="photos-preview-grid d-flex gap-3 flex-wrap" id="achievement-photos-preview">
                                 <!-- Placeholders if needed, or dynamically added -->
-                            </div>
-                        </div>
-
-                        <div class="lead-preferences-section mb-5" id="lead-preferences-section" data-feature="lead_preferences" data-lead-locked="{% if agent_plan and not agent_plan.show_lead_preferences %}1{% else %}0{% endif %}">
-                            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-                                <div>
-                                    <h5 class="mb-1"><i class="fas fa-chart-line mr-2"></i>Lead Preferences</h5>
-                                    <p class="text-muted small mb-0">Choose the customer leads you want to receive. Admin can lock or unlock this section per plan.</p>
-                                </div>
-                                <button type="button" class="btn btn-outline-primary mt-2 mt-md-0" id="open-lead-preferences-btn">
-                                    <i class="fas fa-sliders-h mr-2"></i>Configure
-                                </button>
-                            </div>
-                            <div class="border rounded p-3 bg-light">
-                                <p class="mb-2 small text-muted">Current selection</p>
-                                <div class="lead-pref-summary-grid">
-                                    <div class="lead-pref-summary-card" id="lead-summary-new-business" data-feature="receive_leads" data-plan-locked="{% if agent_plan and not agent_plan.show_lead_preferences or agent_plan and not agent_plan.show_new_business_leads %}1{% else %}0{% endif %}">
-                                        <span class="lead-pref-summary-num">1</span>
-                                        <div>
-                                            <p class="lead-pref-summary-title">New Business</p>
-                                            <span class="badge badge-pill {% if agent.leadPreferences.leads_new_business|default:True %}badge-success{% else %}badge-secondary{% endif %} px-3 py-2">New Business</span>
-                                        </div>
-                                    </div>
-                                    <div class="lead-pref-summary-card" id="lead-summary-portfolio" data-feature="lead_portfolio_analysis" data-plan-locked="{% if agent_plan and not agent_plan.show_lead_preferences or agent_plan and not agent_plan.show_lead_portfolio_analysis %}1{% else %}0{% endif %}">
-                                        <span class="lead-pref-summary-num">2</span>
-                                        <div>
-                                            <p class="lead-pref-summary-title">Portfolio Analysis</p>
-                                            <span class="badge badge-pill {% if agent.leadPreferences.leads_portfolio_analysis %}badge-success{% else %}badge-secondary{% endif %} px-3 py-2">Portfolio Analysis</span>
-                                        </div>
-                                    </div>
-                                    <div class="lead-pref-summary-card" id="lead-summary-claims" data-feature="lead_claims_support" data-plan-locked="{% if agent_plan and not agent_plan.show_lead_preferences or agent_plan and not agent_plan.show_lead_claims_support %}1{% else %}0{% endif %}">
-                                        <span class="lead-pref-summary-num">3</span>
-                                        <div>
-                                            <p class="lead-pref-summary-title">Claims Support</p>
-                                            <span class="badge badge-pill {% if agent.leadPreferences.leads_claims_support %}badge-success{% else %}badge-secondary{% endif %} px-3 py-2">Claims Support</span>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
 
@@ -5110,16 +5111,6 @@ Overview
                 $('#ai-generate-bio-btn').addClass('disabled').css({'pointer-events': 'none', 'opacity': '0.5'}).attr('title', lockReason('Professional Bio', 'show_professional_bio')).html('<i class="fas fa-lock"></i><span>Locked by Plan</span>');
             }
             if (!planPermissions.claimSupport) lockSection($('.performance-stats-section'), "Claim Support Statistics", "show_claim_support");
-        }
-
-        if (!step3Locked) {
-            if (!planPermissions.portfolio) lockSection($('#segment-selector-section'), "Product Portfolio", "show_portfolio");
-            if (!planPermissions.companies) lockSection($('#portfolio-content'), "Company Portfolio", "show_companies");
-        }
-        
-        if (!step4Locked) {
-            if (!planPermissions.achievement) lockSection($('.achievement-photos-section'), "Achievement Photos", "show_achievement");
-            if (!planPermissions.socialMedia) lockSection($('.digital-presence-section'), "Social Media Settings", "show_social_media");
             const lockLeadItem = function($els, name, hintKey) {
                 $els.each(function () {
                     const $el = $(this);
@@ -5146,6 +5137,16 @@ Overview
             if (!planPermissions.leadPreferences || !planPermissions.leadClaims) {
                 lockLeadItem($('#lead-summary-claims, #lead-claims'), "Claims Support", "show_lead_claims_support");
             }
+        }
+
+        if (!step3Locked) {
+            if (!planPermissions.portfolio) lockSection($('#segment-selector-section'), "Product Portfolio", "show_portfolio");
+            if (!planPermissions.companies) lockSection($('#portfolio-content'), "Company Portfolio", "show_companies");
+        }
+        
+        if (!step4Locked) {
+            if (!planPermissions.achievement) lockSection($('.achievement-photos-section'), "Achievement Photos", "show_achievement");
+            if (!planPermissions.socialMedia) lockSection($('.digital-presence-section'), "Social Media Settings", "show_social_media");
         }
     }
     {% endif %}

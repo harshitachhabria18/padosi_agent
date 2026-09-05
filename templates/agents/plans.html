@@ -833,6 +833,15 @@
         margin-top: 2px;
     }
 
+    .plan-col-price-strike {
+        display: block;
+        font-size: 12px;
+        font-weight: 700;
+        color: #94a3b8;
+        text-decoration: line-through;
+        margin-bottom: 2px;
+    }
+
     .plan-compare-table tbody tr {
         border-bottom: 1px solid #f1f5f9;
     }
@@ -953,34 +962,6 @@
         background: #047857;
     }
 
-    .plan-trust-row {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        align-items: center;
-        gap: 20px 32px;
-        margin-top: 28px;
-        padding: 16px 0;
-    }
-
-    .plan-trust-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 12px;
-        font-weight: 700;
-        color: #475569;
-    }
-
-    .plan-trust-item i {
-        font-size: 18px;
-        color: #1e3a8a;
-    }
-
-    .plan-trust-item.trust-green i {
-        color: #059669;
-    }
-
     .plans-view-hidden {
         display: none !important;
     }
@@ -1058,6 +1039,76 @@
         .plan-compare-actions .compare-action-col {
             padding: 14px 10px;
         }
+    }
+
+    /* Scratch popup — admin-configurable theme */
+    #giftModal.gift-modal-overlay {
+        background: {{ scratch_popup.overlay_bg|default:'rgba(15, 23, 42, 0.85)' }};
+        backdrop-filter: blur({{ scratch_popup.overlay_blur_px|default:4 }}px);
+    }
+
+    #giftModal .gift-modal {
+        background: {{ scratch_popup.modal_bg|default:'#ffffff' }};
+        border: {{ scratch_popup.modal_border_width_px|default:3 }}px solid {{ scratch_popup.modal_border_color|default:'#7c3aed' }};
+        border-radius: {{ scratch_popup.modal_radius_px|default:28 }}px;
+        box-shadow: {{ scratch_popup.modal_shadow|default:'0 18px 50px rgba(88, 28, 135, 0.22)' }};
+    }
+
+    #giftModal .btn-close-gift-modal {
+        background: {{ scratch_popup.close_btn_bg|default:'#f1f5f9' }} !important;
+        color: {{ scratch_popup.close_btn_color|default:'#64748b' }} !important;
+    }
+
+    #giftModal .btn-close-gift-modal:hover {
+        background: {{ scratch_popup.close_btn_hover_bg|default:'#e2e8f0' }} !important;
+        color: {{ scratch_popup.close_btn_hover_color|default:'#0f172a' }} !important;
+    }
+
+    #giftModal .exc-urgency-top {
+        color: {{ scratch_popup.urgency_top_color|default:'#9f1239' }};
+    }
+
+    #giftModal .exc-urgency-count {
+        color: {{ scratch_popup.urgency_count_color|default:'#e11d48' }};
+    }
+
+    #giftModal #modalStrikePrice {
+        color: {{ scratch_popup.strike_price_color|default:'#94a3b8' }} !important;
+    }
+
+    #giftModal #modalCurrentPrice {
+        color: {{ scratch_popup.current_price_color|default:'#16a34a' }} !important;
+    }
+
+    #giftModal .discount-sticker {
+        background: {{ scratch_popup.discount_sticker_bg|default:'#e11d48' }};
+    }
+
+    #giftModal #modalDiscountBadge {
+        background: {{ scratch_popup.follower_discount_bg|default:'#d1fae5' }} !important;
+        color: {{ scratch_popup.follower_discount_color|default:'#059669' }} !important;
+        border-color: {{ scratch_popup.follower_discount_border|default:'#6ee7b7' }} !important;
+    }
+
+    #giftModal .exc-section-head {
+        color: {{ scratch_popup.features_section_accent|default:'#7c3aed' }};
+    }
+
+    #giftModal .exc-section-head .exc-line {
+        background: {{ scratch_popup.features_section_line|default:'#7c3aed' }};
+    }
+
+    #giftModal .exc-section-head .exc-accent {
+        color: {{ scratch_popup.features_section_accent|default:'#8b5cf6' }};
+    }
+
+    #giftModal #modalClaimOfferBtn.btn-pay {
+        background: {{ scratch_popup.claim_btn_bg|default:'#6d28d9' }};
+        color: {{ scratch_popup.claim_btn_color|default:'#ffffff' }};
+    }
+
+    #giftModal #modalClaimOfferBtn.btn-pay:hover:not(:disabled) {
+        background: {{ scratch_popup.claim_btn_hover_bg|default:'#5b21b6' }};
     }
 
     /* Checkout Integration Styles */
@@ -1908,21 +1959,6 @@
             </div>
 
             </div><!-- /.plans-grid -->
-
-            <div class="plan-trust-row">
-                <div class="plan-trust-item">
-                    <i class="fa-solid fa-shield-halved"></i>
-                    100% Secure Payments
-                </div>
-                <div class="plan-trust-item trust-green">
-                    <i class="fa-solid fa-headset"></i>
-                    Dedicated Support
-                </div>
-                <div class="plan-trust-item">
-                    <i class="fa-solid fa-rocket"></i>
-                    Upgrade Anytime
-                </div>
-            </div>
         </div><!-- /#plansCardsView -->
 
         <!-- Comparison View (hidden by default) -->
@@ -1947,13 +1983,19 @@
                             <th>Features</th>
                             <th class="plan-col-header starter-col">
                                 <div class="plan-col-name">{{ starter_name|default:"Digital Presence" }}</div>
-                                <div class="plan-col-price">₹{{ starter_base }}/-</div>
+                                {% if compare_starter_show_strike %}
+                                <span class="plan-col-price-strike">₹{{ starter_full|floatformat:"0" }}/-</span>
+                                {% endif %}
+                                <div class="plan-col-price">₹{{ compare_starter_price }}/-</div>
                                 <div class="plan-col-gst">+18% GST</div>
                             </th>
                             <th class="plan-col-header prof-col">
                                 <span class="plan-col-popular">Most Popular</span>
                                 <div class="plan-col-name">{{ prof_name|default:"Professional Presence" }}</div>
-                                <div class="plan-col-price">₹{{ prof_base }}/-</div>
+                                {% if compare_prof_show_strike %}
+                                <span class="plan-col-price-strike">₹{{ prof_full|floatformat:"0" }}/-</span>
+                                {% endif %}
+                                <div class="plan-col-price">₹{{ compare_prof_price }}/-</div>
                                 <div class="plan-col-gst">+18% GST</div>
                             </th>
                         </tr>
@@ -1997,21 +2039,6 @@
                             <i class="fa-solid fa-arrow-right"></i>
                         </button>
                     </div>
-                </div>
-            </div>
-
-            <div class="plan-trust-row">
-                <div class="plan-trust-item">
-                    <i class="fa-solid fa-shield-halved"></i>
-                    100% Secure Payments
-                </div>
-                <div class="plan-trust-item trust-green">
-                    <i class="fa-solid fa-headset"></i>
-                    Dedicated Support
-                </div>
-                <div class="plan-trust-item">
-                    <i class="fa-solid fa-rocket"></i>
-                    Upgrade Anytime
                 </div>
             </div>
         </div><!-- /#plansCompareView -->
@@ -2072,91 +2099,61 @@
 <!-- Gift / Scratch Modal Overlay -->
 <div class="gift-modal-overlay" id="giftModal">
     <div class="gift-modal">
-        <!-- Close Button -->
         <button type="button" class="btn-close-gift-modal" onclick="closeGiftModal()" aria-label="Close">
             <i class="fa-solid fa-xmark"></i>
         </button>
 
-        <!-- Urgency Banner -->
         <div class="exc-urgency text-center">
-            <div class="exc-urgency-top">🔥 Hurry! Offer valid only for the first 1000 users!</div>
-            <div class="exc-urgency-count">🔥 874/1000 Claimed</div>
+            <div class="exc-urgency-top">{{ scratch_popup.urgency_line_1_display }}</div>
+            <div class="exc-urgency-count">{{ scratch_popup.urgency_line_2_display }}</div>
         </div>
 
-        <!-- Price Pill Area -->
         <div class="exc-price-pill" id="excPricePill">
-            <span
-                style="font-size: 1.4rem; color: #94a3b8; font-weight: 700; text-decoration: line-through; text-decoration-thickness: 2px;"
+            <span class="plan-price-strike" style="font-size: 1.4rem; font-weight: 700; text-decoration: line-through; text-decoration-thickness: 2px;"
                 id="modalStrikePrice">₹{{ starter_full|floatformat:"0" }}/-</span>
-            <span style="font-size: 2.2rem; font-weight: 900; color: #16a34a; letter-spacing: -1px; line-height: 1;"
+            <span style="font-size: 2.2rem; font-weight: 900; letter-spacing: -1px; line-height: 1;"
                 id="modalCurrentPrice">₹{{ starter_base }}/-</span>
             <div class="discount-sticker" id="modalDiscountSticker">
                 <span class="discount-val" id="modalDiscountVal">{{ starter_discount_percent|default:"35" }}%</span>
-                <span class="discount-text">OFF</span>
+                <span class="discount-text" id="modalDiscountLabel">{{ scratch_popup.discount_label|default:"OFF" }}</span>
             </div>
         </div>
 
+        {% if scratch_popup.show_follower_discount_badge %}
         <div class="d-flex justify-content-center mb-2" id="modalDiscountBadgeWrapper">
             <span class="badge px-3 py-1 rounded-pill fw-bold" id="modalDiscountBadge"
-                style="font-size: 11px; background: #d1fae5; color: #059669; border: 1px solid #6ee7b7; {% if not has_social_discount %}display:none;{% endif %}">
-                <i class="fa-solid fa-tag me-1"></i> Extra Follower Discount Applied!
+                style="font-size: 11px; {% if not has_social_discount %}display:none;{% endif %}">
+                <i class="fa-solid fa-tag me-1"></i> <span id="modalFollowerDiscountText">{{ scratch_popup.follower_discount_text }}</span>
             </span>
         </div>
+        {% endif %}
 
-        <!-- What You'll Get Divider -->
+        {% if scratch_popup.show_features_section %}
         <div class="exc-section-head">
             <div class="exc-line"></div>
-            <div><span style="color: #8b5cf6;">✦</span> What You'll Get <span style="color: #8b5cf6;">✦</span></div>
+            <div><span class="exc-accent">✦</span> {{ scratch_popup.features_section_title }} <span class="exc-accent">✦</span></div>
             <div class="exc-line"></div>
         </div>
 
         <div class="grid-3-cols mb-3">
+            {% for feature in scratch_popup.features %}
             <div class="feature-tile">
-                <div class="icon-wrapper" style="color: #16a34a; background: #f0fdf4;">
-                    <i class="fa-solid fa-globe"></i>
+                <div class="icon-wrapper" style="color: {{ feature.color }}; background: {{ feature.bg_color }};">
+                    <i class="fa-solid {{ feature.icon }}"></i>
                 </div>
-                <div class="feature-text">Permanent<br>Website</div>
+                <div class="feature-text">{{ feature.name|safe }}</div>
             </div>
-            <div class="feature-tile">
-                <div class="icon-wrapper" style="color: #6d28d9; background: #f3e8ff;">
-                    <i class="fa-solid fa-id-card-clip"></i>
-                </div>
-                <div class="feature-text">Digital<br>Card</div>
-            </div>
-            <div class="feature-tile">
-                <div class="icon-wrapper" style="color: #f97316; background: #fff7ed;">
-                    <i class="fa-solid fa-shield-halved"></i>
-                </div>
-                <div class="feature-text">Licensed<br>Badge</div>
-            </div>
-            <div class="feature-tile">
-                <div class="icon-wrapper" style="color: #16a34a; background: #f0fdf4;">
-                    <i class="fa-solid fa-phone"></i>
-                </div>
-                <div class="feature-text">Call &<br>WhatsApp</div>
-            </div>
-            <div class="feature-tile">
-                <div class="icon-wrapper" style="color: #6d28d9; background: #f3e8ff;">
-                    <i class="fa-solid fa-star"></i>
-                </div>
-                <div class="feature-text">Customer<br>Reviews</div>
-            </div>
-            <div class="feature-tile">
-                <div class="icon-wrapper" style="color: #3b82f6; background: #eff6ff;">
-                    <i class="fa-solid fa-store"></i>
-                </div>
-                <div class="feature-text">Product<br>Showcase</div>
-            </div>
+            {% endfor %}
         </div>
+        {% endif %}
 
-        <!-- Follow on Divider -->
+        {% if scratch_popup.show_social_section %}
         <div class="exc-section-head">
             <div class="exc-line"></div>
-            <div><span style="color: #8b5cf6;">✦</span> Follow on <span style="color: #8b5cf6;">✦</span></div>
+            <div><span class="exc-accent">✦</span> {{ scratch_popup.social_section_title }} <span class="exc-accent">✦</span></div>
             <div class="exc-line"></div>
         </div>
 
-        <!-- Social Links 4-col -->
         <div class="grid-4-cols mb-3" id="modalSocialButtons">
             {% for link in social_links %}
             {% with p=link.platform|lower %}
@@ -2251,15 +2248,15 @@
             </button>
             {% endfor %}
         </div>
+        {% endif %}
 
-        <!-- Action Button -->
         <div class="mt-2 mb-1">
             <button type="button" class="btn-pay" id="modalClaimOfferBtn" onclick="claimModalOffer()">
                 <div
                     style="border: 2px solid rgba(255,255,255,0.8); border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; position: absolute; left: 20px;">
                     <i class="fa-solid fa-bolt" style="font-size: 10px;"></i>
                 </div>
-                Claim Offer
+                <span id="modalClaimOfferBtnText">{{ scratch_popup.claim_btn_text|default:"Claim Offer" }}</span>
                 <i class="fa-solid fa-chevron-right" style="position: absolute; right: 20px; font-size: 14px;"></i>
             </button>
         </div>

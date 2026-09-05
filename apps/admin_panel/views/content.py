@@ -11,6 +11,11 @@ from apps.home.models.site_setting import SiteSetting
 from apps.home.models.faq import Faq
 from apps.admin_panel.models.admin_activity_log import AdminActivityLog
 from apps.admin_panel.views.dashboard import _get_admin_from_session
+from apps.agents.views.registration import (
+    _DEFAULT_SCRATCH_POPUP,
+    _normalize_scratch_popup,
+    _parse_scratch_popup_from_post,
+)
 from apps.agents.services.feature_unlock import (
     FEATURE_ATTR_MAP,
     FEATURE_LABELS,
@@ -26,7 +31,6 @@ from apps.agents.services.feature_unlock import (
     remove_plan_only_unlock_rule,
     resolve_plan_feature_slugs,
     resolve_plan_entitlements,
-    load_plan_features_config,
     sanitize_unlock_rules,
     toggle_plan_feature,
     upsert_plan_unlock_rule,
@@ -497,6 +501,7 @@ _DEFAULT_PRICING = {
     'promo_discount_label': 'Partner Promo Applied! Once in a lifetime offer!',
     'standard_label': 'Get started with our standard partner plans',
     'choose_plan_heading': 'Start your digital journey',
+    'comparison_price_display': 'original',
     'social_links': [
         {'platform': 'Instagram', 'url': 'https://instagram.com/padosiagent', 'icon': 'fa-instagram'},
         {'platform': 'Facebook', 'url': 'https://facebook.com/padosiagent', 'icon': 'fa-facebook'},
@@ -533,6 +538,8 @@ def plans(request):
     pricing.setdefault('promo_discount_label', _DEFAULT_PRICING['promo_discount_label'])
     pricing.setdefault('standard_label', _DEFAULT_PRICING['standard_label'])
     pricing.setdefault('choose_plan_heading', _DEFAULT_PRICING['choose_plan_heading'])
+    pricing.setdefault('comparison_price_display', _DEFAULT_PRICING['comparison_price_display'])
+    pricing['scratch_popup'] = _normalize_scratch_popup(pricing.get('scratch_popup'), format_urgency=False)
     pricing.setdefault('social_links', list(_DEFAULT_PRICING['social_links']))
     pricing.setdefault('follow_tiers', list(_DEFAULT_PRICING['follow_tiers']))
     for tier in pricing.get('follow_tiers') or []:
@@ -766,6 +773,12 @@ def update_plans(request):
             'promo_discount_label': request.POST.get('promo_discount_label', 'Partner Promo Applied! Once in a lifetime offer!'),
             'standard_label':       request.POST.get('standard_label', 'Get started with our standard partner plans'),
             'choose_plan_heading':  (request.POST.get('choose_plan_heading') or 'Start your digital journey').strip()[:80] or 'Start your digital journey',
+            'comparison_price_display': (
+                (request.POST.get('comparison_price_display') or 'original').strip().lower()
+                if (request.POST.get('comparison_price_display') or 'original').strip().lower() in ('original', 'discounted')
+                else 'original'
+            ),
+            'scratch_popup': _parse_scratch_popup_from_post(request.POST),
             'social_links':         social_links,
             'follow_tiers':         follow_tiers,
         }

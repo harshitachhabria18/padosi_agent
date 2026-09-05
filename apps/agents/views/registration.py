@@ -101,6 +101,7 @@ _DEFAULT_PRICING = {
     'promo_discount_label': 'Partner Promo Applied! Once in a lifetime offer!',
     'standard_label': 'Get started with our standard partner plans',
     'choose_plan_heading': 'Start your digital journey',
+    'comparison_price_display': 'original',
     'social_links': [
         {'platform': 'Instagram', 'url': 'https://instagram.com/padosiagent', 'icon': 'fa-instagram'},
         {'platform': 'Facebook', 'url': 'https://facebook.com/padosiagent', 'icon': 'fa-facebook'},
@@ -159,6 +160,177 @@ _PLAN_COMPARISON_ROWS = [
     {'name': 'Gallery', 'starter': False, 'professional': True},
     {'name': 'AI Auto-fill & Suggestions', 'starter': False, 'professional': True},
 ]
+
+_DEFAULT_SCRATCH_POPUP = {
+    'overlay_bg': 'rgba(15, 23, 42, 0.85)',
+    'overlay_blur_px': 4,
+    'modal_bg': '#ffffff',
+    'modal_border_color': '#7c3aed',
+    'modal_border_width_px': 3,
+    'modal_radius_px': 28,
+    'modal_shadow': '0 18px 50px rgba(88, 28, 135, 0.22)',
+    'close_btn_bg': '#f1f5f9',
+    'close_btn_color': '#64748b',
+    'close_btn_hover_bg': '#e2e8f0',
+    'close_btn_hover_color': '#0f172a',
+    'urgency_line_1': '🔥 Hurry! Offer valid only for the first {total_seats} users!',
+    'urgency_line_2': '🔥 {claimed_seats}/{total_seats} Claimed',
+    'urgency_top_color': '#9f1239',
+    'urgency_count_color': '#e11d48',
+    'total_seats': 1000,
+    'claimed_seats': 874,
+    'strike_price_color': '#94a3b8',
+    'current_price_color': '#16a34a',
+    'discount_sticker_bg': '#e11d48',
+    'discount_label': 'OFF',
+    'follower_discount_text': 'Extra Follower Discount Applied!',
+    'follower_discount_bg': '#d1fae5',
+    'follower_discount_color': '#059669',
+    'follower_discount_border': '#6ee7b7',
+    'show_follower_discount_badge': True,
+    'features_section_title': "What You'll Get",
+    'features_section_accent': '#8b5cf6',
+    'features_section_line': '#7c3aed',
+    'social_section_title': 'Follow on',
+    'show_features_section': True,
+    'show_social_section': True,
+    'claim_btn_text': 'Claim Offer',
+    'claim_btn_bg': '#6d28d9',
+    'claim_btn_color': '#ffffff',
+    'claim_btn_hover_bg': '#5b21b6',
+    'features': [
+        {'name': 'Permanent<br>Website', 'icon': 'fa-globe', 'color': '#16a34a', 'bg_color': '#f0fdf4'},
+        {'name': 'Digital<br>Card', 'icon': 'fa-id-card-clip', 'color': '#6d28d9', 'bg_color': '#f3e8ff'},
+        {'name': 'Licensed<br>Badge', 'icon': 'fa-shield-halved', 'color': '#f97316', 'bg_color': '#fff7ed'},
+        {'name': 'Call &<br>WhatsApp', 'icon': 'fa-phone', 'color': '#16a34a', 'bg_color': '#f0fdf4'},
+        {'name': 'Customer<br>Reviews', 'icon': 'fa-star', 'color': '#6d28d9', 'bg_color': '#f3e8ff'},
+        {'name': 'Product<br>Showcase', 'icon': 'fa-store', 'color': '#3b82f6', 'bg_color': '#eff6ff'},
+    ],
+}
+
+
+def _normalize_scratch_popup(raw=None, *, format_urgency=True):
+    """Merge admin scratch-popup config with defaults for choose-plan gift modal."""
+    cfg = dict(_DEFAULT_SCRATCH_POPUP)
+    if isinstance(raw, dict):
+        for key, val in raw.items():
+            if key == 'features':
+                continue
+            if val is not None and val != '':
+                cfg[key] = val
+
+    features = None
+    if isinstance(raw, dict) and isinstance(raw.get('features'), list) and raw['features']:
+        features = raw['features']
+    cfg['features'] = features or list(_DEFAULT_SCRATCH_POPUP['features'])
+
+    try:
+        total_seats = int(cfg.get('total_seats') or 1000)
+    except (TypeError, ValueError):
+        total_seats = 1000
+    try:
+        claimed_seats = int(cfg.get('claimed_seats') or 874)
+    except (TypeError, ValueError):
+        claimed_seats = 874
+    spots_left = max(0, total_seats - claimed_seats)
+    cfg['total_seats'] = total_seats
+    cfg['claimed_seats'] = claimed_seats
+    cfg['spots_left'] = spots_left
+
+    cfg['show_features_section'] = _parse_json_flag(cfg.get('show_features_section', True))
+    cfg['show_social_section'] = _parse_json_flag(cfg.get('show_social_section', True))
+    cfg['show_follower_discount_badge'] = _parse_json_flag(cfg.get('show_follower_discount_badge', True))
+
+    if format_urgency:
+        def _fmt(template, fallback):
+            text = template or fallback
+            try:
+                return text.format(
+                    total_seats=total_seats,
+                    claimed_seats=claimed_seats,
+                    spots_left=spots_left,
+                )
+            except (KeyError, ValueError, IndexError):
+                return text
+
+        cfg['urgency_line_1_display'] = _fmt(
+            cfg.get('urgency_line_1'),
+            _DEFAULT_SCRATCH_POPUP['urgency_line_1'],
+        )
+        cfg['urgency_line_2_display'] = _fmt(
+            cfg.get('urgency_line_2'),
+            _DEFAULT_SCRATCH_POPUP['urgency_line_2'],
+        )
+    else:
+        cfg['urgency_line_1_display'] = cfg.get('urgency_line_1') or _DEFAULT_SCRATCH_POPUP['urgency_line_1']
+        cfg['urgency_line_2_display'] = cfg.get('urgency_line_2') or _DEFAULT_SCRATCH_POPUP['urgency_line_2']
+
+    return cfg
+
+
+def _parse_scratch_popup_from_post(post):
+    """Build scratch_popup dict from admin plans form POST."""
+    pf_names = post.getlist('sp_feature_name[]')
+    pf_icons = post.getlist('sp_feature_icon[]')
+    pf_colors = post.getlist('sp_feature_color[]')
+    pf_bg_colors = post.getlist('sp_feature_bg_color[]')
+    features = []
+    for i, name in enumerate(pf_names):
+        name = (name or '').strip()
+        if not name:
+            continue
+        features.append({
+            'name': name,
+            'icon': (pf_icons[i] if i < len(pf_icons) else 'fa-star').strip() or 'fa-star',
+            'color': (pf_colors[i] if i < len(pf_colors) else '#16a34a').strip() or '#16a34a',
+            'bg_color': (pf_bg_colors[i] if i < len(pf_bg_colors) else '#f0fdf4').strip() or '#f0fdf4',
+        })
+
+    def _int(key, default):
+        try:
+            return int(post.get(key, default) or default)
+        except (TypeError, ValueError):
+            return default
+
+    return {
+        'overlay_bg': (post.get('sp_overlay_bg') or _DEFAULT_SCRATCH_POPUP['overlay_bg']).strip(),
+        'overlay_blur_px': _int('sp_overlay_blur_px', _DEFAULT_SCRATCH_POPUP['overlay_blur_px']),
+        'modal_bg': (post.get('sp_modal_bg') or _DEFAULT_SCRATCH_POPUP['modal_bg']).strip(),
+        'modal_border_color': (post.get('sp_modal_border_color') or _DEFAULT_SCRATCH_POPUP['modal_border_color']).strip(),
+        'modal_border_width_px': _int('sp_modal_border_width_px', _DEFAULT_SCRATCH_POPUP['modal_border_width_px']),
+        'modal_radius_px': _int('sp_modal_radius_px', _DEFAULT_SCRATCH_POPUP['modal_radius_px']),
+        'modal_shadow': (post.get('sp_modal_shadow') or _DEFAULT_SCRATCH_POPUP['modal_shadow']).strip(),
+        'close_btn_bg': (post.get('sp_close_btn_bg') or _DEFAULT_SCRATCH_POPUP['close_btn_bg']).strip(),
+        'close_btn_color': (post.get('sp_close_btn_color') or _DEFAULT_SCRATCH_POPUP['close_btn_color']).strip(),
+        'close_btn_hover_bg': (post.get('sp_close_btn_hover_bg') or _DEFAULT_SCRATCH_POPUP['close_btn_hover_bg']).strip(),
+        'close_btn_hover_color': (post.get('sp_close_btn_hover_color') or _DEFAULT_SCRATCH_POPUP['close_btn_hover_color']).strip(),
+        'urgency_line_1': (post.get('sp_urgency_line_1') or _DEFAULT_SCRATCH_POPUP['urgency_line_1']).strip(),
+        'urgency_line_2': (post.get('sp_urgency_line_2') or _DEFAULT_SCRATCH_POPUP['urgency_line_2']).strip(),
+        'urgency_top_color': (post.get('sp_urgency_top_color') or _DEFAULT_SCRATCH_POPUP['urgency_top_color']).strip(),
+        'urgency_count_color': (post.get('sp_urgency_count_color') or _DEFAULT_SCRATCH_POPUP['urgency_count_color']).strip(),
+        'total_seats': _int('sp_total_seats', _DEFAULT_SCRATCH_POPUP['total_seats']),
+        'claimed_seats': _int('sp_claimed_seats', _DEFAULT_SCRATCH_POPUP['claimed_seats']),
+        'strike_price_color': (post.get('sp_strike_price_color') or _DEFAULT_SCRATCH_POPUP['strike_price_color']).strip(),
+        'current_price_color': (post.get('sp_current_price_color') or _DEFAULT_SCRATCH_POPUP['current_price_color']).strip(),
+        'discount_sticker_bg': (post.get('sp_discount_sticker_bg') or _DEFAULT_SCRATCH_POPUP['discount_sticker_bg']).strip(),
+        'discount_label': (post.get('sp_discount_label') or _DEFAULT_SCRATCH_POPUP['discount_label']).strip()[:12] or 'OFF',
+        'follower_discount_text': (post.get('sp_follower_discount_text') or _DEFAULT_SCRATCH_POPUP['follower_discount_text']).strip(),
+        'follower_discount_bg': (post.get('sp_follower_discount_bg') or _DEFAULT_SCRATCH_POPUP['follower_discount_bg']).strip(),
+        'follower_discount_color': (post.get('sp_follower_discount_color') or _DEFAULT_SCRATCH_POPUP['follower_discount_color']).strip(),
+        'follower_discount_border': (post.get('sp_follower_discount_border') or _DEFAULT_SCRATCH_POPUP['follower_discount_border']).strip(),
+        'show_follower_discount_badge': 'sp_show_follower_discount_badge' in post,
+        'features_section_title': (post.get('sp_features_section_title') or _DEFAULT_SCRATCH_POPUP['features_section_title']).strip(),
+        'features_section_accent': (post.get('sp_features_section_accent') or _DEFAULT_SCRATCH_POPUP['features_section_accent']).strip(),
+        'features_section_line': (post.get('sp_features_section_line') or _DEFAULT_SCRATCH_POPUP['features_section_line']).strip(),
+        'social_section_title': (post.get('sp_social_section_title') or _DEFAULT_SCRATCH_POPUP['social_section_title']).strip(),
+        'show_features_section': 'sp_show_features_section' in post,
+        'show_social_section': 'sp_show_social_section' in post,
+        'claim_btn_text': (post.get('sp_claim_btn_text') or _DEFAULT_SCRATCH_POPUP['claim_btn_text']).strip()[:40] or 'Claim Offer',
+        'claim_btn_bg': (post.get('sp_claim_btn_bg') or _DEFAULT_SCRATCH_POPUP['claim_btn_bg']).strip(),
+        'claim_btn_color': (post.get('sp_claim_btn_color') or _DEFAULT_SCRATCH_POPUP['claim_btn_color']).strip(),
+        'claim_btn_hover_bg': (post.get('sp_claim_btn_hover_bg') or _DEFAULT_SCRATCH_POPUP['claim_btn_hover_bg']).strip(),
+        'features': features or list(_DEFAULT_SCRATCH_POPUP['features']),
+    }
 
 def _tier_optional_float(tier, key):
     """Return a float from a tier field, or None if missing/blank."""
@@ -1227,6 +1399,9 @@ def chooseplan(request):
     if not isinstance(pricing_config, dict):
         pricing_config = dict(_DEFAULT_PRICING)
     pricing_config.setdefault('choose_plan_heading', _DEFAULT_PRICING['choose_plan_heading'])
+    comparison_price_mode = (pricing_config.get('comparison_price_display') or 'original').strip().lower()
+    if comparison_price_mode not in ('original', 'discounted'):
+        comparison_price_mode = 'original'
 
     starter_cfg = pricing_config.get('starter', _DEFAULT_PRICING['starter'])
     prof_cfg = pricing_config.get('professional', _DEFAULT_PRICING['professional'])
@@ -1323,6 +1498,20 @@ def chooseplan(request):
     prof_discount_percent = 0
     if prof_full > 0 and prof_base < prof_full:
         prof_discount_percent = round((1 - (prof_base / prof_full)) * 100)
+
+    if comparison_price_mode == 'discounted':
+        compare_starter_price = int(starter_base)
+        compare_prof_price = int(prof_base)
+    else:
+        compare_starter_price = int(round(starter_full))
+        compare_prof_price = int(round(prof_full))
+
+    compare_starter_show_strike = (
+        comparison_price_mode == 'discounted' and compare_starter_price < int(round(starter_full))
+    )
+    compare_prof_show_strike = (
+        comparison_price_mode == 'discounted' and compare_prof_price < int(round(prof_full))
+    )
 
     starter_name = starter_cfg.get('name', "Starter's Plan")
     starter_desc = starter_cfg.get('description', 'Perfect for New Agents')
@@ -1444,6 +1633,8 @@ def chooseplan(request):
         '🔥 {claimed_seats}/{total_seats} Claimed',
     )
 
+    scratch_popup = _normalize_scratch_popup(pricing_config.get('scratch_popup'))
+
     context = {
         'draft': agent,  # Pass agent as draft to avoid template changes
         'agent': agent,
@@ -1508,6 +1699,13 @@ def chooseplan(request):
         'starter_plan_features': _STARTER_PLAN_UI_FEATURES,
         'professional_plan_features': _PROFESSIONAL_PLAN_UI_FEATURES,
         'plan_comparison_rows': _PLAN_COMPARISON_ROWS,
+        'comparison_price_mode': comparison_price_mode,
+        'compare_starter_price': compare_starter_price,
+        'compare_prof_price': compare_prof_price,
+        'compare_starter_show_strike': compare_starter_show_strike,
+        'compare_prof_show_strike': compare_prof_show_strike,
+        'scratch_popup': scratch_popup,
+        'scratch_popup_json': json.dumps(scratch_popup),
         'hide_site_nav': True,
         'hide_footer': True,
         'hide_chatbot': True,

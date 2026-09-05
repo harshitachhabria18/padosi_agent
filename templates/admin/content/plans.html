@@ -502,6 +502,18 @@
                     <small class="text-muted">Main heading on /chooseplan/ (for example: Start your digital journey).</small>
                 </div>
                 <div class="col-lg-6">
+                    <label class="form-label fw-semibold" style="font-size:13px;">Plan comparison table prices</label>
+                    <select name="comparison_price_display" class="form-select">
+                        <option value="original" {% if pricing.comparison_price_display|default:'original' == 'original' %}selected{% endif %}>
+                            Original list price (full_price — e.g. ₹1999 / ₹6999)
+                        </option>
+                        <option value="discounted" {% if pricing.comparison_price_display == 'discounted' %}selected{% endif %}>
+                            Current discounted price (after social tiers / promo)
+                        </option>
+                    </select>
+                    <small class="text-muted">Controls which prices appear in the side-by-side plan comparison on /chooseplan/.</small>
+                </div>
+                <div class="col-lg-6">
                     <label class="form-label fw-semibold" style="font-size:13px;">Promo Discount Label</label>
                     <input type="text" name="promo_discount_label" class="form-control"
                            value="{{ pricing.promo_discount_label|default:'Partner Promo Applied! Once in a lifetime offer!' }}"
@@ -518,6 +530,185 @@
             </div>
         </div>
     </div>
+
+    <!-- Scratch Reward Popup (shown after scratching plan ribbon) -->
+    {% with sp=pricing.scratch_popup %}
+    <div class="plan-editor-card mb-4" id="section-scratch-popup" style="border-top: 4px solid #7c3aed;">
+        <div class="plan-editor-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg,#f5f3ff,#fff);">
+            <div>
+                <i class="fa-solid fa-gift text-purple me-2" style="color:#7c3aed;"></i>
+                <span class="fw-bold">Scratch Reward Popup</span>
+                <div class="fw-normal text-muted" style="font-size:12px;margin-top:2px;">Customize the popup shown when an agent scratches the plan ribbon on /chooseplan/.</div>
+            </div>
+        </div>
+        <div class="p-4">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" style="font-size:13px;">Urgency line 1</label>
+                    <input type="text" name="sp_urgency_line_1" class="form-control" value="{{ sp.urgency_line_1_display|default:sp.urgency_line_1 }}" placeholder="🔥 Hurry! Offer valid only for the first {total_seats} users!">
+                    <small class="text-muted">Use {total_seats}, {claimed_seats}, {spots_left}</small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" style="font-size:13px;">Urgency line 2</label>
+                    <input type="text" name="sp_urgency_line_2" class="form-control" value="{{ sp.urgency_line_2_display|default:sp.urgency_line_2 }}" placeholder="🔥 {claimed_seats}/{total_seats} Claimed">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold" style="font-size:13px;">Total seats</label>
+                    <input type="number" name="sp_total_seats" class="form-control" value="{{ sp.total_seats|default:1000 }}" min="1">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold" style="font-size:13px;">Claimed seats</label>
+                    <input type="number" name="sp_claimed_seats" class="form-control" value="{{ sp.claimed_seats|default:874 }}" min="0">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold" style="font-size:13px;">Features section title</label>
+                    <input type="text" name="sp_features_section_title" class="form-control" value="{{ sp.features_section_title|default:"What You'll Get" }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold" style="font-size:13px;">Social section title</label>
+                    <input type="text" name="sp_social_section_title" class="form-control" value="{{ sp.social_section_title|default:'Follow on' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold" style="font-size:13px;">Claim button text</label>
+                    <input type="text" name="sp_claim_btn_text" class="form-control" value="{{ sp.claim_btn_text|default:'Claim Offer' }}" maxlength="40">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold" style="font-size:13px;">Discount sticker label</label>
+                    <input type="text" name="sp_discount_label" class="form-control" value="{{ sp.discount_label|default:'OFF' }}" maxlength="12">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold" style="font-size:13px;">Follower discount badge text</label>
+                    <input type="text" name="sp_follower_discount_text" class="form-control" value="{{ sp.follower_discount_text|default:'Extra Follower Discount Applied!' }}">
+                </div>
+            </div>
+
+            <div class="row g-3 mt-2 pt-3 border-top">
+                <div class="col-12"><label class="form-label fw-bold mb-1" style="font-size:13px;">Popup colors &amp; style</label></div>
+                <div class="col-md-3">
+                    <label class="form-label" style="font-size:12px;">Overlay background</label>
+                    <input type="text" name="sp_overlay_bg" class="form-control form-control-sm" value="{{ sp.overlay_bg|default:'rgba(15, 23, 42, 0.85)' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" style="font-size:12px;">Modal background</label>
+                    <input type="color" name="sp_modal_bg" class="form-control form-control-color w-100" value="{{ sp.modal_bg|default:'#ffffff' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" style="font-size:12px;">Modal border</label>
+                    <input type="color" name="sp_modal_border_color" class="form-control form-control-color w-100" value="{{ sp.modal_border_color|default:'#7c3aed' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" style="font-size:12px;">Claim button</label>
+                    <input type="color" name="sp_claim_btn_bg" class="form-control form-control-color w-100" value="{{ sp.claim_btn_bg|default:'#6d28d9' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" style="font-size:12px;">Claim button text</label>
+                    <input type="color" name="sp_claim_btn_color" class="form-control form-control-color w-100" value="{{ sp.claim_btn_color|default:'#ffffff' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" style="font-size:12px;">Claim button hover</label>
+                    <input type="color" name="sp_claim_btn_hover_bg" class="form-control form-control-color w-100" value="{{ sp.claim_btn_hover_bg|default:'#5b21b6' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" style="font-size:12px;">Current price color</label>
+                    <input type="color" name="sp_current_price_color" class="form-control form-control-color w-100" value="{{ sp.current_price_color|default:'#16a34a' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" style="font-size:12px;">Strike price color</label>
+                    <input type="color" name="sp_strike_price_color" class="form-control form-control-color w-100" value="{{ sp.strike_price_color|default:'#94a3b8' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" style="font-size:12px;">Discount sticker</label>
+                    <input type="color" name="sp_discount_sticker_bg" class="form-control form-control-color w-100" value="{{ sp.discount_sticker_bg|default:'#e11d48' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" style="font-size:12px;">Urgency line 1 color</label>
+                    <input type="color" name="sp_urgency_top_color" class="form-control form-control-color w-100" value="{{ sp.urgency_top_color|default:'#9f1239' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" style="font-size:12px;">Urgency line 2 color</label>
+                    <input type="color" name="sp_urgency_count_color" class="form-control form-control-color w-100" value="{{ sp.urgency_count_color|default:'#e11d48' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" style="font-size:12px;">Section accent</label>
+                    <input type="color" name="sp_features_section_accent" class="form-control form-control-color w-100" value="{{ sp.features_section_accent|default:'#8b5cf6' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" style="font-size:12px;">Section divider line</label>
+                    <input type="color" name="sp_features_section_line" class="form-control form-control-color w-100" value="{{ sp.features_section_line|default:'#7c3aed' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" style="font-size:12px;">Follow badge background</label>
+                    <input type="color" name="sp_follower_discount_bg" class="form-control form-control-color w-100" value="{{ sp.follower_discount_bg|default:'#d1fae5' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" style="font-size:12px;">Follow badge text</label>
+                    <input type="color" name="sp_follower_discount_color" class="form-control form-control-color w-100" value="{{ sp.follower_discount_color|default:'#059669' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" style="font-size:12px;">Follow badge border</label>
+                    <input type="color" name="sp_follower_discount_border" class="form-control form-control-color w-100" value="{{ sp.follower_discount_border|default:'#6ee7b7' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" style="font-size:12px;">Close button bg</label>
+                    <input type="color" name="sp_close_btn_bg" class="form-control form-control-color w-100" value="{{ sp.close_btn_bg|default:'#f1f5f9' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" style="font-size:12px;">Close button icon</label>
+                    <input type="color" name="sp_close_btn_color" class="form-control form-control-color w-100" value="{{ sp.close_btn_color|default:'#64748b' }}">
+                </div>
+                <input type="hidden" name="sp_overlay_blur_px" value="{{ sp.overlay_blur_px|default:4 }}">
+                <input type="hidden" name="sp_modal_border_width_px" value="{{ sp.modal_border_width_px|default:3 }}">
+                <input type="hidden" name="sp_modal_radius_px" value="{{ sp.modal_radius_px|default:28 }}">
+                <input type="hidden" name="sp_modal_shadow" value="{{ sp.modal_shadow|default:'0 18px 50px rgba(88, 28, 135, 0.22)' }}">
+                <input type="hidden" name="sp_close_btn_hover_bg" value="{{ sp.close_btn_hover_bg|default:'#e2e8f0' }}">
+                <input type="hidden" name="sp_close_btn_hover_color" value="{{ sp.close_btn_hover_color|default:'#0f172a' }}">
+            </div>
+
+            <div class="d-flex flex-wrap gap-4 mt-3 pt-3 border-top">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="sp_show_features_section" id="spShowFeatures" {% if sp.show_features_section %}checked{% endif %}>
+                    <label class="form-check-label fw-semibold" for="spShowFeatures" style="font-size:13px;">Show features grid</label>
+                </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="sp_show_social_section" id="spShowSocial" {% if sp.show_social_section %}checked{% endif %}>
+                    <label class="form-check-label fw-semibold" for="spShowSocial" style="font-size:13px;">Show social follow section</label>
+                </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="sp_show_follower_discount_badge" id="spShowFollowBadge" {% if sp.show_follower_discount_badge %}checked{% endif %}>
+                    <label class="form-check-label fw-semibold" for="spShowFollowBadge" style="font-size:13px;">Show follower discount badge</label>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-top">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="form-label fw-bold mb-0" style="font-size:14px;"><i class="fa-solid fa-list-check text-purple me-1"></i> Popup feature tiles</label>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="addScratchFeatureBtn" style="font-size:12px;"><i class="fa-solid fa-plus me-1"></i> Add feature</button>
+                </div>
+                <div id="scratchFeaturesContainer" class="d-flex flex-column gap-2">
+                    {% for feat in sp.features %}
+                    <div class="row g-2 align-items-center scratch-feature-row p-2 border rounded bg-white">
+                        <div class="col-md-4">
+                            <input type="text" name="sp_feature_name[]" class="form-control form-control-sm" value="{{ feat.name }}" placeholder="Feature name (HTML ok)">
+                        </div>
+                        <div class="col-md-2">
+                            <input type="text" name="sp_feature_icon[]" class="form-control form-control-sm" value="{{ feat.icon }}" placeholder="fa-globe">
+                        </div>
+                        <div class="col-md-2">
+                            <input type="color" name="sp_feature_color[]" class="form-control form-control-color w-100" value="{{ feat.color|default:'#16a34a' }}">
+                        </div>
+                        <div class="col-md-2">
+                            <input type="color" name="sp_feature_bg_color[]" class="form-control form-control-color w-100" value="{{ feat.bg_color|default:'#f0fdf4' }}">
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <button type="button" class="btn btn-sm btn-outline-danger delete-scratch-feature-btn"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endwith %}
 
     <div class="text-end mb-5">
         <button type="submit" class="btn btn-primary px-5">
@@ -967,6 +1158,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     row.querySelectorAll('input').forEach(inp => inp.value = '');
                 }
+            }
+        });
+    }
+
+    // Scratch popup feature tiles Add / Delete
+    const addScratchFeatureBtn = document.getElementById('addScratchFeatureBtn');
+    const scratchFeaturesContainer = document.getElementById('scratchFeaturesContainer');
+    if (addScratchFeatureBtn && scratchFeaturesContainer) {
+        addScratchFeatureBtn.addEventListener('click', function() {
+            const row = document.createElement('div');
+            row.className = 'row g-2 align-items-center scratch-feature-row p-2 border rounded bg-white';
+            row.innerHTML = `
+                <div class="col-md-4">
+                    <input type="text" name="sp_feature_name[]" class="form-control form-control-sm" placeholder="Feature name (HTML ok)">
+                </div>
+                <div class="col-md-2">
+                    <input type="text" name="sp_feature_icon[]" class="form-control form-control-sm" value="fa-star" placeholder="fa-globe">
+                </div>
+                <div class="col-md-2">
+                    <input type="color" name="sp_feature_color[]" class="form-control form-control-color w-100" value="#16a34a">
+                </div>
+                <div class="col-md-2">
+                    <input type="color" name="sp_feature_bg_color[]" class="form-control form-control-color w-100" value="#f0fdf4">
+                </div>
+                <div class="col-md-2 text-end">
+                    <button type="button" class="btn btn-sm btn-outline-danger delete-scratch-feature-btn"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+            `;
+            scratchFeaturesContainer.appendChild(row);
+        });
+
+        scratchFeaturesContainer.addEventListener('click', function(e) {
+            const delBtn = e.target.closest('.delete-scratch-feature-btn');
+            if (!delBtn) return;
+            const row = delBtn.closest('.scratch-feature-row');
+            if (scratchFeaturesContainer.querySelectorAll('.scratch-feature-row').length > 1) {
+                row.remove();
+            } else {
+                row.querySelectorAll('input[type="text"]').forEach(inp => inp.value = '');
             }
         });
     }
