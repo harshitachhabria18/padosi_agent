@@ -45,6 +45,27 @@
         </div>
     </div>
 
+    <div class="card mb-4" style="border-radius:14px;">
+        <div class="card-body py-3">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div>
+                    <label class="form-label fw-bold mb-0" for="previewAutoSeconds">
+                        Card → website preview delay
+                    </label>
+                    <div class="text-muted" style="font-size:12px;">
+                        Seconds to wait on the digital card before auto-switching to the profile website preview. Default: 2.
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <input type="number" min="1" max="30" step="1" name="preview_auto_advance_seconds"
+                           id="previewAutoSeconds" class="form-control" style="width:90px;"
+                           value="{{ swipe.preview_auto_advance_seconds|default:2 }}">
+                    <span class="text-muted" style="font-size:13px;">seconds</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="slides-container">
         {% for slide in swipe.slides %}
         <div class="card mb-3 slide-card" style="border-left: 4px solid {% if slide.visible %}{{ slide.color_from|default:'#10b981' }}{% else %}#f59e0b{% endif %};">

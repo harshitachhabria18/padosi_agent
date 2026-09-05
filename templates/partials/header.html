@@ -8,6 +8,7 @@
                     <img src="{% static 'img/logo.webp' %}" alt="PadosiAgent Logo" class="img-fluid" width="150" height="50" fetchpriority="high">
                 </figure>
             </a>
+            {% if not hide_site_nav %}
             <button class="navbar-toggler collapsed" type="button" data-toggle="collapse"
                 data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
                 aria-label="Toggle navigation">
@@ -128,6 +129,7 @@
                     {% endif %}
                 </div>
             </div>
+            {% endif %}
         </nav>
     </div>
 </header>

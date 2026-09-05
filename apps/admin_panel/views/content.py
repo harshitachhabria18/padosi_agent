@@ -317,8 +317,20 @@ def update_banners(request):
 
 _HEX_COLOR = re.compile(r'^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$')
 
+_DEFAULT_PREVIEW_AUTO_SECONDS = 2
+
+
+def _safe_preview_seconds(raw, default=_DEFAULT_PREVIEW_AUTO_SECONDS):
+    try:
+        value = int(str(raw).strip())
+    except (TypeError, ValueError):
+        return default
+    return max(1, min(30, value))
+
+
 _DEFAULT_REGISTRATION_SWIPE = {
     'enabled': True,
+    'preview_auto_advance_seconds': _DEFAULT_PREVIEW_AUTO_SECONDS,
     'slides': [
         {
             'title': 'Free Digital Card',
@@ -369,6 +381,7 @@ def get_registration_swipe_config(visible_only=False):
     if not isinstance(raw, dict):
         data = {
             'enabled': True,
+            'preview_auto_advance_seconds': _DEFAULT_PREVIEW_AUTO_SECONDS,
             'slides': [dict(slide) for slide in _DEFAULT_REGISTRATION_SWIPE['slides']],
         }
     else:
@@ -389,12 +402,18 @@ def get_registration_swipe_config(visible_only=False):
         enabled = raw.get('enabled')
         data = {
             'enabled': True if enabled is None else bool(enabled),
+            'preview_auto_advance_seconds': _safe_preview_seconds(
+                raw.get('preview_auto_advance_seconds'), _DEFAULT_PREVIEW_AUTO_SECONDS
+            ),
             'slides': slides,
         }
 
     if visible_only:
         data = {
             'enabled': data['enabled'],
+            'preview_auto_advance_seconds': data.get(
+                'preview_auto_advance_seconds', _DEFAULT_PREVIEW_AUTO_SECONDS
+            ),
             'slides': [s for s in data['slides'] if s.get('visible', True)],
         }
     return data
@@ -436,6 +455,10 @@ def update_registration_cards(request):
 
         payload = {
             'enabled': 'swipe_enabled' in request.POST,
+            'preview_auto_advance_seconds': _safe_preview_seconds(
+                request.POST.get('preview_auto_advance_seconds'),
+                _DEFAULT_PREVIEW_AUTO_SECONDS,
+            ),
             'slides': slides or [dict(s) for s in _DEFAULT_REGISTRATION_SWIPE['slides']],
         }
         SiteSetting.set_value('registration_swipe_cards', payload, 'registration')

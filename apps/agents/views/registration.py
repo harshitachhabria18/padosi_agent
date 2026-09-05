@@ -139,6 +139,26 @@ _PROFESSIONAL_PLAN_UI_FEATURES = [
     {'name': 'AI Auto-fill &<br>Suggestions', 'icon': 'fa-wand-magic-sparkles', 'color': '#8b5cf6', 'bg_color': '#f5f3ff'},
 ]
 
+_PLAN_COMPARISON_ROWS = [
+    {'name': 'Permanent Webpage', 'starter': True, 'professional': True},
+    {'name': 'Professional Digital Card', 'starter': True, 'professional': True},
+    {'name': 'Licensed Badge', 'starter': True, 'professional': True},
+    {'name': 'Call & WhatsApp Buttons', 'starter': True, 'professional': True},
+    {'name': 'Customer Review & Rating', 'starter': True, 'professional': True},
+    {'name': 'Profile QR', 'starter': True, 'professional': True},
+    {'name': 'Review & Rating QR', 'starter': True, 'professional': True},
+    {'name': 'Product Showcase', 'starter': True, 'professional': True},
+    {'name': 'Visibility in Your Pin Code', 'starter': True, 'professional': True},
+    {'name': 'Downloadable Digital Card', 'starter': True, 'professional': True},
+    {'name': 'New Business Leads', 'starter': True, 'professional': 'priority'},
+    {'name': 'Trusted Badge', 'starter': False, 'professional': True},
+    {'name': 'Lead Preferences', 'starter': False, 'professional': True},
+    {'name': 'SEO – Google will know you', 'starter': False, 'professional': True},
+    {'name': 'AIO & GEO', 'starter': False, 'professional': True},
+    {'name': 'Profile Analytics', 'starter': False, 'professional': True},
+    {'name': 'Gallery', 'starter': False, 'professional': True},
+    {'name': 'AI Auto-fill & Suggestions', 'starter': False, 'professional': True},
+]
 
 def _tier_optional_float(tier, key):
     """Return a float from a tier field, or None if missing/blank."""
@@ -673,6 +693,10 @@ def _get_registration_context(request):
         'prefilledPromo': prefilled_promo,
         'registration_swipe_enabled': bool(swipe.get('enabled')) and bool(swipe.get('slides')),
         'registration_swipe_slides': swipe.get('slides') or [],
+        'preview_auto_advance_ms': int(swipe.get('preview_auto_advance_seconds') or 2) * 1000,
+        'hide_site_nav': True,
+        'hide_footer': True,
+        'hide_chatbot': True,
     }
 
 
@@ -1483,6 +1507,10 @@ def chooseplan(request):
         'urgency_line_2': urgency_line_2,
         'starter_plan_features': _STARTER_PLAN_UI_FEATURES,
         'professional_plan_features': _PROFESSIONAL_PLAN_UI_FEATURES,
+        'plan_comparison_rows': _PLAN_COMPARISON_ROWS,
+        'hide_site_nav': True,
+        'hide_footer': True,
+        'hide_chatbot': True,
     }
 
     return render(request, 'agents/plans.html', context)
@@ -2448,6 +2476,7 @@ def payment_complete(request):
     return render(request, 'agents/payment_complete.html', {
         'agent_name': (getattr(agent, 'fullname', '') or '').strip(),
         'redirect_url': redirect_url,
+        'hide_chatbot': True,
     })
 
 

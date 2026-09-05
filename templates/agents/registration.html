@@ -2,6 +2,7 @@
 {% load static %}
 
 {% block title %}Agent Registration | PadosiAgent{% endblock %}
+{% block chatbot_widget %}{% endblock %}
 
 {% block extra_css %}
     <!-- Google Fonts -->
@@ -177,6 +178,95 @@
                         justify-content: center;
                         min-height: min(68vh, 540px);
                     }
+                    .reg-preview-card-stack {
+                        position: relative;
+                        width: 100%;
+                        max-width: 980px;
+                        margin: 0 auto;
+                        padding-top: 44px;
+                    }
+                    .reg-preview-edit-btn {
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        z-index: 8;
+                        height: 36px;
+                        padding: 0 12px;
+                        border-radius: 999px;
+                        background: #fff;
+                        color: #0f172a;
+                        border: 1px solid rgba(16, 185, 129, 0.35);
+                        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18);
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 6px;
+                        font-size: 13px;
+                        font-weight: 700;
+                    }
+                    .reg-preview-edit-btn:hover {
+                        background: #ecfdf5;
+                        color: #047857;
+                        border-color: #10b981;
+                    }
+                    .reg-preview-url-hero {
+                        width: 100%;
+                        padding: 16px 18px;
+                        background: linear-gradient(135deg, #065f46 0%, #0f766e 50%, #1d4ed8 100%);
+                        text-align: center;
+                    }
+                    .reg-preview-portfolio-layout {
+                        display: flex;
+                        flex-direction: column;
+                        width: 100%;
+                        gap: 0;
+                    }
+                    .reg-preview-url-section {
+                        width: 100%;
+                        border-radius: 16px;
+                        overflow: hidden;
+                        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.22);
+                    }
+                    .reg-preview-url-gap {
+                        width: 100%;
+                        height: 16px;
+                        background: #383b48;
+                        flex-shrink: 0;
+                    }
+                    .reg-preview-url-hero-label {
+                        display: block;
+                        font-size: 11px;
+                        font-weight: 700;
+                        letter-spacing: 0.08em;
+                        text-transform: uppercase;
+                        color: rgba(236, 253, 245, 0.85);
+                        margin-bottom: 6px;
+                    }
+                    .reg-preview-url-hero-text {
+                        display: block;
+                        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+                        font-size: 14px;
+                        font-weight: 800;
+                        color: #fff;
+                        word-break: break-all;
+                        line-height: 1.35;
+                    }
+                    @media (max-width: 639px) {
+                        .reg-preview-card-stack {
+                            padding-top: 40px;
+                        }
+                        .reg-preview-edit-btn {
+                            height: 34px;
+                            padding: 0 10px;
+                            font-size: 12px;
+                        }
+                        .reg-preview-url-hero-text {
+                            font-size: 12px;
+                        }
+                        .reg-preview-url-gap {
+                            height: 14px;
+                        }
+                    }
                 </style>
     <!-- Registration spark celebration -->
     <link rel="stylesheet" href="{% static 'css/registration-celebration.css' %}">
@@ -289,8 +379,9 @@
                                                 </div>
                                                 <div x-show="editName || name.trim().length <= 1"
                                                     class="flex min-w-0 items-center gap-1">
-                                                    <input x-ref="nameInput" type="text" x-model="name"
-                                                        @input="name = name.replace(/[^a-zA-Z\s.-]/g, ''); slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''); checkSlug(); delete errors.fullname"
+                                                    <input x-ref="nameInput" type="text" inputmode="text" enterkeyhint="next" autocomplete="name" x-model="name"
+                                                        @input="onNameInput()"
+                                                        @keydown.enter.prevent="if (name.trim().length >= 2) focusPincode()"
                                                         @focus="editName = true" @blur="editName = false"
                                                         placeholder="Your full name *"
                                                         class="h-9 w-full border border-dashed rounded border-primary/40 bg-primary/[0.04] px-2 text-base font-bold outline-none focus-visible:ring-1"
@@ -334,9 +425,10 @@
                                                         class="flex min-w-0 items-center gap-1 min-w-0 flex-1">
                                                         <span class="inline-flex min-w-0 flex-1 items-center gap-1">
                                                             <i data-lucide="map-pin" class="h-3 w-3 shrink-0"></i>
-                                                            <input x-ref="pinInput" type="text" x-model="pincode"
+                                                            <input x-ref="pinInput" type="text" inputmode="numeric" enterkeyhint="next" maxlength="6" x-model="pincode"
                                                                 @focus="editPin = true"
-                                                                @input="pincode = pincode.replace(/\D/g, '').slice(0,6); pinVerified = false; if (pincode.length === 6) { checkPin(); } else { state = ''; city = ''; } delete errors.agent_pincode"
+                                                                @input="onPincodeInput()"
+                                                                @keydown.enter.prevent="if (isValidPincode) focusIrdai()"
                                                                 @blur="editPin = false" placeholder="Pin code *"
                                                                 class="h-8 w-full min-w-0 border border-dashed rounded border-primary/40 bg-primary/[0.04] px-2 text-sm font-bold outline-none focus-visible:ring-1"
                                                                 :class="{'border-destructive focus-visible:ring-destructive': errors.agent_pincode}">
@@ -378,9 +470,12 @@
                                                 </div>
                                                 <div x-show="editPan || !isPanValid" class="mt-1">
                                                     <input x-ref="panInput" type="text" x-model="pan" maxlength="10"
-                                                        autocomplete="off" spellcheck="false"
+                                                        autocomplete="off" spellcheck="false" autocapitalize="characters"
+                                                        enterkeyhint="next"
+                                                        :inputmode="panInputMode"
                                                         @focus="editPan = true"
                                                         @input="handlePanInput()"
+                                                        @keydown.enter.prevent="if (isPanValid) focusExperience()"
                                                         @blur="editPan = false" placeholder="AAAAA9999A"
                                                         class="h-9 w-full border border-dashed rounded border-primary/40 bg-card px-2 text-sm font-extrabold tracking-wider uppercase placeholder:text-xs placeholder:tracking-normal placeholder:normal-case outline-none focus-visible:ring-1"
                                                         :class="{'border-destructive focus-visible:ring-destructive': errors.pan_number}">
@@ -448,8 +543,8 @@
                                             <!-- Claims Settled -->
                                             <div class="min-w-0 px-1 py-1.5 text-center border-t sm:border-t-0">
                                                 <p
-                                                    class="mb-1 truncate text-[10px] sm:text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                                                    Settled</p>
+                                                    class="mb-1 text-[10px] sm:text-xs font-bold uppercase tracking-wide leading-tight text-muted-foreground">
+                                                    Claim Settled</p>
                                                 <div x-show="!editSettled && claimsSettled"
                                                     class="group flex min-w-0 items-center justify-center gap-1">
                                                     <span class="truncate text-sm font-extrabold text-foreground"
@@ -487,8 +582,9 @@
                                                 <div x-show="editClaims || !claimAmount">
                                                     <input x-ref="claimsInput" type="text" inputmode="numeric" maxlength="3"
                                                         x-model="claimAmount"
-                                                        @focus="editClaims = true"
-                                                        @input="advanceStat('claimAmount', 3)"
+                                                        @focus="editClaims = true; insuranceCapture = false"
+                                                        @input="onClaimAmountInput()"
+                                                        @keydown="onClaimAmountKeydown($event)"
                                                         @blur="editClaims = false" placeholder="₹ Lacs"
                                                         class="h-9 w-full rounded-md border border-dashed border-primary/40 bg-primary/[0.04] px-1 text-center text-sm font-extrabold text-foreground placeholder:text-xs sm:text-sm placeholder:font-semibold placeholder:text-muted-foreground/70 focus-visible:ring-1 outline-none">
                                                 </div>
@@ -497,7 +593,10 @@
                                         </div>
 
                                         <!-- Insurance Segments -->
-                                        <div class="mt-4 rounded-lg border border-primary/20 bg-primary/[0.04] px-2 py-1.5">
+                                        <div x-ref="insuranceSell" tabindex="0"
+                                            @focus="insuranceCapture = true"
+                                            @keydown="selectNextInsuranceFromKey($event)"
+                                            class="mt-4 rounded-lg border border-primary/20 bg-primary/[0.04] px-2 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
                                             <p
                                                 class="text-xs sm:text-sm font-bold uppercase tracking-[0.12em] text-primary">
                                                 Insurance you sell</p>
@@ -514,6 +613,9 @@
                                                     </button>
                                                 </template>
                                             </div>
+                                            <p x-show="insuranceCapture && !segments.length" class="mt-1 text-[10px] sm:text-xs text-muted-foreground">
+                                                Press any key to select Health, then Life, Motor, SME.
+                                            </p>
                                             <span x-show="errors.segments" x-text="errors.segments?.[0]"
                                                 class="text-destructive text-xs mt-1 block font-medium"></span>
                                         </div>
@@ -539,9 +641,10 @@
                                             <div x-show="editPhone || !isPhoneValid"
                                                 class="flex h-10 min-w-0 flex-1 items-center gap-1 rounded-lg bg-primary/10 px-1.5">
                                                 <i data-lucide="phone" class="h-3.5 w-3.5 shrink-0 text-primary"></i>
-                                                <input x-ref="phoneInput" type="tel" x-model="phone"
+                                                <input x-ref="phoneInput" type="tel" inputmode="numeric" enterkeyhint="next" autocomplete="tel" maxlength="10" x-model="phone"
                                                     @focus="editPhone = true"
                                                     @input="handlePhoneInput(); delete errors.mobile"
+                                                    @keydown.enter.prevent="if (isPhoneValid) focusSlug()"
                                                     @blur="editPhone = false" placeholder="Mobile no *"
                                                     class="h-7 min-w-0 flex-1 border border-dashed rounded border-primary/40 bg-card px-1 text-center text-sm font-bold placeholder:text-xs sm:text-sm outline-none focus-visible:ring-1"
                                                     :class="{'border-destructive focus-visible:ring-destructive': errors.mobile}">
@@ -565,8 +668,9 @@
                                             <div x-show="editWa || !isWaValid"
                                                 class="flex h-10 min-w-0 flex-1 items-center gap-1 rounded-lg bg-[#25D366]/15 px-1.5">
                                                 <i data-lucide="message-circle" class="h-4 w-4 shrink-0 text-[#128C4B]"></i>
-                                                <input x-ref="waInput" type="tel" x-model="whatsapp" @focus="editWa = true"
+                                                <input x-ref="waInput" type="tel" inputmode="numeric" enterkeyhint="next" autocomplete="tel" maxlength="10" x-model="whatsapp" @focus="editWa = true"
                                                     @input="handleWhatsappInput(); delete errors.whatsapp"
+                                                    @keydown.enter.prevent="if (isPhoneValid) focusSlug()"
                                                     @blur="editWa = false" placeholder="WhatsApp no"
                                                     class="h-7 min-w-0 flex-1 border border-dashed rounded border-[#25D366]/60 bg-card px-1 text-center text-sm font-bold placeholder:text-xs sm:text-sm outline-none focus-visible:ring-1"
                                                     :class="{'border-destructive focus-visible:ring-destructive': errors.whatsapp}">
@@ -616,7 +720,9 @@
                                             <span
                                                 class="pl-2 pr-1 text-sm font-medium text-muted-foreground truncate max-w-[50%] sm:max-w-none"
                                                 x-text="profileBaseUrl">padosiagent.com/profile/</span>
-                                            <input type="text" x-model="slug" @input="slug = slug.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''); checkSlug()"
+                                            <input x-ref="slugInput" type="text" inputmode="text" enterkeyhint="next" autocapitalize="none" autocomplete="off" x-model="slug"
+                                                @input="onSlugInput()"
+                                                @keydown.enter.prevent="if (slug.length >= 3) focusEmail()"
                                                 class="flex-1 min-w-0 bg-transparent px-1 py-1 text-sm font-bold outline-none placeholder:font-normal placeholder:text-muted-foreground"
                                                 :class="slug.length > 0 ? 'bg-clip-text text-transparent bg-gradient-to-r from-purple-500 via-pink-500 to-red-500' : 'text-foreground'"
                                                 placeholder="your-name">
@@ -656,7 +762,7 @@
                                                         Already registered</span>
                                                 </template>
                                             </div>
-                                            <input type="email" x-model="email"
+                                            <input x-ref="emailInput" type="email" inputmode="email" enterkeyhint="done" autocomplete="email" x-model="email"
                                                 @input="email = email.replace(/\s/g, ''); delete errors.email; checkEmail()"
                                                 @blur="checkEmailNow()"
                                                 placeholder="Enter your email address *"
@@ -769,19 +875,13 @@
         <template x-teleport="body">
         <div x-show="showPreviewModal" style="display: none;"
             class="reg-preview-overlay fixed inset-0 z-50 flex flex-col"
-            @keydown.escape.window="showPreviewModal = false">
+            @keydown.escape.window="showPreviewModal = false"
+            @touchstart.passive="onPreviewTouchStart($event)"
+            @touchend="onPreviewTouchEnd($event)">
 
             <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md" @click="showPreviewModal = false"></div>
 
-            <button type="button"
-                @click="showPreviewModal = false"
-                title="Edit details"
-                aria-label="Edit details"
-                class="absolute top-4 left-4 sm:top-6 sm:left-6 z-20 h-11 w-11 rounded-full bg-white text-slate-700 shadow-lg border border-white/80 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 transition-all inline-flex items-center justify-center">
-                <i data-lucide="pencil" class="h-4 w-4"></i>
-            </button>
-
-            <div class="relative z-10 flex-1 overflow-y-auto px-3 sm:px-6 pt-20 pb-28">
+            <div class="relative z-10 flex-1 overflow-y-auto px-3 sm:px-6 pt-6 pb-28">
                 <div class="w-full mx-auto max-w-5xl reg-preview-stage">
 
                     <!-- Slide 0: Directory card only -->
@@ -793,6 +893,15 @@
                         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                         x-transition:leave-end="opacity-0 -translate-y-4 scale-[0.98]"
                         class="reg-preview-slide reg-preview-slide--card reg-preview-directory-card">
+                        <div class="reg-preview-card-stack">
+                        <button type="button"
+                            @click="showPreviewModal = false"
+                            title="Edit details"
+                            aria-label="Edit details"
+                            class="reg-preview-edit-btn">
+                            <i data-lucide="pencil" class="h-3.5 w-3.5"></i>
+                            <span>Edit</span>
+                        </button>
                         <div class="react-agent-card find-agents-list-item">
                             <!-- Desktop Card -->
                             <div class="rac-card rac-desktop-card">
@@ -1029,6 +1138,7 @@
                                 </div>
                             </div>
                         </div>
+                        </div>
                     </div>
 
                     <!-- Slide 1: Public profile website -->
@@ -1039,9 +1149,21 @@
                         x-transition:leave="transition ease-in duration-1000"
                         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                         x-transition:leave-end="opacity-0 -translate-y-4 scale-[0.98]"
-                        class="reg-preview-slide space-y-4">
+                        class="reg-preview-slide reg-preview-slide--portfolio">
 
-                        <!-- Full Profile Container with shared agent-profile-view styles -->
+                        <div class="reg-preview-portfolio-layout">
+                            <!-- Section 1: Personal URL only -->
+                            <div class="reg-preview-url-section">
+                                <div class="reg-preview-url-hero">
+                                    <span class="reg-preview-url-hero-label">Your personal website URL</span>
+                                    <span class="reg-preview-url-hero-text" x-text="profileHighlightUrl"></span>
+                                </div>
+                            </div>
+
+                            <!-- Blank spacer between URL and profile -->
+                            <div class="reg-preview-url-gap" aria-hidden="true"></div>
+
+                            <!-- Section 2: Profile website -->
                         <div class="profile-view-wrapper rounded-2xl border border-border shadow-md overflow-hidden bg-[#f8fafc] text-left">
                             
                             <!-- Profile Banner -->
@@ -1138,7 +1260,7 @@
                                                 </template>
                                             </div>
 
-                                            <!-- Reviews Summary & Profile URL Badge -->
+                                            <!-- Reviews Summary -->
                                             <div class="flex flex-wrap items-center gap-3">
                                                 <div class="reviews-summary pointer-events-none">
                                                     <div class="stars flex gap-1">
@@ -1149,9 +1271,6 @@
                                                         <i class="fas fa-star text-amber-500"></i>
                                                     </div>
                                                     <span>5.0 (48 reviews)</span>
-                                                </div>
-                                                <div class="text-xs bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1.5 rounded-full font-mono font-semibold truncate max-w-[280px]">
-                                                    <i class="fas fa-link mr-1"></i> <span x-text="profileBaseUrl + (slug || 'dishant-shah')"></span>
                                                 </div>
                                             </div>
                                         </div>
@@ -1377,12 +1496,19 @@
                                 </div>
                             </div>
                         </div>
+                        </div>
                     </div>
 
                 </div>
             </div>
 
-            <div class="absolute bottom-5 sm:bottom-7 inset-x-0 z-20 flex items-center justify-center pointer-events-none">
+            <div class="absolute bottom-5 sm:bottom-7 inset-x-0 z-20 flex flex-col items-center justify-center pointer-events-none gap-3">
+                <div class="pointer-events-none flex items-center gap-2">
+                    <span class="h-2 w-2 rounded-full transition-all duration-300"
+                        :class="previewSlide === 0 ? 'bg-emerald-400 scale-110' : 'bg-white/40'"></span>
+                    <span class="h-2 w-2 rounded-full transition-all duration-300"
+                        :class="previewSlide === 1 ? 'bg-emerald-400 scale-110' : 'bg-white/40'"></span>
+                </div>
                 <div class="pointer-events-auto flex items-center justify-center gap-5 sm:gap-8 px-4">
                     <button type="button" @click="cyclePreview(-1)" class="reg-preview-nav-btn" title="Previous" aria-label="Previous">
                         <i data-lucide="chevron-left" class="h-5 w-5"></i>
@@ -1543,7 +1669,10 @@
                 previewSlide: 0,
                 previewAutoTimer: null,
                 previewAutoDone: false,
+                previewAutoAdvanceMs: {{ preview_auto_advance_ms|default:2000 }},
                 celebrationShowing: false,
+                previewTouchStartX: 0,
+                previewTouchStartY: 0,
                 editName: false,
                 editPin: false,
                 editPan: false,
@@ -1556,6 +1685,9 @@
                 editWa: false,
                 lookingUpPin: false,
                 pinVerified: false,
+                panInputMode: 'text',
+                insuranceCapture: false,
+                _panKeyboardTimer: null,
 
                 segmentOptions: [
                     { id: 'health', label: 'Health', icon: 'heart' },
@@ -1668,12 +1800,13 @@
                 schedulePreviewAutoAdvance() {
                     this.clearPreviewAutoTimer();
                     if (this.previewAutoDone) return;
+                    const delay = Number(this.previewAutoAdvanceMs);
                     this.previewAutoTimer = setTimeout(() => {
                         if (this.showPreviewModal && this.previewSlide === 0 && !this.previewAutoDone) {
                             this.previewAutoDone = true;
                             this.goPreviewSlide(1);
                         }
-                    }, 5000);
+                    }, Number.isFinite(delay) && delay > 0 ? delay : 2000);
                 },
 
                 goPreviewSlide(slide) {
@@ -1688,6 +1821,77 @@
                     this.goPreviewSlide((this.previewSlide + dir + 2) % 2);
                 },
 
+                onPreviewTouchStart(e) {
+                    if (!e.touches || !e.touches.length) return;
+                    this.previewTouchStartX = e.touches[0].clientX;
+                    this.previewTouchStartY = e.touches[0].clientY;
+                },
+
+                onPreviewTouchEnd(e) {
+                    if (!e.changedTouches || !e.changedTouches.length) return;
+                    const dx = e.changedTouches[0].clientX - this.previewTouchStartX;
+                    const dy = e.changedTouches[0].clientY - this.previewTouchStartY;
+                    if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+                        this.cyclePreview(dx < 0 ? 1 : -1);
+                    }
+                },
+
+                focusField(refName, editFlag) {
+                    if (editFlag) this[editFlag] = true;
+                    this.$nextTick(() => {
+                        const el = this.$refs[refName];
+                        if (el) el.focus();
+                    });
+                },
+
+                focusPincode() {
+                    this.editName = false;
+                    this.focusField('pinInput', 'editPin');
+                },
+
+                focusPhone() {
+                    this.insuranceCapture = false;
+                    this.editPhone = true;
+                    this.focusField('phoneInput', 'editPhone');
+                },
+
+                focusSlug() {
+                    this.editPhone = false;
+                    this.editWa = false;
+                    this.focusField('slugInput');
+                },
+
+                focusEmail() {
+                    this.focusField('emailInput');
+                },
+
+                onNameInput() {
+                    this.name = this.name.replace(/[^a-zA-Z\s.-]/g, '');
+                    this.slug = this.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                    this.checkSlug();
+                    delete this.errors.fullname;
+                    if (this.name.trim().length >= 2 && !this.isValidPincode && !this.pincode) {
+                        clearTimeout(this._nameAdvanceTimer);
+                        this._nameAdvanceTimer = setTimeout(() => {
+                            if (this.name.trim().length >= 2 && document.activeElement === this.$refs.nameInput) {
+                                this.focusPincode();
+                            }
+                        }, 600);
+                    }
+                },
+
+                onSlugInput() {
+                    this.slug = this.slug.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                    this.checkSlug();
+                    if (this.slug.length >= 3 && this.isPhoneValid) {
+                        clearTimeout(this._slugAdvanceTimer);
+                        this._slugAdvanceTimer = setTimeout(() => {
+                            if (this.slug.length >= 3 && document.activeElement === this.$refs.slugInput) {
+                                this.focusEmail();
+                            }
+                        }, 400);
+                    }
+                },
 
                 stateCodeMap: {
                     'andaman and nicobar islands': 'an',
@@ -1751,6 +1955,18 @@
                     return `padosiagent.com/profile/${this.stateCode ? this.stateCode + '/' : ''}`;
                 },
 
+                get profileHighlightUrl() {
+                    const slug = (this.slug || this.name || 'your-name')
+                        .toString()
+                        .trim()
+                        .toLowerCase()
+                        .replace(/\s+/g, '-')
+                        .replace(/[^a-z0-9-]/g, '')
+                        .replace(/^-+|-+$/g, '') || 'your-name';
+                    const state = this.stateCode || 'in';
+                    return `padosiagent.com/profile/${state}/${slug}`;
+                },
+
                 get initials() {
                     if (!this.name) return 'YOU';
                     return this.name.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'YOU';
@@ -1809,6 +2025,68 @@
                         this.segments.length > 0;
                 },
 
+                panModeForLength(len) {
+                    // AAAAA 9999 A — letters, then digits, then last letter
+                    if (len < 5) return 'text';
+                    if (len < 9) return 'numeric';
+                    return 'text';
+                },
+
+                applyPanKeyboard(len) {
+                    const nextMode = this.panModeForLength(len);
+                    if (nextMode === this.panInputMode) return;
+                    this.panInputMode = nextMode;
+                    this.refreshPanKeyboard();
+                },
+
+                refreshPanKeyboard() {
+                    const el = this.$refs.panInput;
+                    if (!el || document.activeElement !== el) return;
+                    const pos = (this.pan || '').length;
+                    clearTimeout(this._panKeyboardTimer);
+                    el.blur();
+                    this.editPan = true;
+                    this._panKeyboardTimer = setTimeout(() => {
+                        const input = this.$refs.panInput;
+                        if (!input) return;
+                        this.editPan = true;
+                        input.focus();
+                        try { input.setSelectionRange(pos, pos); } catch (e) {}
+                    }, 50);
+                },
+
+                focusIrdai() {
+                    this.editPin = false;
+                    this.editPan = true;
+                    this.applyPanKeyboard((this.pan || '').length);
+                    this.$nextTick(() => {
+                        const el = this.$refs.panInput;
+                        if (el) el.focus();
+                    });
+                },
+
+                focusExperience() {
+                    this.editPan = false;
+                    this.editExp = true;
+                    this.$nextTick(() => {
+                        const el = this.$refs.expInput;
+                        if (el) el.focus();
+                    });
+                },
+
+                onPincodeInput() {
+                    this.pincode = String(this.pincode || '').replace(/\D/g, '').slice(0, 6);
+                    this.pinVerified = false;
+                    if (this.pincode.length === 6) {
+                        this.checkPin();
+                        this.focusIrdai();
+                    } else {
+                        this.state = '';
+                        this.city = '';
+                    }
+                    delete this.errors.agent_pincode;
+                },
+
                 handlePanInput() {
                     const raw = (this.pan || '').toUpperCase();
                     let result = '';
@@ -1825,6 +2103,8 @@
                     }
                     this.pan = result;
                     delete this.errors.pan_number;
+                    this.applyPanKeyboard(this.pan.length);
+                    if (this.pan.length === 10) this.focusExperience();
                 },
 
                 advanceStat(field, maxLen, nextRef, nextEditFlag) {
@@ -1838,11 +2118,62 @@
                     }
                 },
 
+                focusInsuranceSell() {
+                    this.editClaims = false;
+                    this.insuranceCapture = true;
+                    this.$nextTick(() => {
+                        const el = this.$refs.insuranceSell;
+                        if (el) el.focus();
+                    });
+                },
+
+                onClaimAmountInput() {
+                    this.advanceStat('claimAmount', 3);
+                    if (String(this.claimAmount || '').length >= 3) {
+                        this.focusInsuranceSell();
+                    }
+                },
+
+                onClaimAmountKeydown(e) {
+                    const filled = String(this.claimAmount || '').length > 0;
+                    if (!filled) return;
+                    if (e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Tab') return;
+                    if (/^[0-9]$/.test(e.key)) return;
+                    if (e.ctrlKey || e.metaKey || e.altKey) return;
+                    e.preventDefault();
+                    this.focusInsuranceSell();
+                    if (e.key !== 'Enter') {
+                        this.$nextTick(() => this.selectNextInsuranceFromKey(e));
+                    }
+                },
+
+                selectNextInsuranceFromKey(e) {
+                    if (!this.insuranceCapture) return;
+                    if (e.ctrlKey || e.metaKey || e.altKey) return;
+                    if (['Tab', 'Shift', 'Escape', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
+                    e.preventDefault();
+                    if (e.key === 'Backspace') {
+                        const selected = this.segmentOptions.map(s => s.id).filter(id => this.segments.includes(id));
+                        const last = selected[selected.length - 1];
+                        if (last) this.toggleSegment(last);
+                        return;
+                    }
+                    const next = this.segmentOptions.find(s => !this.segments.includes(s.id));
+                    if (next) {
+                        this.toggleSegment(next.id);
+                        delete this.errors.segments;
+                    } else if (this.segments.length > 0) {
+                        this.focusPhone();
+                    }
+                },
+
                 handlePhoneInput() {
                     this.phone = this.phone.replace(/\D/g, '').slice(0, 10);
-                    // Auto sync whatsapp if they match or whatsapp is empty
                     if (!this.whatsapp || this.whatsapp === this.phone.slice(0, -1)) {
                         this.whatsapp = this.phone;
+                    }
+                    if (/^[6-9]\d{9}$/.test(this.phone) && document.activeElement === this.$refs.phoneInput) {
+                        this.focusSlug();
                     }
                 },
 
@@ -1965,8 +2296,9 @@
                     } else {
                         this.segments.push(id);
                     }
-                    // Avoid lucide.createIcons() here, as x-html renders the <i> once and lucide converts it.
-                    // Instead, trigger a re-scan only on the new elements if they were just added to DOM (which they aren't, they are always present).
+                    if (this.segments.length === this.segmentOptions.length) {
+                        this.focusPhone();
+                    }
                 },
 
                 toggleMf(id) {

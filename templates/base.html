@@ -279,7 +279,9 @@
     
     <script src="{% static 'js/preloader.js' %}" defer></script>
     {% block chatbot_widget %}
+        {% if not hide_chatbot %}
         {% include 'chatbot/widget.html' %}
+        {% endif %}
     {% endblock %}
     {% block modals %}{% endblock %}
     {% block extra_js %}{% endblock %}
