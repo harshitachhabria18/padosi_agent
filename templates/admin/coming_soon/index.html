@@ -1,0 +1,326 @@
+{% extends "admin/base.html" %}
+{% block breadcrumb_title %}Coming Soon Manager{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cs-plan-tab-btn {
+        border: 2px solid transparent;
+        border-radius: 10px;
+        padding: 9px 26px;
+        font-weight: 700;
+        font-size: 14px;
+        cursor: pointer;
+        background: var(--bg-body, #f8f9fa);
+        color: var(--text-muted, #6c757d);
+        transition: all 0.2s;
+    }
+    .cs-plan-tab-btn.active-starter {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: #fff;
+        border-color: #d97706;
+        box-shadow: 0 2px 10px rgba(245,158,11,.35);
+    }
+    .cs-plan-tab-btn.active-professional {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: #fff;
+        border-color: #059669;
+        box-shadow: 0 2px 10px rgba(16,185,129,.35);
+    }
+    .cs-editor-area {
+        font-family: "Courier New", Courier, monospace;
+        font-size: 13px;
+        border-radius: 8px;
+        resize: vertical;
+        background: var(--bg-body, #f8f9fa);
+        border: 1.5px solid var(--border-color, #e2e8f0);
+        color: var(--text-dark, #1a202c);
+        padding: 14px;
+        line-height: 1.7;
+        transition: border-color 0.2s;
+        min-height: 360px;
+    }
+    .cs-editor-area:focus {
+        outline: none;
+        border-color: var(--primary, #1d7d5d);
+        box-shadow: 0 0 0 3px rgba(29,125,93,.1);
+    }
+    .cs-info-banner {
+        background: linear-gradient(135deg, rgba(29,125,93,.08), rgba(16,185,129,.05));
+        border: 1px solid rgba(29,125,93,.18);
+        border-radius: 12px;
+        padding: 16px 20px;
+    }
+    #csPreviewIframe {
+        width: 100%;
+        border: none;
+        border-radius: 8px;
+        min-height: 440px;
+        background: #fff;
+    }
+    .plan-badge-starter  { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; border-radius: 20px; padding: 3px 12px; font-size: 12px; font-weight: 700; }
+    .plan-badge-pro      { background: #d1fae5; color: #065f46; border: 1px solid #10b981; border-radius: 20px; padding: 3px 12px; font-size: 12px; font-weight: 700; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .status-dot.has-content { background: #10b981; }
+    .status-dot.no-content  { background: #d1d5db; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+        <div>
+            <h4 class="mb-1 font-weight-bold text-dark">
+                <i class="fa-solid fa-rocket me-2" style="color: var(--primary);"></i> Coming Soon Manager
+            </h4>
+            <p class="text-muted mb-0 small">
+                Write plan-specific HTML content that agents will see as a <strong>Coming Soon</strong> tab in their dashboard.
+            </p>
+        </div>
+        <!-- Status Summary -->
+        <div class="d-flex gap-3">
+            <span class="d-flex align-items-center gap-2 small">
+                <span class="status-dot {% if coming_soon_starter_html %}has-content{% else %}no-content{% endif %}" title="{% if coming_soon_starter_html %}Starter: Content saved{% else %}Starter: No content yet{% endif %}"></span>
+                <span class="plan-badge-starter">⭐ Starter</span>
+            </span>
+            <span class="d-flex align-items-center gap-2 small">
+                <span class="status-dot {% if coming_soon_professional_html %}has-content{% else %}no-content{% endif %}" title="{% if coming_soon_professional_html %}Professional: Content saved{% else %}Professional: No content yet{% endif %}"></span>
+                <span class="plan-badge-pro">💎 Professional</span>
+            </span>
+        </div>
+
+    </div>
+
+    <!-- Info Banner -->
+    <div class="cs-info-banner mb-4">
+        <div class="d-flex align-items-start gap-3">
+            <i class="fa-solid fa-circle-info fa-lg mt-1" style="color: var(--primary);"></i>
+            <div class="small text-muted">
+                <strong class="text-dark">How it works:</strong>
+                Write any HTML in the editor below and click <strong>Save</strong>. Agents on the matching plan will immediately see a
+                <strong>"🚀 Coming Soon"</strong> tab in their Agent Dashboard, placed after the QR Codes tab.
+                Leaving the editor empty and saving will <strong>hide the tab</strong> for agents on that plan.
+            </div>
+        </div>
+    </div>
+
+    <!-- Plan Tab Switcher -->
+    <div class="d-flex gap-2 mb-4">
+        <button id="csPlanTabStarter" class="cs-plan-tab-btn active-starter" onclick="csShowPlan('starter')">
+            ⭐ Starter Plan
+        </button>
+        <button id="csPlanTabProfessional" class="cs-plan-tab-btn" onclick="csShowPlan('professional')">
+            💎 Professional Plan
+        </button>
+    </div>
+
+    <!-- ── Starter Plan Panel ── -->
+    <div id="csPanelStarter">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0 pt-4 pb-2 d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="font-weight-bold mb-0 text-dark">
+                        <i class="fa-solid fa-code me-2 text-warning"></i> Starter Plan Content
+                    </h5>
+                    <p class="text-muted small mb-0 mt-1">This HTML will appear in the dashboard of every <strong>Starter Plan</strong> agent.</p>
+                </div>
+                <span class="plan-badge-starter">⭐ Starter</span>
+            </div>
+            <div class="card-body pb-4">
+                <textarea id="csStarterEditor" class="cs-editor-area w-100"
+                    placeholder="<div class=&quot;card p-4&quot;>&#10;  <h3>🚀 Coming Soon!</h3>&#10;  <p>Exciting new features are on the way for Starter plan agents.</p>&#10;</div>">{{ coming_soon_starter_html }}</textarea>
+
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                    <button class="btn btn-warning text-white d-flex align-items-center gap-2 px-4 py-2"
+                        style="border-radius:8px; font-weight:700;" onclick="csSave('starter')">
+                        <i class="fa-solid fa-floppy-disk"></i> Save Starter Content
+                    </button>
+                    <button class="btn btn-outline-secondary d-flex align-items-center gap-2 px-3 py-2"
+                        style="border-radius:8px;" onclick="csPreview('starter')">
+                        <i class="fa-solid fa-eye"></i> Preview
+                    </button>
+                    <button class="btn btn-outline-danger d-flex align-items-center gap-2 px-3 py-2"
+                        style="border-radius:8px;" onclick="csClear('starter')">
+                        <i class="fa-solid fa-trash-can"></i> Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Professional Plan Panel ── -->
+    <div id="csPanelProfessional" style="display:none;">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0 pt-4 pb-2 d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="font-weight-bold mb-0 text-dark">
+                        <i class="fa-solid fa-code me-2 text-success"></i> Professional Plan Content
+                    </h5>
+                    <p class="text-muted small mb-0 mt-1">This HTML will appear in the dashboard of every <strong>Professional Plan</strong> agent.</p>
+                </div>
+                <span class="plan-badge-pro">💎 Professional</span>
+            </div>
+            <div class="card-body pb-4">
+                <textarea id="csProfessionalEditor" class="cs-editor-area w-100"
+                    placeholder="<div class=&quot;card p-4&quot;>&#10;  <h3>💎 Coming Soon!</h3>&#10;  <p>Premium features are on the way for Professional plan agents.</p>&#10;</div>">{{ coming_soon_professional_html }}</textarea>
+
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                    <button class="btn btn-success d-flex align-items-center gap-2 px-4 py-2"
+                        style="border-radius:8px; font-weight:700;" onclick="csSave('professional')">
+                        <i class="fa-solid fa-floppy-disk"></i> Save Professional Content
+                    </button>
+                    <button class="btn btn-outline-secondary d-flex align-items-center gap-2 px-3 py-2"
+                        style="border-radius:8px;" onclick="csPreview('professional')">
+                        <i class="fa-solid fa-eye"></i> Preview
+                    </button>
+                    <button class="btn btn-outline-danger d-flex align-items-center gap-2 px-3 py-2"
+                        style="border-radius:8px;" onclick="csClear('professional')">
+                        <i class="fa-solid fa-trash-can"></i> Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="csPreviewModal" tabindex="-1" aria-labelledby="csPreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content border-0 shadow-lg" style="border-radius:16px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title font-weight-bold text-dark" id="csPreviewModalLabel">
+                    <i class="fa-solid fa-eye me-2 text-primary"></i> Preview: <span id="csPreviewPlanLabel"></span>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close"
+                    style="background:none;border:none;font-size:28px;line-height:1;color:var(--text-muted);opacity:.8;margin-top:-10px;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body pt-2 pb-4 px-4">
+                <p class="text-muted small mb-3">
+                    This is how the <strong>Coming Soon</strong> tab content will appear to agents on this plan inside their dashboard.
+                </p>
+                <div style="border:1.5px solid var(--border-color,#e2e8f0);border-radius:12px;overflow:hidden;background:#fff;">
+                    <iframe id="csPreviewIframe" sandbox="allow-same-origin"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    var csActivePlan = 'starter';
+
+    function csShowPlan(plan) {
+        csActivePlan = plan;
+        document.getElementById('csPanelStarter').style.display      = (plan === 'starter')       ? 'block' : 'none';
+        document.getElementById('csPanelProfessional').style.display = (plan === 'professional')  ? 'block' : 'none';
+
+        var btnS = document.getElementById('csPlanTabStarter');
+        var btnP = document.getElementById('csPlanTabProfessional');
+        btnS.className = 'cs-plan-tab-btn' + (plan === 'starter' ? ' active-starter' : '');
+        btnP.className = 'cs-plan-tab-btn' + (plan === 'professional' ? ' active-professional' : '');
+    }
+
+    function csSave(plan) {
+        var editorId     = (plan === 'starter') ? 'csStarterEditor' : 'csProfessionalEditor';
+        var html_content = document.getElementById(editorId).value;
+        var csrfToken    = '{{ csrf_token }}';
+
+        fetch('{% url "admin_coming_soon_save" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': csrfToken
+            },
+            body: 'plan=' + encodeURIComponent(plan)
+                + '&html_content=' + encodeURIComponent(html_content)
+                + '&csrfmiddlewaretoken=' + encodeURIComponent(csrfToken)
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var Toast = Swal.mixin({
+                toast: true, position: 'top-end',
+                showConfirmButton: false, timer: 3000, timerProgressBar: true
+            });
+            Toast.fire({ icon: data.success ? 'success' : 'error', title: data.message });
+
+            // Update status dots on success
+            if (data.success) {
+                var dotId = (plan === 'starter') ? 'dotStarter' : 'dotPro';
+                var labelId = (plan === 'starter') ? 'labelStarter' : 'labelPro';
+                var hasContent = html_content.trim().length > 0;
+                var dot = document.getElementById(dotId);
+                var label = document.getElementById(labelId);
+                if (dot) {
+                    dot.className = 'status-dot ' + (hasContent ? 'has-content' : 'no-content');
+                }
+                if (label) label.textContent = hasContent ? 'Active' : 'Empty';
+            }
+        })
+        .catch(function() {
+            Swal.fire({
+                icon: 'error',
+                title: 'Network error',
+                text: 'Could not save content. Please try again.',
+                confirmButtonColor: '#d33'
+            });
+        });
+    }
+
+    function csPreview(plan) {
+        var editorId     = (plan === 'starter') ? 'csStarterEditor' : 'csProfessionalEditor';
+        var html_content = document.getElementById(editorId).value.trim();
+        var label        = (plan === 'starter') ? '⭐ Starter Plan' : '💎 Professional Plan';
+
+        document.getElementById('csPreviewPlanLabel').textContent = label;
+
+        var iframe = document.getElementById('csPreviewIframe');
+        var doc    = iframe.contentDocument || iframe.contentWindow.document;
+        doc.open();
+        doc.write(
+            '<!DOCTYPE html><html><head>'
+            + '<meta charset="UTF-8">'
+            + '<meta name="viewport" content="width=device-width,initial-scale=1">'
+            + '<style>'
+            + 'body{font-family:system-ui,sans-serif;padding:28px 32px;color:#1a202c;background:#fff;line-height:1.65;}'
+            + '.card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:16px;}'
+            + 'h1,h2,h3,h4,h5{color:#1a202c;} .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;}'
+            + 'img{max-width:100%;border-radius:8px;}'
+            + '</style>'
+            + '</head><body>'
+            + (html_content || '<p style="color:#6b7280;">No content written yet. Type some HTML in the editor above.</p>')
+            + '</body></html>'
+        );
+        doc.close();
+
+        iframe.onload = function() {
+            try { iframe.style.height = (iframe.contentDocument.body.scrollHeight + 40) + 'px'; } catch(e) {}
+        };
+
+        var modal = new bootstrap.Modal(document.getElementById('csPreviewModal'));
+        modal.show();
+    }
+
+    function csClear(plan) {
+        var editorId = (plan === 'starter') ? 'csStarterEditor' : 'csProfessionalEditor';
+        Swal.fire({
+            title: 'Clear content?',
+            text: 'This will empty the editor. Click Save afterwards to remove the tab from agents\u2019 dashboards.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, clear it'
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                document.getElementById(editorId).value = '';
+            }
+        });
+    }
+</script>
+{% endblock %}

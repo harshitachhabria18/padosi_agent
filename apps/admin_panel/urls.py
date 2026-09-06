@@ -165,6 +165,10 @@ from .views.qr_files import (
     qr_files_destroy,
     qr_files_download,
 )
+from .views.coming_soon import (
+    coming_soon_index,
+    save_coming_soon,
+)
 from .views.plans import (
     plans_index,
     plan_create,
@@ -478,6 +482,10 @@ urlpatterns = [
     path("admin/qr-files/<int:id>/update/", qr_files_update, name="admin_qr_files_update"),
     path("admin/qr-files/<int:id>/delete/", qr_files_destroy, name="admin_qr_files_delete"),
     path("d/<str:code>/", qr_files_download, name="qr_download"),
+
+    # Coming Soon Content Manager (standalone admin section)
+    path("admin/coming-soon/", coming_soon_index, name="admin_coming_soon_index"),
+    path("admin/coming-soon/save/", save_coming_soon, name="admin_coming_soon_save"),
 
     # Staff Admin Management
     path("admin/admins/", admins_index, name="admin_admins_index"),

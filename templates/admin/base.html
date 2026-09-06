@@ -794,6 +794,13 @@
             </a>
             {% endif %}
 
+            {% if is_super_admin %}
+            <a href="{% url 'admin_coming_soon_index' %}"
+                class="menu-item {% if '/admin/coming-soon/' in request.path %}active{% endif %}">
+                <i class="fa-solid fa-rocket" style="color:#f59e0b;"></i> Coming Soon Manager
+            </a>
+            {% endif %}
+
             {% if is_super_admin or 'geocoding' in admin_permissions %}
             <a href="/admin/geocoding-manager/"
                 class="menu-item {% if '/admin/geocoding-manager/' in request.path %}active{% endif %}">

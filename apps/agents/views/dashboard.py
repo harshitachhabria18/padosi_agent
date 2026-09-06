@@ -507,6 +507,15 @@ def agent_dashboard(request):
                 'facebook_url': 'https://www.facebook.com/sharer/sharer.php?u=' + quote(target, safe=''),
             })
 
+    # ── Coming Soon tab content – fetched from admin SiteSetting per plan ──
+    _agent_plan_slug = normalize_plan_slug(agent.plan_type or '')
+    if _agent_plan_slug in ('starter', 'basic'):
+        coming_soon_html = SiteSetting.get_value('coming_soon_starter_html', '') or ''
+    elif _agent_plan_slug in ('professional', 'exclusive', 'pro'):
+        coming_soon_html = SiteSetting.get_value('coming_soon_professional_html', '') or ''
+    else:
+        coming_soon_html = ''
+
     context = {
         'agent_plan': agent_plan,
         'agent': agent,
@@ -563,6 +572,7 @@ def agent_dashboard(request):
         'prof_base': int(prof_base),
         'prof_full': int(prof_full),
         'agent_id': agent.id,
+        'coming_soon_html': coming_soon_html,
     }
 
     return render(request, 'agents/dashboard.html', context)

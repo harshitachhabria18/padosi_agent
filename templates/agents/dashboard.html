@@ -205,6 +205,11 @@
                 <li class="nav-item">
                     <a class="nav-link" href="#qrcodes" data-tab="qrcodes" data-feature="qr_codes"><i class="fas fa-qrcode mr-2"></i>QR Codes</a>
                 </li>
+                {% if coming_soon_html %}
+                <li class="nav-item">
+                    <a class="nav-link" href="#comingsoon" data-tab="comingsoon"><i class="fas fa-rocket mr-2"></i>Coming Soon</a>
+                </li>
+                {% endif %}
             </ul>
         </div>
 
@@ -468,6 +473,15 @@
             </div>
             {% endif %}
         </div>
+
+        {% if coming_soon_html %}
+        <!-- Coming Soon Section – plan-specific content set by admin -->
+        <div id="comingsoon-content" style="display: none;">
+            <div class="coming-soon-agent-wrapper px-2 py-3">
+                {% autoescape off %}{{ coming_soon_html }}{% endautoescape %}
+            </div>
+        </div>
+        {% endif %}
 
         <!-- My Profile Section -->
         <div id="profile-content" style="display: none;">
@@ -940,9 +954,11 @@
                 overview: document.getElementById('overview-content'),
                 profile: document.getElementById('profile-content'),
                 leads: document.getElementById('leads-content'),
-                qrcodes: document.getElementById('qr-content')
+                qrcodes: document.getElementById('qr-content'),
+                comingsoon: document.getElementById('comingsoon-content') || null
             };
-            const validTabs = Object.keys(panels);
+            // Only include comingsoon in validTabs if the panel element exists
+            const validTabs = Object.keys(panels).filter(function(k) { return panels[k] !== null; });
 
             if (!dashboardTabs.length || !panels.overview || !panels.profile || !panels.leads || !panels.qrcodes) {
                 tabInitInProgress = false;

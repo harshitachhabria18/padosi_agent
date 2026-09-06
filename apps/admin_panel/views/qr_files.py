@@ -49,7 +49,7 @@ def qr_files_index(request):
         'totalFiles': total_files,
         'totalDownloads': total_downloads,
         'search': search,
-        'selected_type': file_type_filter
+        'selected_type': file_type_filter,
     })
 
 def qr_files_store(request):
