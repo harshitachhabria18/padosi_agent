@@ -524,6 +524,18 @@
             <a href="/admin/agents/?status=active" class="menu-item {% if request.path == '/admin/agents/' %}active{% endif %}">
                 <i class="fa-solid fa-users-gear"></i> Agents
             </a>
+            <a href="{% url 'admin_liafi_agents' %}" class="menu-item {% if '/admin/agents/liafi/' in request.path %}active{% endif %}">
+                <i class="fa-solid fa-id-card-clip" style="color: #f59e0b;"></i> LIAFI Agents
+                {% if liafi_agents_count > 0 %}
+                <span class="badge bg-warning text-dark ms-auto">{{ liafi_agents_count }}</span>
+                {% endif %}
+            </a>
+            <a href="{% url 'admin_lic_agents' %}" class="menu-item {% if '/admin/agents/lic/' in request.path %}active{% endif %}">
+                <i class="fa-solid fa-building-shield" style="color: #2563eb;"></i> LIC Agents
+                {% if lic_agents_count > 0 %}
+                <span class="badge bg-primary ms-auto">{{ lic_agents_count }}</span>
+                {% endif %}
+            </a>
             {% endif %}
 
             {% if is_super_admin or 'distributors' in admin_permissions %}
@@ -687,6 +699,11 @@
             <a href="/admin/settings/hero-section/"
                 class="menu-item {% if '/admin/settings/hero-section/' in request.path %}active{% endif %}">
                 <i class="fa-solid fa-star"></i> Hero Section Editor
+            </a>
+
+            <a href="{% url 'admin_content_liafi' %}"
+                class="menu-item {% if '/admin/content/liafi/' in request.path %}active{% endif %}">
+                <i class="fa-solid fa-id-card-clip" style="color: #f59e0b;"></i> LIAFI Page Editor
             </a>
 
             <a href="/admin/content/banners/"

@@ -39,6 +39,8 @@ def admin_badge_counts(request):
         'total_pincodes_count':    0,
         'insurance_pending_count': 0,
         'payment_pending_count':   0,
+        'liafi_agents_count':      0,
+        'lic_agents_count':        0,
         'notif_count':             0,
         # Permission-gate helpers used by the sidebar template:
         #   is_super_admin     – True for Super Admins (all items visible)
@@ -56,11 +58,25 @@ def admin_badge_counts(request):
             )
             counts['pending_agents_count'] = cursor.fetchone()[0]
 
-            # 2. Registration Pending ── agents.status IN ('incomplete','pending_payment')
+            # 2. Registration Pending ── agents.status IN ('incomplete','pending_payment') + agent drafts
             cursor.execute(
                 "SELECT COUNT(*) FROM agents WHERE status IN ('incomplete', 'pending_payment')"
             )
-            counts['incomplete_agents_count'] = cursor.fetchone()[0]
+            agents_incomplete_count = cursor.fetchone()[0]
+
+            drafts_incomplete_count = 0
+            try:
+                cursor.execute("""
+                    SELECT COUNT(*)
+                    FROM agent_drafts d
+                    WHERE d.registration_step >= 1
+                      AND d.email NOT IN (SELECT email FROM agents WHERE email IS NOT NULL AND email != '')
+                """)
+                drafts_incomplete_count = cursor.fetchone()[0]
+            except Exception:
+                drafts_incomplete_count = 0
+
+            counts['incomplete_agents_count'] = agents_incomplete_count + drafts_incomplete_count
 
             # 2b. Payment Initiated but Pending ── agents with razorpay order but no success callback
             try:
@@ -77,6 +93,37 @@ def admin_badge_counts(request):
                 counts['payment_pending_count'] = cursor.fetchone()[0]
             except Exception:
                 counts['payment_pending_count'] = 0
+
+            # 2c. LIAFI Agents Count
+            try:
+                cursor.execute("""
+                    SELECT COUNT(*) FROM agents WHERE
+                    (profession LIKE '%LIAFI%'
+                     OR insurance_companies LIKE '%LIAFI%'
+                     OR admin_notes LIKE '%LIAFI%'
+                     OR registration_draft LIKE '%liafi%'
+                     OR id IN (SELECT agent_id FROM invoices WHERE promo_code = 'LIAFI'))
+                """)
+                counts['liafi_agents_count'] = cursor.fetchone()[0]
+            except Exception:
+                counts['liafi_agents_count'] = 0
+
+            # 2d. LIC Agents Count
+            try:
+                cursor.execute("""
+                    SELECT COUNT(*) FROM agents a WHERE
+                    (
+                        (
+                            (a.profession = 'LIC Agent' OR a.insurance_companies LIKE '%LIC%' OR a.insurance_companies LIKE '%Life Insurance Corporation%')
+                            AND (a.profession NOT LIKE '%LIAFI%' AND (a.insurance_companies NOT LIKE '%LIAFI%' OR a.insurance_companies IS NULL))
+                        )
+                        OR EXISTS (SELECT 1 FROM invoices WHERE invoices.agent_id = a.id AND invoices.promo_code = 'BIMASAKHI')
+                        OR a.admin_notes LIKE '%lic-event%'
+                    )
+                """)
+                counts['lic_agents_count'] = cursor.fetchone()[0]
+            except Exception:
+                counts['lic_agents_count'] = 0
 
             # 3. Renewal Tracker ── subscriptions expiring within 30 days for active agents
             # Mirrors: DB::table('agent_subscriptions as s')
@@ -194,6 +241,7 @@ def admin_badge_counts(request):
 
             notif_count = (
                 non_active_agents
+                + drafts_incomplete_count
                 + counts['pending_reviews_count']
                 + counts['pending_contacts_count']
             )

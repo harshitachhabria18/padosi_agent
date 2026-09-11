@@ -1,0 +1,473 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}LIC Agents — PadosiAgent{% endblock %}
+{% block breadcrumb_title %}Agent Management › LIC Agents Registry{% endblock %}
+
+{% block content %}
+
+<style>
+/* Custom Toggle Switch for Agent Status */
+.agent-status-switch {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 20px;
+    margin: 0;
+    cursor: pointer;
+}
+.agent-status-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+.agent-status-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #cbd5e1;
+    transition: all 0.25s ease;
+    border-radius: 20px;
+}
+.agent-status-slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: #ffffff;
+    transition: all 0.25s ease;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+.agent-status-switch input:checked + .agent-status-slider {
+    background-color: #10b981;
+}
+.agent-status-switch input:checked + .agent-status-slider:before {
+    transform: translateX(16px);
+}
+.status-pill {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 6px;
+    letter-spacing: 0.3px;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1.2;
+}
+</style>
+
+<!-- Page Header with LIC Branding -->
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #2563eb, #1d4ed8); display: flex; align-items: center; justify-content: center; color: white; font-size: 22px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);">
+            <i class="fa-solid fa-building-shield"></i>
+        </div>
+        <div>
+            <div class="d-flex align-items-center gap-2">
+                <h4 class="m-0 fw-bold">LIC Registered Agents</h4>
+                <span class="badge" style="background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; font-size: 11px; padding: 4px 8px;">
+                    <i class="fa-solid fa-landmark me-1"></i> LIC of India
+                </span>
+            </div>
+            <p class="text-muted small m-0 mt-1">Agents registered via Life Insurance Corporation of India agent portal (/lic-agent/)</p>
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <a href="{% url 'admin_lic_agents_export' %}?search={{ search }}&plan={{ plan_filter }}&status={{ status_filter }}&city={{ city_filter }}&bima_sakhi={{ bima_sakhi }}" class="btn btn-outline-primary shadow-sm" style="font-weight: 500;">
+            <i class="fa-solid fa-file-csv me-1"></i> Export LIC CSV
+        </a>
+        <a href="/lic-agent/" target="_blank" class="btn btn-light border shadow-sm text-secondary" style="font-weight: 500;">
+            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> View Portal
+        </a>
+    </div>
+</div>
+
+<!-- KPI Metric Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6 col-12">
+        <div class="card border-0 shadow-sm" style="border-radius: 12px; background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%); border-left: 4px solid #2563eb !important;">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="text-muted small fw-semibold text-uppercase" style="letter-spacing: 0.5px;">Total LIC Agents</div>
+                        <h3 class="fw-bold m-0 mt-1" style="color: #1e40af;">{{ total_lic }}</h3>
+                    </div>
+                    <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(37, 99, 235, 0.15); display: flex; align-items: center; justify-content: center; color: #2563eb; font-size: 18px;">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 col-12">
+        <div class="card border-0 shadow-sm" style="border-radius: 12px; background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); border-left: 4px solid #16a34a !important;">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="text-muted small fw-semibold text-uppercase" style="letter-spacing: 0.5px;">Active Accounts</div>
+                        <h3 class="fw-bold m-0 mt-1" style="color: #166534;">{{ active_lic }}</h3>
+                    </div>
+                    <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(22, 163, 74, 0.15); display: flex; align-items: center; justify-content: center; color: #16a34a; font-size: 18px;">
+                        <i class="fa-solid fa-user-check"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 col-12">
+        <div class="card border-0 shadow-sm" style="border-radius: 12px; background: linear-gradient(135deg, #ffffff 0%, #fdf4ff 100%); border-left: 4px solid #c026d3 !important;">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="text-muted small fw-semibold text-uppercase" style="letter-spacing: 0.5px;">Bima Sakhi Initiative</div>
+                        <h3 class="fw-bold m-0 mt-1" style="color: #86198f;">{{ bima_sakhi_count }}</h3>
+                    </div>
+                    <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(192, 38, 211, 0.15); display: flex; align-items: center; justify-content: center; color: #c026d3; font-size: 18px;">
+                        <i class="fa-solid fa-person-dress"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 col-12">
+        <div class="card border-0 shadow-sm" style="border-radius: 12px; background: linear-gradient(135deg, #ffffff 0%, #fff7ed 100%); border-left: 4px solid #ea580c !important;">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="text-muted small fw-semibold text-uppercase" style="letter-spacing: 0.5px;">Pending / Incomplete</div>
+                        <h3 class="fw-bold m-0 mt-1" style="color: #9a3412;">{{ pending_lic }}</h3>
+                    </div>
+                    <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(234, 88, 12, 0.15); display: flex; align-items: center; justify-content: center; color: #ea580c; font-size: 18px;">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters Section -->
+<div class="card mb-4 border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+    <div class="card-body p-3 p-md-4">
+        <form method="GET" action="{% url 'admin_lic_agents' %}" class="row g-3 align-items-center">
+            <!-- Search -->
+            <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" name="search" class="form-control border-start-0" placeholder="Search by name, email, mobile, branch..." value="{{ search }}">
+                </div>
+            </div>
+
+            <!-- Plan Filter -->
+            <div class="col-xl-2 col-lg-3 col-md-6 col-sm-6">
+                <select name="plan" class="form-select">
+                    <option value="All Plans" {% if plan_filter == "All Plans" %}selected{% endif %}>All Plans</option>
+                    <option value="Starter's Plan" {% if plan_filter == "Starter's Plan" %}selected{% endif %}>Starter's Plan</option>
+                    <option value="Professional's Plan" {% if plan_filter == "Professional's Plan" %}selected{% endif %}>Professional's Plan</option>
+                </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="col-xl-2 col-lg-3 col-md-6 col-sm-6">
+                <select name="status" class="form-select">
+                    <option value="All Status" {% if status_filter == "All Status" %}selected{% endif %}>All Statuses</option>
+                    <option value="active" {% if status_filter == "active" %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if status_filter == "inactive" %}selected{% endif %}>Inactive</option>
+                    <option value="incomplete" {% if status_filter == "incomplete" %}selected{% endif %}>Incomplete</option>
+                    <option value="pending" {% if status_filter == "pending" %}selected{% endif %}>Pending</option>
+                    <option value="pending_approval" {% if status_filter == "pending_approval" %}selected{% endif %}>Pending Approval</option>
+                    <option value="pending_payment" {% if status_filter == "pending_payment" %}selected{% endif %}>Pending Payment</option>
+                    <option value="blacklisted" {% if status_filter == "blacklisted" %}selected{% endif %}>Blacklisted</option>
+                </select>
+            </div>
+
+            <!-- City Filter -->
+            <div class="col-xl-2 col-lg-2 col-md-6 col-sm-6">
+                <input type="text" name="city" class="form-control" placeholder="City or branch..." value="{{ city_filter }}">
+            </div>
+
+            <!-- Bima Sakhi Checkbox -->
+            <div class="col-xl-1 col-lg-2 col-md-6 col-sm-6">
+                <div class="form-check" title="Filter Bima Sakhi registered agents only">
+                    <input class="form-check-input" type="checkbox" name="bima_sakhi" value="1" id="bimaSakhiCheck" {% if bima_sakhi == '1' %}checked{% endif %}>
+                    <label class="form-check-label small fw-semibold" for="bimaSakhiCheck" style="white-space: nowrap;">
+                        Bima Sakhi
+                    </label>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="col-xl-1 col-lg-12 col-md-12 col-sm-12 d-flex gap-2">
+                <button type="submit" class="btn btn-primary w-100 fw-semibold" title="Apply Filters">
+                    <i class="fa-solid fa-filter"></i>
+                </button>
+                {% if search or plan_filter != 'All Plans' or status_filter != 'All Status' or city_filter or bima_sakhi %}
+                <a href="{% url 'admin_lic_agents' %}" class="btn btn-light border" title="Reset Filters">
+                    <i class="fa-solid fa-xmark"></i>
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- LIC Agents Table Card -->
+<div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th class="ps-4" style="width: 50px;">ID</th>
+                    <th>Agent Details</th>
+                    <th>LIC Branch / Code</th>
+                    <th>Location</th>
+                    <th>Scheme / Tag</th>
+                    <th>Plan</th>
+                    <th class="text-center">Status</th>
+                    <th>Registered</th>
+                    <th class="text-end pe-4">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for agent in page_obj %}
+                <tr>
+                    <!-- ID -->
+                    <td class="ps-4 text-muted fw-semibold" style="font-size: 13px;">#{{ agent.id }}</td>
+
+                    <!-- Agent Details -->
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div style="width: 36px; height: 36px; border-radius: 10px; background: #eff6ff; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #1d4ed8; font-size: 12px; border: 1px solid #bfdbfe; flex-shrink: 0;">
+                                {{ agent.initials }}
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark">{{ agent.fullname }}</div>
+                                <div class="text-muted" style="font-size: 11px;">
+                                    <i class="fa-solid fa-envelope me-1"></i>{{ agent.email }}
+                                    <span class="mx-1">•</span>
+                                    <i class="fa-solid fa-phone me-1"></i>{{ agent.mobile }}
+                                </div>
+                                {% if agent.is_blacklisted %}
+                                    <span class="badge bg-danger mt-1 d-inline-block" style="font-size: 9px; padding: 2px 6px;">Blacklisted</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Branch / Division -->
+                    <td>
+                        {% if agent.branch_info %}
+                            <div class="fw-semibold text-dark" style="font-size: 13px;">
+                                <i class="fa-solid fa-building text-primary me-1"></i> {{ agent.branch_info }}
+                            </div>
+                        {% else %}
+                            <span class="text-muted small">LIC of India</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Location -->
+                    <td style="font-size: 13px;">
+                        <div>{{ agent.state|default:"India" }}</div>
+                        {% if agent.address %}
+                        <div class="text-muted small" style="font-size: 11px;">{{ agent.address|truncatechars:28 }}</div>
+                        {% endif %}
+                    </td>
+
+                    <!-- Scheme / Tag -->
+                    <td>
+                        {% if agent.is_bima_sakhi %}
+                        <span class="badge" style="background: #fdf4ff; color: #86198f; border: 1px solid #f0abfc; font-size: 11px; padding: 4px 8px;">
+                            <i class="fa-solid fa-person-dress me-1"></i> Bima Sakhi
+                        </span>
+                        {% else %}
+                        <span class="badge" style="background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; font-size: 11px; padding: 4px 8px;">
+                            <i class="fa-solid fa-shield-halved me-1"></i> LIC Agent
+                        </span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Plan -->
+                    <td>
+                        <span class="badge {% if 'professional' in agent.selected_plan|lower %}bg-primary{% elif 'starter' in agent.selected_plan|lower %}bg-info text-dark{% else %}bg-secondary{% endif %}" style="font-size: 11px; font-weight: 500;">
+                            {{ agent.selected_plan|default:"FREE" }}
+                        </span>
+                    </td>
+
+                    <!-- Status Toggle & Badge -->
+                    <td class="text-center" style="vertical-align: middle;">
+                        <div class="d-inline-flex flex-column align-items-center justify-content-center" style="min-width: 90px; gap: 4px;">
+                            <label class="agent-status-switch" title="Click to toggle Active / Inactive">
+                                <input type="checkbox" {% if agent.status == 'active' %}checked{% endif %} onchange="toggleAgentStatus({{ agent.id }}, this.checked)">
+                                <span class="agent-status-slider"></span>
+                            </label>
+                            <div>
+                                {% if agent.status == 'active' %}
+                                    <span id="status-badge-{{ agent.id }}" class="status-pill" style="background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0;">
+                                        <i class="fa-solid fa-circle-check me-1" style="font-size: 9px;"></i>Active
+                                    </span>
+                                {% elif agent.status == 'pending_payment' %}
+                                    <span id="status-badge-{{ agent.id }}" class="status-pill" style="background-color: #fef3c7; color: #b45309; border: 1px solid #fde68a;">
+                                        <i class="fa-solid fa-credit-card me-1" style="font-size: 9px;"></i>Pending Pay
+                                    </span>
+                                {% elif agent.status == 'pending_approval' %}
+                                    <span id="status-badge-{{ agent.id }}" class="status-pill" style="background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;">
+                                        <i class="fa-solid fa-user-clock me-1" style="font-size: 9px;"></i>Approval
+                                    </span>
+                                {% elif agent.status == 'incomplete' %}
+                                    <span id="status-badge-{{ agent.id }}" class="status-pill" style="background-color: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;">
+                                        <i class="fa-solid fa-hourglass-half me-1" style="font-size: 9px;"></i>Incomplete
+                                    </span>
+                                {% elif agent.status == 'blacklisted' %}
+                                    <span id="status-badge-{{ agent.id }}" class="status-pill" style="background-color: #fee2e2; color: #b91c1c; border: 1px solid #fecaca;">
+                                        <i class="fa-solid fa-ban me-1" style="font-size: 9px;"></i>Blacklisted
+                                    </span>
+                                {% else %}
+                                    <span id="status-badge-{{ agent.id }}" class="status-pill" style="background-color: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb;">
+                                        {{ agent.status|default:'Inactive'|capfirst }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Registered Date -->
+                    <td class="text-muted" style="font-size: 12px; white-space: nowrap;">
+                        {{ agent.created_at|date:"d M Y" }}
+                    </td>
+
+                    <!-- Actions Dropdown -->
+                    <td class="text-end pe-4">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-light border dropdown-toggle" type="button" data-bs-toggle="dropdown" data-toggle="dropdown" aria-expanded="false" style="font-size: 12px;">
+                                Actions
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size: 13px;">
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'admin_agents_manage' id=agent.id %}">
+                                        <i class="fa-solid fa-sliders me-2 text-primary"></i> Manage Agent
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'admin_agents_edit_profile' id=agent.id %}">
+                                        <i class="fa-solid fa-user-pen me-2 text-info"></i> Edit Profile
+                                    </a>
+                                </li>
+                                {% if agent.slug %}
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'agents:agent_public_profile' slug=agent.slug %}" target="_blank">
+                                        <i class="fa-solid fa-arrow-up-right-from-square me-2 text-success"></i> Public Website
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center py-5">
+                        <div class="text-muted">
+                            <i class="fa-solid fa-building-shield fs-1 text-primary opacity-50 mb-3 d-block"></i>
+                            <h5>No LIC Agents Found</h5>
+                            <p class="small text-secondary mb-3">No agents match the selected search or filter criteria in the LIC registry.</p>
+                            <a href="{% url 'admin_lic_agents' %}" class="btn btn-sm btn-outline-primary">Reset All Filters</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="p-3 border-top d-flex justify-content-between align-items-center">
+        <div class="text-muted small">
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} LIC agents
+        </div>
+        <ul class="pagination pagination-sm m-0">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search }}&plan={{ plan_filter }}&status={{ status_filter }}&city={{ city_filter }}&bima_sakhi={{ bima_sakhi }}">Previous</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">Previous</span></li>
+            {% endif %}
+
+            {% for p in page_obj.paginator.page_range %}
+                {% if page_obj.number == p %}
+                <li class="page-item active"><span class="page-link bg-primary border-primary">{{ p }}</span></li>
+                {% elif p > page_obj.number|add:'-3' and p < page_obj.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ p }}&search={{ search }}&plan={{ plan_filter }}&status={{ status_filter }}&city={{ city_filter }}&bima_sakhi={{ bima_sakhi }}">{{ p }}</a>
+                </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search }}&plan={{ plan_filter }}&status={{ status_filter }}&city={{ city_filter }}&bima_sakhi={{ bima_sakhi }}">Next</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">Next</span></li>
+            {% endif %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function toggleAgentStatus(id, isChecked) {
+    const badgeEl = document.getElementById('status-badge-' + id);
+    fetch("{% url 'admin_agents_toggle_status' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ id: id, status: isChecked ? 'active' : 'inactive' })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success) {
+            if (badgeEl) {
+                if (isChecked) {
+                    badgeEl.innerHTML = '<i class="fa-solid fa-circle-check me-1" style="font-size: 9px;"></i>Active';
+                    badgeEl.style.backgroundColor = '#dcfce7';
+                    badgeEl.style.color = '#15803d';
+                    badgeEl.style.borderColor = '#bbf7d0';
+                } else {
+                    badgeEl.innerHTML = 'Inactive';
+                    badgeEl.style.backgroundColor = '#f3f4f6';
+                    badgeEl.style.color = '#6b7280';
+                    badgeEl.style.borderColor = '#e5e7eb';
+                }
+            }
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Status updated to ' + (isChecked ? 'Active' : 'Inactive'), showConfirmButton: false, timer: 2000 });
+            }
+        } else {
+            alert(data.message || 'Error updating status');
+        }
+    })
+    .catch(err => console.error(err));
+}
+
+$(document).ready(function() {
+    $('.table-responsive').on('show.bs.dropdown', function () {
+         $(this).css('overflow', 'visible');
+    });
+    $('.table-responsive').on('hide.bs.dropdown', function () {
+         $(this).css('overflow', '');
+    });
+});
+</script>
+
+{% endblock %}

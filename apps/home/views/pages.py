@@ -1025,6 +1025,37 @@ def lic_event(request):
     })
 
 
+def liafi_event(request):
+    """LIAFI (Life Insurance Agents' Federation of India) agent onboarding page."""
+    from apps.admin_panel.views.content import DEFAULT_LIAFI_CONTENT
+    saved = SiteSetting.get_value('liafi_page_content', {}) or {}
+    
+    liafi_content = {
+        'badge_text': saved.get('badge_text', DEFAULT_LIAFI_CONTENT['badge_text']),
+        'title_line_1': saved.get('title_line_1', DEFAULT_LIAFI_CONTENT['title_line_1']),
+        'title_highlight': saved.get('title_highlight', DEFAULT_LIAFI_CONTENT['title_highlight']),
+        'description': saved.get('description', DEFAULT_LIAFI_CONTENT['description']),
+        'stats': saved.get('stats') if saved.get('stats') else DEFAULT_LIAFI_CONTENT['stats'],
+        'trust_cards': saved.get('trust_cards') if saved.get('trust_cards') else DEFAULT_LIAFI_CONTENT['trust_cards'],
+        'pricing': {
+            'badge': saved.get('pricing', {}).get('badge', DEFAULT_LIAFI_CONTENT['pricing']['badge']),
+            'promo_code': saved.get('pricing', {}).get('promo_code', DEFAULT_LIAFI_CONTENT['pricing']['promo_code']),
+            'subtitle': saved.get('pricing', {}).get('subtitle', DEFAULT_LIAFI_CONTENT['pricing']['subtitle']),
+            'original_price': saved.get('pricing', {}).get('original_price', DEFAULT_LIAFI_CONTENT['pricing']['original_price']),
+            'offer_price': saved.get('pricing', {}).get('offer_price', DEFAULT_LIAFI_CONTENT['pricing']['offer_price']),
+            'tax_note': saved.get('pricing', {}).get('tax_note', DEFAULT_LIAFI_CONTENT['pricing']['tax_note']),
+            'perks': saved.get('pricing', {}).get('perks') if saved.get('pricing', {}).get('perks') else DEFAULT_LIAFI_CONTENT['pricing']['perks'],
+        },
+        'pillars': saved.get('pillars') if saved.get('pillars') else DEFAULT_LIAFI_CONTENT['pillars'],
+    }
+
+    return render(request, 'public/liafi-event.html', {
+        'liafi': liafi_content,
+        'federation_stats': liafi_content['stats'],
+        'trust_cards': liafi_content['trust_cards'],
+    })
+
+
 def cancellation_refund_policy(request):
     """Cancellation & refund policy — port of routes/web.php:500-502 inline closure."""
     return render(request, 'public/cancellation-refund-policy.html')

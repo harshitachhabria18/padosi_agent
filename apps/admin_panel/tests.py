@@ -108,3 +108,52 @@ class AdminHomepageSettingsTests(TestCase):
         # Verify activity log creation
         logs = AdminActivityLog.objects.filter(action='Update homepage content')
         self.assertEqual(logs.count(), 1)
+
+
+class AdminLiafiPageTests(TestCase):
+    def setUp(self):
+        authenticate_client(self.client)
+
+    def test_admin_liafi_page_status_code(self):
+        response = self.client.get(reverse('admin_content_liafi'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('liafi', response.context)
+
+    def test_admin_liafi_page_update(self):
+        post_data = {
+            'badge_text': 'National LIAFI Drive',
+            'title_line_1': 'Federation of LIC Agents',
+            'title_highlight': 'All India Chapter',
+            'description': 'Empowering over 14 Lakh agents across India with verified digital presence.',
+            'stat_val[]': ['10', '120'],
+            'stat_label[]': ['ZONES', 'DIVISIONS'],
+            'stat_sub[]': ['Pan India', 'Coverage'],
+            'trust_icon[]': ['🏛️'],
+            'trust_title[]': ['Official Body'],
+            'trust_sub[]': ['Reg 2000'],
+            'pricing_badge': 'LIMITED ACCESS',
+            'pricing_promo': 'LIAFI2026',
+            'pricing_subtitle': 'Get verified now',
+            'pricing_original': '2,499',
+            'pricing_offer': '249',
+            'pricing_tax': '+ GST',
+            'perk[]': ['Early Access', 'Exclusive Badge'],
+            'pillar_title[]': ['Decisions'],
+            'pillar_description[]': ['Historic decisions made.'],
+        }
+        response = self.client.post(reverse('admin_content_liafi_update'), data=post_data)
+        self.assertRedirects(response, reverse('admin_content_liafi'))
+
+        # Verify SiteSetting update
+        saved = SiteSetting.get_value('liafi_page_content')
+        self.assertEqual(saved['badge_text'], 'National LIAFI Drive')
+        self.assertEqual(saved['title_line_1'], 'Federation of LIC Agents')
+        self.assertEqual(saved['pricing']['offer_price'], '249')
+        self.assertEqual(saved['pricing']['promo_code'], 'LIAFI2026')
+        self.assertEqual(len(saved['stats']), 2)
+        self.assertEqual(saved['stats'][0]['val'], '10')
+
+        # Verify activity log creation
+        logs = AdminActivityLog.objects.filter(action='Updated LIAFI page content')
+        self.assertEqual(logs.count(), 1)
+

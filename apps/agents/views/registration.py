@@ -492,6 +492,22 @@ def _get_registration_context(request):
     active_investment_types = InvestmentType.objects.filter(is_active=True)
 
     prefilled_promo = request.GET.get('promo') or request.GET.get('ref') or request.session.get('ref_code', '')
+    prefilled_name = request.GET.get('name', '').strip()
+    prefilled_phone = request.GET.get('phone', '').strip()
+    prefilled_email = request.GET.get('email', '').strip()
+    prefilled_pincode = request.GET.get('pincode', '').strip()
+    prefilled_company = request.GET.get('company', '').strip()
+    prefilled_source = request.GET.get('source', '').strip()
+    prefilled_city = request.GET.get('city', '').strip()
+    prefilled_state = request.GET.get('state', '').strip()
+    prefilled_member_id = request.GET.get('member_id', '').strip()
+
+    if prefilled_source:
+        session['reg_source'] = prefilled_source
+    if prefilled_company:
+        session['reg_company'] = prefilled_company
+    if prefilled_member_id:
+        session['reg_member_id'] = prefilled_member_id
 
     return {
         'layout_template': layout_template,
@@ -506,6 +522,21 @@ def _get_registration_context(request):
         'agent_languages': draft.languages if draft else [],
         'active_investment_types': active_investment_types,
         'prefilledPromo': prefilled_promo,
+        'prefilledName': prefilled_name,
+        'prefilledPhone': prefilled_phone,
+        'prefilledEmail': prefilled_email,
+        'prefilledPincode': prefilled_pincode,
+        'prefilledCompany': prefilled_company or session.get('reg_company', ''),
+        'prefilledSource': prefilled_source or session.get('reg_source', ''),
+        'prefilledCity': prefilled_city,
+        'prefilledState': prefilled_state,
+        'prefilledMemberId': prefilled_member_id or session.get('reg_member_id', ''),
+        'registration_swipe_enabled': False,
+        'registration_swipe_slides': [],
+        'preview_auto_advance_ms': 2000,
+        'hide_site_nav': True,
+        'hide_footer': True,
+        'hide_chatbot': True,
     }
 
 
@@ -524,6 +555,94 @@ def agent_registration(request):
 
 
 
+def _int_or_zero(value):
+    try:
+        digits = re.sub(r'\D', '', str(value or ''))
+        return int(digits) if digits else 0
+    except (TypeError, ValueError):
+        return 0
+
+
+def _unique_profile_slug(desired, exclude_pk=None):
+    from django.utils.text import slugify
+    from apps.agents.models import AgentProfile
+
+    base = slugify(desired or '') or 'agent'
+    slug = base
+    n = 1
+    while True:
+        qs = AgentProfile.objects.filter(slug=slug)
+        if exclude_pk:
+            qs = qs.exclude(pk=exclude_pk)
+        if not qs.exists():
+            return slug
+        slug = f'{base}-{n}'
+        n += 1
+
+
+def _public_profile_path(agent):
+    slug = ''
+    try:
+        profile = getattr(agent, 'profile', None)
+        slug = (profile.slug or '') if profile else ''
+    except Exception:
+        slug = ''
+    if not slug:
+        slug = getattr(agent, 'agent_slug', '') or ''
+    if not slug:
+        return reverse('agents:agent_dashboard')
+    return reverse('agents:agent_public_profile', kwargs={'slug': slug})
+
+
+def _activation_success_payload(request, agent, message='Payment successful and account activated.'):
+    from apps.distributors.views.dashboard import is_distributor
+
+    redirect_url = reverse('agents:agent_dashboard')
+    try:
+        if request.user.is_authenticated and is_distributor(request.user):
+            redirect_url = reverse('distributors:agents_index')
+    except Exception:
+        pass
+    profile_path = _public_profile_path(agent)
+    return {
+        'success': True,
+        'message': message,
+        'redirect_url': redirect_url,
+        'agent_name': (getattr(agent, 'fullname', '') or '').strip(),
+        'profile_url': request.build_absolute_uri(profile_path),
+    }
+
+
+def _assign_step1_draft_fields(draft, request, extra=None):
+    extra = extra or {}
+    draft.fullname = extra.get('fullname', request.POST.get('fullname', '').strip())
+    draft.mobile = extra.get('mobile', request.POST.get('mobile', '').strip())
+    draft.agent_pincode = extra.get('agent_pincode', request.POST.get('agent_pincode', '').strip())
+    draft.state = extra.get('state', request.POST.get('state', '').strip())
+    draft.experience_range = extra.get('experience', request.POST.get('experience_range', ''))
+    draft.segments = extra.get('segments', request.POST.getlist('segments[]') or request.POST.getlist('segments'))
+    draft.investment_types = extra.get(
+        'investment_types',
+        request.POST.getlist('investment_types[]') or request.POST.getlist('investment_types'),
+    )
+    draft.promo_code = extra.get('promo_code', request.POST.get('promo_code', '').strip())
+    draft.address = extra.get('address', request.POST.get('address', '').strip())
+    draft.client_base = extra.get('client_base', request.POST.get('client_base', '').strip())
+    draft.slug = extra.get('slug', request.POST.get('slug', '').strip())
+    draft.whatsapp = extra.get('whatsapp', request.POST.get('whatsapp', '').strip())
+    draft.pan_number = extra.get('pan_number', request.POST.get('pan_number', '').strip().upper())
+    draft.claims_settled = extra.get('claims_settled', _int_or_zero(request.POST.get('claims_settled')))
+    draft.claim_amount = extra.get('claim_amount', request.POST.get('claim_amount', '').strip())
+    company = extra.get('company', request.POST.get('company', '').strip()) or getattr(request, 'session', {}).get('reg_company', '')
+    if company:
+        draft.insurance_companies = [company]
+    member_id = extra.get('member_id', request.POST.get('member_id', '').strip()) or getattr(request, 'session', {}).get('reg_member_id', '')
+    if member_id and not draft.license_number:
+        draft.license_number = member_id
+    photo = request.FILES.get('photo')
+    if photo:
+        draft.photo = photo
+    return draft
 @require_http_methods(["GET"])
 def check_slug_availability(request):
     """Check if a custom slug is available for an agent profile."""
@@ -621,6 +740,9 @@ def register_step1(request):
                 'redirect': reverse('agents:agent_dashboard'),
             })
 
+        is_claim = (request.POST.get('is_claim') == '1') or (request.POST.get('action') == 'claim')
+        target_step = 2 if is_claim else 1
+
         # Reuse existing registration (Agent and AgentDraft)
         draft = AgentDraft.objects.filter(email=email).first()
         if not draft:
@@ -630,24 +752,14 @@ def register_step1(request):
                 session_key = request.session.session_key
             draft = AgentDraft(session_key=session_key, email=email)
 
-        draft.fullname = fullname
-        draft.mobile = mobile
-        draft.agent_pincode = agent_pincode
-        draft.state = state
-        draft.experience_range = experience
-        draft.segments = segments
-        draft.investment_types = investment_types
-        draft.promo_code = promo_code
-        if promo_code:
-            request.session['applied_promo_code'] = promo_code
-        else:
-            if not request.session.get('distributor_led_registration') and not request.session.get('distributor_id'):
-                request.session.pop('applied_promo_code', None)
-        draft.address = address
-        draft.client_base = client_base
-        draft.slug = slug
+        _assign_step1_draft_fields(draft, request)
+        draft.email = email
         draft.email_verified = True
-        draft.registration_step = 1
+        draft.registration_step = target_step
+        if draft.promo_code:
+            request.session['applied_promo_code'] = draft.promo_code
+        elif not request.session.get('distributor_led_registration') and not request.session.get('distributor_id'):
+            request.session.pop('applied_promo_code', None)
         draft.save()
 
         request.session['current_draft_id'] = draft.pk
@@ -661,58 +773,56 @@ def register_step1(request):
         existing_agent.client_base = client_base
         existing_agent.save()
 
-        logger.info(f'Agent Step 1 reused & updated — draft #{draft.pk}, email={email}')
+        logger.info(f'Agent Step 1 reused & updated — draft #{draft.pk}, email={email}, step={target_step}')
 
         return JsonResponse({
             'success': True,
             'message': 'Basic information updated!',
+            'draft_id': draft.pk,
             'redirect': '/chooseplan/',
         })
 
-    # Create new draft
+    is_claim = (request.POST.get('is_claim') == '1') or (request.POST.get('action') == 'claim')
+    target_step = 2 if is_claim else 1
+
+    # Create or update draft
     session_key = request.session.session_key
     if not session_key:
         request.session.create()
         session_key = request.session.session_key
 
     draft_id = request.session.get('current_draft_id')
+    draft = None
     if draft_id:
         try:
-            draft = AgentDraft.objects.get(pk=draft_id)
+            existing = AgentDraft.objects.get(pk=draft_id)
+            if existing.email and existing.email.strip().lower() == email:
+                draft = existing
         except AgentDraft.DoesNotExist:
-            draft = AgentDraft(session_key=session_key)
-    else:
-        draft = AgentDraft(session_key=session_key)
+            pass
+
+    if not draft:
+        draft = AgentDraft.objects.filter(email=email).first() or AgentDraft(session_key=session_key, email=email)
 
     draft.email = email
+    _assign_step1_draft_fields(draft, request)
     draft.email_verified = True
-    draft.fullname = fullname
-    draft.mobile = mobile
-    draft.agent_pincode = agent_pincode
-    draft.state = state
-    draft.experience_range = experience
-    draft.segments = segments
-    draft.investment_types = investment_types
-    draft.promo_code = promo_code
-    if promo_code:
-        request.session['applied_promo_code'] = promo_code
-    else:
-        if not request.session.get('distributor_led_registration') and not request.session.get('distributor_id'):
-            request.session.pop('applied_promo_code', None)
-    draft.address = address
-    draft.client_base = client_base
-    draft.slug = slug
-    draft.registration_step = 1
+    draft.registration_step = target_step
+    if draft.promo_code:
+        request.session['applied_promo_code'] = draft.promo_code
+    elif not request.session.get('distributor_led_registration') and not request.session.get('distributor_id'):
+        request.session.pop('applied_promo_code', None)
     draft.save()
 
     request.session['current_draft_id'] = draft.pk
     request.session['reg_step'] = 2
 
-    logger.info(f'Agent Step 1 saved — draft #{draft.pk}, email={email}')
+    logger.info(f'Agent Step 1 saved — draft #{draft.pk}, email={email}, step={target_step}')
 
     return JsonResponse({
         'success': True,
         'message': 'Basic information saved!',
+        'draft_id': draft.pk,
         'redirect': '/chooseplan/',
     })
 
@@ -882,6 +992,9 @@ def chooseplan(request):
     try:
         from apps.agents.models import AgentDraft
         agent = AgentDraft.objects.get(pk=draft_id)
+        if agent.registration_step < 2:
+            agent.registration_step = 2
+            agent.save(update_fields=['registration_step', 'updated_at'])
     except AgentDraft.DoesNotExist:
         request.session.pop('current_draft_id', None)
         return redirect('agents:agent_registration')
@@ -1176,6 +1289,14 @@ def create_agent_from_draft(draft, plan_type, plan_name, status='pending_payment
     from apps.agents.models import Agent, AgentProfile, AgentInsuranceSegment
     
     now = timezone.now()
+
+    profession = 'LIC Agent'
+    company_str = str(draft.insurance_companies or '').lower()
+    promo_str = str(draft.promo_code or '').upper()
+    if 'liafi' in company_str or promo_str == 'LIAFI':
+        profession = 'LIAFI Agent'
+    elif 'lic' in company_str or promo_str == 'BIMASAKHI':
+        profession = 'LIC Agent'
     
     agent, created = Agent.objects.get_or_create(
         email=draft.email,
@@ -1184,6 +1305,7 @@ def create_agent_from_draft(draft, plan_type, plan_name, status='pending_payment
             'mobile': draft.mobile,
             'user_types': ['insurance_agent'],
             'insurance_companies': draft.insurance_companies or [],
+            'profession': profession,
             'experience_range': draft.experience_range or '',
             'client_base': draft.client_base or '',
             'registration_step': 2,
@@ -1198,6 +1320,7 @@ def create_agent_from_draft(draft, plan_type, plan_name, status='pending_payment
         agent.fullname = draft.fullname
         agent.mobile = draft.mobile
         agent.insurance_companies = draft.insurance_companies or []
+        agent.profession = profession
         agent.experience_range = draft.experience_range or ''
         agent.client_base = draft.client_base or ''
         agent.status = status
@@ -1211,8 +1334,14 @@ def create_agent_from_draft(draft, plan_type, plan_name, status='pending_payment
     for seg in (draft.segments or []):
         AgentInsuranceSegment.objects.create(agent=agent, segment_type=seg)
     
+    is_liafi = (profession == 'LIAFI Agent') or ('liafi' in company_str) or (promo_str == 'LIAFI')
+    member_id = draft.license_number or ''
+    if is_liafi and member_id and 'LIAFI Member ID' not in (agent.admin_notes or ''):
+        agent.admin_notes = (str(agent.admin_notes or '') + f"\nLIAFI Member ID: {member_id}").strip()
+
     # Write registration_draft JSON (matching PHP Step 2)
     agent.registration_draft = {
+        'member_id': member_id if is_liafi else '',
         'license_number': draft.license_number or '',
         'pan_number': draft.pan_number or '',
         'software_name': draft.software_name or '',
@@ -1224,7 +1353,7 @@ def create_agent_from_draft(draft, plan_type, plan_name, status='pending_payment
         },
         'desired_services': draft.desired_services or [],
     }
-    agent.save(update_fields=['registration_draft', 'updated_at'])
+    agent.save(update_fields=['admin_notes', 'registration_draft', 'updated_at'])
     
     profile, p_created = AgentProfile.objects.get_or_create(
         agent=agent,

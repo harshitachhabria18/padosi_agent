@@ -1,13 +1,15 @@
+import csv
+import json
 import logging
+import re
 from django.utils import timezone
 from django.db import connection
 from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
-import json
 
 from .dashboard import _get_admin_from_session
 
@@ -1023,20 +1025,110 @@ def agent_pending_registrations(request):
     except Exception as e:
         logger.error(f"Error fetching pending registrations list: {e}")
 
-    for agent in agents:
+    # ── Also fetch AgentDraft entries (Step 1 done, payment not yet initiated) ─
+    # Only include drafts whose email does NOT already exist in the agents table,
+    # so there are no duplicates once someone proceeds to payment.
+    draft_entries = []
+    if (not plan_filter or plan_filter == 'All Plans') and (not event_filter or event_filter == 'All Events'):
+        try:
+            from django.db import connection
+
+            draft_query = """
+                SELECT
+                    d.id, d.fullname, d.email, d.mobile,
+                    d.address, d.state, d.agent_pincode,
+                    d.registration_step, d.created_at, d.updated_at,
+                    TIMESTAMPDIFF(HOUR, d.created_at, NOW()) AS hours_waiting
+                FROM agent_drafts AS d
+                WHERE d.registration_step >= 1
+                  AND d.email NOT IN (SELECT email FROM agents WHERE email IS NOT NULL AND email != '')
+            """
+            draft_params = []
+
+            if search:
+                draft_query += " AND (d.fullname LIKE %s OR d.email LIKE %s)"
+                search_param = f"%{search}%"
+                draft_params.extend([search_param, search_param])
+
+            if city_filter:
+                draft_query += " AND (d.address LIKE %s OR d.state LIKE %s)"
+                city_param = f"%{city_filter}%"
+                draft_params.extend([city_param, city_param])
+
+            if sort_by == 'oldest':
+                draft_query += " ORDER BY d.created_at ASC"
+            elif sort_by == 'waiting':
+                draft_query += " ORDER BY TIMESTAMPDIFF(HOUR, d.created_at, NOW()) DESC"
+            else:
+                draft_query += " ORDER BY d.created_at DESC"
+
+            with connection.cursor() as cursor:
+                cursor.execute(draft_query, draft_params)
+                draft_columns = [col[0] for col in cursor.description]
+                raw_drafts = [dict(zip(draft_columns, row)) for row in cursor.fetchall()]
+
+            for d in raw_drafts:
+                hours_waiting = d.get('hours_waiting') or 0
+                reg_step = d.get('registration_step') or 1
+                is_claimed = (reg_step >= 2)
+                draft_badge = 'CLAIM' if is_claimed else 'DRAFT'
+
+                draft_entries.append({
+                    'id': d['id'],
+                    'fullname': d['fullname'] or '',
+                    'email': d['email'] or '',
+                    'mobile': d['mobile'] or '',
+                    'status': 'claim' if is_claimed else 'draft',
+                    'registration_step': reg_step,
+                    'draft_badge': draft_badge,
+                    'is_claimed': is_claimed,
+                    'address': d['address'] or d.get('state') or '',
+                    'display_name': d['fullname'] or '',
+                    'profile_photo_path': None,
+                    'pan_number': None,
+                    'is_blacklisted': False,
+                    'is_blacklisted_by_pan': 0,
+                    'badge': None,
+                    'selected_plan': None,
+                    'expires_at': None,
+                    'razorpay_order_id': None,
+                    'sub_payment_status': None,
+                    'sub_created_at': None,
+                    'registration_amount': None,
+                    'avg_rating': None,
+                    'review_count': 0,
+                    'created_at': d['created_at'],
+                    'updated_at': d['updated_at'],
+                    'hours_waiting': hours_waiting,
+                    'sub_minutes_ago': None,
+                    'is_draft': True,
+                })
+        except Exception as e:
+            logger.error(f"Error fetching draft registrations list: {e}")
+
+    # Merge agents + drafts, then re-sort the combined list
+    all_entries = agents + draft_entries
+    if sort_by == 'oldest':
+        all_entries.sort(key=lambda x: str(x.get('created_at') or ''), reverse=False)
+    elif sort_by == 'waiting':
+        all_entries.sort(key=lambda x: x.get('hours_waiting') or 0, reverse=True)
+    else:
+        all_entries.sort(key=lambda x: str(x.get('created_at') or ''), reverse=True)
+
+    for entry in all_entries:
         total_pending += 1
-        hours_waiting = agent.get('hours_waiting') or 0
+        hours_waiting = entry.get('hours_waiting') or 0
         total_wait_hours += hours_waiting
         if hours_waiting > 48:
             urgent_count += 1
         # Count agents who initiated payment (have order_id) but subscription still pending
-        if agent.get('razorpay_order_id') and agent.get('sub_payment_status') == 'pending':
+        if entry.get('razorpay_order_id') and entry.get('sub_payment_status') == 'pending':
             payment_initiated_count += 1
 
     avg_wait_hours = (total_wait_hours / total_pending) if total_pending > 0 else 0
 
     context = {
-        'agents': agents,
+        'agents': all_entries,
         'search': search,
         'plan_filter': plan_filter,
         'city_filter': city_filter,
@@ -1163,3 +1255,421 @@ def admin_full_update_profile(request, id):
     if not agent:
         return JsonResponse({'status': 'error', 'message': 'Agent not found'}, status=404)
     return apply_profile_update(request, agent, is_admin_edit=True)
+
+
+# ─── LIAFI & LIC Agents Dedicated Registries ──────────────────────────────────
+
+def _extract_branch_info(companies_raw, notes_raw=''):
+    """Extract branch name and code from insurance_companies or admin notes."""
+    raw_str = str(companies_raw or '') + ' ' + str(notes_raw or '')
+    m = re.search(r'[—\-]\s*([^(]+)\s*\(Code\s*([^)]+)\)', raw_str, re.IGNORECASE)
+    if m:
+        return f"{m.group(1).strip()} (Code {m.group(2).strip()})"
+    m2 = re.search(r'Code\s*[:\-\s]?\s*([0-9A-Za-z]+)', raw_str, re.IGNORECASE)
+    if m2:
+        return f"Branch Code {m2.group(1).strip()}"
+    return ''
+
+
+def _build_liafi_agent_list_query(search, plan_filter, status_filter, city_filter):
+    query = """
+        SELECT
+            a.id, a.fullname, a.email, a.mobile, a.status, a.created_at, a.badge, a.is_blacklisted,
+            a.profession, a.insurance_companies, a.admin_notes, a.registration_draft,
+            ap.address, ap.state, ap.display_name, ap.slug, ap.license_number,
+            s.selected_plan, s.expires_at,
+            (SELECT AVG(rating) FROM agent_reviews WHERE agent_id = a.id AND is_approved = 1) AS avg_rating,
+            (SELECT COUNT(*) FROM agent_reviews WHERE agent_id = a.id AND is_approved = 1) AS review_count,
+            (SELECT COUNT(*) FROM agent_leads WHERE agent_id = a.id) AS leads_count,
+            (SELECT promo_code FROM invoices WHERE invoices.agent_id = a.id ORDER BY id DESC LIMIT 1) AS invoice_promo
+        FROM agents AS a
+        LEFT JOIN agent_profiles AS ap ON a.id = ap.agent_id
+        LEFT JOIN agent_subscriptions AS s ON a.id = s.agent_id
+            AND s.id = (SELECT MAX(id) FROM agent_subscriptions WHERE agent_id = a.id)
+        WHERE (
+            a.profession LIKE %s
+            OR a.insurance_companies LIKE %s
+            OR a.admin_notes LIKE %s
+            OR a.registration_draft LIKE %s
+            OR EXISTS (SELECT 1 FROM invoices WHERE invoices.agent_id = a.id AND invoices.promo_code = 'LIAFI')
+            OR EXISTS (SELECT 1 FROM free_trial_history WHERE free_trial_history.agent_id = a.id AND free_trial_history.promo_code = 'LIAFI')
+        )
+    """
+    params = ['%LIAFI%', '%LIAFI%', '%LIAFI%', '%liafi%']
+
+    if search:
+        query += " AND (a.fullname LIKE %s OR a.email LIKE %s OR a.mobile LIKE %s OR ap.display_name LIKE %s OR a.insurance_companies LIKE %s)"
+        search_param = f"%{search}%"
+        params.extend([search_param, search_param, search_param, search_param, search_param])
+
+    if plan_filter and plan_filter != 'All Plans':
+        query += " AND s.selected_plan = %s"
+        params.append(plan_filter)
+
+    if status_filter == 'blacklisted':
+        query += " AND a.is_blacklisted = 1"
+    elif status_filter == 'not_blacklisted':
+        query += " AND (a.is_blacklisted = 0 OR a.is_blacklisted IS NULL)"
+    elif status_filter and status_filter != 'All Status':
+        query += " AND a.status = %s"
+        params.append(status_filter)
+
+    if city_filter:
+        query += " AND (ap.address LIKE %s OR a.insurance_companies LIKE %s)"
+        params.extend([f"%{city_filter}%", f"%{city_filter}%"])
+
+    query += " ORDER BY a.id DESC"
+    return query, params
+
+
+def liafi_agent_list(request):
+    """
+    Dedicated Admin Registry: LIAFI Registered Agents
+    """
+    admin_id = _get_admin_from_session(request)
+    if not admin_id:
+        return redirect('admin_login')
+
+    search = request.GET.get('search', '').strip()
+    plan_filter = request.GET.get('plan', 'All Plans')
+    status_filter = request.GET.get('status', 'All Status')
+    city_filter = request.GET.get('city', '').strip()
+
+    query, params = _build_liafi_agent_list_query(search, plan_filter, status_filter, city_filter)
+
+    agents = []
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(query, params)
+            columns = [col[0] for col in cursor.description]
+            agents = [dict(zip(columns, row)) for row in cursor.fetchall()]
+    except Exception as e:
+        logger.error(f"Error fetching LIAFI agents list: {e}")
+
+    # Calculate statistics across all LIAFI agents
+    total_liafi = 0
+    active_liafi = 0
+    pending_liafi = 0
+    promo_liafi = 0
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT 
+                    COUNT(DISTINCT a.id) as total,
+                    SUM(CASE WHEN a.status = 'active' THEN 1 ELSE 0 END) as active_count,
+                    SUM(CASE WHEN a.status IN ('incomplete', 'pending_payment', 'pending_approval', 'pending') THEN 1 ELSE 0 END) as pending_count,
+                    SUM(CASE WHEN EXISTS (SELECT 1 FROM invoices WHERE invoices.agent_id = a.id AND invoices.promo_code = 'LIAFI') OR a.admin_notes LIKE '%LIAFI%' THEN 1 ELSE 0 END) as promo_count
+                FROM agents a
+                WHERE (
+                    a.profession LIKE '%LIAFI%'
+                    OR a.insurance_companies LIKE '%LIAFI%'
+                    OR a.admin_notes LIKE '%LIAFI%'
+                    OR a.registration_draft LIKE '%liafi%'
+                    OR EXISTS (SELECT 1 FROM invoices WHERE invoices.agent_id = a.id AND invoices.promo_code = 'LIAFI')
+                    OR EXISTS (SELECT 1 FROM free_trial_history WHERE free_trial_history.agent_id = a.id AND free_trial_history.promo_code = 'LIAFI')
+                )
+            """)
+            stats_row = cursor.fetchone()
+            if stats_row:
+                total_liafi = stats_row[0] or 0
+                active_liafi = stats_row[1] or 0
+                pending_liafi = stats_row[2] or 0
+                promo_liafi = stats_row[3] or 0
+    except Exception as e:
+        logger.error(f"Error calculating LIAFI agent stats: {e}")
+
+    for agent in agents:
+        agent['branch_info'] = _extract_branch_info(agent.get('insurance_companies'), agent.get('admin_notes'))
+        agent['is_liafi_member'] = (agent.get('invoice_promo') == 'LIAFI') or ('LIAFI' in str(agent.get('admin_notes') or '')) or ('liafi' in str(agent.get('profession') or '').lower())
+        initials = (agent.get('fullname') or '').strip()
+        agent['initials'] = ''.join([w[0] for w in initials.split()[:2]]).upper() if initials else 'LA'
+
+        # Extract Member ID
+        member_id = ''
+        reg_draft = agent.get('registration_draft')
+        if reg_draft:
+            if isinstance(reg_draft, str):
+                try:
+                    reg_draft = json.loads(reg_draft)
+                except Exception:
+                    reg_draft = {}
+            if isinstance(reg_draft, dict):
+                member_id = reg_draft.get('member_id') or ''
+        if not member_id and agent.get('admin_notes'):
+            m_id = re.search(r'LIAFI Member ID:\s*([^\n\r]+)', str(agent.get('admin_notes')))
+            if m_id:
+                member_id = m_id.group(1).strip()
+        if not member_id and agent.get('license_number'):
+            member_id = agent.get('license_number')
+        agent['member_id'] = member_id
+
+    paginator = Paginator(agents, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'agents': agents,
+        'search': search,
+        'plan_filter': plan_filter,
+        'status_filter': status_filter,
+        'city_filter': city_filter,
+        'page_obj': page_obj,
+        'total_liafi': total_liafi,
+        'active_liafi': active_liafi,
+        'pending_liafi': pending_liafi,
+        'promo_liafi': promo_liafi,
+    }
+    return render(request, 'admin/agents/liafi_list.html', context)
+
+
+def _build_lic_agent_list_query(search, plan_filter, status_filter, city_filter, bima_sakhi_filter=False):
+    query = """
+        SELECT
+            a.id, a.fullname, a.email, a.mobile, a.status, a.created_at, a.badge, a.is_blacklisted,
+            a.profession, a.insurance_companies, a.admin_notes,
+            ap.address, ap.state, ap.display_name, ap.slug,
+            s.selected_plan, s.expires_at,
+            (SELECT AVG(rating) FROM agent_reviews WHERE agent_id = a.id AND is_approved = 1) AS avg_rating,
+            (SELECT COUNT(*) FROM agent_reviews WHERE agent_id = a.id AND is_approved = 1) AS review_count,
+            (SELECT COUNT(*) FROM agent_leads WHERE agent_id = a.id) AS leads_count,
+            (SELECT promo_code FROM invoices WHERE invoices.agent_id = a.id ORDER BY id DESC LIMIT 1) AS invoice_promo
+        FROM agents AS a
+        LEFT JOIN agent_profiles AS ap ON a.id = ap.agent_id
+        LEFT JOIN agent_subscriptions AS s ON a.id = s.agent_id
+            AND s.id = (SELECT MAX(id) FROM agent_subscriptions WHERE agent_id = a.id)
+        WHERE (
+            (
+                (a.profession = 'LIC Agent' OR a.insurance_companies LIKE %s OR a.insurance_companies LIKE %s)
+                AND (a.profession NOT LIKE %s AND (a.insurance_companies NOT LIKE %s OR a.insurance_companies IS NULL))
+            )
+            OR EXISTS (SELECT 1 FROM invoices WHERE invoices.agent_id = a.id AND invoices.promo_code = 'BIMASAKHI')
+            OR a.admin_notes LIKE %s
+        )
+    """
+    params = ['%LIC%', '%Life Insurance Corporation%', '%LIAFI%', '%LIAFI%', '%lic-event%']
+
+    if bima_sakhi_filter:
+        query += """ AND (
+            EXISTS (SELECT 1 FROM invoices WHERE invoices.agent_id = a.id AND invoices.promo_code = 'BIMASAKHI')
+            OR a.admin_notes LIKE %s
+        )"""
+        params.append('%BIMASAKHI%')
+
+    if search:
+        query += " AND (a.fullname LIKE %s OR a.email LIKE %s OR a.mobile LIKE %s OR ap.display_name LIKE %s OR a.insurance_companies LIKE %s)"
+        search_param = f"%{search}%"
+        params.extend([search_param, search_param, search_param, search_param, search_param])
+
+    if plan_filter and plan_filter != 'All Plans':
+        query += " AND s.selected_plan = %s"
+        params.append(plan_filter)
+
+    if status_filter == 'blacklisted':
+        query += " AND a.is_blacklisted = 1"
+    elif status_filter == 'not_blacklisted':
+        query += " AND (a.is_blacklisted = 0 OR a.is_blacklisted IS NULL)"
+    elif status_filter and status_filter != 'All Status':
+        query += " AND a.status = %s"
+        params.append(status_filter)
+
+    if city_filter:
+        query += " AND (ap.address LIKE %s OR a.insurance_companies LIKE %s)"
+        params.extend([f"%{city_filter}%", f"%{city_filter}%"])
+
+    query += " ORDER BY a.id DESC"
+    return query, params
+
+
+def lic_agent_list(request):
+    """
+    Dedicated Admin Registry: LIC Registered Agents
+    """
+    admin_id = _get_admin_from_session(request)
+    if not admin_id:
+        return redirect('admin_login')
+
+    search = request.GET.get('search', '')
+    plan_filter = request.GET.get('plan', 'All Plans')
+    status_filter = request.GET.get('status', 'All Status')
+    city_filter = request.GET.get('city', '')
+    bima_sakhi_filter = request.GET.get('bima_sakhi') == '1'
+
+    query, params = _build_lic_agent_list_query(search, plan_filter, status_filter, city_filter, bima_sakhi_filter)
+
+    agents = []
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(query, params)
+            columns = [col[0] for col in cursor.description]
+            agents = [dict(zip(columns, row)) for row in cursor.fetchall()]
+    except Exception as e:
+        logger.error(f"Error fetching LIC agents list: {e}")
+
+    total_lic = 0
+    active_lic = 0
+    pending_lic = 0
+    bima_sakhi_count = 0
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT 
+                    COUNT(*) as total,
+                    SUM(CASE WHEN a.status = 'active' THEN 1 ELSE 0 END) as active_count,
+                    SUM(CASE WHEN a.status IN ('incomplete', 'pending_payment', 'pending_approval', 'pending') THEN 1 ELSE 0 END) as pending_count,
+                    SUM(CASE WHEN EXISTS (SELECT 1 FROM invoices WHERE invoices.agent_id = a.id AND invoices.promo_code = 'BIMASAKHI') OR a.admin_notes LIKE '%BIMASAKHI%' THEN 1 ELSE 0 END) as bima_count
+                FROM agents a
+                WHERE (
+                    (
+                        (a.profession = 'LIC Agent' OR a.insurance_companies LIKE '%LIC%' OR a.insurance_companies LIKE '%Life Insurance Corporation%')
+                        AND (a.profession NOT LIKE '%LIAFI%' AND (a.insurance_companies NOT LIKE '%LIAFI%' OR a.insurance_companies IS NULL))
+                    )
+                    OR EXISTS (SELECT 1 FROM invoices WHERE invoices.agent_id = a.id AND invoices.promo_code = 'BIMASAKHI')
+                    OR a.admin_notes LIKE '%lic-event%'
+                )
+            """)
+            stats_row = cursor.fetchone()
+            if stats_row:
+                total_lic = stats_row[0] or 0
+                active_lic = stats_row[1] or 0
+                pending_lic = stats_row[2] or 0
+                bima_sakhi_count = stats_row[3] or 0
+    except Exception as e:
+        logger.error(f"Error calculating LIC agent stats: {e}")
+
+    for agent in agents:
+        agent['branch_info'] = _extract_branch_info(agent.get('insurance_companies'), agent.get('admin_notes'))
+        agent['is_bima_sakhi'] = (agent.get('invoice_promo') == 'BIMASAKHI') or ('BIMASAKHI' in str(agent.get('admin_notes') or ''))
+        initials = (agent.get('fullname') or '').strip()
+        agent['initials'] = ''.join([w[0] for w in initials.split()[:2]]).upper() if initials else 'LIC'
+
+    paginator = Paginator(agents, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'agents': agents,
+        'search': search,
+        'plan_filter': plan_filter,
+        'status_filter': status_filter,
+        'city_filter': city_filter,
+        'bima_sakhi': '1' if bima_sakhi_filter else '',
+        'page_obj': page_obj,
+        'total_lic': total_lic,
+        'active_lic': active_lic,
+        'pending_lic': pending_lic,
+        'bima_sakhi_count': bima_sakhi_count,
+    }
+    return render(request, 'admin/agents/lic_list.html', context)
+
+
+def export_liafi_agents(request):
+    """CSV Export of LIAFI agents."""
+    admin_id = _get_admin_from_session(request)
+    if not admin_id:
+        return redirect('admin_login')
+
+    search = request.GET.get('search', '')
+    plan_filter = request.GET.get('plan', 'All Plans')
+    status_filter = request.GET.get('status', 'All Status')
+    city_filter = request.GET.get('city', '')
+
+    query, params = _build_liafi_agent_list_query(search, plan_filter, status_filter, city_filter)
+    rows = []
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(query, params)
+            columns = [col[0] for col in cursor.description]
+            for row in cursor.fetchall():
+                a = dict(zip(columns, row))
+                branch = _extract_branch_info(a.get('insurance_companies'), a.get('admin_notes'))
+                member_id = ''
+                reg_draft = a.get('registration_draft')
+                if reg_draft:
+                    if isinstance(reg_draft, str):
+                        try:
+                            reg_draft = json.loads(reg_draft)
+                        except Exception:
+                            reg_draft = {}
+                    if isinstance(reg_draft, dict):
+                        member_id = reg_draft.get('member_id') or ''
+                if not member_id and a.get('admin_notes'):
+                    m_id = re.search(r'LIAFI Member ID:\s*([^\n\r]+)', str(a.get('admin_notes')))
+                    if m_id:
+                        member_id = m_id.group(1).strip()
+                if not member_id and a.get('license_number'):
+                    member_id = a.get('license_number')
+
+                rows.append([
+                    a.get('id'),
+                    a.get('fullname'),
+                    a.get('email'),
+                    a.get('mobile'),
+                    member_id or '',
+                    branch or a.get('address') or '',
+                    a.get('state') or '',
+                    a.get('selected_plan') or 'FREE',
+                    a.get('status'),
+                    'Yes' if (a.get('invoice_promo') == 'LIAFI' or 'LIAFI' in str(a.get('admin_notes') or '')) else 'No',
+                    str(a.get('created_at') or '')[:19],
+                ])
+    except Exception as e:
+        logger.error(f"Error exporting LIAFI agents: {e}")
+
+    header = ['Agent ID', 'Full Name', 'Email', 'Mobile', 'Member ID', 'Branch / Division', 'State', 'Plan', 'Status', 'LIAFI Member Promo', 'Registered At']
+    filename = f"liafi_agents_export_{timezone.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    response = HttpResponse(content_type='text/csv; charset=UTF-8')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response.write(b'\xef\xbb\xbf')
+    writer = csv.writer(response)
+    writer.writerow(header)
+    writer.writerows(rows)
+    return response
+
+
+def export_lic_agents(request):
+    """CSV Export of LIC agents."""
+    admin_id = _get_admin_from_session(request)
+    if not admin_id:
+        return redirect('admin_login')
+
+    search = request.GET.get('search', '')
+    plan_filter = request.GET.get('plan', 'All Plans')
+    status_filter = request.GET.get('status', 'All Status')
+    city_filter = request.GET.get('city', '')
+    bima_sakhi_filter = request.GET.get('bima_sakhi') == '1'
+
+    query, params = _build_lic_agent_list_query(search, plan_filter, status_filter, city_filter, bima_sakhi_filter)
+    rows = []
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(query, params)
+            columns = [col[0] for col in cursor.description]
+            for row in cursor.fetchall():
+                a = dict(zip(columns, row))
+                branch = _extract_branch_info(a.get('insurance_companies'), a.get('admin_notes'))
+                rows.append([
+                    a.get('id'),
+                    a.get('fullname'),
+                    a.get('email'),
+                    a.get('mobile'),
+                    branch or a.get('address') or '',
+                    a.get('state') or '',
+                    a.get('selected_plan') or 'FREE',
+                    a.get('status'),
+                    'Yes' if (a.get('invoice_promo') == 'BIMASAKHI' or 'BIMASAKHI' in str(a.get('admin_notes') or '')) else 'No',
+                    str(a.get('created_at') or '')[:19],
+                ])
+    except Exception as e:
+        logger.error(f"Error exporting LIC agents: {e}")
+
+    header = ['Agent ID', 'Full Name', 'Email', 'Mobile', 'Branch / Code', 'State', 'Plan', 'Status', 'Bima Sakhi Scheme', 'Registered At']
+    filename = f"lic_agents_export_{timezone.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    response = HttpResponse(content_type='text/csv; charset=UTF-8')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response.write(b'\xef\xbb\xbf')
+    writer = csv.writer(response)
+    writer.writerow(header)
+    writer.writerows(rows)
+    return response

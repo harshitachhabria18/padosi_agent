@@ -861,6 +861,33 @@ class AgentProfileView(models.Model):
         managed = True
 
 
+class AgentCardImpression(models.Model):
+    """Tracks every time an agent's card appears in a find-agents search result page."""
+    agent = models.ForeignKey(Agent, on_delete=models.CASCADE, related_name='card_impressions', db_constraint=False)
+    impression_date = models.DateField()
+    search_pincode = models.CharField(max_length=10, blank=True, null=True)
+    impression_count = models.IntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'agent_card_impressions'
+        managed = True
+        unique_together = ('agent', 'impression_date', 'search_pincode')
+
+
+class AgentSearchEvent(models.Model):
+    """Tracks every time the find-agents page is loaded with a pincode (global, not per-agent)."""
+    search_date = models.DateField()
+    pincode = models.CharField(max_length=10, blank=True, null=True)
+    event_count = models.IntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'agent_search_events'
+        managed = True
+        unique_together = ('search_date', 'pincode')
 class AgentReview(models.Model):
     agent = models.ForeignKey(Agent, on_delete=models.CASCADE, related_name='reviews')
     user = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True)

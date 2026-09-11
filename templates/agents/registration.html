@@ -628,6 +628,9 @@
                                     <input type="hidden" name="claim_amount" :value="claimAmount">
                                     <input type="hidden" name="slug" :value="slug">
                                     <input type="hidden" name="promo_code" :value="promoApplied ? promoCode : ''">
+                                    <input type="hidden" name="company" value="{{ prefilledCompany|default:'' }}">
+                                    <input type="hidden" name="source" value="{{ prefilledSource|default:'' }}">
+                                    <input type="hidden" name="member_id" value="{{ prefilledMemberId|default:'' }}">
 
                                     <button type="submit" :disabled="isSubmitting"
                                         class="mt-4 inline-flex w-full items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 h-12 text-base transition-all group">
@@ -1364,15 +1367,18 @@
                 },
 
                 // Form fields
-                name: '{{ draft.fullname }}',
+                name: '{{ draft.fullname|default:prefilledName|default:""|escapejs }}',
                 slug: '',
                 slugStatus: 'checking',
-                email: '{{ draft.email }}',
-                phone: '{{ draft.mobile }}',
-                whatsapp: '{{ draft.whatsapp }}',
-                pincode: '{{ draft.agent_pincode }}',
-                city: '{{ prefilledState|default:"" }}',
-                state: '{{ prefilledState|default:"" }}',
+                email: '{{ draft.email|default:prefilledEmail|default:""|escapejs }}',
+                emailStatus: '',
+                emailCheckMessage: '',
+                emailLoginUrl: '{% url "agents:agent_login" %}',
+                phone: '{{ draft.mobile|default:prefilledPhone|default:""|escapejs }}',
+                whatsapp: '{{ draft.whatsapp|default:prefilledPhone|default:""|escapejs }}',
+                pincode: '{{ draft.agent_pincode|default:prefilledPincode|default:""|escapejs }}',
+                city: '{{ prefilledCity|default:prefilledState|default:""|escapejs }}',
+                state: '{{ prefilledState|default:""|escapejs }}',
                 pan: '',
                 yearsExperience: '',
                 clientBase: '',
@@ -1425,7 +1431,7 @@
                     }, 100);
                 },
 
-                validateAndOpenPreview() {
+                async validateAndOpenPreview() {
                     const nameStr = this.name || '';
                     const emailStr = this.email || '';
                     const phoneStr = this.phone || '';
@@ -1440,6 +1446,63 @@
                     if (!this.segments || this.segments.length === 0) return Swal.fire('Missing Detail', 'Please select at least one insurance segment.', 'warning');
                     if (!this.agreeTerms) return Swal.fire('Missing Detail', 'Please agree to the Terms of Service to continue.', 'warning');
 
+                    // Save draft to server immediately upon clicking "Continue to Choose Plan"
+                    this.isSubmitting = true;
+                    try {
+                        const formData = new FormData(document.getElementById('step1Form'));
+                        formData.append('action', 'draft');
+                        formData.append('is_claim', '0');
+                        if (this.photoFile) {
+                            formData.append('photo', this.photoFile);
+                        }
+
+                        const res = await fetch("{% url 'agents:agent_register_step1' %}", {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            }
+                        });
+                        const data = await res.json().catch(() => null);
+                        if (!res.ok || !data || !data.success) {
+                            let errMsg = (data && data.message) ? data.message : 'Error saving registration details. Please try again.';
+                            if (data && data.errors) {
+                                this.errors = data.errors;
+                                let errorHtml = '<ul style="text-align: left; margin-bottom: 0;">';
+                                for (let field in data.errors) {
+                                    errorHtml += `<li>${data.errors[field][0]}</li>`;
+                                }
+                                errorHtml += '</ul>';
+                                errMsg = errorHtml;
+                            }
+                            return Swal.fire({ icon: 'error', title: 'Validation Error', html: errMsg });
+                        }
+                    } catch (err) {
+                        console.error('Draft save error:', err);
+                        return Swal.fire('Error', 'Could not save your details. Please check your connection and try again.', 'error');
+                    } finally {
+                        this.isSubmitting = false;
+                    }
+
+                    const self = this;
+                    if (typeof window.showRegCelebration === 'function') {
+                        this.celebrationShowing = true;
+                        window.showRegCelebration(this.name || '', {
+                            duration: 2500,
+                            nextText: 'Opening your card preview…',
+                            message: 'You\'re all set! Preview your digital card and profile website next.',
+                            onComplete: function () {
+                                self.celebrationShowing = false;
+                                self.openPreviewModal();
+                            }
+                        });
+                    } else {
+                        this.openPreviewModal();
+                    }
+                },
+
+                openPreviewModal() {
                     this.showPreviewModal = true;
                     this.previewSlide = 0;
                     setTimeout(() => {
@@ -1659,8 +1722,13 @@
 
                         this.isSubmitting = true;
 
-                        // Submit via AJAX
+                        // Submit via AJAX as CLAIM
                         const formData = new FormData(document.getElementById('step1Form'));
+                        formData.append('action', 'claim');
+                        formData.append('is_claim', '1');
+                        if (this.photoFile) {
+                            formData.append('photo', this.photoFile);
+                        }
 
                         fetch("{% url 'agents:agent_register_step1' %}", {
                             method: 'POST',

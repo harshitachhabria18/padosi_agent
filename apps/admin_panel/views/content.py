@@ -1146,3 +1146,169 @@ def manage_agent_toggle(request, plan_slug):
         'enabled_features': new_config.get(slug) or [],
         'rules': rules,
     })
+
+
+# ─── LIAFI Page Dynamic Content Editor ───────────────────────────────────────
+
+DEFAULT_LIAFI_CONTENT = {
+    'badge_text': 'Official LIAFI Digital Initiative',
+    'title_line_1': "Life Insurance Agents'",
+    'title_highlight': 'Federation Of India',
+    'description': "Since 2nd October 1964, LIAFI has been actively safeguarding the professional rights and dignity of lakhs of LIC Agents across the nation. Through PadosiAgent, empower your life insurance agency with a permanent verified digital website, Google pin code discovery, and direct policyholder connect.",
+    'stats': [
+        {'val': '8', 'label': 'Zones', 'sub': 'All India Presence'},
+        {'val': '113', 'label': 'Divisions', 'sub': 'Pan India Network'},
+        {'val': '2,048', 'label': 'Branches', 'sub': 'Ground Coverage'},
+        {'val': '13.7L+', 'label': 'Agents', 'sub': 'Empowered Community'},
+    ],
+    'trust_cards': [
+        {'icon': '🏛️', 'title': 'LIAFI Official Federation', 'sub': 'Regn. No. 2924 of 2000'},
+        {'icon': '🌐', 'title': 'Permanent Digital Agency', 'sub': 'Your verified website & card'},
+        {'icon': '📍', 'title': 'Pin Code Visibility', 'sub': 'Direct local customer queries'},
+        {'icon': '🤝', 'title': '60+ Years of Legacy', 'sub': 'Serving agents since 1964'},
+    ],
+    'pricing': {
+        'badge': 'LIMITED SEATS! ACROSS INDIA',
+        'promo_code': 'LIAFI',
+        'subtitle': 'Build your verified digital identity & grow your life insurance agency.',
+        'original_price': '1,999',
+        'offer_price': '199',
+        'tax_note': '+ GST',
+        'perks': [
+            'Be One of the First',
+            'Early Access Benefits',
+            'Grow Business Faster',
+        ]
+    },
+    'pillars': [
+        {
+            'title': 'Historic Decisions',
+            'description': 'Decades of continuous struggle and dialogue have achieved historic landmark decisions improving the service conditions and commission safeguards for agents.',
+        },
+        {
+            'title': 'Policyholder First',
+            'description': 'LIAFI continually advocates for policyholder transparency, fair claim settlements, and quality insurance service delivery across India.',
+        },
+        {
+            'title': 'Digital Modernization',
+            'description': "Equipping every modern insurance adviser with digital tools, Google search discoverability, and WhatsApp card sharing to excel in today's digital era.",
+        }
+    ]
+}
+
+
+def liafi_content(request):
+    """Admin editor view for /liafi/ page dynamic content."""
+    admin_id = _get_admin_from_session(request)
+    if not admin_id:
+        return redirect('admin_login')
+
+    saved = SiteSetting.get_value('liafi_page_content', {}) or {}
+    
+    # Merge saved with defaults so all keys and arrays exist
+    liafi_data = {
+        'badge_text': saved.get('badge_text', DEFAULT_LIAFI_CONTENT['badge_text']),
+        'title_line_1': saved.get('title_line_1', DEFAULT_LIAFI_CONTENT['title_line_1']),
+        'title_highlight': saved.get('title_highlight', DEFAULT_LIAFI_CONTENT['title_highlight']),
+        'description': saved.get('description', DEFAULT_LIAFI_CONTENT['description']),
+        'stats': saved.get('stats', DEFAULT_LIAFI_CONTENT['stats']),
+        'trust_cards': saved.get('trust_cards', DEFAULT_LIAFI_CONTENT['trust_cards']),
+        'pricing': {
+            'badge': saved.get('pricing', {}).get('badge', DEFAULT_LIAFI_CONTENT['pricing']['badge']),
+            'promo_code': saved.get('pricing', {}).get('promo_code', DEFAULT_LIAFI_CONTENT['pricing']['promo_code']),
+            'subtitle': saved.get('pricing', {}).get('subtitle', DEFAULT_LIAFI_CONTENT['pricing']['subtitle']),
+            'original_price': saved.get('pricing', {}).get('original_price', DEFAULT_LIAFI_CONTENT['pricing']['original_price']),
+            'offer_price': saved.get('pricing', {}).get('offer_price', DEFAULT_LIAFI_CONTENT['pricing']['offer_price']),
+            'tax_note': saved.get('pricing', {}).get('tax_note', DEFAULT_LIAFI_CONTENT['pricing']['tax_note']),
+            'perks': saved.get('pricing', {}).get('perks', DEFAULT_LIAFI_CONTENT['pricing']['perks']),
+        },
+        'pillars': saved.get('pillars', DEFAULT_LIAFI_CONTENT['pillars']),
+    }
+
+    return render(request, 'admin/content/liafi.html', {
+        'liafi': liafi_data,
+    })
+
+
+def update_liafi_content(request):
+    """Save /liafi/ dynamic content from Admin form."""
+    admin_id = _get_admin_from_session(request)
+    if not admin_id:
+        return redirect('admin_login')
+
+    if request.method == 'POST':
+        # Stats list
+        stats_val = request.POST.getlist('stat_val[]')
+        stats_label = request.POST.getlist('stat_label[]')
+        stats_sub = request.POST.getlist('stat_sub[]')
+        stats = []
+        for i in range(max(len(stats_val), len(stats_label))):
+            v = stats_val[i].strip() if i < len(stats_val) else ''
+            l = stats_label[i].strip() if i < len(stats_label) else ''
+            s = stats_sub[i].strip() if i < len(stats_sub) else ''
+            if v or l:
+                stats.append({'val': v, 'label': l, 'sub': s})
+        if not stats:
+            stats = DEFAULT_LIAFI_CONTENT['stats']
+
+        # Trust cards list
+        trust_icon = request.POST.getlist('trust_icon[]')
+        trust_title = request.POST.getlist('trust_title[]')
+        trust_sub = request.POST.getlist('trust_sub[]')
+        trust_cards = []
+        for i in range(max(len(trust_icon), len(trust_title))):
+            ic = trust_icon[i].strip() if i < len(trust_icon) else ''
+            tt = trust_title[i].strip() if i < len(trust_title) else ''
+            ts = trust_sub[i].strip() if i < len(trust_sub) else ''
+            if tt:
+                trust_cards.append({'icon': ic, 'title': tt, 'sub': ts})
+        if not trust_cards:
+            trust_cards = DEFAULT_LIAFI_CONTENT['trust_cards']
+
+        # Perks list
+        perks_raw = request.POST.getlist('perk[]')
+        perks = [p.strip() for p in perks_raw if p.strip()]
+        if not perks:
+            perks = DEFAULT_LIAFI_CONTENT['pricing']['perks']
+
+        # Pillars list
+        pillar_titles = request.POST.getlist('pillar_title[]')
+        pillar_descriptions = request.POST.getlist('pillar_description[]')
+        pillars = []
+        for i in range(max(len(pillar_titles), len(pillar_descriptions))):
+            pt = pillar_titles[i].strip() if i < len(pillar_titles) else ''
+            pd = pillar_descriptions[i].strip() if i < len(pillar_descriptions) else ''
+            if pt or pd:
+                pillars.append({'title': pt, 'description': pd})
+        if not pillars:
+            pillars = DEFAULT_LIAFI_CONTENT['pillars']
+
+        payload = {
+            'badge_text': request.POST.get('badge_text', '').strip() or DEFAULT_LIAFI_CONTENT['badge_text'],
+            'title_line_1': request.POST.get('title_line_1', '').strip() or DEFAULT_LIAFI_CONTENT['title_line_1'],
+            'title_highlight': request.POST.get('title_highlight', '').strip() or DEFAULT_LIAFI_CONTENT['title_highlight'],
+            'description': request.POST.get('description', '').strip() or DEFAULT_LIAFI_CONTENT['description'],
+            'stats': stats,
+            'trust_cards': trust_cards,
+            'pricing': {
+                'badge': request.POST.get('pricing_badge', '').strip() or DEFAULT_LIAFI_CONTENT['pricing']['badge'],
+                'promo_code': request.POST.get('pricing_promo', '').strip() or DEFAULT_LIAFI_CONTENT['pricing']['promo_code'],
+                'subtitle': request.POST.get('pricing_subtitle', '').strip() or DEFAULT_LIAFI_CONTENT['pricing']['subtitle'],
+                'original_price': request.POST.get('pricing_original', '').strip() or DEFAULT_LIAFI_CONTENT['pricing']['original_price'],
+                'offer_price': request.POST.get('pricing_offer', '').strip() or DEFAULT_LIAFI_CONTENT['pricing']['offer_price'],
+                'tax_note': request.POST.get('pricing_tax', '').strip() or DEFAULT_LIAFI_CONTENT['pricing']['tax_note'],
+                'perks': perks,
+            },
+            'pillars': pillars,
+        }
+
+        SiteSetting.set_value('liafi_page_content', payload, 'liafi')
+        try:
+            AdminActivityLog.log('Updated LIAFI page content', 'SiteSetting', request=request)
+        except Exception:
+            pass
+        messages.success(request, 'LIAFI page settings saved successfully. Changes are live immediately!')
+        return redirect('admin_content_liafi')
+
+    return redirect('admin_content_liafi')
+

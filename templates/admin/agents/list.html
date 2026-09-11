@@ -6,6 +6,63 @@
 
 {% block content %}
 
+<style>
+/* Custom Toggle Switch for Agent Status */
+.agent-status-switch {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 20px;
+    margin: 0;
+    cursor: pointer;
+}
+.agent-status-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+.agent-status-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #cbd5e1;
+    transition: all 0.25s ease;
+    border-radius: 20px;
+}
+.agent-status-slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: #ffffff;
+    transition: all 0.25s ease;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+.agent-status-switch input:checked + .agent-status-slider {
+    background-color: #10b981;
+}
+.agent-status-switch input:checked + .agent-status-slider:before {
+    transform: translateX(16px);
+}
+.status-pill {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 6px;
+    letter-spacing: 0.3px;
+    display: inline-flex;
+    align-items: center;
+    text-transform: capitalize;
+}
+</style>
+
 <!-- Page Header -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="m-0">Agent Ecosystem</h4>
@@ -158,10 +215,40 @@
                             <div class="text-muted" style="font-size: 11px;">{{ agent.leads_count|default:"0" }} Leads</div>
                         </td>
 
-                        <!-- Status Toggle -->
-                        <td class="text-center">
-                            <div class="form-check form-switch d-inline-block">
-                                <input class="form-check-input" type="checkbox" role="switch" {% if agent.status == 'active' %}checked{% endif %} onchange="toggleAgentStatus({{ agent.id }}, this.checked)">
+                        <!-- Status Toggle & Badge -->
+                        <td class="text-center" style="vertical-align: middle;">
+                            <div class="d-inline-flex flex-column align-items-center justify-content-center" style="min-width: 90px; gap: 4px;">
+                                <label class="agent-status-switch" title="Click to toggle Active / Inactive">
+                                    <input type="checkbox" {% if agent.status == 'active' %}checked{% endif %} onchange="toggleAgentStatus({{ agent.id }}, this.checked)">
+                                    <span class="agent-status-slider"></span>
+                                </label>
+                                <div>
+                                    {% if agent.status == 'active' %}
+                                        <span id="status-badge-{{ agent.id }}" class="status-pill" style="background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0;">
+                                            <i class="fa-solid fa-circle-check me-1" style="font-size: 9px;"></i>Active
+                                        </span>
+                                    {% elif agent.status == 'pending_payment' %}
+                                        <span id="status-badge-{{ agent.id }}" class="status-pill" style="background-color: #fef3c7; color: #b45309; border: 1px solid #fde68a;">
+                                            <i class="fa-solid fa-credit-card me-1" style="font-size: 9px;"></i>Pending Pay
+                                        </span>
+                                    {% elif agent.status == 'pending_approval' %}
+                                        <span id="status-badge-{{ agent.id }}" class="status-pill" style="background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;">
+                                            <i class="fa-solid fa-user-clock me-1" style="font-size: 9px;"></i>Approval
+                                        </span>
+                                    {% elif agent.status == 'incomplete' %}
+                                        <span id="status-badge-{{ agent.id }}" class="status-pill" style="background-color: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;">
+                                            <i class="fa-solid fa-hourglass-half me-1" style="font-size: 9px;"></i>Incomplete
+                                        </span>
+                                    {% elif agent.status == 'blacklisted' %}
+                                        <span id="status-badge-{{ agent.id }}" class="status-pill" style="background-color: #fee2e2; color: #b91c1c; border: 1px solid #fecaca;">
+                                            <i class="fa-solid fa-ban me-1" style="font-size: 9px;"></i>Blacklisted
+                                        </span>
+                                    {% else %}
+                                        <span id="status-badge-{{ agent.id }}" class="status-pill" style="background-color: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb;">
+                                            {{ agent.status|default:'Inactive'|capfirst }}
+                                        </span>
+                                    {% endif %}
+                                </div>
                             </div>
                         </td>
 
@@ -266,8 +353,8 @@
 </div>
 
 <script>
-function toggleAgentStatus(id, isActive) {
-    const status = isActive ? 'active' : 'inactive';
+function toggleAgentStatus(id, isChecked) {
+    const badgeEl = document.getElementById('status-badge-' + id);
     fetch("{% url 'admin_agents_toggle_status' %}", {
         method: 'POST',
         headers: {
@@ -275,13 +362,26 @@ function toggleAgentStatus(id, isActive) {
             'Accept': 'application/json',
             'X-CSRFToken': '{{ csrf_token }}'
         },
-        body: JSON.stringify({ id: id, status: status })
+        body: JSON.stringify({ id: id, status: isChecked ? 'active' : 'inactive' })
     })
     .then(res => res.json())
     .then(data => {
         if(data.success) {
+            if (badgeEl) {
+                if (isChecked) {
+                    badgeEl.innerHTML = '<i class="fa-solid fa-circle-check me-1" style="font-size: 9px;"></i>Active';
+                    badgeEl.style.backgroundColor = '#dcfce7';
+                    badgeEl.style.color = '#15803d';
+                    badgeEl.style.borderColor = '#bbf7d0';
+                } else {
+                    badgeEl.innerHTML = 'Inactive';
+                    badgeEl.style.backgroundColor = '#f3f4f6';
+                    badgeEl.style.color = '#6b7280';
+                    badgeEl.style.borderColor = '#e5e7eb';
+                }
+            }
             if (typeof Swal !== 'undefined') {
-                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Status updated successfully', showConfirmButton: false, timer: 3000 });
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Status updated to ' + (isChecked ? 'Active' : 'Inactive'), showConfirmButton: false, timer: 2000 });
             }
         } else {
             alert(data.message || 'Error updating status');
@@ -330,28 +430,6 @@ function updateAgentBadge(id, badge) {
     .catch(err => console.error(err));
 }
 
-function toggleAgentStatus(id, isChecked) {
-    fetch("{% url 'admin_agents_toggle_status' %}", {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'X-CSRFToken': '{{ csrf_token }}'
-        },
-        body: JSON.stringify({ id: id, status: isChecked ? 'active' : 'inactive' })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if(data.success) {
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Status updated successfully', showConfirmButton: false, timer: 3000 });
-            }
-        } else {
-            alert(data.message || 'Error updating status');
-        }
-    })
-    .catch(err => console.error(err));
-}
 
 function toggleBlacklist(agentId, action) {
     if (action === 'add') {

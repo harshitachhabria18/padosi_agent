@@ -55,6 +55,10 @@ from .views.agents import (
     admin_verify_pending_payment,
     admin_edit_profile,
     admin_full_update_profile,
+    liafi_agent_list,
+    lic_agent_list,
+    export_liafi_agents,
+    export_lic_agents,
 )
 from .views.agents_irdai import verify_irdai_license
 from .views.agents_amfi import verify_amfi_arn
@@ -257,6 +261,10 @@ urlpatterns = [
 
     # Phase 3B: Agents List
     path("admin/agents/", agent_list, name="admin_agents"),
+    path("admin/agents/liafi/", liafi_agent_list, name="admin_liafi_agents"),
+    path("admin/agents/liafi/export/", export_liafi_agents, name="admin_liafi_agents_export"),
+    path("admin/agents/lic/", lic_agent_list, name="admin_lic_agents"),
+    path("admin/agents/lic/export/", export_lic_agents, name="admin_lic_agents_export"),
     
     path("admin/agents/<int:id>/manage/", manage_agent, name="admin_agents_manage"),
     path("admin/agents/manage/<int:id>/", manage_agent, name="admin_agents_manage_alt"),
@@ -324,6 +332,8 @@ urlpatterns = [
     path('admin/content/plans/update-review-growth/', content.update_review_growth, name='admin_content_plans_update_review_growth'),
     path('admin/content/plans/manage-agent/<str:plan_slug>/', content.manage_agent_preview, name='admin_content_plans_manage_agent'),
     path('admin/content/plans/manage-agent/<str:plan_slug>/toggle/', content.manage_agent_toggle, name='admin_content_plans_manage_agent_toggle'),
+    path('admin/content/liafi/', content.liafi_content, name='admin_content_liafi'),
+    path('admin/content/liafi/update/', content.update_liafi_content, name='admin_content_liafi_update'),
 
     # Phase 7B: CMS Static Pages
     path('admin/pages/',                          pages_index,  name='admin_pages_index'),

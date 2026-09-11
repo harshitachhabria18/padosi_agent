@@ -25,6 +25,8 @@ urlpatterns = [
     path('calculator/', RedirectView.as_view(url='/calculators/health-insurance-calculator/', permanent=True), name='calculator'),
     path('coming-soon/', pages.coming_soon, name='coming_soon'),
     path('lic-agent/', pages.lic_event, name='lic_event'),
+    path('liafi/', pages.liafi_event, name='liafi_event'),
+    path('liafi-agent/', RedirectView.as_view(url='/liafi/', permanent=False), name='liafi_agent_redirect'),
     path('cancellation-refund-policy/', pages.cancellation_refund_policy, name='cancellation_refund'),
     path('blacklisted-agents/', pages.blacklisted_agents, name='blacklisted_agents'),
     path('<slug:slug>/',     pages.custom_page,    name='custom_page'),

@@ -218,9 +218,18 @@
                                     <div class="agent-initials">{{ agent.fullname|make_list|first|upper }}</div>
                                 {% endif %}
                                 <div>
-                                    <div class="fw-bold" style="font-size:14px; color:var(--text-primary);">{{ agent.display_name|default:agent.fullname }}</div>
+                                    <div class="fw-bold" style="font-size:14px; color:var(--text-primary);">
+                                        {{ agent.display_name|default:agent.fullname }}
+                                        {% if agent.is_draft %}
+                                            {% if agent.draft_badge == 'CLAIM' %}
+                                            <span style="font-size:9px; font-weight:700; padding:2px 6px; border-radius:4px; background:#dcfce7; color:#166534; margin-left:4px; vertical-align:middle; border:1px solid #bbf7d0;">CLAIM</span>
+                                            {% else %}
+                                            <span style="font-size:9px; font-weight:700; padding:2px 6px; border-radius:4px; background:#e0e7ff; color:#3730a3; margin-left:4px; vertical-align:middle; border:1px solid #c7d2fe;">DRAFT</span>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
                                     <div style="font-size:11px; color:var(--text-muted);">{{ agent.email }}</div>
-                                    {% if agent.is_blacklisted or agent.is_blacklisted_by_pan %}
+                                    {% if not agent.is_draft and agent.is_blacklisted or not agent.is_draft and agent.is_blacklisted_by_pan %}
                                     <div class="mt-1">
                                         <span class="badge bg-danger text-white" style="font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: 600;">
                                             <i class="fa-solid fa-triangle-exclamation me-1"></i> Blacklisted PAN Match
@@ -302,7 +311,17 @@
 
                         {# Payment Status #}
                         <td style="padding:14px 16px; border-bottom:1px solid var(--border-light); text-align:center;">
-                            {% if agent.razorpay_order_id and agent.sub_payment_status == 'pending' %}
+                            {% if agent.is_draft %}
+                                <span class="payment-badge payment-none">
+                                    <i class="fa-solid fa-clock" style="font-size:9px;"></i>
+                                    Not Started
+                                </span>
+                                {% if agent.draft_badge == 'CLAIM' %}
+                                <div style="font-size:10px; color:#166534; font-weight:600; margin-top:3px;">Choosing Plan</div>
+                                {% else %}
+                                <div style="font-size:10px; color:var(--text-muted); margin-top:3px;">Plan not chosen yet</div>
+                                {% endif %}
+                            {% elif agent.razorpay_order_id and agent.sub_payment_status == 'pending' %}
                                 <span class="payment-badge payment-initiated">
                                     <i class="fa-solid fa-credit-card" style="font-size:9px;"></i>
                                     Payment Initiated
@@ -355,7 +374,7 @@
                         {# Actions #}
                         <td style="padding:14px 16px; border-bottom:1px solid var(--border-light); text-align:center;">
                             <div class="d-flex gap-2 justify-content-center flex-wrap">
-                                {% if agent.razorpay_order_id and agent.sub_payment_status == 'pending' and agent.sub_minutes_ago >= 15 %}
+                                {% if not agent.is_draft and agent.razorpay_order_id and agent.sub_payment_status == 'pending' and agent.sub_minutes_ago >= 15 %}
                                 <button type="button"
                                     class="btn-verify verify-payment-btn"
                                     data-agent-id="{{ agent.id }}"
@@ -365,7 +384,11 @@
                                     Verify Payment
                                 </button>
                                 {% endif %}
+                                {% if agent.is_draft %}
+                                <button type="button" class="btn btn-danger btn-sm delete-btn" data-model="agent_draft" data-id="{{ agent.id }}" title="Delete Draft Registration" style="padding: 4px 8px;"><i class="fas fa-trash"></i></button>
+                                {% else %}
                                 <button type="button" class="btn btn-danger btn-sm delete-btn" data-model="agent" data-id="{{ agent.id }}" title="Delete Incomplete Registration" style="padding: 4px 8px;"><i class="fas fa-trash"></i></button>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>

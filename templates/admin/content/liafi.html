@@ -1,0 +1,436 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}LIAFI Page Editor — PadosiAgent Admin{% endblock %}
+{% block breadcrumb_title %}Content Control › LIAFI Page Editor{% endblock %}
+
+{% block content %}
+<form method="POST" action="{% url 'admin_content_liafi_update' %}" id="liafi-admin-form">
+    {% csrf_token %}
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h4 class="m-0 fw-bold d-flex align-items-center gap-2">
+                <i class="fa-solid fa-id-card-clip" style="color: #f59e0b;"></i> LIAFI Page Editor
+                <span class="badge bg-amber-100 text-dark border border-warning" style="font-size: 11px; background:#fef3c7;">/liafi/</span>
+            </h4>
+            <p class="text-muted mb-0 mt-1" style="font-size: 13px;">
+                Manage all dynamic parts of the LIAFI Federation onboarding page — statistics, pricing, trust cards, headers, and heritage details.
+            </p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="/liafi/" target="_blank" class="btn btn-outline-secondary btn-sm shadow-sm">
+                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> View Live Page
+            </a>
+            <button type="submit" class="btn btn-primary shadow-sm px-4">
+                <i class="fa-solid fa-cloud-arrow-up me-1"></i> Save All Changes
+            </button>
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="mb-3">
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm" role="alert">
+            <i class="fa-solid fa-circle-check me-2"></i> {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Tabs Navigation -->
+    <ul class="nav nav-tabs mb-4" id="liafiTabs" role="tablist" style="border-bottom: 2px solid #e2e8f0; gap: 4px;">
+        <li class="nav-item">
+            <a class="nav-link active fw-semibold" data-toggle="tab" data-bs-toggle="tab" href="#tab-hero" role="tab" style="font-size: 13px;">
+                <i class="fa-solid fa-heading me-1.5 text-primary"></i> 1. Hero &amp; Intro
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link fw-semibold" data-toggle="tab" data-bs-toggle="tab" href="#tab-stats" role="tab" style="font-size: 13px;">
+                <i class="fa-solid fa-chart-simple me-1.5 text-warning"></i> 2. Federation Numbers (Stats)
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link fw-semibold" data-toggle="tab" data-bs-toggle="tab" href="#tab-trust" role="tab" style="font-size: 13px;">
+                <i class="fa-solid fa-shield-halved me-1.5 text-success"></i> 3. Trust Cards
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link fw-semibold" data-toggle="tab" data-bs-toggle="tab" href="#tab-pricing" role="tab" style="font-size: 13px;">
+                <i class="fa-solid fa-tag me-1.5 text-danger"></i> 4. Pricing &amp; Offer
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link fw-semibold" data-toggle="tab" data-bs-toggle="tab" href="#tab-heritage" role="tab" style="font-size: 13px;">
+                <i class="fa-solid fa-landmark me-1.5 text-info"></i> 5. Heritage Pillars
+            </a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+
+        <!-- ══════════════════ TAB 1: HERO & INTRO ══════════════════ -->
+        <div class="tab-pane fade show active" id="tab-hero">
+            <div class="card mb-4 shadow-sm border-0" style="border-left: 4px solid #1e40af !important;">
+                <div class="card-header bg-white py-3">
+                    <h6 class="m-0 fw-bold text-dark"><i class="fa-solid fa-pen-to-square me-2 text-primary"></i>Header &amp; Headline Content</h6>
+                    <small class="text-muted">Shown at the top of the dark navy hero section on /liafi/</small>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold text-dark" style="font-size: 13px;">Top Pill Badge Text</label>
+                            <input type="text" name="badge_text" value="{{ liafi.badge_text }}"
+                                class="form-control" placeholder="e.g. Official LIAFI Digital Initiative">
+                            <small class="text-muted">Appears above the main headline inside the gold pill badge.</small>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-dark" style="font-size: 13px;">Main Headline (Line 1)</label>
+                            <input type="text" name="title_line_1" value="{{ liafi.title_line_1 }}"
+                                class="form-control" placeholder="e.g. Life Insurance Agents'">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-dark" style="font-size: 13px;">Headline Highlight (Gradient Gold Text)</label>
+                            <input type="text" name="title_highlight" value="{{ liafi.title_highlight }}"
+                                class="form-control" placeholder="e.g. Federation Of India">
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold text-dark" style="font-size: 13px;">Introduction Description</label>
+                            <textarea name="description" rows="4" class="form-control"
+                                placeholder="Enter the federation intro paragraph...">{{ liafi.description }}</textarea>
+                            <small class="text-muted">HTML tags like <code>&lt;strong class="text-amber-300 font-bold"&gt;2nd October 1964&lt;/strong&gt;</code> are supported.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════════ TAB 2: FEDERATION NUMBERS (STATS) ══════════════════ -->
+        <div class="tab-pane fade" id="tab-stats">
+            <div class="card mb-4 shadow-sm border-0" style="border-left: 4px solid #f59e0b !important;">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="m-0 fw-bold text-dark"><i class="fa-solid fa-chart-column me-2 text-warning"></i>Federation Scope &amp; Stats Grid</h6>
+                        <small class="text-muted">The 4 stat cards displaying nationwide numbers (Zones, Divisions, Branches, Agents)</small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-warning text-dark border-warning" id="add-stat-btn">
+                        <i class="fa-solid fa-plus me-1"></i> Add Stat Card
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="stats-container">
+                        {% for stat in liafi.stats %}
+                        <div class="stat-row p-3 mb-3 border rounded-3 bg-light bg-opacity-50">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-3">
+                                    <label class="form-label fw-semibold text-secondary" style="font-size: 12px;">Display Number / Value</label>
+                                    <input type="text" name="stat_val[]" value="{{ stat.val }}"
+                                        class="form-control form-control-sm fw-bold text-primary" placeholder="e.g. 8, 113, 2,048, 13.7L+">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold text-secondary" style="font-size: 12px;">Label / Metric</label>
+                                    <input type="text" name="stat_label[]" value="{{ stat.label }}"
+                                        class="form-control form-control-sm text-uppercase fw-bold" placeholder="e.g. ZONES, DIVISIONS">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold text-secondary" style="font-size: 12px;">Subtext</label>
+                                    <input type="text" name="stat_sub[]" value="{{ stat.sub }}"
+                                        class="form-control form-control-sm" placeholder="e.g. All India Presence">
+                                </div>
+                                <div class="col-md-1 text-end">
+                                    <button type="button" class="btn btn-outline-danger btn-sm w-100 remove-row-btn" title="Remove Stat">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════════ TAB 3: TRUST CARDS ══════════════════ -->
+        <div class="tab-pane fade" id="tab-trust">
+            <div class="card mb-4 shadow-sm border-0" style="border-left: 4px solid #10b981 !important;">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="m-0 fw-bold text-dark"><i class="fa-solid fa-certificate me-2 text-success"></i>Trust Highlights &amp; Credentials</h6>
+                        <small class="text-muted">The 4 trust badges (Registration No, Digital Agency, Pin Code, Legacy)</small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-success" id="add-trust-btn">
+                        <i class="fa-solid fa-plus me-1"></i> Add Trust Card
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="trust-container">
+                        {% for t in liafi.trust_cards %}
+                        <div class="trust-row p-3 mb-3 border rounded-3 bg-light bg-opacity-50">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-2">
+                                    <label class="form-label fw-semibold text-secondary" style="font-size: 12px;">Icon (Emoji / Text)</label>
+                                    <input type="text" name="trust_icon[]" value="{{ t.icon }}"
+                                        class="form-control form-control-sm text-center" placeholder="🏛️, 🌐, 📍, 🤝">
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label fw-semibold text-secondary" style="font-size: 12px;">Card Title</label>
+                                    <input type="text" name="trust_title[]" value="{{ t.title }}"
+                                        class="form-control form-control-sm fw-bold" placeholder="e.g. LIAFI Official Federation">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold text-secondary" style="font-size: 12px;">Card Subtitle</label>
+                                    <input type="text" name="trust_sub[]" value="{{ t.sub }}"
+                                        class="form-control form-control-sm" placeholder="e.g. Regn. No. 2924 of 2000">
+                                </div>
+                                <div class="col-md-1 text-end">
+                                    <button type="button" class="btn btn-outline-danger btn-sm w-100 remove-row-btn" title="Remove Card">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════════ TAB 4: PRICING & OFFER ══════════════════ -->
+        <div class="tab-pane fade" id="tab-pricing">
+            <div class="card mb-4 shadow-sm border-0" style="border-left: 4px solid #ef4444 !important;">
+                <div class="card-header bg-white py-3">
+                    <h6 class="m-0 fw-bold text-dark"><i class="fa-solid fa-tags me-2 text-danger"></i>Special Offer &amp; Pricing Banner</h6>
+                    <small class="text-muted">Configures the offer block displayed on both desktop and mobile views of /liafi/</small>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-dark" style="font-size: 13px;">Offer Badge Text</label>
+                            <input type="text" name="pricing_badge" value="{{ liafi.pricing.badge }}"
+                                class="form-control" placeholder="e.g. LIMITED SEATS! ACROSS INDIA">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-dark" style="font-size: 13px;">Promo Code</label>
+                            <input type="text" name="pricing_promo" value="{{ liafi.pricing.promo_code }}"
+                                class="form-control uppercase fw-bold" placeholder="e.g. LIAFI">
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold text-dark" style="font-size: 13px;">Tagline / Pitch Subtitle</label>
+                            <input type="text" name="pricing_subtitle" value="{{ liafi.pricing.subtitle }}"
+                                class="form-control" placeholder="e.g. Build your verified digital identity & grow your life insurance agency.">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold text-dark" style="font-size: 13px;">Original Strikethrough Price (₹)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="text" name="pricing_original" value="{{ liafi.pricing.original_price }}"
+                                    class="form-control" placeholder="1,999">
+                                <span class="input-group-text">/-</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold text-dark" style="font-size: 13px;">Discounted / Offer Price (₹)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="text" name="pricing_offer" value="{{ liafi.pricing.offer_price }}"
+                                    class="form-control fw-bold text-success" placeholder="199">
+                                <span class="input-group-text">/-</span>
+                            </div>
+                            <small class="text-muted">Also updates the "All Included @ ₹{{ liafi.pricing.offer_price }}/- Only" badge.</small>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold text-dark" style="font-size: 13px;">Tax Suffix Note</label>
+                            <input type="text" name="pricing_tax" value="{{ liafi.pricing.tax_note }}"
+                                class="form-control" placeholder="+ GST">
+                        </div>
+                    </div>
+
+                    <!-- Checklist Perks -->
+                    <div class="border-top pt-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark" style="font-size: 14px;">Offer Benefit Checkmark Pills</h6>
+                                <small class="text-muted">The 3 checkmark badges shown at the bottom of the pricing card</small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="add-perk-btn">
+                                <i class="fa-solid fa-plus me-1"></i> Add Benefit
+                            </button>
+                        </div>
+                        <div id="perks-container">
+                            {% for perk in liafi.pricing.perks %}
+                            <div class="perk-row d-flex align-items-center gap-2 mb-2">
+                                <span class="text-success fw-bold">✓</span>
+                                <input type="text" name="perk[]" value="{{ perk }}" class="form-control form-control-sm" placeholder="e.g. Be One of the First">
+                                <button type="button" class="btn btn-outline-danger btn-sm remove-row-btn" title="Remove Benefit">
+                                    <i class="fa-solid fa-times"></i>
+                                </button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════════ TAB 5: HERITAGE PILLARS ══════════════════ -->
+        <div class="tab-pane fade" id="tab-heritage">
+            <div class="card mb-4 shadow-sm border-0" style="border-left: 4px solid #06b6d4 !important;">
+                <div class="card-header bg-white py-3">
+                    <h6 class="m-0 fw-bold text-dark"><i class="fa-solid fa-landmark-flag me-2 text-info"></i>About LIAFI Heritage Pillars</h6>
+                    <small class="text-muted">The 3 cards in the heritage section (Historic Decisions, Policyholder First, Digital Modernization)</small>
+                </div>
+                <div class="card-body">
+                    {% for pillar in liafi.pillars %}
+                    <div class="p-3 mb-3 border rounded-3 bg-light bg-opacity-50">
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold text-dark" style="font-size: 13px;">Pillar {{ forloop.counter }} Title</label>
+                                <input type="text" name="pillar_title[]" value="{{ pillar.title }}" class="form-control fw-bold" placeholder="Card Title">
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label fw-bold text-dark" style="font-size: 13px;">Description</label>
+                                <textarea name="pillar_description[]" rows="2" class="form-control" placeholder="Card description text...">{{ pillar.description }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Floating Action Footer -->
+    <div class="d-flex justify-content-between align-items-center bg-white p-3 rounded-3 shadow-sm border mt-3">
+        <a href="/liafi/" target="_blank" class="btn btn-outline-secondary">
+            <i class="fa-solid fa-eye me-1"></i> Preview /liafi/ Page
+        </a>
+        <button type="submit" class="btn btn-primary px-5 fw-bold shadow-sm">
+            <i class="fa-solid fa-cloud-arrow-up me-2"></i> Save All Changes
+        </button>
+    </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ── Tab Switching Support (Bootstrap 4 + jQuery + Vanilla Fallback) ──
+    const tabLinks = document.querySelectorAll('#liafiTabs a');
+    tabLinks.forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Try jQuery Bootstrap tab if available
+            if (window.$ && typeof $(this).tab === 'function') {
+                $(this).tab('show');
+            }
+            // Always ensure classes toggle cleanly
+            tabLinks.forEach(function(l) { l.classList.remove('active'); });
+            this.classList.add('active');
+
+            const targetSelector = this.getAttribute('href');
+            document.querySelectorAll('.tab-content > .tab-pane').forEach(function(pane) {
+                pane.classList.remove('show', 'active');
+            });
+            const targetPane = document.querySelector(targetSelector);
+            if (targetPane) {
+                targetPane.classList.add('show', 'active');
+            }
+        });
+    });
+
+    // Row removal listener for any remove button
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-row-btn')) {
+            const row = e.target.closest('.stat-row, .trust-row, .perk-row');
+            if (row) {
+                const container = row.parentElement;
+                // Leave at least 1 row
+                if (container.children.length > 1) {
+                    row.remove();
+                } else {
+                    alert('At least one item must remain.');
+                }
+            }
+        }
+    });
+
+    // Add Stat Card
+    document.getElementById('add-stat-btn').addEventListener('click', function() {
+        const container = document.getElementById('stats-container');
+        const div = document.createElement('div');
+        div.className = 'stat-row p-3 mb-3 border rounded-3 bg-light bg-opacity-50';
+        div.innerHTML = `
+            <div class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold text-secondary" style="font-size: 12px;">Display Number / Value</label>
+                    <input type="text" name="stat_val[]" value="" class="form-control form-control-sm fw-bold text-primary" placeholder="e.g. 500+">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold text-secondary" style="font-size: 12px;">Label / Metric</label>
+                    <input type="text" name="stat_label[]" value="" class="form-control form-control-sm text-uppercase fw-bold" placeholder="e.g. CLUBS">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold text-secondary" style="font-size: 12px;">Subtext</label>
+                    <input type="text" name="stat_sub[]" value="" class="form-control form-control-sm" placeholder="e.g. Across Nation">
+                </div>
+                <div class="col-md-1 text-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm w-100 remove-row-btn" title="Remove Stat">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            </div>`;
+        container.appendChild(div);
+    });
+
+    // Add Trust Card
+    document.getElementById('add-trust-btn').addEventListener('click', function() {
+        const container = document.getElementById('trust-container');
+        const div = document.createElement('div');
+        div.className = 'trust-row p-3 mb-3 border rounded-3 bg-light bg-opacity-50';
+        div.innerHTML = `
+            <div class="row g-2 align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold text-secondary" style="font-size: 12px;">Icon (Emoji / Text)</label>
+                    <input type="text" name="trust_icon[]" value="🛡️" class="form-control form-control-sm text-center" placeholder="Emoji">
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label fw-semibold text-secondary" style="font-size: 12px;">Card Title</label>
+                    <input type="text" name="trust_title[]" value="" class="form-control form-control-sm fw-bold" placeholder="Feature Title">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold text-secondary" style="font-size: 12px;">Card Subtitle</label>
+                    <input type="text" name="trust_sub[]" value="" class="form-control form-control-sm" placeholder="Feature Subtitle">
+                </div>
+                <div class="col-md-1 text-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm w-100 remove-row-btn" title="Remove Card">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            </div>`;
+        container.appendChild(div);
+    });
+
+    // Add Perk
+    document.getElementById('add-perk-btn').addEventListener('click', function() {
+        const container = document.getElementById('perks-container');
+        const div = document.createElement('div');
+        div.className = 'perk-row d-flex align-items-center gap-2 mb-2';
+        div.innerHTML = `
+            <span class="text-success fw-bold">✓</span>
+            <input type="text" name="perk[]" value="" class="form-control form-control-sm" placeholder="e.g. Dedicated Support">
+            <button type="button" class="btn btn-outline-danger btn-sm remove-row-btn" title="Remove Benefit">
+                <i class="fa-solid fa-times"></i>
+            </button>`;
+        container.appendChild(div);
+    });
+});
+</script>
+{% endblock %}

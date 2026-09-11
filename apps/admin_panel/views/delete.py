@@ -75,6 +75,10 @@ def admin_delete(request):
             elif model == 'Faq':
                 cursor.execute("DELETE FROM faqs WHERE id = %s", [record_id])
 
+            elif model == 'agent_draft':
+                # Delete a draft registration entry (no linked Agent/User record exists yet)
+                cursor.execute("DELETE FROM agent_drafts WHERE id = %s", [record_id])
+
             else:
                 return JsonResponse({'success': False, 'message': 'Invalid model type'}, status=400)
 

@@ -434,7 +434,8 @@
                         style="background:linear-gradient(135deg,#EEF3FD,#E8F5EE);">
                         <img src="{% static 'img/lic-event-all-in-one.jpg' %}"
                             alt="PadosiAgent 3 tools for LIC agents"
-                            class="w-full h-auto object-contain max-h-[50vh] lg:max-h-none">
+                            class="w-full h-auto object-contain max-h-[50vh] lg:max-h-none"
+                            onerror="this.parentElement.style.display='none';">
                     </div>
 
 
@@ -809,7 +810,7 @@
         let lastPincode    = '';
 
         // ── Load branches ─────────────────────────────────────────────────
-        fetch('/lic-branches.json')
+        fetch("{% static 'lic-branches.json' %}")
             .then(r => r.json())
             .then(data => {
                 branches = data;
@@ -1043,7 +1044,7 @@
                 if (bimaSakhiCheckbox.checked) params.set('promo', 'BIMASAKHI');
 
                 toast.show('Details saved! Redirecting to registration…', 'success');
-                setTimeout(() => { window.location.href = `/agent-registration?${params.toString()}`; }, 1000);
+                setTimeout(() => { window.location.href = `/agent-registration/?${params.toString()}`; }, 1000);
 
             } catch {
                 submitBtn.disabled = false;
@@ -1053,6 +1054,15 @@
                 submitBtnSpinner.style.display = 'none';
                 toast.show('Something went wrong. Please try again.', 'error');
             }
+        });
+
+        // ── Reset submit button when restored from browser back-forward cache (bfcache) ──
+        window.addEventListener('pageshow', () => {
+            submitBtnSpinner.classList.add('hidden');
+            submitBtnSpinner.style.display = 'none';
+            submitBtnText.classList.remove('hidden');
+            submitBtnText.style.display = 'flex';
+            validateForm();
         });
     </script>
 </body>
