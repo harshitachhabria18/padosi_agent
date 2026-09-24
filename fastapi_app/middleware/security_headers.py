@@ -46,7 +46,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "https://assets.calendly.com; "
             "font-src 'self' data: "
             "https://fonts.gstatic.com https://cdnjs.cloudflare.com; "
-            "img-src 'self' data: blob: "
+            "img-src 'self' data: blob: https://fastapi.tiangolo.com "
             "https://www.facebook.com https://www.google-analytics.com "
             "https://*.clarity.ms https://c.clarity.ms; "
             "frame-src 'self' "

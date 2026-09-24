@@ -118,7 +118,7 @@ def build_championship_dashboard_json_payload(request, agent):
         prof_price = 4999
 
     agent_slug_val = getattr(agent, 'agent_slug', None) or getattr(agent, 'id', '')
-    profile_url = f"{scheme}://{domain}/agent/{agent_slug_val}/"
+    profile_url = build_safe_absolute_uri(request, f"/agent/{agent_slug_val}/")
 
     default_wa_text = render_whatsapp_message(
         WHATSAPP_TEMPLATES['en']['templates'][0]['text'],
@@ -514,7 +514,7 @@ def agent_championship_dashboard(request):
             prof_price = 4999
 
         agent_slug_val = getattr(agent, 'agent_slug', None) or getattr(agent, 'id', '')
-        profile_url = f"{scheme}://{domain}/agent/{agent_slug_val}/"
+        profile_url = build_safe_absolute_uri(request, f"/agent/{agent_slug_val}/")
 
         default_wa_text = render_whatsapp_message(
             WHATSAPP_TEMPLATES['en']['templates'][0]['text'],
@@ -583,6 +583,8 @@ def agent_championship_dashboard(request):
             'next_reward': roadmap_data['next_reward'],
             'referrals_needed': roadmap_data['referrals_needed'],
             'referral_url': referral_url,
+            'profile_url': profile_url,
+            'collect_reviews_profile_url': profile_url,
             'qr_base64': qr_base64,
             'top_10': top_10,
             'top_50': top_50,

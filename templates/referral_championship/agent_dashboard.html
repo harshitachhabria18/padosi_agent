@@ -1016,7 +1016,7 @@
     const waTemplates = {{ whatsapp_templates_json|safe }};
     const agentName = "{{ agent.fullname|escapejs }}";
     const refLink = "{{ referral_url|escapejs }}";
-    const profLink = "{{ referral_url|escapejs }}";
+    const profLink = "{{ profile_url|escapejs }}";
     const digPrice = "{{ dig_price }}";
     const profPrice = "{{ prof_price }}";
 
@@ -1051,27 +1051,57 @@
 
     // ── Copy & Share ──
     function copyText(text, label) {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text).then(() => {
-                showToast(`${label} copied to clipboard!`, 'success');
-            }).catch(() => {
-                showToast(`Failed to copy ${label}`, 'error');
-            });
-        } else {
-            const ta = document.createElement('textarea');
-            ta.value = text;
-            ta.style.position = 'fixed';
-            ta.style.opacity = '0';
-            document.body.appendChild(ta);
-            ta.focus();
-            ta.select();
+        label = label || 'Link';
+        if (!text || text.trim() === '') {
+            if (label.toLowerCase().includes('profile')) {
+                const agentSlug = "{{ agent.agent_slug|default:agent.id|escapejs }}";
+                if (agentSlug) {
+                    text = `${window.location.origin}/agent/${agentSlug}/`;
+                }
+            } else if (label.toLowerCase().includes('referral') || label.toLowerCase().includes('invite') || label.toLowerCase().includes('sms')) {
+                const refCode = "{{ participant.referral_id|escapejs }}";
+                if (refCode) {
+                    text = `${window.location.origin}/ref/${refCode}/`;
+                }
+            }
+        }
+        if (!text || text.trim() === '') {
+            showToast(`Nothing to copy for ${label}`, 'error');
+            return;
+        }
+
+        function fallbackCopy(val) {
             try {
-                document.execCommand('copy');
-                showToast(`${label} copied to clipboard!`, 'success');
+                const ta = document.createElement('textarea');
+                ta.value = val;
+                ta.setAttribute('readonly', '');
+                ta.style.position = 'fixed';
+                ta.style.top = '-9999px';
+                ta.style.left = '-9999px';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.focus();
+                ta.select();
+                const successful = document.execCommand('copy');
+                document.body.removeChild(ta);
+                if (successful) {
+                    showToast(`${label} copied to clipboard!`, 'success');
+                } else {
+                    showToast(`Failed to copy ${label}`, 'error');
+                }
             } catch (err) {
                 showToast(`Failed to copy ${label}`, 'error');
             }
-            document.body.removeChild(ta);
+        }
+
+        if (navigator.clipboard && window.isSecureContext && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(`${label} copied to clipboard!`, 'success');
+            }).catch(() => {
+                fallbackCopy(text);
+            });
+        } else {
+            fallbackCopy(text);
         }
     }
 

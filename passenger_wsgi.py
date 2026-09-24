@@ -49,18 +49,40 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "padosi_agent.settings")
 from django.core.wsgi import get_wsgi_application
 django_wsgi_application = get_wsgi_application()
 
+FASTAPI_ENABLED = False
+_last_pid = None
+_asgi_wsgi_app = None
+
 try:
-    from a2wsgi import ASGIMiddleware
+    import a2wsgi
     from padosi_agent.asgi import application as asgi_app
-    asgi_wsgi_application = ASGIMiddleware(asgi_app)
     FASTAPI_ENABLED = True
 except Exception:
     import logging
-    logging.getLogger(__name__).exception("ASGI/FastAPI could not be loaded")
+    logging.getLogger(__name__).exception("ASGI/FastAPI could not be initialized")
     FASTAPI_ENABLED = False
+
+def get_asgi_wsgi_application():
+    """Lazily instantiate ASGIMiddleware per worker process to ensure event loop thread survives fork."""
+    global _last_pid, _asgi_wsgi_app
+    current_pid = os.getpid()
+    if _asgi_wsgi_app is None or _last_pid != current_pid:
+        from a2wsgi import ASGIMiddleware
+        from padosi_agent.asgi import application as asgi_app
+        _asgi_wsgi_app = ASGIMiddleware(asgi_app)
+        _last_pid = current_pid
+    return _asgi_wsgi_app
 
 def application(environ, start_response):
     path = environ.get("PATH_INFO", "")
-    if FASTAPI_ENABLED and path.startswith("/api"):
-        return asgi_wsgi_application(environ, start_response)
+    if FASTAPI_ENABLED and (path.startswith("/api/") or path == "/api"):
+        if path == "/api":
+            start_response("307 Temporary Redirect", [("Location", "/api/docs"), ("Content-Length", "0")])
+            return [b""]
+        try:
+            return get_asgi_wsgi_application()(environ, start_response)
+        except Exception:
+            import logging
+            logging.getLogger(__name__).exception("FastAPI ASGI execution error; falling back to Django")
+            return django_wsgi_application(environ, start_response)
     return django_wsgi_application(environ, start_response)

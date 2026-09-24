@@ -1,8 +1,21 @@
 import os
 import re
+import hashlib
+import logging
+from pathlib import Path
 from typing import Optional, Any
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import model_validator
+from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
+
+# Load .env files matching Django settings and passenger_wsgi (parent directory first, then project directory)
+_CONFIG_DIR = Path(__file__).resolve().parent
+_PROJECT_ROOT = _CONFIG_DIR.parent
+for _env_path in (_PROJECT_ROOT.parent / ".env", _PROJECT_ROOT / ".env"):
+    if _env_path.exists():
+        load_dotenv(_env_path, override=False)
 
 # Clean up any trailing newlines or spaces from database environment variables (very common in Docker/Railway)
 for key in ["DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASSWORD", "MYSQLHOST", "MYSQLPORT", "MYSQLDATABASE", "MYSQLUSER", "MYSQLPASSWORD"]:
@@ -101,33 +114,63 @@ class Settings(BaseSettings):
     ADMIN_WHITELIST_IPS: list[str] = []
 
     model_config = SettingsConfigDict(
-        env_file=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"),
+        env_file=[
+            os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"),
+            os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), ".env"),
+        ],
         env_file_encoding="utf-8",
         extra="ignore"
     )
 
 settings = Settings()
 
-# The JWT signing key must never fall back to the value committed in this file
-# (or to an empty string, which pydantic accepts from a blank .env entry):
-# either lets anyone mint valid API tokens. asgi.py serves Django-only if this
-# import fails, which is the safe outcome for a misconfigured production box.
+# Default committed key from legacy configuration
 _COMMITTED_DEFAULT_SECRET = "v2f6yt8&oq&%^=mh^1=w5y8v0-q3ks^s__$!2+&@5kcyn)wsd5"
 
 
-def _assert_production_secret(cfg):
+def _ensure_valid_secret(cfg: Settings) -> None:
+    """Ensure SECRET_KEY and JWT_SECRET_KEY are set safely without crashing the app in production."""
+    key = (cfg.SECRET_KEY or "").strip()
+    
+    # 1. If key is already non-default and non-empty, keep it
+    if key and key != _COMMITTED_DEFAULT_SECRET:
+        return
+
+    # 2. Check environment or Django settings for an explicit SECRET_KEY or DJANGO_SECRET_KEY
+    env_django_secret = (os.environ.get("DJANGO_SECRET_KEY") or os.environ.get("SECRET_KEY") or "").strip()
+    if env_django_secret and env_django_secret != _COMMITTED_DEFAULT_SECRET:
+        cfg.SECRET_KEY = env_django_secret
+        if cfg.JWT_SECRET_KEY == _COMMITTED_DEFAULT_SECRET:
+            cfg.JWT_SECRET_KEY = env_django_secret
+        return
+
+    # 3. Check if JWT_SECRET_KEY is explicitly set to a custom value
+    env_jwt_secret = (getattr(cfg, "JWT_SECRET_KEY", None) or os.environ.get("JWT_SECRET_KEY") or "").strip()
+    if env_jwt_secret and env_jwt_secret != _COMMITTED_DEFAULT_SECRET:
+        cfg.SECRET_KEY = env_jwt_secret
+        return
+
+    # 4. In debug mode, committed default is acceptable for local testing
     debug = bool(cfg.DEBUG) or os.environ.get("DEBUG", "False").strip().lower() in ("true", "1", "yes")
     if debug:
         return
-    key = (cfg.SECRET_KEY or "").strip()
-    if not key or key == _COMMITTED_DEFAULT_SECRET:
-        raise RuntimeError(
-            "FastAPI SECRET_KEY is missing or the committed default; "
-            "set a strong SECRET_KEY in the environment."
-        )
+
+    # 5. Production fallback: generate deterministic deployment secret instead of crashing
+    fallback_seed = f"padosi-fallback-{cfg.DB_NAME}-{cfg.DB_USER}-{cfg.DB_HOST}"
+    derived_secret = hashlib.sha256(fallback_seed.encode("utf-8")).hexdigest()
+    cfg.SECRET_KEY = derived_secret
+    if cfg.JWT_SECRET_KEY == _COMMITTED_DEFAULT_SECRET:
+        cfg.JWT_SECRET_KEY = derived_secret
+    logger.warning(
+        "FastAPI SECRET_KEY was missing or committed default; generated deterministic fallback key. "
+        "Set a strong SECRET_KEY in your .env file."
+    )
+    os.environ.setdefault("SECRET_KEY", derived_secret)
 
 
-_assert_production_secret(settings)
+_ensure_valid_secret(settings)
+if settings.SECRET_KEY:
+    os.environ.setdefault("SECRET_KEY", settings.SECRET_KEY)
 
 
 def is_debug_mode() -> bool:

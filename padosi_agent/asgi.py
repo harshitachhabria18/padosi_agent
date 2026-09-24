@@ -8,7 +8,8 @@ import sys
 
 from django.core.asgi import get_asgi_application
 from starlette.applications import Starlette
-from starlette.routing import Mount
+from starlette.responses import RedirectResponse
+from starlette.routing import Mount, Route
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "padosi_agent.settings")
 
@@ -20,11 +21,15 @@ if BASE_DIR not in sys.path:
 
 django_application = get_asgi_application()
 
+async def redirect_to_docs(request):
+    return RedirectResponse(url="/api/docs", status_code=307)
+
 try:
     from fastapi_app.main import app as fastapi_application
 
     application = Starlette(
         routes=[
+            Route("/api", endpoint=redirect_to_docs),
             Mount("/api", app=fastapi_application),
             Mount("/", app=django_application),
         ]
