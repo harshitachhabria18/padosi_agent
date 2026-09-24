@@ -50,10 +50,10 @@ def build_safe_absolute_uri(request, path_or_url):
         uri = request.build_absolute_uri(path_or_url)
     except Exception:
         clean_path = path_or_url if path_or_url.startswith('/') else f'/{path_or_url}'
-        return f"https://padosiagent.com{clean_path}"
+        return f"https://www.padosiagent.com{clean_path}"
 
     if not getattr(settings, 'DEBUG', False) and any(h in uri.lower() for h in ('localhost', '127.0.0.1')):
-        uri = re.sub(r'^https?://(localhost|127\.0\.0\.1)(:\d+)?', 'https://padosiagent.com', uri)
+        uri = re.sub(r'^https?://(localhost|127\.0\.0\.1)(:\d+)?', 'https://www.padosiagent.com', uri)
     return uri
 
 
@@ -117,8 +117,10 @@ def build_championship_dashboard_json_payload(request, agent):
     except (TypeError, ValueError):
         prof_price = 4999
 
-    agent_slug_val = getattr(agent, 'agent_slug', None) or getattr(agent, 'id', '')
+    profile = agent.get_primary_profile() if hasattr(agent, 'get_primary_profile') else getattr(agent, 'profile', None)
+    agent_slug_val = (getattr(profile, 'slug', None) if profile else None) or getattr(agent, 'agent_slug', None) or str(getattr(agent, 'id', ''))
     profile_url = build_safe_absolute_uri(request, f"/agent/{agent_slug_val}/")
+    review_url = f"https://www.padosiagent.com/review/{agent_slug_val}/"
 
     default_wa_text = render_whatsapp_message(
         WHATSAPP_TEMPLATES['en']['templates'][0]['text'],
@@ -320,7 +322,9 @@ def build_championship_dashboard_json_payload(request, agent):
         'min_reviews': min_reviews,
         'reviews_satisfied': review_count >= min_reviews,
         'complete_profile_url': build_safe_absolute_uri(request, reverse('agents:agent_edit_profile')),
-        'collect_reviews_profile_url': profile_url
+        'collect_reviews_profile_url': review_url,
+        'collect_reviews_url': review_url,
+        'review_url': review_url,
     }
 
     pipeline = {
@@ -513,8 +517,10 @@ def agent_championship_dashboard(request):
         except (TypeError, ValueError):
             prof_price = 4999
 
-        agent_slug_val = getattr(agent, 'agent_slug', None) or getattr(agent, 'id', '')
+        profile = agent.get_primary_profile() if hasattr(agent, 'get_primary_profile') else getattr(agent, 'profile', None)
+        agent_slug_val = (getattr(profile, 'slug', None) if profile else None) or getattr(agent, 'agent_slug', None) or str(getattr(agent, 'id', ''))
         profile_url = build_safe_absolute_uri(request, f"/agent/{agent_slug_val}/")
+        review_url = f"https://www.padosiagent.com/review/{agent_slug_val}/"
 
         default_wa_text = render_whatsapp_message(
             WHATSAPP_TEMPLATES['en']['templates'][0]['text'],
@@ -584,7 +590,9 @@ def agent_championship_dashboard(request):
             'referrals_needed': roadmap_data['referrals_needed'],
             'referral_url': referral_url,
             'profile_url': profile_url,
-            'collect_reviews_profile_url': profile_url,
+            'review_url': review_url,
+            'collect_reviews_profile_url': review_url,
+            'collect_reviews_url': review_url,
             'qr_base64': qr_base64,
             'top_10': top_10,
             'top_50': top_50,
