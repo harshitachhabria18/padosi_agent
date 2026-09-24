@@ -5,192 +5,408 @@
 {% block chatbot_widget %}{% endblock %}
 
 {% block extra_css %}
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="{% static 'css/design-system.css' %}" rel="stylesheet">
 <style>
-    .dashboard-con {
-        font-family: 'Outfit', sans-serif;
-        background: radial-gradient(circle at 10% 20%, rgb(240, 247, 255) 0%, rgb(255, 255, 255) 90%);
-        padding: 80px 20px;
-        min-height: calc(100vh - 100px);
-        display: flex;
-        align-items: center;
-    }
-    .dashboard-card {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(226, 232, 240, 0.8);
-        border-radius: 24px;
-        box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05);
-        padding: 50px;
-        max-width: 700px;
-        margin: 0 auto;
-        width: 100%;
-        transition: transform 0.3s ease;
-    }
-    .dashboard-header {
-        border-bottom: 2px solid #f1f5f9;
-        padding-bottom: 24px;
-        margin-bottom: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    .dashboard-header h2 {
-        font-size: 28px;
-        font-weight: 700;
-        color: #0f172a;
-        margin: 0;
-    }
-    .status-badge {
-        background: #ecfdf5;
-        color: #0d9488;
-        border: 1px solid #a7f3d0;
-        padding: 6px 16px;
-        border-radius: 9999px;
-        font-size: 14px;
-        font-weight: 600;
-        text-transform: capitalize;
-    }
-    .info-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 24px;
-        margin-bottom: 35px;
-    }
-    .info-item {
-        background: #f8fafc;
-        padding: 18px;
-        border-radius: 14px;
-        border: 1.5px solid #cbd5e1;
-    }
-    .info-item label {
-        display: block;
-        font-size: 13px;
-        font-weight: 600;
-        color: #64748b;
-        text-transform: uppercase;
-        margin-bottom: 6px;
-        letter-spacing: 0.5px;
-    }
-    .info-item span {
-        font-size: 16px;
-        font-weight: 600;
-        color: #1e293b;
-        word-break: break-all;
-    }
-    .actions-bar {
-        display: flex;
-        gap: 16px;
-    }
-    .btn-action-primary {
-        background: linear-gradient(135deg, #273c8e 0%, #1e2e6d 100%);
-        color: #ffffff;
-        border: none;
-        padding: 14px 28px;
-        border-radius: 12px;
-        font-size: 15px;
-        font-weight: 700;
-        cursor: pointer;
-        text-decoration: none;
-        box-shadow: 0 10px 20px -5px rgba(39, 60, 142, 0.3);
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .btn-action-primary:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 15px 25px -5px rgba(39, 60, 142, 0.4);
-        color: #ffffff;
-        text-decoration: none;
-    }
-    .btn-action-danger {
-        background: #fef2f2;
-        color: #b91c1c;
-        border: 1.5px solid #fca5a5;
-        padding: 14px 28px;
-        border-radius: 12px;
-        font-size: 15px;
-        font-weight: 700;
-        cursor: pointer;
-        text-decoration: none;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .btn-action-danger:hover {
-        background: #fee2e2;
-        color: #991b1b;
-        transform: translateY(-1px);
-        text-decoration: none;
+  .dashboard-wrapper {
+    background-color: var(--bg-body);
+    min-height: calc(100vh - var(--header-height));
+    padding: var(--space-3xl) var(--space-lg);
+  }
+
+  .dashboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .dashboard-hero {
+    margin-bottom: var(--space-3xl);
+  }
+
+  .hero-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2xl);
+    margin-bottom: var(--space-xl);
+    flex-wrap: wrap;
+  }
+
+  .hero-heading h1 {
+    font-size: var(--font-size-4xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    margin-bottom: var(--space-sm);
+  }
+
+  .hero-heading p {
+    font-size: var(--font-size-base);
+    color: var(--text-secondary);
+    margin-bottom: 0;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: var(--space-lg);
+    flex-wrap: wrap;
+  }
+
+  /* Status Card */
+  .status-card {
+    background-color: var(--color-primary-light);
+    border: 1px solid #a7f3d0;
+    padding: var(--space-lg) var(--space-2xl);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+  }
+
+  .status-icon {
+    font-size: var(--font-size-2xl);
+    color: var(--color-primary);
+  }
+
+  .status-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .status-label {
+    font-size: var(--font-size-xs);
+    color: #0d9488;
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .status-value {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: #0d9488;
+    text-transform: capitalize;
+  }
+
+  /* KPI Grid */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-2xl);
+    margin-bottom: var(--space-3xl);
+  }
+
+  .kpi-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: var(--space-2xl);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .kpi-icon {
+    font-size: var(--font-size-2xl);
+    margin-bottom: var(--space-lg);
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-primary-light);
+    border-radius: var(--radius-lg);
+    color: var(--color-primary);
+  }
+
+  .kpi-value {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    margin-bottom: var(--space-sm);
+  }
+
+  .kpi-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    font-weight: var(--font-weight-medium);
+    margin-bottom: var(--space-md);
+  }
+
+  .kpi-footer {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+  }
+
+  /* Profile Info Section */
+  .profile-section {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-2xl);
+    margin-bottom: var(--space-3xl);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .profile-section h3 {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--space-2xl);
+    color: var(--text-primary);
+  }
+
+  .profile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-2xl);
+  }
+
+  .profile-item {
+    padding: var(--space-lg);
+    background-color: var(--bg-hover);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
+  }
+
+  .profile-item-label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--space-sm);
+    display: block;
+  }
+
+  .profile-item-value {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    word-break: break-word;
+  }
+
+  /* Quick Actions */
+  .actions-section {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-2xl);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .actions-section h3 {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--space-2xl);
+    color: var(--text-primary);
+  }
+
+  .actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-lg);
+  }
+
+  .action-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-2xl) var(--space-lg);
+    background-color: var(--bg-hover);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
+    text-align: center;
+    transition: all var(--transition-fast);
+    text-decoration: none;
+    color: var(--text-primary);
+  }
+
+  .action-item:hover {
+    background-color: var(--bg-active);
+    border-color: var(--color-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .action-icon {
+    font-size: var(--font-size-2xl);
+    color: var(--color-primary);
+  }
+
+  .action-label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .dashboard-wrapper {
+      padding: var(--space-2xl) var(--space-lg);
     }
 
-    @media (max-width: 640px) {
-        .info-grid {
-            grid-template-columns: 1fr;
-        }
-        .actions-bar {
-            flex-direction: column;
-        }
-        .btn-action-primary, .btn-action-danger {
-            width: 100%;
-            justify-content: center;
-        }
-        .dashboard-card {
-            padding: 30px 20px;
-        }
-        .dashboard-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 12px;
-        }
+    .hero-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-lg);
     }
+
+    .hero-heading h1 {
+      font-size: var(--font-size-2xl);
+    }
+
+    .kpi-grid {
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: var(--space-lg);
+    }
+
+    .kpi-card {
+      padding: var(--space-lg);
+    }
+
+    .kpi-value {
+      font-size: var(--font-size-2xl);
+    }
+
+    .profile-section,
+    .actions-section {
+      padding: var(--space-lg);
+    }
+
+    .profile-grid,
+    .actions-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .actions-grid {
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<section class="dashboard-con">
-    <div class="container">
-        <div class="dashboard-card">
-            <div class="dashboard-header">
-                <div>
-                    <h2>Welcome to PadosiAgent Portal</h2>
-                    <p class="text-muted mb-0" style="font-size: 14px; margin-top: 4px;">Agent Control Center</p>
-                </div>
-                <span class="status-badge">
-                    <i class="fas fa-check-circle mr-1"></i>Active Agent
-                </span>
-            </div>
-
-            <div class="info-grid">
-                <div class="info-item">
-                    <label>Full Name</label>
-                    <span>{{ agent.fullname }}</span>
-                </div>
-                <div class="info-item">
-                    <label>Email Address</label>
-                    <span>{{ agent.email }}</span>
-                </div>
-                <div class="info-item">
-                    <label>Mobile Number</label>
-                    <span>{{ agent.mobile }}</span>
-                </div>
-                <div class="info-item">
-                    <label>Assigned Pincode</label>
-                    <span>{{ agent.agent_pincode }}</span>
-                </div>
-            </div>
-
-            <div class="actions-bar">
-                <a href="/" class="btn-action-primary">
-                    <i class="fas fa-home"></i> Go to Homepage
-                </a>
-                <a href="{% url 'agents:agent_logout' %}" class="btn-action-danger">
-                    <i class="fas fa-sign-out-alt"></i> Log Out
-                </a>
-            </div>
+<div class="dashboard-wrapper">
+  <div class="dashboard-container">
+    <!-- Hero Section -->
+    <div class="dashboard-hero">
+      <div class="hero-header">
+        <div class="hero-heading">
+          <h1>Welcome back, {{ agent.fullname }}</h1>
+          <p>Manage your profile, leads, and subscription from here</p>
         </div>
+        <div class="status-card">
+          <i class="fas fa-check-circle status-icon"></i>
+          <div class="status-info">
+            <span class="status-label">Account Status</span>
+            <span class="status-value">{{ agent.status|default:"Active" }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-actions">
+        <a href="{% url 'agents:agent_profile_view' agent.id %}" class="btn btn-primary">
+          <i class="fas fa-user"></i> View Public Profile
+        </a>
+        <a href="/" class="btn btn-secondary">
+          <i class="fas fa-home"></i> Homepage
+        </a>
+        <a href="{% url 'agents:agent_logout' %}" class="btn btn-ghost">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+      </div>
     </div>
-</section>
+
+    <!-- KPI Grid -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon">
+          <i class="fas fa-user"></i>
+        </div>
+        <div class="kpi-value">{{ agent.fullname|truncatewords:2 }}</div>
+        <div class="kpi-label">Agent Name</div>
+        <div class="kpi-footer">License verified</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon">
+          <i class="fas fa-star"></i>
+        </div>
+        <div class="kpi-value">{{ agent.plan_type|default:"Starter"|capfirst }}</div>
+        <div class="kpi-label">Current Plan</div>
+        <div class="kpi-footer">Active subscription</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon">
+          <i class="fas fa-map-marker-alt"></i>
+        </div>
+        <div class="kpi-value">{{ agent.agent_pincode }}</div>
+        <div class="kpi-label">Service Pincode</div>
+        <div class="kpi-footer">Your service area</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon">
+          <i class="fas fa-calendar"></i>
+        </div>
+        <div class="kpi-value">--</div>
+        <div class="kpi-label">Joined</div>
+        <div class="kpi-footer">Member since signup</div>
+      </div>
+    </div>
+
+    <!-- Profile Information -->
+    <div class="profile-section">
+      <h3><i class="fas fa-id-card"></i> Profile Information</h3>
+      <div class="profile-grid">
+        <div class="profile-item">
+          <span class="profile-item-label">Email Address</span>
+          <span class="profile-item-value">{{ agent.email }}</span>
+        </div>
+        <div class="profile-item">
+          <span class="profile-item-label">Mobile Number</span>
+          <span class="profile-item-value">{{ agent.mobile }}</span>
+        </div>
+        <div class="profile-item">
+          <span class="profile-item-label">Experience Range</span>
+          <span class="profile-item-value">{{ agent.experience_range|default:"Not specified" }}</span>
+        </div>
+        <div class="profile-item">
+          <span class="profile-item-label">Client Base</span>
+          <span class="profile-item-value">{{ agent.client_base|default:"Not specified" }}</span>
+        </div>
+        <div class="profile-item">
+          <span class="profile-item-label">Account Status</span>
+          <span class="profile-item-value">{{ agent.status|capfirst }}</span>
+        </div>
+        <div class="profile-item">
+          <span class="profile-item-label">User Type</span>
+          <span class="profile-item-value">{{ agent.user_types|default:"Agent" }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="actions-section">
+      <h3><i class="fas fa-lightning-bolt"></i> Quick Actions</h3>
+      <div class="actions-grid">
+        <a href="{% url 'agents:agent_profile_view' agent.id %}" class="action-item">
+          <i class="fas fa-eye action-icon"></i>
+          <span class="action-label">View Profile</span>
+        </a>
+        <a href="/" class="action-item">
+          <i class="fas fa-search action-icon"></i>
+          <span class="action-label">Find Agents</span>
+        </a>
+        <a href="/" class="action-item">
+          <i class="fas fa-chart-line action-icon"></i>
+          <span class="action-label">Performance</span>
+        </a>
+        <a href="/" class="action-item">
+          <i class="fas fa-cog action-icon"></i>
+          <span class="action-label">Settings</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

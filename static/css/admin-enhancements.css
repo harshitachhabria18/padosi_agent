@@ -1,0 +1,553 @@
+/**
+ * Admin Panel UX Enhancements
+ * Improves sidebar navigation, tables, forms, and mobile responsiveness
+ */
+
+/* ═══════════════════════════════════════════════════════════════════ */
+/* SIDEBAR IMPROVEMENTS */
+/* ═══════════════════════════════════════════════════════════════════ */
+
+.admin-sidebar {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.sidebar-menu {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.sidebar-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-menu::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+.menu-label {
+  margin-top: 16px;
+  margin-bottom: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-label);
+  padding-left: 12px;
+}
+
+.menu-label:first-child {
+  margin-top: 0;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  margin-bottom: 4px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.menu-item i {
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.menu-item:hover {
+  background-color: var(--menu-hover-bg);
+  color: var(--primary);
+  padding-left: 16px;
+}
+
+.menu-item.active {
+  background-color: var(--primary-light);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.menu-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: var(--primary);
+  border-radius: 0 3px 3px 0;
+}
+
+.menu-item .badge {
+  margin-left: auto;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background-color: #ef4444;
+  color: white;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════ */
+/* TABLE ENHANCEMENTS */
+/* ═══════════════════════════════════════════════════════════════════ */
+
+.table-responsive {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.table {
+  margin-bottom: 0;
+}
+
+.table thead th {
+  background-color: var(--bg-table-header);
+  border-bottom: 2px solid var(--border-color);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-label);
+  padding: 14px 16px;
+  white-space: nowrap;
+}
+
+.table tbody td {
+  padding: 14px 16px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+  background-color: var(--bg-hover);
+}
+
+.table-striped tbody tr:nth-child(odd) {
+  background-color: var(--bg-body);
+}
+
+.table-striped tbody tr:nth-child(odd):hover {
+  background-color: var(--bg-hover);
+}
+
+/* Status badges in tables */
+.badge-sm {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+/* Action buttons in tables */
+.table .btn-sm {
+  padding: 4px 8px;
+  font-size: 11px;
+  gap: 4px;
+}
+
+/* Checkbox column */
+.table th:first-child,
+.table td:first-child {
+  width: 40px;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════ */
+/* FORM ENHANCEMENTS */
+/* ═══════════════════════════════════════════════════════════════════ */
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.form-group.required label::after {
+  content: '*';
+  color: #ef4444;
+  margin-left: 4px;
+}
+
+.form-control,
+.form-select {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+}
+
+.form-control:focus,
+.form-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(29, 125, 93, 0.1);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  background-color: var(--bg-hover);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-control::placeholder {
+  color: var(--text-muted);
+}
+
+textarea.form-control {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-text {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.is-invalid {
+  border-color: #ef4444 !important;
+}
+
+.is-invalid:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
+.invalid-feedback {
+  display: block;
+  font-size: 11px;
+  color: #ef4444;
+  margin-top: 4px;
+}
+
+/* Filter card (common in admin pages) */
+.filter-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-xs);
+}
+
+.filter-card .row {
+  gap: 16px;
+}
+
+.filter-card .form-group {
+  margin-bottom: 0;
+}
+
+.filter-card .btn {
+  align-self: flex-end;
+  margin-top: 28px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════ */
+/* BUTTON ENHANCEMENTS */
+/* ═══════════════════════════════════════════════════════════════════ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  user-select: none;
+  outline: none;
+}
+
+.btn:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #0d5d47;
+  border-color: #0d5d47;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(29, 125, 93, 0.2);
+}
+
+.btn-secondary {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.btn-danger {
+  background-color: #fee2e2;
+  color: #ef4444;
+  border-color: #fca5a5;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #fecaca;
+  border-color: #f87171;
+}
+
+.btn-success {
+  background-color: #d1fae5;
+  color: var(--color-success);
+  border-color: #a7f3d0;
+}
+
+.btn-success:hover:not(:disabled) {
+  background-color: #a7f3d0;
+  border-color: #6ee7b7;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 11px;
+}
+
+.btn-lg {
+  padding: 12px 24px;
+  font-size: 14px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════ */
+/* CARD & CONTENT ENHANCEMENTS */
+/* ═══════════════════════════════════════════════════════════════════ */
+
+.card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.card-header {
+  background-color: var(--bg-card);
+  border-bottom: 1px solid var(--border-light);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.card-header h5 {
+  margin-bottom: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+.card-footer {
+  background-color: var(--bg-hover);
+  border-top: 1px solid var(--border-light);
+  padding: 16px 20px;
+  text-align: right;
+}
+
+/* ═══════════════════════════════════════════════════════════════════ */
+/* MOBILE RESPONSIVENESS */
+/* ═══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .admin-sidebar {
+    width: 280px;
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 1000;
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .admin-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .main-wrapper {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .sidebar-toggle {
+    display: flex !important;
+  }
+
+  /* Mobile table enhancements */
+  .table-responsive {
+    border: none;
+    margin: -20px;
+  }
+
+  .table {
+    min-width: 100%;
+  }
+
+  /* Stack filter form on mobile */
+  .filter-card .row {
+    flex-direction: column;
+  }
+
+  .filter-card .form-group {
+    width: 100%;
+  }
+
+  .filter-card .btn {
+    width: 100%;
+    margin-top: 12px;
+    justify-content: center;
+  }
+
+  /* Action buttons stack on mobile */
+  .btn-group-sm {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .btn-group-sm .btn {
+    flex: 1;
+    min-width: 100px;
+  }
+
+  /* Card header adjustments */
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* Form adjustments */
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-control,
+  .form-select {
+    padding: 12px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .table th, .table td {
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+
+  .table thead th {
+    font-size: 10px;
+  }
+
+  .btn-sm {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+
+  .menu-item {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .menu-item i {
+    width: 16px;
+  }
+
+  .card-body {
+    padding: 12px;
+  }
+
+  .filter-card {
+    padding: 12px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════ */
+/* PRINT STYLES */
+/* ═══════════════════════════════════════════════════════════════════ */
+
+@media print {
+  .admin-sidebar,
+  .top-navbar,
+  .btn,
+  .filter-card {
+    display: none;
+  }
+
+  .main-wrapper {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .card {
+    border: 1px solid #ccc;
+    page-break-inside: avoid;
+  }
+
+  .table {
+    font-size: 11px;
+  }
+}
