@@ -254,12 +254,10 @@ class ThreatMonitorMiddleware(BaseHTTPMiddleware):
         if "multipart/form-data" in content_type:
             input_str = ""
         else:
+            # BaseHTTPMiddleware caches body() and replays it downstream. Do not
+            # replace request._receive: Starlette reads it again to wait for
+            # http.disconnect and raises RuntimeError on a repeated http.request.
             body_bytes = await request.body()
-
-            async def receive():
-                return {"type": "http.request", "body": body_bytes, "more_body": False}
-
-            request._receive = receive
             input_str = body_bytes.decode("utf-8", errors="ignore")
 
         verdict = await run_in_threadpool(

@@ -1,3 +1,4 @@
+from starlette.concurrency import run_in_threadpool
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi import Request
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -49,7 +50,7 @@ class AdminAuthMiddleware(BaseHTTPMiddleware):
         # Only check admin session for docs / openapi
         if path in protected_paths:
             session_token = request.cookies.get("session_token")
-            if not is_valid_admin_session(session_token):
+            if not await run_in_threadpool(is_valid_admin_session, session_token):
                 return RedirectResponse(url="/admin/login/", status_code=303)
 
         response = await call_next(request)
