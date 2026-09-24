@@ -119,7 +119,11 @@ def build_championship_dashboard_json_payload(request, agent):
 
     profile = agent.get_primary_profile() if hasattr(agent, 'get_primary_profile') else getattr(agent, 'profile', None)
     agent_slug_val = (getattr(profile, 'slug', None) if profile else None) or getattr(agent, 'agent_slug', None) or str(getattr(agent, 'id', ''))
-    profile_url = build_safe_absolute_uri(request, f"/agent/{agent_slug_val}/")
+    state_code = getattr(agent, 'state_code', 'gj')
+    if callable(state_code):
+        state_code = state_code()
+    state_code = str(state_code or 'gj').strip().lower()
+    profile_url = build_safe_absolute_uri(request, f"/{state_code}/{agent_slug_val}/")
     review_url = f"https://www.padosiagent.com/review/{agent_slug_val}/"
 
     default_wa_text = render_whatsapp_message(
@@ -519,7 +523,11 @@ def agent_championship_dashboard(request):
 
         profile = agent.get_primary_profile() if hasattr(agent, 'get_primary_profile') else getattr(agent, 'profile', None)
         agent_slug_val = (getattr(profile, 'slug', None) if profile else None) or getattr(agent, 'agent_slug', None) or str(getattr(agent, 'id', ''))
-        profile_url = build_safe_absolute_uri(request, f"/agent/{agent_slug_val}/")
+        state_code = getattr(agent, 'state_code', 'gj')
+        if callable(state_code):
+            state_code = state_code()
+        state_code = str(state_code or 'gj').strip().lower()
+        profile_url = build_safe_absolute_uri(request, f"/{state_code}/{agent_slug_val}/")
         review_url = f"https://www.padosiagent.com/review/{agent_slug_val}/"
 
         default_wa_text = render_whatsapp_message(

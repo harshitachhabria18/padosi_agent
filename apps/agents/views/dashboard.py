@@ -2563,12 +2563,13 @@ def agent_og_image(request, agent_id=None, slug=None):
 
 
 def agent_public_share_profile(request, slug):
-    from apps.agents.models import Agent, AgentReview, AgentPerformanceStat
-    from django.shortcuts import render
+    from apps.agents.models import Agent
+    from django.shortcuts import redirect, render
     from django.http import Http404
+    from django.urls import reverse
 
     agent = Agent.objects.filter(profile__slug=slug).first()
-    if not agent and slug.isdigit():
+    if not agent and str(slug).isdigit():
         agent = Agent.objects.filter(id=int(slug)).first()
 
     if not agent:
@@ -2586,43 +2587,26 @@ def agent_public_share_profile(request, slug):
             'profile': profile
         }, status=404)
 
-    perf = AgentPerformanceStat.objects.filter(agent=agent).first()
-    reviews = agent.reviews.filter(is_approved=True)
+    profile_slug = (profile.slug if profile and profile.slug else '') or getattr(agent, 'agent_slug', '') or str(agent.id)
 
-    # Categories list
-    categories = []
-    if agent.insuranceSegments.exists():
-        categories = [s.segment_type.capitalize() if s.segment_type != 'sme' else 'SME' for s in agent.insuranceSegments.all()]
+    state_code = getattr(agent, 'state_code', 'gj')
+    if callable(state_code):
+        state_code = state_code()
+    state_code = str(state_code or 'gj').strip().lower()
 
-    display_name = (profile.display_name if profile else '') or agent.fullname or 'Agent'
-    agent_initial = display_name[0].upper() if display_name else 'A'
+    try:
+        target_url = reverse('agents:agent_public_profile_state_direct', kwargs={'state_code': state_code, 'slug': profile_slug})
+    except Exception:
+        try:
+            target_url = reverse('agents:agent_public_profile', kwargs={'slug': profile_slug})
+        except Exception:
+            target_url = f"/{state_code}/{profile_slug}/"
 
-    # Build description for SEO Open Graph preview
-    desc_parts = []
-    if profile and profile.experience_years:
-        desc_parts.append(f"{profile.experience_years}+ Yrs Exp")
-    if agent.average_rating:
-        desc_parts.append(f"{round(agent.average_rating, 1)} Star Rating")
-    if categories:
-        desc_parts.append(f"Services: {', '.join(categories)}")
-    if agent.agent_city_display:
-        desc_parts.append(f"Serving: {agent.agent_city_display}")
-    seo_description = " · ".join(desc_parts) or "Licensed PadosiAgent Insurance & Investment Advisor."
+    query_string = request.META.get('QUERY_STRING', '')
+    if query_string:
+        target_url = f"{target_url}?{query_string}"
 
-    agent_plan = _resolve_agent_plan(agent.plan_type, agent=agent)
-
-    context = {
-        'agent': agent,
-        'profile': profile,
-        'performanceStats': perf,
-        'reviews': reviews,
-        'categories': categories,
-        'agentDisplayName': display_name,
-        'agentInitial': agent_initial,
-        'seoDescription': seo_description,
-        'agent_plan': agent_plan,
-    }
-    return render(request, 'agents/profile_share.html', context)
+    return redirect(target_url, permanent=True)
 
 
 def serve_private_file(request, file_path):
