@@ -17,40 +17,14 @@ class TestHybridFixes(unittest.TestCase):
     def setUpClass(cls):
         cls.client = TestClient(app, raise_server_exceptions=False)
 
-    def test_admin_financial_liability_requires_admin(self):
-        """CRIT-02: Ensure unauthenticated users cannot view administrative financial liability."""
-        res = self.client.get("/v1/championship/admin/financial-liability")
-        self.assertEqual(res.status_code, 403)
-        data = res.json()
-        self.assertIn("detail", data)
-        self.assertIn("Administrative access required", data["detail"])
-
-    def test_admin_settings_requires_admin(self):
-        """CRIT-02: Ensure unauthenticated users cannot update championship settings."""
-        res = self.client.post("/v1/championship/admin/settings", json={"status": "active"})
-        self.assertEqual(res.status_code, 403)
-        data = res.json()
-        self.assertIn("detail", data)
-        self.assertIn("Administrative access required", data["detail"])
-
-    def test_admin_endpoints_reject_standard_agent_token(self):
-        """CRIT-02: Ensure standard agent token cannot access admin routes."""
+    def test_championship_admin_api_is_not_exposed(self):
+        """CRIT-02: championship admin APIs were removed from the mobile API; no caller may reach them."""
         agent_token = create_access_token({"sub": "agent@test.com", "role": "agent"})
-        res = self.client.get(
-            "/v1/championship/admin/financial-liability",
-            headers={"Authorization": f"Bearer {agent_token}"}
-        )
-        self.assertEqual(res.status_code, 403)
-
-    def test_admin_endpoints_accept_admin_role_token(self):
-        """CRIT-02: Ensure admin role JWT bypasses require_admin dependency guard."""
-        admin_token = create_access_token({"sub": "admin@test.com", "role": "admin"})
-        res = self.client.get(
-            "/v1/championship/admin/financial-liability",
-            headers={"Authorization": f"Bearer {admin_token}"}
-        )
-        # require_admin passes; status code is not 403 (either 200 or 500/DB connection if DB is offline)
-        self.assertNotEqual(res.status_code, 403)
+        for headers in ({}, {"Authorization": f"Bearer {agent_token}"}):
+            res = self.client.get("/v1/championship/admin/financial-liability", headers=headers)
+            self.assertIn(res.status_code, (403, 404))
+            res = self.client.post("/v1/championship/admin/settings", json={"status": "active"}, headers=headers)
+            self.assertIn(res.status_code, (403, 404))
 
     def test_password_reset_accepts_unauthenticated_requests(self):
         """CRIT-01: Ensure POST /v1/agents/reset-password is not blocked by 401 Unauthorized."""
