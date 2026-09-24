@@ -4,8 +4,6 @@ import json
 import logging
 import traceback
 import concurrent.futures
-from groq import Groq, BadRequestError
-from openai import OpenAI
 from apps.chatbot.models import ChatSession, ChatMessage, LatencyLog
 from apps.home.views.pages import build_agent_query
 import time
@@ -237,13 +235,17 @@ def _get_client(provider: dict, api_key: str):
     """Return a cached SDK client for this provider (created once, reused every call)."""
     name = provider["name"]
     if name not in _client_cache:
+        # SDKs are imported on first use: they add ~50-70 MB to every
+        # Passenger process that would otherwise never call an LLM.
         if provider["type"] == "groq":
+            from groq import Groq
             _client_cache[name] = Groq(
                 api_key=api_key,
                 timeout=_LLM_TIMEOUT,
                 max_retries=0,  # disable built-in Retry-After waits
             )
         else:
+            from openai import OpenAI
             _client_cache[name] = OpenAI(
                 api_key=api_key,
                 base_url=provider.get("base_url"),

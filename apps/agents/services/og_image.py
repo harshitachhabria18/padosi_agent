@@ -54,6 +54,38 @@ except (ImportError, Exception):
     sync_playwright = None
     PLAYWRIGHT_AVAILABLE = False
 
+from contextlib import contextmanager
+
+
+@contextmanager
+def _single_browser_slot():
+    """Yield True if this process may launch Chromium now.
+
+    This URL is public and crawled by link-preview bots. Each Chromium costs
+    ~150-300 MB and many processes/threads. Several at once exceed the
+    hosting account's memory/process limits, so only one may run
+    server-wide. A concurrent render uses the Pillow card instead.
+    """
+    try:
+        import fcntl
+    except ImportError:  # Windows dev machines
+        yield True
+        return
+    got = False
+    lock_dir = os.path.join(settings.BASE_DIR, 'tmp')
+    os.makedirs(lock_dir, exist_ok=True)
+    with open(os.path.join(lock_dir, 'og_chromium.lock'), 'w') as fh:
+        try:
+            fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            got = True
+        except OSError:
+            got = False
+        try:
+            yield got
+        finally:
+            if got:
+                fcntl.flock(fh, fcntl.LOCK_UN)
+
 def render_agent_og_jpeg(agent):
     """Return JPEG bytes for a 1200x630 agent digital visiting card OG image using Playwright or Pillow."""
     profile = None
@@ -222,27 +254,31 @@ def render_agent_og_jpeg(agent):
     }
 
     if PLAYWRIGHT_AVAILABLE and sync_playwright is not None:
-        try:
-            import sys, asyncio
-            if sys.platform == 'win32':
+        with _single_browser_slot() as may_launch:
+            if not may_launch:
+                logger.info("OG render for agent %s: Chromium busy, using Pillow card", getattr(agent, 'id', None))
+            else:
                 try:
-                    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
-                except Exception:
-                    pass
-            html = render_to_string('agents/og_image.html', context)
-            with sync_playwright() as p:
-                browser = p.chromium.launch(headless=True)
-                page = browser.new_page(viewport={"width": 1200, "height": 630})
-                page.set_content(html)
-                try:
-                    page.wait_for_load_state("networkidle", timeout=3000)
-                except Exception:
-                    pass
-                jpeg_bytes = page.screenshot(type="jpeg", quality=95)
-                browser.close()
-            return jpeg_bytes
-        except Exception as e:
-            logger.warning(f"Playwright OG rendering failed, falling back to Pillow: {e}")
+                    import sys, asyncio
+                    if sys.platform == 'win32':
+                        try:
+                            asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+                        except Exception:
+                            pass
+                    html = render_to_string('agents/og_image.html', context)
+                    with sync_playwright() as p:
+                        browser = p.chromium.launch(headless=True)
+                        page = browser.new_page(viewport={"width": 1200, "height": 630})
+                        page.set_content(html)
+                        try:
+                            page.wait_for_load_state("networkidle", timeout=3000)
+                        except Exception:
+                            pass
+                        jpeg_bytes = page.screenshot(type="jpeg", quality=95)
+                        browser.close()
+                    return jpeg_bytes
+                except Exception as e:
+                    logger.warning(f"Playwright OG rendering failed, falling back to Pillow: {e}")
 
     # Memory-safe, high-speed Pillow fallback
     return _render_agent_og_jpeg_pillow(agent, profile=profile, perf=perf)

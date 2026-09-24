@@ -5,6 +5,11 @@ on:
     branches:
       - main
 
+# Queue deploys instead of running two against the server at the same time.
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest

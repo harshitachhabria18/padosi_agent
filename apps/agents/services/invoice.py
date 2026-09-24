@@ -16,7 +16,6 @@ import requests
 from datetime import datetime
 from django.conf import settings
 from django.template.loader import render_to_string
-from xhtml2pdf import pisa
 
 from apps.agents.models import Agent, AgentSubscription, Invoice
 from apps.home.models import SiteSetting
@@ -342,7 +341,9 @@ class InvoiceService:
             tempfile.NamedTemporaryFile = ClosedNamedTemporaryFile
 
             try:
-                # Convert HTML to PDF using Pisa (xhtml2pdf)
+                # Imported here, not at module load: xhtml2pdf/reportlab add
+                # ~55 MB to every Passenger process, and only invoices use it.
+                from xhtml2pdf import pisa
                 with open(full_path, "w+b") as result_file:
                     pisa_status = pisa.CreatePDF(html_string, dest=result_file, link_callback=link_callback, encoding='utf-8')
             finally:

@@ -2,7 +2,6 @@ import os
 import uuid
 import base64
 import logging
-from curl_cffi import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from urllib.parse import urljoin
@@ -29,6 +28,8 @@ class IRDAIScraperService:
 
     @staticmethod
     def initiate_lookup(pan_number):
+        # curl_cffi is loaded only for this admin-only lookup (~15 MB per process).
+        from curl_cffi import requests
         cleanup_stale_sessions()
         session_id = str(uuid.uuid4())
         
@@ -97,6 +98,7 @@ class IRDAIScraperService:
 
     @staticmethod
     def resume_lookup(session_id, captcha_solution):
+        from curl_cffi import requests
         cleanup_stale_sessions()
         session_data = SESSION_REGISTRY.pop(session_id, None)
         
