@@ -1158,16 +1158,20 @@
 
         function applyDark(on) {
             document.body.classList.toggle('dark-mode', on);
-            darkIcon.className = on ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+            if (darkIcon) {
+                darkIcon.className = on ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+            }
             localStorage.setItem('adminDark', on ? '1' : '0');
         }
 
         /* Restore preference on page load */
         applyDark(localStorage.getItem('adminDark') === '1');
 
-        darkToggle.addEventListener('click', function () {
-            applyDark(!document.body.classList.contains('dark-mode'));
-        });
+        if (darkToggle) {
+            darkToggle.addEventListener('click', function () {
+                applyDark(!document.body.classList.contains('dark-mode'));
+            });
+        }
 
         /* ── Notification bell ─────────────────────────────────────────── */
         var notifBtn = document.getElementById('notifBtn');
