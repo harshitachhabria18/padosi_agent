@@ -18,6 +18,7 @@
             </button>
         </form>
         {% endif %}
+        <a href="{% url 'admin_payment_reconcile' %}" class="btn btn-outline-success btn-sm">🛡️ Payment Recovery</a>
         <a href="{% url 'admin_invoices' %}" class="btn btn-outline-secondary btn-sm">All Folders</a>
         <a href="{% url 'admin_invoices_create' %}" class="btn btn-primary btn-sm">➕ Create Invoice</a>
     </div>

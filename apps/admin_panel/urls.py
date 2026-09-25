@@ -109,6 +109,11 @@ from .views.invoices import (
     create_manual_invoice,
     admin_verify_promo,
 )
+from .views.payment_reconcile import (
+    payment_reconcile_dashboard,
+    reconcile_inspect_payment,
+    reconcile_execute_payment,
+)
 from .views.promo_codes import (
     promo_code_list,
     toggle_promo_code_status,
@@ -385,6 +390,11 @@ urlpatterns = [
     path("admin/invoices/sync/", sync_sheet, name="admin_invoice_sync_sheet"),
     path("admin/invoices/<int:invoice_id>/sync/", sync_single_invoice, name="admin_invoice_sync_single"),
     path("admin/invoices/open-sheet/", open_sheet, name="admin_invoice_open_sheet"),
+
+    # Payment Reconciliation & Recovery
+    path("admin/payments/reconcile/", payment_reconcile_dashboard, name="admin_payment_reconcile"),
+    path("admin/payments/reconcile/inspect/", reconcile_inspect_payment, name="admin_payment_reconcile_inspect"),
+    path("admin/payments/reconcile/execute/", reconcile_execute_payment, name="admin_payment_reconcile_execute"),
 
     # Phase X.1: Promo Codes
     path("admin/promo-codes/", promo_code_list, name="admin_promo_codes"),

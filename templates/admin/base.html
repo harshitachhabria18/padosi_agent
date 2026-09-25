@@ -749,6 +749,12 @@
             </a>
             {% endif %}
 
+            {% if is_super_admin or 'invoices' in admin_permissions or 'revenue' in admin_permissions %}
+            <a href="/admin/payments/reconcile/" class="menu-item {% if '/admin/payments/reconcile/' in request.path %}active{% endif %}">
+                <i class="fa-solid fa-file-invoice-dollar" style="color:#059669;"></i> Payment Recovery
+            </a>
+            {% endif %}
+
             {% if is_super_admin or 'promo_codes' in admin_permissions %}
             <a href="/admin/promo-codes/"
                 class="menu-item {% if '/admin/promo-codes/' in request.path %}active{% endif %}">
