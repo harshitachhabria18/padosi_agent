@@ -355,13 +355,21 @@ def reconcile_inspect_payment(request):
                 matched_agent = Agent.objects.filter(email__iexact=cust_email).first()
             if not matched_agent and order_id:
                 sub_match = AgentSubscription.objects.filter(razorpay_order_id=order_id).first()
-                if sub_match:
-                    matched_agent = sub_match.agent
+                if sub_match and getattr(sub_match, 'agent_id', None):
+                    try:
+                        matched_agent = Agent.objects.filter(id=sub_match.agent_id).first()
+                    except Exception:
+                        matched_agent = None
 
             if payment_id and not payment_id.startswith('pay_for_'):
                 existing_invoice = Invoice.objects.filter(razorpay_payment_id=payment_id).first()
             if not existing_invoice and order_id:
                 existing_invoice = Invoice.objects.filter(razorpay_order_id=order_id).first()
+            if not matched_agent and existing_invoice and getattr(existing_invoice, 'agent_id', None):
+                try:
+                    matched_agent = Agent.objects.filter(id=existing_invoice.agent_id).first()
+                except Exception:
+                    pass
         except Exception as db_e:
             logger.warning(f"Error querying local DB for matched records: {db_e}")
 
@@ -535,6 +543,11 @@ def reconcile_execute_payment(request):
 
                 # 4. Find or create Subscription
                 subscription = AgentSubscription.objects.filter(agent=agent).order_by('-created_at').first()
+                if not subscription and order_id:
+                    subscription = AgentSubscription.objects.filter(razorpay_order_id=order_id).first()
+                if not subscription and payment_id:
+                    subscription = AgentSubscription.objects.filter(razorpay_payment_id=payment_id).first()
+
                 if not subscription:
                     subscription = AgentSubscription.objects.create(
                         agent=agent,
@@ -548,6 +561,7 @@ def reconcile_execute_payment(request):
                         expires_at=timezone.now() + timezone.timedelta(days=365)
                     )
                 else:
+                    subscription.agent = agent
                     subscription.selected_plan = plan_name or subscription.selected_plan
                     subscription.registration_amount = paid_rupees
                     subscription.payment_status = 'completed'
@@ -559,6 +573,24 @@ def reconcile_execute_payment(request):
                     if not subscription.expires_at:
                         subscription.expires_at = timezone.now() + timezone.timedelta(days=365)
                     subscription.save()
+
+                # Reclaim orphaned invoice if any exists for this order/payment
+                try:
+                    if order_id or payment_id:
+                        inv_match = None
+                        if payment_id:
+                            inv_match = Invoice.objects.filter(razorpay_payment_id=payment_id).first()
+                        if not inv_match and order_id:
+                            inv_match = Invoice.objects.filter(razorpay_order_id=order_id).first()
+                        if inv_match and getattr(inv_match, 'agent_id', None) != agent.id:
+                            inv_match.agent = agent
+                            inv_match.agent_email = agent.email
+                            inv_match.agent_name = agent.fullname
+                            if payment_id and not inv_match.razorpay_payment_id:
+                                inv_match.razorpay_payment_id = payment_id
+                            inv_match.save()
+                except Exception as inv_e:
+                    logger.warning(f"Could not reclaim invoice: {inv_e}")
 
                 # 5. Link Django User account
                 create_or_link_django_user(agent)

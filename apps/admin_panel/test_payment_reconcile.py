@@ -97,6 +97,61 @@ class TestPaymentReconcileViews(unittest.TestCase):
                                 self.assertEqual(data['razorpay']['amount_rupees'], 2359.00)
                                 self.assertEqual(data['razorpay']['inferred_plan_type'], 'starter')
 
+    def test_inspect_orphaned_subscription_no_crash(self):
+        """
+        Verify that if an AgentSubscription exists for an order, but its agent_id
+        points to a nonexistent Agent, inspect does not crash with Agent.DoesNotExist.
+        """
+        req = self.rf.post(
+            '/admin/payments/reconcile/inspect/',
+            data=json.dumps({'query': 'order_TgAtfYxCS12pG6'}),
+            content_type='application/json'
+        )
+        fake_payment = {
+            'id': 'pay_TgAtr0PKkdyKnz',
+            'order_id': 'order_TgAtfYxCS12pG6',
+            'amount': 235900,
+            'status': 'captured',
+            'email': 'yashwantsinghmoral@gmail.com',
+            'contact': '+918521514171',
+            'method': 'upi',
+            'notes': {},
+        }
+        fake_order = {
+            'id': 'order_TgAtfYxCS12pG6',
+            'amount': 235900,
+            'status': 'paid',
+            'receipt': 'agent_draft_99_1790318572',
+        }
+
+        mock_client = MagicMock()
+        mock_client.order.fetch.return_value = fake_order
+        mock_client.order.payments.return_value = {'items': [fake_payment]}
+
+        # Orphaned subscription with non-existent agent_id
+        mock_sub = MagicMock()
+        mock_sub.agent_id = 999999
+
+        with patch('apps.admin_panel.views.payment_reconcile._get_admin_from_session', return_value={'id': 1}):
+            with patch('apps.admin_panel.views.payment_reconcile.razorpay_client', return_value=mock_client):
+                with patch('apps.agents.models.Agent.objects.filter') as mock_agent_filter:
+                    # Agent does not exist
+                    mock_agent_filter.return_value.first.return_value = None
+                    with patch('apps.agents.models.AgentSubscription.objects.filter') as mock_sub_filter:
+                        mock_sub_filter.return_value.first.return_value = mock_sub
+                        with patch('apps.agents.models.AgentDraft.objects.filter') as mock_draft_filter:
+                            mock_draft_filter.return_value.first.return_value = None
+                            with patch('apps.agents.models.Invoice.objects.filter') as mock_inv_filter:
+                                mock_inv_filter.return_value.first.return_value = None
+
+                                resp = reconcile_inspect_payment(req)
+                                self.assertEqual(resp.status_code, 200)
+                                data = json.loads(resp.content)
+                                self.assertTrue(data['success'])
+                                self.assertTrue(data['has_razorpay'])
+                                self.assertEqual(data['razorpay']['order_id'], 'order_TgAtfYxCS12pG6')
+                                self.assertIsNone(data['db_match']['agent'])
+
     def test_execute_reconcile_existing_agent(self):
         req = self.rf.post(
             '/admin/payments/reconcile/execute/',
