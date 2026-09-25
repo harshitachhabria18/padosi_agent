@@ -7,6 +7,7 @@ Django authenticate() cannot verify those hashes, so agent login uses the
 same check_password_hash() helper as admin login.
 """
 import logging
+import re
 from types import SimpleNamespace
 
 from django.contrib.auth.models import User as DjangoUser
@@ -368,6 +369,34 @@ def link_agent_to_django_user(agent, django_user):
     return agent
 
 
+def normalize_agent_mobile(mobile):
+    """Return a 10-digit Indian mobile or empty string."""
+    raw = re.sub(r'[^0-9]', '', str(mobile or ''))
+    if len(raw) == 12 and raw.startswith('91'):
+        raw = raw[2:]
+    if len(raw) == 11 and raw.startswith('0'):
+        raw = raw[1:]
+    if len(raw) > 10:
+        raw = raw[-10:]
+    if len(raw) == 10 and raw[0] in '6789':
+        return raw
+    return ''
+
+
+def default_agent_temp_password(agent):
+    """
+    Default password when a new website agent gets auth rows (no hash yet).
+    Uses 10-digit mobile from registration; email only if mobile is missing.
+    Existing stored hashes are never overwritten by this helper.
+    """
+    if not agent:
+        return ''
+    mobile = normalize_agent_mobile(getattr(agent, 'mobile', None))
+    if mobile:
+        return mobile
+    return (getattr(agent, 'email', None) or '').strip()
+
+
 def _hash_for_verified_password(password, laravel_user, django_user):
     for stored in (
         getattr(laravel_user, 'password', None),
@@ -435,7 +464,7 @@ def create_or_link_django_user(agent, plain_password=None):
     Ensure auth_user + users rows exist for an agent.
 
     Does not overwrite an existing bcrypt hash unless plain_password is given.
-    If no hash exists, stores bcrypt(email) — the platform temp password.
+    If no hash exists, stores bcrypt(default_agent_temp_password(agent)).
     """
     if not agent or not agent.email:
         raise ValueError('Agent email is required')
@@ -456,7 +485,7 @@ def create_or_link_django_user(agent, plain_password=None):
         if stored and is_bcrypt_hash(stored):
             bcrypt_hash = stored
         else:
-            bcrypt_hash = hash_password(email)
+            bcrypt_hash = hash_password(default_agent_temp_password(agent))
             overwrite = not stored
 
     django_user = ensure_django_user(email, fullname, bcrypt_hash, overwrite_password=overwrite)

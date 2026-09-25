@@ -108,30 +108,38 @@ class AuthService:
                         except Exception:
                             self.db.rollback()
 
-        # Orphan incomplete/pending_payment agents have no users row. Temp password is the email.
+        # Orphan incomplete/pending_payment agents may have no users row yet.
         if not password_valid and agent and agent.status in ('incomplete', 'pending_payment'):
             stored = user.password if user and user.password else None
-            if not stored and request.password and agent.email and request.password.lower() == agent.email.lower():
-                password_valid = True
-                if not user:
-                    try:
-                        from fastapi_app.models.user import User as UserModel
-                        user = UserModel(
-                            fullname=agent.fullname or agent.email,
-                            email=agent.email,
-                            password=get_password_hash(agent.email),
-                            role='agent',
-                            status='active',
-                            email_verified_at=datetime.utcnow(),
-                        )
-                        self.db.add(user)
-                        self.db.flush()
-                        if not agent.user_id:
-                            agent.user_id = user.id
-                        self.db.commit()
-                    except Exception:
-                        self.db.rollback()
-                        user = self.user_repo.get_by_email(request.email)
+            if not stored and request.password:
+                from apps.agents.services.account_auth import default_agent_temp_password
+
+                temp_password = default_agent_temp_password(agent)
+                legacy_email_password = (
+                    agent.email
+                    and request.password.lower() == agent.email.lower()
+                )
+                if request.password == temp_password or legacy_email_password:
+                    password_valid = True
+                    if not user:
+                        try:
+                            from fastapi_app.models.user import UserModel
+                            user = UserModel(
+                                fullname=agent.fullname or agent.email,
+                                email=agent.email,
+                                password=get_password_hash(request.password),
+                                role='agent',
+                                status='active',
+                                email_verified_at=datetime.utcnow(),
+                            )
+                            self.db.add(user)
+                            self.db.flush()
+                            if not agent.user_id:
+                                agent.user_id = user.id
+                            self.db.commit()
+                        except Exception:
+                            self.db.rollback()
+                            user = self.user_repo.get_by_email(request.email)
 
         if not user or not password_valid:
             record_login_attempt(ip)

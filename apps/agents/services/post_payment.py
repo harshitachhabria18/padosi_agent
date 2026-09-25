@@ -64,10 +64,12 @@ def fulfill_invoice_and_welcome(agent, subscription):
         pdf_path = os.path.join(settings.MEDIA_ROOT, 'app', 'private', invoice.pdf_path)
 
     try:
+        from apps.agents.services.account_auth import default_agent_temp_password
+
         email_service.send_welcome(
             to_email=agent.email,
             to_name=agent.fullname,
-            temp_password=agent.email,
+            temp_password=default_agent_temp_password(agent),
             plan_name=subscription.selected_plan,
             attachment_path=pdf_path,
         )

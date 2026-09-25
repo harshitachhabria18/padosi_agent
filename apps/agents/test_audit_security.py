@@ -340,14 +340,19 @@ class RefundWebhookTests(TestCase):
 
 
 class DefaultPasswordTests(TestCase):
-    """Owner decision: a new agent's temporary password stays their email."""
+    """New website agents get their 10-digit mobile as the initial password."""
 
-    def test_new_agent_temp_password_is_email(self):
+    def test_new_agent_temp_password_is_mobile(self):
         from apps.agents.services.account_auth import create_or_link_django_user, verify_agent_password
-        agent = Agent.objects.create(fullname='New', email='newagent@example.com', mobile='9876500900', status='active')
+        mobile = '9876500900'
+        agent = Agent.objects.create(
+            fullname='New', email='newagent@example.com', mobile=mobile, status='active',
+        )
         create_or_link_django_user(agent)
-        ok, _, _ = verify_agent_password(agent.email, agent.email, agent=agent)
+        ok, _, _ = verify_agent_password(agent.email, mobile, agent=agent)
         self.assertTrue(ok)
+        ok_email, _, _ = verify_agent_password(agent.email, agent.email, agent=agent)
+        self.assertFalse(ok_email)
 
 
 class RegistrationPhotoUploadTests(SimpleTestCase):

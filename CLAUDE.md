@@ -237,7 +237,7 @@
 ### Security invariants (do not regress — see `apps/agents/test_audit_security.py`)
 1. Payment endpoints never trust a client-supplied `agent_id` / `plan_type` / `plan_name`. The agent comes from the paid order; login only when the session owns the checkout (`_session_owns_agent()`) or the request carries a valid Razorpay signature for that order (`_payer_signature_valid()`); the plan comes from `subscription.selected_plan` (`_order_plan_slug`).
 2. Passwordless flows (`client_quick_register`, `fb_ad_signup`) must never `login()` a portal user (`_is_portal_user`) or create an `auth_user` for an email owned by an agent/portal account (`_email_belongs_to_portal_account`).
-3. (Owner decision) New agents' temporary password is their email and the welcome email says so — intentionally unchanged.
+3. New website agents' initial password is their 10-digit mobile (welcome email); existing bcrypt hashes are never overwritten. Insurance-portal onboarding may still use email-as-password where explicitly set.
 4. Client IP = `ThreatMonitorMiddleware.get_client_ip()` (Django) / `fastapi_app.utils.client_ip.get_client_ip()` — never `X-Forwarded-For.split(',')[0]`.
 5. Data embedded in `<script>`: use `{% load json_tags %}{{ value|safe_json }}`, never `json.dumps(...)|safe`. Server JSON that JS inserts via `innerHTML` must be HTML-escaped at the source. Admin/CMS-authored HTML renders with `{% load html_tags %}{{ value|clean_html }}`, never `|safe` or `{% autoescape off %}`. Raw HTML CMS pages (`Page.is_raw_code`) are served as-is; only a Super Admin may save script-enabled raw content (`raw_script_save_blocked` in `admin_panel/views/pages.py`).
 6. Changing an agent's email must be rejected if the address belongs to any other `auth_user`/`users` row.

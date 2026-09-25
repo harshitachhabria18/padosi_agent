@@ -114,9 +114,9 @@ class AgentRegistrationEndToEndTests(TestCase):
             dash = self.client.get('/agent/dashboard/')
         self.assertEqual(dash.status_code, 200)
 
-        # New agent's temporary password is their email (owner decision).
+        # New agent's temporary password is their registered mobile number.
         self.client.logout()
-        login = self.client.post('/agent-login/', {'email': agent.email, 'password': agent.email})
+        login = self.client.post('/agent-login/', {'email': agent.email, 'password': agent.mobile})
         self.assertEqual(login.status_code, 302)
         self.assertIn('/agent/dashboard', login['Location'])
 
