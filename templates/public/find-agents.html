@@ -1746,7 +1746,7 @@ no spam calls, only trusted licensed agents.{% endblock %}
 
                             <!-- Insurance Company Dropdown (only shown in Claim mode after a tile is selected) -->
                             <div class="form-group mb-4" id="ClaimInsuranceCompanyContainer"
-                                style="display: none; padding-top: 16px; border-top: 1px solid #e2e8f0; margin-top: 4px;">
+                                style="display: {% if selected_claim_company %}block{% else %}none{% endif %}; padding-top: 16px; border-top: 1px solid #e2e8f0; margin-top: 4px;">
                                 <label for="ClaimInsuranceCompany"
                                     style="font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; display: block; color: #14b8a6; margin-bottom: 8px;">
                                     <i class="fas fa-building mr-1"></i> Insurance Company
@@ -1754,9 +1754,17 @@ no spam calls, only trusted licensed agents.{% endblock %}
                                 <select class="selectbox" name="ClaimInsuranceCompany" id="ClaimInsuranceCompany"
                                     style="background: #f8fafc; color: #334155; border: 1px solid #14b8a6; border-radius: 8px; width: 100%; padding: 10px 12px; font-family: 'Outfit', sans-serif; font-size: 13px; outline: none; cursor: pointer;">
                                     <option value="" style="background: #f8fafc; color: #334155;">All Companies</option>
+                                    {% for company in all_claim_companies %}
+                                    <option value="{{ company }}" style="background: #f8fafc; color: #334155;"
+                                        {% if selected_claim_company == company %}selected{% endif %}>{{ company }}</option>
+                                    {% endfor %}
                                 </select>
                                 <p id="ClaimInsuranceCompanyHint"
-                                    style="font-size: 11px; color: #6b7280; margin-top: 6px; margin-bottom: 0;"></p>
+                                    style="font-size: 11px; color: #6b7280; margin-top: 6px; margin-bottom: 0;">
+                                    {% if selected_claim_company %}
+                                    Showing agents who handle <strong>{{ selected_claim_company }}</strong> claims at the top.
+                                    {% endif %}
+                                </p>
                             </div>
 
 
@@ -2226,6 +2234,12 @@ no spam calls, only trusted licensed agents.{% endblock %}
 
         // --- Claim Insurance Company Dropdown Change Logic ---
         $('#ClaimInsuranceCompany').on('change', function () {
+            const val = $(this).val();
+            if (val) {
+                $('#ClaimInsuranceCompanyHint').text('✓ Agents handling ' + val + ' claims will appear at the top with higher match %');
+            } else {
+                $('#ClaimInsuranceCompanyHint').text('Select a company to prioritize agents who handle their claims');
+            }
             syncFiltersToHiddenInputs();
         });
 
@@ -2239,14 +2253,10 @@ no spam calls, only trusted licensed agents.{% endblock %}
                 $('#ComplaintTypeContainer').slideDown(250);
                 $('#claim-step-guide').slideDown(200);
 
-                // Company dropdown: only show after an insurance type tile is selected
-                const hasSelectedTile = $('.circle-tile.active').length > 0;
-                if (hasSelectedTile) {
-                    $('#ClaimInsuranceCompanyContainer').slideDown(250);
-                } else {
-                    $('#ClaimInsuranceCompanyContainer').slideUp(250);
-                    $('#ClaimInsuranceCompany').val('');
-                }
+                // Company dropdown: show as soon as Claim mode is active
+                // (no longer requires an insurance type tile to be selected first)
+                $('#ClaimInsuranceCompanyContainer').slideDown(250);
+                updateClaimCompanyDropdown();
             } else {
                 $('#ComplaintTypeContainer').slideUp(250);
                 $('#ComplaintType').val('');
@@ -2282,48 +2292,65 @@ no spam calls, only trusted licensed agents.{% endblock %}
         }
 
         // --- Populate Claim Company Dropdown based on the ONE selected insurance type tile ---
+        // allClaimCompanies = every company name stored in Agent.insurance_companies (served by backend)
+        var allClaimCompanies = {{ all_claim_companies|default:"[]"|safe }};
+        var preSelectedClaimCompany = "{{ selected_claim_company|escapejs }}";
+
         function updateClaimCompanyDropdown() {
             const isClaimActive = $('.filter-pill[data-value="Claim"]').hasClass('active');
             if (!isClaimActive) return;
 
             const $activeTile = $('.circle-tile.active').first();
+            const $select = $('#ClaimInsuranceCompany');
+            const currentVal = $select.val() || preSelectedClaimCompany;
+
+            let companies = [];
+            let hintText = '';
+
             if ($activeTile.length === 0) {
-                // No tile selected — reset dropdown and show placeholder hint
-                $('#ClaimInsuranceCompany').empty()
-                    .append('<option value="" style="background:#f8fafc;color:#334155;">— Select insurance type first —</option>');
-                $('#ClaimInsuranceCompanyHint').text('Select an insurance type above to see available companies');
-                return;
+                // No tile selected — show ALL companies from backend (sorted)
+                companies = allClaimCompanies.slice().sort();
+                hintText = companies.length > 0
+                    ? companies.length + ' companies available — select to filter agents'
+                    : 'Select an insurance type above to see available companies';
+            } else {
+                // Tile selected — prefer category-specific list, fallback to all
+                const parentSection = $activeTile.closest('.product-category-section');
+                const catName = parentSection.data('category');
+                const catCompanies = (portfolioCompaniesByType[catName] || []).slice().sort();
+                companies = catCompanies.length > 0 ? catCompanies : allClaimCompanies.slice().sort();
+                const displayName = (catName || '').replace(' Insurance', '');
+                hintText = companies.length + ' companies for ' + displayName + ' Insurance';
             }
 
-            // Get the parent category of the selected tile (e.g. "Health Insurance")
-            const parentSection = $activeTile.closest('.product-category-section');
-            const catName = parentSection.data('category');
-            const companies = (portfolioCompaniesByType[catName] || []).slice().sort();
-
-            const $select = $('#ClaimInsuranceCompany');
-            const currentVal = $select.val();
             $select.empty();
             $select.append('<option value="" style="background:#f8fafc;color:#334155;">All Companies</option>');
 
             if (companies.length === 0) {
-                $select.append('<option value="" disabled style="background:#f8fafc;color:#64748b;">No companies listed</option>');
-                $('#ClaimInsuranceCompanyHint').text('No companies found for ' + catName);
+                $select.append('<option value="" disabled style="background:#f8fafc;color:#64748b;">No companies listed yet</option>');
+                $('#ClaimInsuranceCompanyHint').text(hintText);
             } else {
                 companies.forEach(function (company) {
                     const opt = $('<option></option>')
                         .attr('value', company)
                         .css({ background: '#f8fafc', color: '#334155' })
                         .text(company);
+                    if (currentVal && company === currentVal) {
+                        opt.attr('selected', 'selected');
+                    }
                     $select.append(opt);
                 });
 
-                // Restore previous selection if still in the list
+                // Restore previously selected value
                 if (currentVal && companies.includes(currentVal)) {
                     $select.val(currentVal);
                 }
 
-                const displayName = catName.replace(' Insurance', '');
-                $('#ClaimInsuranceCompanyHint').text(companies.length + ' companies for ' + displayName + ' Insurance');
+                $('#ClaimInsuranceCompanyHint').text(
+                    currentVal
+                        ? 'Agents handling ' + currentVal + ' claims appear at the top with higher match %'
+                        : hintText
+                );
             }
         }
 
