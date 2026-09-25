@@ -20,6 +20,7 @@ from padosi_agent.razorpay_env import (
     complete_pair_from_env_files,
     credential_pair_from_mapping,
     resync_razorpay_environ_after_dotenv,
+    webhook_secret_from_env_files,
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -307,7 +308,7 @@ RAZORPAY_KEY, RAZORPAY_SECRET = complete_pair_from_env_files(BASE_DIR)
 if not (RAZORPAY_KEY and RAZORPAY_SECRET):
     RAZORPAY_KEY, RAZORPAY_SECRET = credential_pair_from_mapping(os.environ)
 RAZORPAY_WEBHOOK_SECRET = _clean_env_secret(
-    os.environ.get('RAZORPAY_WEBHOOK_SECRET') or ''
+    os.environ.get('RAZORPAY_WEBHOOK_SECRET') or webhook_secret_from_env_files(BASE_DIR) or ''
 )
 
 # ─── Firebase Cloud Messaging (FCM) ─────────────────────────────────────────

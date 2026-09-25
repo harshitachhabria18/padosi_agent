@@ -58,6 +58,20 @@ def razorpay_credentials(file_maps=None, environ=None):
     return '', ''
 
 
+def razorpay_webhook_secret():
+    """Return configured Razorpay webhook secret from settings or dotenv files."""
+    secret = clean_razorpay_credential(getattr(settings, 'RAZORPAY_WEBHOOK_SECRET', ''))
+    if secret:
+        return secret
+    for mapping in list(_dotenv_file_maps()) + [os.environ]:
+        raw = mapping.get('RAZORPAY_WEBHOOK_SECRET')
+        if raw:
+            cleaned = clean_razorpay_credential(raw)
+            if cleaned:
+                return cleaned
+    return ''
+
+
 def razorpay_client():
     key, secret = razorpay_credentials()
     if not key or not secret:
@@ -151,7 +165,7 @@ def mock_payment_id():
     return f'{MOCK_PAYMENT_PREFIX}{int(time.time())}_{uuid.uuid4().hex[:8]}'
 
 
-def create_checkout_order(amount_paise, receipt, request):
+def create_checkout_order(amount_paise, receipt, request, notes=None):
     """Return (order_id, is_mock). order_id is None if a paid order could not be created."""
     amount_paise = int(amount_paise or 0)
     if amount_paise <= 0:
@@ -170,12 +184,15 @@ def create_checkout_order(amount_paise, receipt, request):
         if client is None:
             logger.error('Razorpay keys are missing; cannot create order')
             return None, False
-        order = client.order.create({
+        order_payload = {
             'amount': amount_paise,
             'currency': 'INR',
             'receipt': str(receipt or '')[:40],
             'payment_capture': 1,
-        })
+        }
+        if notes and isinstance(notes, dict):
+            order_payload['notes'] = {str(k)[:40]: str(v)[:256] for k, v in notes.items() if v is not None}
+        order = client.order.create(order_payload)
         return order.get('id'), False
     except Exception as err:
         key, _secret = razorpay_credentials()

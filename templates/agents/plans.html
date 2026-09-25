@@ -2732,13 +2732,14 @@
             }
         };
 
+        // Always provide handler so in-modal completions (card, UPI QR, etc.) execute onSuccess
+        options.handler = onSuccess;
+
         if (useCallback) {
             // HTTPS netbanking/UPI: Razorpay redirects back to callback_url after payment.
             options.callback_url = window.location.origin + '/agent-register/payment-callback/';
-            options.redirect = true;
         } else {
-            // Local HTTP dev: stay in modal and confirm via handler + verify-payment.
-            options.handler = onSuccess;
+            // Local HTTP dev: explicitly disable redirect so modal handler handles it.
             options.redirect = false;
         }
 

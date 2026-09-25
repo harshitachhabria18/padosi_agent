@@ -861,19 +861,27 @@ def get_edit_logs(request, id):
 
 
 def _build_queue_query(status_filter, search, plan_filter, city_filter, event_filter, sort_by):
-    query = '''
+    from django.db import connection
+    if connection.vendor == 'sqlite':
+        hours_expr = "CAST((julianday('now') - julianday(a.created_at)) * 24 AS INTEGER)"
+        minutes_expr = "CAST((julianday('now') - julianday(s.created_at)) * 1440 AS INTEGER)"
+    else:
+        hours_expr = "TIMESTAMPDIFF(HOUR, a.created_at, NOW())"
+        minutes_expr = "TIMESTAMPDIFF(MINUTE, s.created_at, NOW())"
+
+    query = f'''
         SELECT
             a.id, a.fullname, a.email, a.mobile, a.status,
             a.created_at, a.updated_at, a.badge, a.registration_step, a.is_blacklisted,
             ap.address, ap.display_name, ap.profile_photo_path, ap.pan_number,
             (SELECT COUNT(*) FROM blacklisted_agents WHERE pan = ap.pan_number AND ap.pan_number IS NOT NULL AND ap.pan_number != '') as is_blacklisted_by_pan,
             s.selected_plan, s.expires_at,
-            s.razorpay_order_id, s.payment_status as sub_payment_status,
+            s.razorpay_order_id, s.razorpay_payment_id, s.payment_status as sub_payment_status,
             s.created_at as sub_created_at, s.registration_amount,
             (SELECT AVG(rating) FROM agent_reviews WHERE agent_id = a.id AND is_approved = 1) as avg_rating,
             (SELECT COUNT(*) FROM agent_reviews WHERE agent_id = a.id AND is_approved = 1) as review_count,
-            TIMESTAMPDIFF(HOUR, a.created_at, NOW()) as hours_waiting,
-            TIMESTAMPDIFF(MINUTE, s.created_at, NOW()) as sub_minutes_ago
+            {hours_expr} as hours_waiting,
+            {minutes_expr} as sub_minutes_ago
         FROM agents as a
         LEFT JOIN agent_profiles as ap ON a.id = ap.agent_id
         LEFT JOIN agent_subscriptions as s ON a.id = s.agent_id
@@ -909,7 +917,7 @@ def _build_queue_query(status_filter, search, plan_filter, city_filter, event_fi
     if sort_by == 'oldest':
         query += " ORDER BY a.created_at ASC"
     elif sort_by == 'waiting':
-        query += " ORDER BY TIMESTAMPDIFF(HOUR, a.created_at, NOW()) DESC"
+        query += f" ORDER BY {hours_expr} DESC"
     else:
         query += " ORDER BY a.created_at DESC"
 
@@ -1039,12 +1047,17 @@ def agent_pending_registrations(request):
     if (not plan_filter or plan_filter == 'All Plans') and (not event_filter or event_filter == 'All Events'):
         try:
             from django.db import connection as _dc
-            draft_query = """
+            _draft_hours_expr = (
+                "CAST((julianday('now') - julianday(d.created_at)) * 24 AS INTEGER)"
+                if _dc.vendor == 'sqlite'
+                else "TIMESTAMPDIFF(HOUR, d.created_at, NOW())"
+            )
+            draft_query = f"""
                 SELECT
                     d.id, d.fullname, d.email, d.mobile,
                     d.address, d.state, d.agent_pincode,
                     d.registration_step, d.created_at, d.updated_at,
-                    TIMESTAMPDIFF(HOUR, d.created_at, NOW()) AS hours_waiting
+                    {_draft_hours_expr} AS hours_waiting
                 FROM agent_drafts AS d
                 WHERE d.registration_step >= 1
                   AND d.email NOT IN (SELECT email FROM agents WHERE email IS NOT NULL AND email != '')
@@ -1061,7 +1074,7 @@ def agent_pending_registrations(request):
             if sort_by == 'oldest':
                 draft_query += " ORDER BY d.created_at ASC"
             elif sort_by == 'waiting':
-                draft_query += " ORDER BY TIMESTAMPDIFF(HOUR, d.created_at, NOW()) DESC"
+                draft_query += f" ORDER BY {_draft_hours_expr} DESC"
             else:
                 draft_query += " ORDER BY d.created_at DESC"
             with _dc.cursor() as _cur:
@@ -1230,10 +1243,10 @@ def admin_verify_pending_payment(request):
             'message': f'Agent {agent.fullname} is already activated with a paid invoice.'
         })
 
-    # Check for pending subscription with razorpay_order_id
+    # Check for pending/failed subscription with razorpay_order_id
     subscription = AgentSubscription.objects.filter(
         agent=agent,
-        payment_status='pending'
+        payment_status__in=['pending', 'failed'],
     ).order_by('-created_at').first()
 
     if not subscription or not subscription.razorpay_order_id:
@@ -1256,10 +1269,11 @@ def admin_verify_pending_payment(request):
         }, status=500)
 
     if result:
+        agent.refresh_from_db()
         logger.info(f"[admin_verify_pending_payment] Admin #{admin_id} successfully verified payment for agent {agent.email} (ID: {agent.id})")
         return JsonResponse({
             'success': True,
-            'message': f'Payment verified successfully for {agent.fullname}! Agent activated, invoice generated, and welcome email sent.',
+            'message': f'Payment verified successfully for {agent.fullname}! Agent moved to Pending Approval queue.',
             'agent_status': agent.status,
         })
     else:

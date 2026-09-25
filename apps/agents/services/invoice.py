@@ -39,7 +39,47 @@ def get_logo_data_uri():
 def get_pdf_absolute_path(pdf_path):
     if not pdf_path:
         return None
-    return os.path.join(settings.MEDIA_ROOT, 'app', 'private', pdf_path)
+    if os.path.isabs(pdf_path):
+        return pdf_path
+    clean_path = str(pdf_path).replace('\\', '/').lstrip('/')
+    if clean_path.startswith('media/'):
+        clean_path = clean_path[len('media/'):]
+    if clean_path.startswith('app/private/'):
+        return os.path.join(settings.MEDIA_ROOT, clean_path)
+    return os.path.join(settings.MEDIA_ROOT, 'app', 'private', clean_path)
+
+def calculate_tax_breakdown(gst_amount: float, state: str) -> dict:
+    """
+    Calculate CGST, SGST, IGST and place of supply.
+    Gujarat -> Intra-state: CGST 9% + SGST 9%, IGST 0.
+    Other Indian States -> Inter-state: CGST 0, SGST 0, IGST 18%.
+    Supports full state names and 'gj' state code.
+    """
+    state_str = str(state or '').strip()
+    place_of_supply = state_str if state_str else 'Gujarat'
+    clean_lower = place_of_supply.lower()
+    is_gujarat = 'gujarat' in clean_lower or clean_lower == 'gj'
+    is_igst = not is_gujarat
+    if clean_lower == 'gj':
+        place_of_supply = 'Gujarat'
+    gst_val = round(float(gst_amount or 0), 2)
+
+    if is_igst:
+        cgst = 0.0
+        sgst = 0.0
+        igst = gst_val
+    else:
+        cgst = round(gst_val / 2, 2)
+        sgst = round(gst_val - cgst, 2)
+        igst = 0.0
+
+    return {
+        'place_of_supply': place_of_supply,
+        'is_igst': is_igst,
+        'cgst': cgst,
+        'sgst': sgst,
+        'igst': igst,
+    }
 
 def generate_invoice_number() -> str:
     """
@@ -146,6 +186,24 @@ class InvoiceService:
             folder = Invoice.resolve_discount_folder(discount_percent, total_amount)
 
             profile = agent.get_primary_profile()
+            agent_address = profile.address if (profile and profile.address) else ''
+            agent_state = profile.state if (profile and profile.state) else ''
+            if not agent_state and agent.registration_draft and isinstance(agent.registration_draft, dict):
+                agent_state = agent.registration_draft.get('state', '')
+                if not agent_address and agent.registration_draft.get('address'):
+                    agent_address = agent.registration_draft.get('address', '')
+            if not agent_state:
+                try:
+                    from apps.agents.models import AgentDraft
+                    draft = AgentDraft.objects.filter(email=agent.email).first()
+                    if draft and draft.state:
+                        agent_state = draft.state
+                        if not agent_address and draft.address:
+                            agent_address = draft.address
+                except Exception:
+                    pass
+            if not agent_state:
+                agent_state = 'Gujarat'
 
             # 5. Create Invoice Database record with retry on sequence collision
             from django.db import IntegrityError
@@ -159,8 +217,8 @@ class InvoiceService:
                         agent_name=agent.fullname,
                         agent_email=agent.email,
                         agent_mobile=agent.mobile,
-                        agent_address=profile.address if profile else '',
-                        agent_state=profile.state if profile else '',
+                        agent_address=agent_address,
+                        agent_state=agent_state,
                         plan_name=subscription.selected_plan,
                         plan_type=agent.plan_type or 'professional',
                         base_amount=base_amount,
@@ -246,8 +304,9 @@ class InvoiceService:
         Saves file to media/invoices/{discount_folder}/{invoice_number}.pdf.
         """
         try:
-            # Prepare context for the template
-            half_gst = round(float(invoice.gst_amount) / 2, 2)
+            # Calculate tax breakdown
+            tax_info = calculate_tax_breakdown(invoice.gst_amount, invoice.agent_state)
+            half_gst = tax_info['cgst']
             
             item_name = invoice.plan_name
             
@@ -261,17 +320,10 @@ class InvoiceService:
                 plan_desc = "PadosiAgent Subscription – 1 Year Professional"
 
             # Attach GST template variables dynamically to the ORM object
-            agent_state = str(invoice.agent_state or '').strip()
-            is_igst = 'gujarat' not in agent_state.lower()
-            invoice.is_igst = is_igst
-            if is_igst:
-                invoice.gst_amount_igst = invoice.gst_amount
-                invoice.gst_amount_cgst = 0
-                invoice.gst_amount_sgst = 0
-            else:
-                invoice.gst_amount_igst = 0
-                invoice.gst_amount_cgst = half_gst
-                invoice.gst_amount_sgst = half_gst
+            invoice.is_igst = tax_info['is_igst']
+            invoice.gst_amount_igst = tax_info['igst']
+            invoice.gst_amount_cgst = tax_info['cgst']
+            invoice.gst_amount_sgst = tax_info['sgst']
 
             font_path = (settings.BASE_DIR / 'static' / 'fonts' / 'DejaVuSans.ttf').as_posix()
             font_path_bold = (settings.BASE_DIR / 'static' / 'fonts' / 'DejaVuSans-Bold.ttf').as_posix()
@@ -285,7 +337,7 @@ class InvoiceService:
                         'amount': invoice.base_amount,
                     }
                 ],
-                'is_gujarat': str(invoice.agent_state or '').strip().lower() == 'gujarat',
+                'is_gujarat': not tax_info['is_igst'],
                 'half_gst': half_gst,
                 'logo_src': get_logo_data_uri(),
                 'font_path': font_path,
@@ -361,15 +413,18 @@ class InvoiceService:
             logger.error(f"[InvoiceService] generate_pdf exception: {e}", exc_info=True)
             return None
 
-    def sync_to_google_sheet(self, invoice: Invoice) -> None:
+    def sync_to_google_sheet(self, invoice: Invoice) -> bool:
         """
         Synchronize invoice details to Google Sheet using Web App Script URL.
-        Non-blocking operation.
+        Non-blocking operation. Sends all 16 columns matching Google Sheet headers:
+        Invoice #, Date, Agent, Email, Mobile, Plan Name, Place of Supply, Base Amount,
+        CGST, SGST, IGST, Total Amount, Payment ID, Promo Code, Discount Folder, PDF Link
+        along with base64-encoded PDF binary to upload into Google Drive.
         """
         try:
             sheet_url = SiteSetting.get_value('invoice_google_sheet_url')
             if not sheet_url or not isinstance(sheet_url, str):
-                return
+                return False
 
             sheet_url = sheet_url.strip()
             # SSRF protection: require HTTPS and block private / metadata IPs
@@ -377,47 +432,130 @@ class InvoiceService:
             parsed = urlparse(sheet_url)
             if parsed.scheme != 'https' or not parsed.netloc:
                 logger.warning(f"[InvoiceService] Rejected insecure non-HTTPS sheet URL: {sheet_url}")
-                return
+                return False
 
             blocked_hosts = ('169.254.169.254', 'metadata.google.internal', 'localhost', '127.0.0.1', '0.0.0.0')
             if any(bh in parsed.netloc.lower() for bh in blocked_hosts):
                 logger.warning(f"[InvoiceService] Blocked metadata/internal host in sheet sync: {parsed.netloc}")
-                return
+                return False
+
+            # Extract base64 PDF content if file exists on disk
+            pdf_base64 = None
+            pdf_path = getattr(invoice, 'pdf_path', None) if not isinstance(invoice, dict) else invoice.get('pdf_path')
+            if pdf_path:
+                abs_path = get_pdf_absolute_path(pdf_path)
+                if abs_path and os.path.exists(abs_path):
+                    try:
+                        with open(abs_path, 'rb') as f:
+                            pdf_base64 = base64.b64encode(f.read()).decode('utf-8')
+                    except Exception as fe:
+                        logger.warning(f"[InvoiceService] Could not read PDF for base64: {fe}")
+
+            invoice_number = getattr(invoice, 'invoice_number', '') if not isinstance(invoice, dict) else invoice.get('invoice_number', '')
+            created_at = getattr(invoice, 'created_at', None) if not isinstance(invoice, dict) else invoice.get('created_at')
+            if created_at:
+                if isinstance(created_at, str):
+                    try:
+                        dt = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
+                        formatted_date = dt.strftime("%d/%m/%Y %H:%M")
+                    except ValueError:
+                        formatted_date = created_at
+                else:
+                    formatted_date = created_at.strftime("%d/%m/%Y %H:%M")
+            else:
+                formatted_date = datetime.now().strftime("%d/%m/%Y %H:%M")
+
+            agent_name = getattr(invoice, 'agent_name', '') if not isinstance(invoice, dict) else invoice.get('agent_name', '')
+            agent_email = getattr(invoice, 'agent_email', '') if not isinstance(invoice, dict) else invoice.get('agent_email', '')
+            agent_mobile = getattr(invoice, 'agent_mobile', '') if not isinstance(invoice, dict) else invoice.get('agent_mobile', '')
+            plan_name = getattr(invoice, 'plan_name', '') if not isinstance(invoice, dict) else invoice.get('plan_name', '')
+            agent_state = getattr(invoice, 'agent_state', '') if not isinstance(invoice, dict) else invoice.get('agent_state', '')
+
+            base_amount = float(getattr(invoice, 'base_amount', 0) if not isinstance(invoice, dict) else invoice.get('base_amount', 0) or 0)
+            gst_amount = float(getattr(invoice, 'gst_amount', 0) if not isinstance(invoice, dict) else invoice.get('gst_amount', 0) or 0)
+            total_amount = float(getattr(invoice, 'total_amount', 0) if not isinstance(invoice, dict) else invoice.get('total_amount', 0) or 0)
+            discount_percent = float(getattr(invoice, 'discount_percent', 0) if not isinstance(invoice, dict) else invoice.get('discount_percent', 0) or 0)
+
+            folder_raw = getattr(invoice, 'discount_folder', 'others') if not isinstance(invoice, dict) else invoice.get('discount_folder', 'others')
+            folder_label = Invoice.folder_label(folder_raw) if hasattr(Invoice, 'folder_label') else str(folder_raw)
+
+            payment_id = getattr(invoice, 'razorpay_payment_id', '') if not isinstance(invoice, dict) else invoice.get('razorpay_payment_id', '')
+            payment_status = getattr(invoice, 'payment_status', 'paid') if not isinstance(invoice, dict) else invoice.get('payment_status', 'paid')
+            promo_code = getattr(invoice, 'promo_code', '') if not isinstance(invoice, dict) else invoice.get('promo_code', '')
+
+            tax_info = calculate_tax_breakdown(gst_amount, agent_state)
+
+            pdf_url = f"{settings.MEDIA_URL}app/private/{pdf_path}" if pdf_path else ''
 
             payload = {
-                'invoice_number': invoice.invoice_number,
-                'date': invoice.created_at.strftime('%d/%m/%Y %H:%M') if invoice.created_at else datetime.now().strftime('%d/%m/%Y %H:%M'),
-                'agent_id': invoice.agent.id,
-                'agent_name': invoice.agent_name,
-                'agent_email': invoice.agent_email,
-                'agent_mobile': invoice.agent_mobile,
-                'plan_name': invoice.plan_name,
-                'base_amount': float(invoice.base_amount),
-                'gst_amount': float(invoice.gst_amount),
-                'total_amount': float(invoice.total_amount),
-                'discount_percent': float(invoice.discount_percent),
-                'discount_folder': Invoice.folder_label(invoice.discount_folder),
-                'payment_id': invoice.razorpay_payment_id or 'N/A',
-                'payment_status': invoice.payment_status,
-                'promo_code': invoice.promo_code or '',
-                'pdf_url': f"{settings.MEDIA_URL}app/private/{invoice.pdf_path}" if invoice.pdf_path else '',
+                # Snake-case keys
+                'invoice_number': invoice_number,
+                'date': formatted_date,
+                'agent_name': agent_name,
+                'agent_email': agent_email,
+                'agent_mobile': agent_mobile or '',
+                'plan_name': plan_name,
+                'place_of_supply': tax_info['place_of_supply'],
+                'base_amount': base_amount,
+                'cgst': tax_info['cgst'],
+                'sgst': tax_info['sgst'],
+                'igst': tax_info['igst'],
+                'gst_amount': gst_amount,
+                'total_amount': total_amount,
+                'discount_percent': discount_percent,
+                'discount_folder': folder_label,
+                'payment_id': payment_id or 'N/A',
+                'payment_status': payment_status,
+                'promo_code': promo_code or '',
+                'pdf_url': pdf_url,
+                'pdf_base64': pdf_base64,
+                # Exact 16 Google Sheet Column Aliases matching user header format
+                'Invoice #': invoice_number,
+                'Date': formatted_date,
+                'Agent': agent_name,
+                'Email': agent_email,
+                'Mobile': agent_mobile or '',
+                'Plan Name': plan_name,
+                'Place of Supply': tax_info['place_of_supply'],
+                'Base Amount': base_amount,
+                'CGST': tax_info['cgst'],
+                'SGST': tax_info['sgst'],
+                'IGST': tax_info['igst'],
+                'Total Amount': total_amount,
+                'Payment ID': payment_id or 'N/A',
+                'Promo Code': promo_code or '',
+                'Discount Folder': folder_label,
             }
 
-            response = requests.post(sheet_url, json=payload, timeout=5)
+            response = requests.post(sheet_url, json=payload, timeout=30, allow_redirects=True)
 
-            if response.status_code == 200:
-                invoice.synced_to_sheet = True
-                invoice.synced_at = datetime.now()
-                invoice.save(update_fields=['synced_to_sheet', 'synced_at'])
-                logger.info(f"[InvoiceService] Synced invoice {invoice.invoice_number} to Google Sheet successfully.")
+            if response.status_code in (200, 302):
+                if hasattr(invoice, 'save') and hasattr(invoice, 'synced_to_sheet'):
+                    invoice.synced_to_sheet = True
+                    invoice.synced_at = datetime.now()
+                    invoice.save(update_fields=['synced_to_sheet', 'synced_at'])
+                else:
+                    inv_id = invoice.get('id') if isinstance(invoice, dict) else getattr(invoice, 'id', None)
+                    if inv_id:
+                        from django.db import connection
+                        with connection.cursor() as cursor:
+                            cursor.execute(
+                                "UPDATE invoices SET synced_to_sheet = 1, synced_at = NOW() WHERE id = %s",
+                                [inv_id]
+                            )
+                logger.info(f"[InvoiceService] Synced invoice {invoice_number} to Google Sheet successfully.")
+                return True
             else:
                 logger.warning(
-                    f"[InvoiceService] Google Sheet sync failed for {invoice.invoice_number}. "
-                    f"Status code: {response.status_code}"
+                    f"[InvoiceService] Google Sheet sync failed for {invoice_number}. "
+                    f"Status code: {response.status_code}, response: {response.text[:200]}"
                 )
+                return False
 
         except Exception as e:
             logger.warning(f"[InvoiceService] Google Sheet sync exception: {e}")
+            return False
+
 
 
 # Singleton instance

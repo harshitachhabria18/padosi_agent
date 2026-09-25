@@ -110,17 +110,24 @@
             </div>
             <div class="card-body p-3">
                 <p style="font-size:12px;color:#6b7280;" class="mb-2">
-                    Paste your Google Apps Script URL below. New invoices will auto-sync.
+                    Connect your Google Apps Script and Google Sheet for automated sync & Drive storage.
                 </p>
                 <form action="{% url 'admin_invoice_save_sheet_url' %}" method="POST">
                     {% csrf_token %}
                     <div class="mb-2">
+                        <label class="form-label mb-1" style="font-size:11px; font-weight:600; color:#334155;">Apps Script Web App URL (Sync):</label>
                         <input type="url" name="sheet_url" class="form-control form-control-sm"
-                               placeholder="https://script.google.com/macros/s/..."
+                               placeholder="https://script.google.com/macros/s/.../exec"
                                value="{{ googleSheetUrl|default:'' }}">
                     </div>
-                    <button type="submit" class="btn btn-success btn-sm w-100 mb-2">Save URL</button>
-                    {% if googleSheetUrl %}
+                    <div class="mb-2">
+                        <label class="form-label mb-1" style="font-size:11px; font-weight:600; color:#334155;">Google Sheet Link (Optional):</label>
+                        <input type="url" name="sheet_view_url" class="form-control form-control-sm"
+                               placeholder="https://docs.google.com/spreadsheets/d/.../edit"
+                               value="{{ googleSheetViewUrl|default:'' }}">
+                    </div>
+                    <button type="submit" class="btn btn-success btn-sm w-100 mb-2">Save Configuration</button>
+                    {% if googleSheetViewUrl or googleSheetUrl %}
                     <a href="{% url 'admin_invoice_open_sheet' %}" target="_blank" class="btn btn-outline-success btn-sm w-100">
                         🔗 Open Sheet
                     </a>
@@ -131,11 +138,14 @@
                     <div class="fw-bold mb-2" style="font-size:12px; color:#0369a1;">🚀 End-to-End Setup Guide</div>
                     <ol class="mb-0 ps-3" style="font-size:11px; color:#0c4a6e; line-height:1.6;">
                         <li class="mb-1"><strong>Drive:</strong> Create a folder & copy its ID from the URL.</li>
-                        <li class="mb-1"><strong>Sheets:</strong> Extensions > Apps Script.</li>
+                        <li class="mb-1"><strong>Sheets:</strong> Extensions &gt; Apps Script.</li>
                         <li class="mb-1"><strong>Code:</strong> Paste the script & add your Folder ID at the top.</li>
-                        <li class="mb-1"><strong>Deploy:</strong> New Deployment > Web App > Access: <strong>Anyone</strong>.</li>
+                        <li class="mb-1"><strong>Deploy:</strong> New Deployment &gt; Web App &gt; Access: <strong>Anyone</strong>.</li>
                         <li class="mb-1"><strong>Final:</strong> Copy the Web App URL, paste above & click <strong>Save URL</strong>.</li>
                     </ol>
+                    <button type="button" class="btn btn-outline-primary btn-sm w-100 mt-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#appsScriptModal" style="font-size:11px;">
+                        📋 View Apps Script Code (Code.gs)
+                    </button>
                 </div>
             </div>
         </div>
@@ -221,11 +231,17 @@
                             </td>
                             <td style="font-size:11px;color:#6b7280;">{{ inv.created_at|date:"d M Y" }}</td>
                             <td class="pe-3">
-                                <div class="d-flex gap-1">
-                                    <a href="{% url 'admin_invoice_download' inv.id %}" class="btn btn-outline-primary btn-sm" title="Download PDF">
+                                <div class="d-flex gap-1 align-items-center">
+                                    <form action="{% url 'admin_invoice_sync_single' inv.id %}" method="POST" class="d-inline m-0">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-success btn-sm" title="{% if inv.synced_to_sheet %}Re-sync to Google Sheet{% else %}Sync to Google Sheet{% endif %}" style="padding: 4px 8px; font-size: 11px;">
+                                            {% if inv.synced_to_sheet %}🔄{% else %}📤{% endif %}
+                                        </button>
+                                    </form>
+                                    <a href="{% url 'admin_invoice_download' inv.id %}" class="btn btn-outline-primary btn-sm" title="Download PDF" style="padding: 4px 8px; font-size: 11px;">
                                         ⬇️
                                     </a>
-                                    <a href="{% url 'admin_invoice_preview' inv.id %}" target="_blank" class="btn btn-outline-secondary btn-sm" title="Preview">
+                                    <a href="{% url 'admin_invoice_preview' inv.id %}" target="_blank" class="btn btn-outline-secondary btn-sm" title="Preview" style="padding: 4px 8px; font-size: 11px;">
                                         👁
                                     </a>
                                 </div>
@@ -290,4 +306,257 @@
     </div>
 </div>
 
+<!-- Google Apps Script Modal -->
+<div class="modal fade" id="appsScriptModal" tabindex="-1" aria-labelledby="appsScriptModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header text-white" style="background:#18529d;">
+                <div>
+                    <h5 class="modal-title fw-bold" id="appsScriptModalLabel">Google Apps Script (Code.gs)</h5>
+                    <div style="font-size:12px; opacity:0.9;">Syncs invoices to Google Sheets & uploads PDFs to Google Drive</div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4" style="background:#f8fafc;">
+                <div class="alert alert-info py-2 px-3 mb-3" style="font-size:12px;">
+                    <strong>Google Sheet 16 Headers:</strong><br>
+                    <code>Invoice # | Date | Agent | Email | Mobile | Plan Name | Place of Supply | Base Amount | CGST | SGST | IGST | Total Amount | Payment ID | Promo Code | Discount Folder | PDF Link</code>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-semibold text-secondary" style="font-size:13px;">Code to paste into Apps Script:</span>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="copyAppsScriptCode()" id="btnCopyScript">
+                        📋 Copy Code
+                    </button>
+                </div>
+
+                <pre id="appsScriptCodeText" class="p-3 rounded border text-light" style="background:#0f172a; font-size:11px; max-height:400px; overflow-y:auto; font-family:monospace; line-height:1.5;">// REPLACE WITH YOUR GOOGLE DRIVE FOLDER ID (Optional - defaults to "PadosiAgent Invoices"):
+var FOLDER_ID = "YOUR_GOOGLE_DRIVE_FOLDER_ID";
+
+/**
+ * Handles GET requests (when the link is clicked or opened in a browser).
+ * Automatically redirects the user to the active Google Sheet spreadsheet!
+ */
+function doGet(e) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheetUrl = ss.getUrl();
+    return HtmlService.createHtmlOutput(
+      '&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;head&gt;' +
+      '&lt;meta http-equiv="refresh" content="0;url=' + sheetUrl + '"&gt;' +
+      '&lt;script&gt;window.location.replace("' + sheetUrl + '");&lt;/script&gt;' +
+      '&lt;/head&gt;' +
+      '&lt;body style="font-family:system-ui,sans-serif;text-align:center;padding:50px;background:#f8fafc;color:#1e293b;"&gt;' +
+      '&lt;div style="background:#ffffff;padding:30px;border-radius:12px;display:inline-block;box-shadow:0 4px 12px rgba(0,0,0,0.08);"&gt;' +
+      '&lt;h2 style="color:#18529d;margin-top:0;"&gt;Opening Google Sheet...&lt;/h2&gt;' +
+      '&lt;p style="color:#64748b;"&gt;If you are not redirected automatically, click below:&lt;/p&gt;' +
+      '&lt;a href="' + sheetUrl + '" style="display:inline-block;padding:10px 20px;background:#18529d;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;"&gt;Open Google Sheet &rarr;&lt;/a&gt;' +
+      '&lt;/div&gt;&lt;/body&gt;&lt;/html&gt;'
+    ).setTitle("PadosiAgent Invoice Sheet").setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  } catch (err) {
+    return ContentService.createTextOutput("PadosiAgent Invoice Web App is Active. (Ready to receive invoice sync via POST)").setMimeType(ContentService.MimeType.TEXT);
+  }
+}
+
+function doPost(e) {
+  var lock = LockService.getScriptLock();
+  // Wait up to 30 seconds for concurrent invocations
+  try {
+    lock.waitLock(30000);
+  } catch (lockErr) {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "error",
+      message: "Server busy, could not acquire script lock"
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  try {
+    if (!e || !e.postData || !e.postData.contents) {
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "error",
+        message: "No POST body received"
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    var data = JSON.parse(e.postData.contents);
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+
+    // Reliably target "Invoices" tab or the first sheet tab (never random tab)
+    var sheet = ss.getSheetByName("Invoices") || ss.getSheetByName("Sheet1") || ss.getSheets()[0];
+
+    // 1. Auto-create 16 headers if sheet is empty
+    if (sheet.getLastRow() === 0) {
+      var headers = [
+        "Invoice #", "Date", "Agent", "Email", "Mobile", "Plan Name",
+        "Place of Supply", "Base Amount", "CGST", "SGST", "IGST",
+        "Total Amount", "Payment ID", "Promo Code", "Discount Folder", "PDF Link"
+      ];
+      sheet.appendRow(headers);
+      var headerRange = sheet.getRange(1, 1, 1, headers.length);
+      headerRange.setFontWeight("bold");
+      headerRange.setBackground("#18529d");
+      headerRange.setFontColor("#ffffff");
+      headerRange.setHorizontalAlignment("center");
+      sheet.setFrozenRows(1);
+
+      // Set text format for Date (col 2) and Mobile (col 5)
+      var maxRows = Math.max(sheet.getMaxRows() - 1, 10);
+      sheet.getRange(2, 2, maxRows, 1).setNumberFormat("@");
+      sheet.getRange(2, 5, maxRows, 1).setNumberFormat("@");
+      // Set currency/decimal format for Amount columns 8..12
+      sheet.getRange(2, 8, maxRows, 5).setNumberFormat("#,##0.00");
+    }
+
+    // 2. Upload PDF to Google Drive if base64 provided
+    var pdfDriveUrl = "";
+    if (data.pdf_base64 && data.pdf_base64.length > 50) {
+      try {
+        var rootFolder;
+        if (FOLDER_ID && FOLDER_ID !== "YOUR_GOOGLE_DRIVE_FOLDER_ID" && FOLDER_ID.trim().length > 5) {
+          rootFolder = DriveApp.getFolderById(FOLDER_ID.trim());
+        } else {
+          // If no custom folder ID, use/create dedicated "PadosiAgent Invoices" folder
+          var defaultFolders = DriveApp.getFoldersByName("PadosiAgent Invoices");
+          rootFolder = defaultFolders.hasNext() ? defaultFolders.next() : DriveApp.createFolder("PadosiAgent Invoices");
+        }
+
+        // Subfolder based on discount folder (e.g. "No Discount", "10%", "₹1 (Special)")
+        var subFolderName = (data.discount_folder || data['Discount Folder'] || "Invoices").toString().trim();
+        var subFolders = rootFolder.getFoldersByName(subFolderName);
+        var targetFolder = subFolders.hasNext() ? subFolders.next() : rootFolder.createFolder(subFolderName);
+
+        var bytes = Utilities.base64Decode(data.pdf_base64);
+        var invNum = (data.invoice_number || data['Invoice #'] || "Invoice").toString().replace(/[\/\\:*?"&lt;&gt;|]/g, "_");
+        var fileName = invNum + ".pdf";
+        var blob = Utilities.newBlob(bytes, "application/pdf", fileName);
+
+        // Remove old file versions safely to prevent binary PDF corruption with setContent
+        var existingFiles = targetFolder.getFilesByName(fileName);
+        while (existingFiles.hasNext()) {
+          var oldFile = existingFiles.next();
+          try {
+            oldFile.setTrashed(true);
+          } catch (trashErr) {
+            // Ignore if trash not permitted
+          }
+        }
+
+        var file = targetFolder.createFile(blob);
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        pdfDriveUrl = file.getUrl();
+      } catch (driveErr) {
+        pdfDriveUrl = data.pdf_url || ("Drive Error: " + driveErr.toString());
+      }
+    } else {
+      pdfDriveUrl = data.pdf_url || "";
+    }
+
+    // 3. Extract and parse data matching exact 16-column header
+    var invoiceNumber = data.invoice_number || data['Invoice #'] || "";
+    var date = data.date || data['Date'] || "";
+    var agentName = data.agent_name || data['Agent'] || "";
+    var agentEmail = data.agent_email || data['Email'] || "";
+    var agentMobile = data.agent_mobile || data['Mobile'] || "";
+    var planName = data.plan_name || data['Plan Name'] || "";
+    var placeOfSupply = data.place_of_supply || data['Place of Supply'] || "Gujarat";
+    var baseAmount = data.base_amount != null ? Number(data.base_amount) : (data['Base Amount'] != null ? Number(data['Base Amount']) : 0);
+    var cgst = data.cgst != null ? Number(data.cgst) : (data['CGST'] != null ? Number(data['CGST']) : 0);
+    var sgst = data.sgst != null ? Number(data.sgst) : (data['SGST'] != null ? Number(data['SGST']) : 0);
+    var igst = data.igst != null ? Number(data.igst) : (data['IGST'] != null ? Number(data['IGST']) : 0);
+    var totalAmount = data.total_amount != null ? Number(data.total_amount) : (data['Total Amount'] != null ? Number(data['Total Amount']) : 0);
+    var paymentId = data.payment_id || data['Payment ID'] || "";
+    var promoCode = data.promo_code || data['Promo Code'] || "";
+    var discountFolder = data.discount_folder || data['Discount Folder'] || "";
+
+    // Sanitize mobile to prevent formula errors or scientific notation
+    var mobileStr = agentMobile ? agentMobile.toString().trim() : "";
+    if (mobileStr && !mobileStr.startsWith("'")) {
+      mobileStr = "'" + mobileStr;
+    }
+
+    // 4. Exact 16-column row
+    var rowData = [
+      invoiceNumber,
+      date,
+      agentName,
+      agentEmail,
+      mobileStr,
+      planName,
+      placeOfSupply,
+      baseAmount,
+      cgst,
+      sgst,
+      igst,
+      totalAmount,
+      paymentId,
+      promoCode,
+      discountFolder,
+      pdfDriveUrl
+    ];
+
+    // 5. Prevent duplicate rows: Check if invoice already exists in Column 1
+    var existingRow = -1;
+    var lastRow = sheet.getLastRow();
+    if (lastRow > 1 && invoiceNumber) {
+      var colValues = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+      var targetNum = invoiceNumber.toString().trim().toLowerCase();
+      for (var i = 0; i &lt; colValues.length; i++) {
+        if (colValues[i][0] && colValues[i][0].toString().trim().toLowerCase() === targetNum) {
+          existingRow = i + 2; // header is row 1
+          break;
+        }
+      }
+    }
+
+    if (existingRow > 0) {
+      sheet.getRange(existingRow, 1, 1, rowData.length).setValues([rowData]);
+    } else {
+      sheet.appendRow(rowData);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "success",
+      action: existingRow > 0 ? "updated" : "appended",
+      invoice_number: invoiceNumber,
+      drive_url: pdfDriveUrl
+    })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "error",
+      message: err.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    lock.releaseLock();
+  }
+}</pre>
+            </div>
+            <div class="modal-footer" style="background:#ffffff;">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyAppsScriptCode() {
+    var code = document.getElementById("appsScriptCodeText").innerText;
+    navigator.clipboard.writeText(code).then(function() {
+        var btn = document.getElementById("btnCopyScript");
+        var oldText = btn.innerHTML;
+        btn.innerHTML = "✅ Copied!";
+        btn.classList.remove("btn-primary");
+        btn.classList.add("btn-success");
+        setTimeout(function() {
+            btn.innerHTML = oldText;
+            btn.classList.remove("btn-success");
+            btn.classList.add("btn-primary");
+        }, 2000);
+    }).catch(function(err) {
+        alert("Please select and copy the code manually.");
+    });
+}
+</script>
+
 {% endblock %}
+

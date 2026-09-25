@@ -154,7 +154,7 @@
                         <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color);">⏱ Registered</th>
                         <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color);">⌛ Waiting</th>
                         <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color);">Location</th>
-                        <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color);">Plan</th>
+                        <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color);">Plan &amp; Payment</th>
                         <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color);">Badges</th>
                         <th style="padding:12px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); background:var(--bg-table-header); border-bottom:1px solid var(--border-color); text-align:right;">Actions</th>
                     </tr>
@@ -247,16 +247,46 @@
                             {% endif %}
                         </td>
 
-                        {# Plan #}
+                        {# Plan & Payment #}
                         <td style="padding:14px 16px; border-bottom:1px solid var(--border-light);">
                             {% if agent.selected_plan %}
                                 {% if 'professional' in agent.selected_plan|lower %}
                                 <span class="badge bg-primary" style="font-size:10px; border-radius:6px;">Professional</span>
+                                {% elif 'exclusive' in agent.selected_plan|lower %}
+                                <span class="badge bg-warning text-dark" style="font-size:10px; border-radius:6px;">Exclusive</span>
+                                {% elif 'trial' in agent.selected_plan|lower %}
+                                <span class="badge bg-info text-dark" style="font-size:10px; border-radius:6px;">Trial</span>
                                 {% else %}
                                 <span class="badge bg-secondary" style="font-size:10px; border-radius:6px;">Starter</span>
                                 {% endif %}
                             {% else %}
                                 <span style="font-size:12px; color:var(--text-muted);">N/A</span>
+                            {% endif %}
+
+                            {% if agent.sub_payment_status == 'completed' %}
+                                <div class="mt-1 d-flex align-items-center gap-1">
+                                    <span class="badge bg-success" style="font-size:9px; padding:2px 5px; border-radius:4px;">
+                                        <i class="fa-solid fa-check me-1"></i>Paid
+                                    </span>
+                                    {% if agent.registration_amount %}
+                                    <span style="font-size:11px; font-weight:600; color:var(--text-primary);">₹{{ agent.registration_amount|floatformat:0 }}</span>
+                                    {% endif %}
+                                </div>
+                                {% if agent.razorpay_payment_id %}
+                                <div style="font-size:10px; color:var(--text-muted); font-family:monospace;" title="Razorpay Payment ID: {{ agent.razorpay_payment_id }}">
+                                    {{ agent.razorpay_payment_id|truncatechars:16 }}
+                                </div>
+                                {% elif agent.razorpay_order_id %}
+                                <div style="font-size:10px; color:var(--text-muted); font-family:monospace;" title="Razorpay Order ID: {{ agent.razorpay_order_id }}">
+                                    {{ agent.razorpay_order_id|truncatechars:16 }}
+                                </div>
+                                {% endif %}
+                            {% elif agent.sub_payment_status %}
+                                <div class="mt-1">
+                                    <span class="badge bg-warning text-dark" style="font-size:9px; padding:2px 5px; border-radius:4px;">
+                                        {{ agent.sub_payment_status|title }}
+                                    </span>
+                                </div>
                             {% endif %}
                         </td>
 

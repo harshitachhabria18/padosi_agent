@@ -72,6 +72,25 @@ def complete_pair_from_env_files(base_dir):
     return pair
 
 
+def webhook_secret_from_env_files(base_dir):
+    try:
+        from dotenv import dotenv_values
+    except ImportError:
+        return ''
+    base = Path(base_dir)
+    for path in (base.parent / '.env', base / '.env'):
+        try:
+            if path.is_file():
+                val = (dotenv_values(path) or {}).get('RAZORPAY_WEBHOOK_SECRET')
+                if val:
+                    cleaned = clean_razorpay_credential(val)
+                    if cleaned:
+                        return cleaned
+        except Exception:
+            continue
+    return ''
+
+
 def apply_complete_razorpay_pair(pair, environ=None):
     env = environ if environ is not None else os.environ
     key, secret = pair

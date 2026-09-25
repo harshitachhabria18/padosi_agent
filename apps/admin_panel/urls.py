@@ -104,6 +104,7 @@ from .views.invoices import (
     download_invoice,
     save_sheet_url,
     sync_sheet,
+    sync_single_invoice,
     open_sheet,
     create_manual_invoice,
     admin_verify_promo,
@@ -382,6 +383,7 @@ urlpatterns = [
     # Phase 6G.4B: Google Sheet Sync
     path("admin/invoices/settings/url/", save_sheet_url, name="admin_invoice_save_sheet_url"),
     path("admin/invoices/sync/", sync_sheet, name="admin_invoice_sync_sheet"),
+    path("admin/invoices/<int:invoice_id>/sync/", sync_single_invoice, name="admin_invoice_sync_single"),
     path("admin/invoices/open-sheet/", open_sheet, name="admin_invoice_open_sheet"),
 
     # Phase X.1: Promo Codes

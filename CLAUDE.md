@@ -1,152 +1,152 @@
-# PadosiAgent — Project Bible for Claude Code
+        # PadosiAgent — Project Bible for Claude Code
 
-> Read this fully before touching ANY file. This project has multiple auth systems, a hybrid Django+FastAPI stack, and shared database tables. One wrong assumption breaks production.
+        > Read this fully before touching ANY file. This project has multiple auth systems, a hybrid Django+FastAPI stack, and shared database tables. One wrong assumption breaks production.
 
----
+        ---
 
-## 1. What This Project Does
+        ## 1. What This Project Does
 
-**PadosiAgent** (`padosiagent.com`) is an **insurance agent marketplace** in India.
-- Public users search for nearby insurance agents by pincode/city/type
-- Insurance agents register, pay a subscription, and get a profile card + leads
-- Admin manages all agents, subscriptions, approvals, referrals
-- Insurance companies onboard and manage their agents via a separate portal
-- Distributors onboard agents on behalf of companies
-- Chatbot (AI) helps users find agents
+        **PadosiAgent** (`padosiagent.com`) is an **insurance agent marketplace** in India.
+        - Public users search for nearby insurance agents by pincode/city/type
+        - Insurance agents register, pay a subscription, and get a profile card + leads
+        - Admin manages all agents, subscriptions, approvals, referrals
+        - Insurance companies onboard and manage their agents via a separate portal
+        - Distributors onboard agents on behalf of companies
+        - Chatbot (AI) helps users find agents
 
-**Original stack:** Laravel + PHP → **Ported to Django + FastAPI** (this repo)
+        **Original stack:** Laravel + PHP → **Ported to Django + FastAPI** (this repo)
 
----
+        ---
 
-## 2. Technology Stack
+        ## 2. Technology Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | Django 5.2 (web), FastAPI 0.139 (mobile API) |
-| Language | Python 3.11+ |
-| Database | MySQL / MariaDB |
-| ORM | Django ORM (web), SQLAlchemy 2.0 (FastAPI) |
-| Schema migration | Django migrations (web), Alembic (FastAPI — rarely used) |
-| Payments | Razorpay |
-| Email | Brevo (primary API) → Django SMTP (fallback) |
-| Push notifications | Firebase FCM |
-| Image storage | Cloudinary (agent photos) + local `media/` |
-| LLM / AI | Groq (primary) → Gemini → OpenRouter (fallback chain) |
-| Chatbot | Groq/Gemini LLM via `apps/chatbot/llm_client.py` |
-| Static files | WhiteNoise (compressed + hashed manifests) |
-| Session | `cached_db` (file cache + MySQL) |
-| Cache | File-based cache (`cache/` dir, 5-min TTL) |
-| Auth tokens | bcrypt (agent/admin) + JWT via python-jose (FastAPI) |
-| ASGI server | Daphne (production) |
-| WSGI server | Gunicorn |
-| Deployment | GoDaddy shared hosting, Apache reverse proxy, SSH deploy via GitHub Actions |
+        | Layer | Technology |
+        |---|---|
+        | Framework | Django 5.2 (web), FastAPI 0.139 (mobile API) |
+        | Language | Python 3.11+ |
+        | Database | MySQL / MariaDB |
+        | ORM | Django ORM (web), SQLAlchemy 2.0 (FastAPI) |
+        | Schema migration | Django migrations (web), Alembic (FastAPI — rarely used) |
+        | Payments | Razorpay |
+        | Email | Brevo (primary API) → Django SMTP (fallback) |
+        | Push notifications | Firebase FCM |
+        | Image storage | Cloudinary (agent photos) + local `media/` |
+        | LLM / AI | Groq (primary) → Gemini → OpenRouter (fallback chain) |
+        | Chatbot | Groq/Gemini LLM via `apps/chatbot/llm_client.py` |
+        | Static files | WhiteNoise (compressed + hashed manifests) |
+        | Session | `cached_db` (file cache + MySQL) |
+        | Cache | File-based cache (`cache/` dir, 5-min TTL) |
+        | Auth tokens | bcrypt (agent/admin) + JWT via python-jose (FastAPI) |
+        | ASGI server | Daphne (production) |
+        | WSGI server | Gunicorn |
+        | Deployment | GoDaddy shared hosting, Apache reverse proxy, SSH deploy via GitHub Actions |
 
----
+        ---
 
-## 3. Repository Structure
+        ## 3. Repository Structure
 
-```
-padosi_agent_aws-main/
-├── manage.py
-├── requirements.txt
-├── password_hashing.py          ← SHARED bcrypt helper (Django + FastAPI both use this)
-├── .env.example                 ← Copy to .env, never commit .env
-├── padosi_agent/                ← Django project config
-│   ├── settings.py
-│   ├── urls.py                  ← Root URL router
-│   ├── asgi.py                  ← ASGI: FastAPI at /api, Django at /
-│   ├── wsgi.py
-│   ├── middleware.py            ← StaleCookieSanitizer, AutoCsrf, SEO middlewares
-│   ├── razorpay_env.py          ← Razorpay credential loading (multi-env safe)
-│   ├── storage.py               ← SingleThreadedCompressedManifestStaticFilesStorage
-│   ├── sitemaps.py
-│   └── views.py                 ← csrf_failure_view, csrf_refresh_api
-├── apps/
-│   ├── home/                    ← Public website (homepage, find-agents, calculators, CMS)
-│   ├── agents/                  ← Agent registration, auth, dashboard, payment, profile
-│   ├── admin_panel/             ← Internal admin portal (NOT Django admin)
-│   ├── insurance/               ← Insurance company portal
-│   ├── distributors/            ← Distributor portal
-│   ├── chatbot/                 ← AI chatbot (Groq/Gemini LLM)
-│   └── referral_championship/   ← Gamified referral campaign system
-├── fastapi_app/                 ← FastAPI mobile API (mounted at /api)
-│   ├── main.py                  ← App factory + router includes
-│   ├── config.py                ← Pydantic Settings (reads same .env)
-│   ├── database.py              ← SQLAlchemy engine (same MySQL DB)
-│   ├── models/                  ← SQLAlchemy models (mirror Django models)
-│   ├── routers/                 ← FastAPI routers (auth, dashboard, profile, etc.)
-│   ├── schemas/                 ← Pydantic request/response schemas
-│   ├── services/                ← Business logic
-│   ├── repositories/            ← DB access layer
-│   ├── middleware/              ← CORS, rate limit, threat monitor, API logger
-│   ├── dependencies/            ← auth.py (JWT), ip_whitelist.py
-│   └── utils/                   ← auth helpers, datetime, image validation
-├── templates/                   ← Django templates (DTL)
-├── static/                      ← CSS, JS, images (source)
-├── staticfiles/                 ← Collected static (WhiteNoise serves this)
-├── media/                       ← User uploads (agent photos, invoices)
-├── logs/                        ← Django rotating logs (NOT in media/)
-├── cache/                       ← File-based cache dir
-└── scripts/
-    └── deploy_godaddy.sh        ← SSH deploy script
-```
+        ```
+        padosi_agent_aws-main/
+        ├── manage.py
+        ├── requirements.txt
+        ├── password_hashing.py          ← SHARED bcrypt helper (Django + FastAPI both use this)
+        ├── .env.example                 ← Copy to .env, never commit .env
+        ├── padosi_agent/                ← Django project config
+        │   ├── settings.py
+        │   ├── urls.py                  ← Root URL router
+        │   ├── asgi.py                  ← ASGI: FastAPI at /api, Django at /
+        │   ├── wsgi.py
+        │   ├── middleware.py            ← StaleCookieSanitizer, AutoCsrf, SEO middlewares
+        │   ├── razorpay_env.py          ← Razorpay credential loading (multi-env safe)
+        │   ├── storage.py               ← SingleThreadedCompressedManifestStaticFilesStorage
+        │   ├── sitemaps.py
+        │   └── views.py                 ← csrf_failure_view, csrf_refresh_api
+        ├── apps/
+        │   ├── home/                    ← Public website (homepage, find-agents, calculators, CMS)
+        │   ├── agents/                  ← Agent registration, auth, dashboard, payment, profile
+        │   ├── admin_panel/             ← Internal admin portal (NOT Django admin)
+        │   ├── insurance/               ← Insurance company portal
+        │   ├── distributors/            ← Distributor portal
+        │   ├── chatbot/                 ← AI chatbot (Groq/Gemini LLM)
+        │   └── referral_championship/   ← Gamified referral campaign system
+        ├── fastapi_app/                 ← FastAPI mobile API (mounted at /api)
+        │   ├── main.py                  ← App factory + router includes
+        │   ├── config.py                ← Pydantic Settings (reads same .env)
+        │   ├── database.py              ← SQLAlchemy engine (same MySQL DB)
+        │   ├── models/                  ← SQLAlchemy models (mirror Django models)
+        │   ├── routers/                 ← FastAPI routers (auth, dashboard, profile, etc.)
+        │   ├── schemas/                 ← Pydantic request/response schemas
+        │   ├── services/                ← Business logic
+        │   ├── repositories/            ← DB access layer
+        │   ├── middleware/              ← CORS, rate limit, threat monitor, API logger
+        │   ├── dependencies/            ← auth.py (JWT), ip_whitelist.py
+        │   └── utils/                   ← auth helpers, datetime, image validation
+        ├── templates/                   ← Django templates (DTL)
+        ├── static/                      ← CSS, JS, images (source)
+        ├── staticfiles/                 ← Collected static (WhiteNoise serves this)
+        ├── media/                       ← User uploads (agent photos, invoices)
+        ├── logs/                        ← Django rotating logs (NOT in media/)
+        ├── cache/                       ← File-based cache dir
+        └── scripts/
+            └── deploy_godaddy.sh        ← SSH deploy script
+        ```
 
----
+        ---
 
-## 4. Architecture: How Requests Flow
+        ## 4. Architecture: How Requests Flow
 
-### Web (Django)
-```
-Browser → Apache → Daphne/Gunicorn → Django ASGI/WSGI
-                                    → padosi_agent/urls.py
-                                    → App URLconfs (home, agents, admin_panel, etc.)
-                                    → Views → Services → Django ORM → MySQL
-```
+        ### Web (Django)
+        ```
+        Browser → Apache → Daphne/Gunicorn → Django ASGI/WSGI
+                                            → padosi_agent/urls.py
+                                            → App URLconfs (home, agents, admin_panel, etc.)
+                                            → Views → Services → Django ORM → MySQL
+        ```
 
-### Mobile App API (FastAPI)
-```
-Mobile App → Apache → Daphne → ASGI router (asgi.py)
-                              → /api/** → FastAPI (fastapi_app/main.py)
-                                        → Routers → Services → SQLAlchemy → MySQL
-                              → /** → Django
-```
+        ### Mobile App API (FastAPI)
+        ```
+        Mobile App → Apache → Daphne → ASGI router (asgi.py)
+                                    → /api/** → FastAPI (fastapi_app/main.py)
+                                                → Routers → Services → SQLAlchemy → MySQL
+                                    → /** → Django
+        ```
 
-**CRITICAL:** Django and FastAPI share the **same MySQL database**. Django ORM models and SQLAlchemy models mirror each other on the same tables.
+        **CRITICAL:** Django and FastAPI share the **same MySQL database**. Django ORM models and SQLAlchemy models mirror each other on the same tables.
 
-### ASGI Mount (asgi.py)
-```python
-# FastAPI at /api — Django at /
-application = Starlette(routes=[
-    Mount("/api", app=fastapi_application),
-    Mount("/", app=django_application),
-])
-# If FastAPI fails to load → Django-only fallback (graceful degradation)
-```
+        ### ASGI Mount (asgi.py)
+        ```python
+        # FastAPI at /api — Django at /
+        application = Starlette(routes=[
+            Mount("/api", app=fastapi_application),
+            Mount("/", app=django_application),
+        ])
+        # If FastAPI fails to load → Django-only fallback (graceful degradation)
+        ```
 
----
+        ---
 
-## 5. Django Apps — Responsibilities
+        ## 5. Django Apps — Responsibilities
 
-| App | URL Prefix | Purpose |
-|---|---|---|
-| `apps.home` | `/` | Public pages: homepage, find-agents, calculators, CMS pages, pincode check |
-| `apps.agents` | `/agent*`, `/profile/*`, `/join/*`, `/participants/*` | Agent auth, registration, payment, dashboard, profile, leads, events |
-| `apps.admin_panel` | `/admin/*` | Internal admin portal (separate from `/django-admin/`) |
-| `apps.insurance` | `/insurance/*` | Insurance company portal (manager/sales/onboarding/accounts roles) |
-| `apps.distributors` | `/distributor/*` | Distributor portal + sub-distributor portal |
-| `apps.chatbot` | `/chatbot-api/` | LLM chatbot endpoint |
-| `apps.referral_championship` | `/agent/championship/*`, `/admin/championship/*` | Gamified referral campaign |
+        | App | URL Prefix | Purpose |
+        |---|---|---|
+        | `apps.home` | `/` | Public pages: homepage, find-agents, calculators, CMS pages, pincode check |
+        | `apps.agents` | `/agent*`, `/profile/*`, `/join/*`, `/participants/*` | Agent auth, registration, payment, dashboard, profile, leads, events |
+        | `apps.admin_panel` | `/admin/*` | Internal admin portal (separate from `/django-admin/`) |
+        | `apps.insurance` | `/insurance/*` | Insurance company portal (manager/sales/onboarding/accounts roles) |
+        | `apps.distributors` | `/distributor/*` | Distributor portal + sub-distributor portal |
+        | `apps.chatbot` | `/chatbot-api/` | LLM chatbot endpoint |
+        | `apps.referral_championship` | `/agent/championship/*`, `/admin/championship/*` | Gamified referral campaign |
 
----
+        ---
 
-## 6. Database Conventions — READ CAREFULLY
+        ## 6. Database Conventions — READ CAREFULLY
 
-### Critical settings
-```python
-USE_TZ = False           # No timezone awareness on datetimes — NEVER use timezone.now() for comparisons
-TIME_ZONE = 'Asia/Kolkata'
-DEFAULT_AUTO_FIELD = 'django.db.backends.BigAutoField'
-```
+        ### Critical settings
+        ```python
+        USE_TZ = False           # No timezone awareness on datetimes — NEVER use timezone.now() for comparisons
+        TIME_ZONE = 'Asia/Kolkata'
+        DEFAULT_AUTO_FIELD = 'django.db.backends.BigAutoField'
+        ```
 
 **`USE_TZ = False` means:**
 - `auto_now_add=True` / `auto_now=True` → naive datetimes (no tzinfo)

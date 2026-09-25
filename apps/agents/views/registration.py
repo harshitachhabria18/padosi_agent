@@ -45,6 +45,7 @@ from apps.agents.services.razorpay_checkout import (
     login_agent_user,
     mock_payment_id,
     razorpay_client,
+    razorpay_webhook_secret,
 )
 
 logger = logging.getLogger(__name__)
@@ -2592,16 +2593,14 @@ def verify_and_activate_pending_payment(agent):
             sub_expiry = timezone.now() + timezone.timedelta(days=365)
 
             if is_trial:
-                agent.status = 'active'
                 agent.plan_type = 'free_trial'
                 agent.trial_ends_at = timezone.now() + timezone.timedelta(days=trial_days)
                 upgrade_discount = SiteSetting.get_value('trial_upgrade_discount', 20)
                 agent.upgrade_discount_percent = int(upgrade_discount)
                 sub_expiry = timezone.now() + timezone.timedelta(days=trial_days)
-            elif is_upgrade:
+
+            if is_upgrade and agent.status == 'active':
                 agent.plan_type = plan_type
-                if agent.status in ('pending_payment', 'incomplete', 'pending_accounts_payment'):
-                    agent.status = 'pending_approval'
             else:
                 agent.status = 'pending_approval'
                 agent.plan_type = plan_type
@@ -2628,10 +2627,12 @@ def verify_and_activate_pending_payment(agent):
             _isolated('[verify_and_activate_pending_payment] Referral code generation',
                       lambda: _ensure_referral_code(agent))
 
-            # Link user
-            user = create_or_link_django_user(agent)
+            # Link user (isolated so DB sync hiccups do not roll back payment)
+            _isolated('[verify_and_activate_pending_payment] Link django user',
+                      lambda: create_or_link_django_user(agent))
 
-            queue_invoice_and_welcome(agent.id, subscription.id)
+            _isolated('[verify_and_activate_pending_payment] Queue invoice and welcome',
+                      lambda: queue_invoice_and_welcome(agent.id, subscription.id))
 
             logger.info(f"[verify_and_activate_pending_payment] Successfully activated agent {agent.email} via direct Razorpay query.")
             return True
@@ -2796,10 +2797,16 @@ def _agent_register_complete_impl(request):
 
     total_amount = _to_money(total_amount)
     amount_paise = _to_paise(total_amount)
+    order_notes = {
+        'draft_id': str(draft.pk),
+        'email': str(getattr(draft, 'email', '') or ''),
+        'plan_type': str(plan_type),
+    }
     razorpay_order_id, mock_checkout = create_checkout_order(
         amount_paise,
         f'agent_draft_{draft.pk}_{int(time.time())}',
         request,
+        notes=order_notes,
     )
 
     # Strict Production Guard: If order creation fails for a paid plan, prevent bypass
@@ -2931,7 +2938,7 @@ def _agent_register_complete_impl(request):
                 subscription.expires_at = sub_expiry
                 subscription.save()
                 
-                agent.status = 'active'
+                agent.status = 'pending_approval'
                 if plan_type == 'free_trial':
                     agent.trial_ends_at = timezone.now() + timezone.timedelta(days=trial_days)
                     upgrade_discount = SiteSetting.get_value('trial_upgrade_discount', 20)
@@ -2941,8 +2948,8 @@ def _agent_register_complete_impl(request):
                 # Best-effort side effects, each in its own savepoint.
                 _isolated('Referral credit during free checkout', lambda: _credit_referral_conversion(agent))
                 _isolated('Referral code generation', lambda: _ensure_referral_code(agent))
-
-                queue_invoice_and_welcome(agent.id, subscription.id)
+                _isolated('Queue invoice and welcome during free checkout',
+                          lambda: queue_invoice_and_welcome(agent.id, subscription.id))
 
                 instant_complete = True
     except Exception as db_err:
@@ -3202,15 +3209,16 @@ def _finalize_razorpay_payment(request, data):
 
             sub_expiry = timezone.now() + timezone.timedelta(days=365)
             if plan_type == 'free_trial':
-                agent.status = 'active'
                 agent.trial_ends_at = timezone.now() + timezone.timedelta(days=trial_days)
                 upgrade_discount = SiteSetting.get_value('trial_upgrade_discount', 20)
                 agent.upgrade_discount_percent = int(upgrade_discount)
                 sub_expiry = timezone.now() + timezone.timedelta(days=trial_days)
-            elif is_upgrade:
-                if agent.status in ('pending_payment', 'incomplete', 'pending_accounts_payment'):
-                    agent.status = 'pending_approval'
+
+            if is_upgrade and agent.status == 'active':
+                # Active agent upgrading their plan retains active status
+                pass
             else:
+                # All new registrations (paid, free trial, 0-amount) move to pending_approval
                 agent.status = 'pending_approval'
 
             if plan_type:
@@ -3252,7 +3260,7 @@ def _finalize_razorpay_payment(request, data):
                 },
             )
 
-            queue_invoice_and_welcome(agent.id, subscription.id)
+            _isolated('Queue invoice and welcome', lambda: queue_invoice_and_welcome(agent.id, subscription.id))
 
         # Signature was verified above for this order and `agent` is the order's
         # own agent, so this is the payer — sign them in (works across browsers).
@@ -3809,7 +3817,7 @@ def razorpay_webhook(request):
     """
     payload = request.body
     received_signature = request.META.get('HTTP_X_RAZORPAY_SIGNATURE') or request.headers.get('X-Razorpay-Signature')
-    webhook_secret = getattr(settings, 'RAZORPAY_WEBHOOK_SECRET', '')
+    webhook_secret = razorpay_webhook_secret() or getattr(settings, 'RAZORPAY_WEBHOOK_SECRET', '')
 
     if not webhook_secret:
         logger.error("[Razorpay Webhook] RAZORPAY_WEBHOOK_SECRET is not configured.")
@@ -3843,11 +3851,19 @@ def razorpay_webhook(request):
     if not event:
         return HttpResponse('Invalid event', status=400)
 
-    if event == 'payment.captured':
-        payment = data['payload']['payment']['entity']
-        order_id = payment.get('order_id')
-        payment_id = payment.get('id')
+    if event in ('payment.captured', 'order.paid', 'payment.authorized'):
+        payload_data = data.get('payload') or {}
+        payment_entity = (payload_data.get('payment') or {}).get('entity') or {}
+        order_entity = (payload_data.get('order') or {}).get('entity') or {}
+
+        order_id = payment_entity.get('order_id') or order_entity.get('id')
+        payment_id = payment_entity.get('id') or order_entity.get('payment_id')
+        paid_amount_paise = payment_entity.get('amount') or order_entity.get('amount_paid') or order_entity.get('amount')
         signature = received_signature
+
+        if not order_id:
+            logger.error(f"[Razorpay Webhook] Missing order_id in event {event}")
+            return HttpResponse('Missing order ID', status=400)
 
         from apps.agents.models import Agent, AgentSubscription, PromoCode, Invoice
         from apps.home.models import SiteSetting
@@ -3859,76 +3875,86 @@ def razorpay_webhook(request):
         if (subscription and subscription.payment_status == 'completed') or existing_invoice:
             return HttpResponse('Webhook processed successfully (already completed)', status=200)
 
-        if subscription:
-            agent = subscription.agent
-            
-            # Avoid duplicate activation
-            if subscription.payment_status == 'completed':
-                return HttpResponse('Webhook processed successfully (already completed)', status=200)
+        if not subscription:
+            # Order may not have been committed yet by frontend request; tell Razorpay to retry
+            logger.warning(f"[Razorpay Webhook] Subscription not found yet for order {order_id}. Returning 503 for retry.")
+            return HttpResponse('Order subscription not found yet, retrying', status=503)
 
-            # Verify amount paid matches subscription amount to prevent tampering
-            paid_amount_paise = payment.get('amount')
-            expected_amount_paise = _expected_amount_paise(subscription.registration_amount)
-            if not _paise_amounts_match(paid_amount_paise, expected_amount_paise):
-                logger.critical(
-                    f"[Webhook] PRICE TAMPERING DETECTED! "
-                    f"Order: {order_id}, Paid: {paid_amount_paise} paise, Expected: {expected_amount_paise} paise."
-                )
-                return HttpResponse('Payment validation failed: Amount mismatch.', status=400)
+        agent = subscription.agent
+        if not agent:
+            logger.error(f"[Razorpay Webhook] Subscription {subscription.pk} has no associated agent.")
+            return HttpResponse('Agent not found', status=400)
 
-            from django.db import transaction
-            try:
-                with transaction.atomic():
-                    subscription = AgentSubscription.objects.select_for_update().get(pk=subscription.pk)
-                    if subscription.payment_status == 'completed':
-                        # The browser callback activated it while we waited on the lock.
-                        return HttpResponse('Webhook processed successfully (already completed)', status=200)
-                    agent = subscription.agent
-                    plan_type = _order_plan_slug(subscription, agent)
-                    is_trial = plan_type == 'free_trial'
+        # Verify amount paid matches subscription amount to prevent tampering
+        expected_amount_paise = _expected_amount_paise(subscription.registration_amount)
+        if paid_amount_paise and not _paise_amounts_match(paid_amount_paise, expected_amount_paise):
+            logger.critical(
+                f"[Webhook] PRICE TAMPERING DETECTED! "
+                f"Order: {order_id}, Paid: {paid_amount_paise} paise, Expected: {expected_amount_paise} paise."
+            )
+            return HttpResponse('Payment validation failed: Amount mismatch.', status=400)
 
-                    trial_config = SiteSetting.get_value('trial_plan_config', {'duration_days': 30})
-                    trial_days = int(trial_config.get('duration_days', 30))
-                    sub_expiry = timezone.now() + timezone.timedelta(days=365)
-                    if is_trial:
-                        sub_expiry = timezone.now() + timezone.timedelta(days=trial_days)
+        from django.db import transaction
+        try:
+            with transaction.atomic():
+                subscription = AgentSubscription.objects.select_for_update().get(pk=subscription.pk)
+                if subscription.payment_status == 'completed':
+                    # The browser callback activated it while we waited on the lock.
+                    return HttpResponse('Webhook processed successfully (already completed)', status=200)
+                agent = subscription.agent
+                plan_type = _order_plan_slug(subscription, agent)
+                is_trial = plan_type == 'free_trial'
+                is_upgrade = _is_plan_upgrade_payment(agent, order_id)
 
-                    # Update subscription status
-                    subscription.payment_status = 'completed'
-                    subscription.status = 'active'
+                trial_config = SiteSetting.get_value('trial_plan_config', {'duration_days': 30})
+                trial_days = int(trial_config.get('duration_days', 30))
+                sub_expiry = timezone.now() + timezone.timedelta(days=365)
+                if is_trial:
+                    sub_expiry = timezone.now() + timezone.timedelta(days=trial_days)
+
+                # Update subscription status
+                subscription.payment_status = 'completed'
+                subscription.status = 'active'
+                if payment_id:
                     subscription.razorpay_payment_id = payment_id
-                    subscription.razorpay_signature = signature
-                    subscription.starts_at = timezone.now()
-                    subscription.expires_at = sub_expiry
-                    subscription.save()
+                subscription.razorpay_signature = signature
+                subscription.starts_at = timezone.now()
+                subscription.expires_at = sub_expiry
+                subscription.save()
 
-                    # Update Agent status
-                    agent.registration_step = 2
-                    if is_trial:
-                        agent.status = 'active'
-                        agent.plan_type = 'free_trial'
-                        agent.trial_ends_at = timezone.now() + timezone.timedelta(days=trial_days)
-                        upgrade_discount = SiteSetting.get_value('trial_upgrade_discount', 20)
-                        agent.upgrade_discount_percent = int(upgrade_discount)
-                    else:
-                        agent.status = 'pending_approval'
-                        agent.plan_type = plan_type
-                    agent.save()
+                # Update Agent status
+                agent.registration_step = 2
+                if is_trial:
+                    agent.plan_type = 'free_trial'
+                    agent.trial_ends_at = timezone.now() + timezone.timedelta(days=trial_days)
+                    upgrade_discount = SiteSetting.get_value('trial_upgrade_discount', 20)
+                    agent.upgrade_discount_percent = int(upgrade_discount)
+                else:
+                    agent.plan_type = plan_type
 
-                    # Best-effort side effects, each in its own savepoint.
-                    _isolated('[Webhook] Referral credit processing', lambda: _credit_referral_conversion(agent))
-                    _isolated('[Webhook] Referral code generation', lambda: _ensure_referral_code(agent))
-                    _isolated('[Webhook] Promo usage increment',
-                              lambda: _increment_promo_usage(subscription.promo_code))
+                if is_upgrade and agent.status == 'active':
+                    # Existing active agent upgrading retains active status
+                    pass
+                else:
+                    # All new registrations move to pending_approval
+                    agent.status = 'pending_approval'
+                agent.save()
 
-                    # Link django user
-                    user = create_or_link_django_user(agent)
+                # Best-effort side effects, each in its own savepoint.
+                _isolated('[Webhook] Referral credit processing', lambda: _credit_referral_conversion(agent))
+                _isolated('[Webhook] Referral code generation', lambda: _ensure_referral_code(agent))
+                _isolated('[Webhook] Promo usage increment',
+                          lambda: _increment_promo_usage(subscription.promo_code))
 
-                    queue_invoice_and_welcome(agent.id, subscription.id)
+                # Link django user (isolated so DB sync hiccups do not roll back payment)
+                _isolated('[Webhook] Link django user', lambda: create_or_link_django_user(agent))
 
-            except Exception as db_err:
-                logger.error(f"[Webhook] Database transaction failed: {db_err}")
-                return HttpResponse('Database transaction failed', status=500)
+                _isolated('[Webhook] Queue invoice and welcome',
+                          lambda: queue_invoice_and_welcome(agent.id, subscription.id))
+
+        except Exception as db_err:
+            logger.error(f"[Webhook] Database transaction failed: {db_err}")
+            return HttpResponse('Database transaction failed', status=500)
 
     elif event == 'refund.processed':
         return _handle_refund_webhook(data)

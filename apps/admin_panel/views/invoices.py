@@ -120,6 +120,10 @@ def invoice_list(request):
         row = cursor.fetchone()
         googleSheetUrl = row[0] if row else None
 
+        cursor.execute("SELECT value FROM site_settings WHERE `key` = 'invoice_google_sheet_view_url'")
+        row_view = cursor.fetchone()
+        googleSheetViewUrl = row_view[0] if row_view else None
+
         cursor.execute("SELECT COUNT(*) FROM invoices WHERE synced_to_sheet = 0")
         unsynced_invoice_count = cursor.fetchone()[0]
 
@@ -133,6 +137,7 @@ def invoice_list(request):
         'totalRevenue': total_revenue,
         'total_filtered': total_filtered,
         'googleSheetUrl': googleSheetUrl,
+        'googleSheetViewUrl': googleSheetViewUrl,
         'unsynced_invoice_count': unsynced_invoice_count,
 
         'page_obj': page_obj,
@@ -253,15 +258,33 @@ def save_sheet_url(request):
         return redirect("admin_login_page")
         
     sheet_url = request.POST.get('sheet_url', '').strip()
+    sheet_view_url = request.POST.get('sheet_view_url', '').strip()
+
+    # Smart auto-detection if user pasted a spreadsheet link into script URL or vice-versa
+    if 'docs.google.com/spreadsheets' in sheet_url and not sheet_view_url:
+        sheet_view_url = sheet_url
+        sheet_url = ''
+        messages.warning(request, 'You pasted a Google Sheet spreadsheet link. For auto-syncing, also paste the Apps Script Web App URL.')
+    elif 'script.google.com' in sheet_view_url and not sheet_url:
+        sheet_url = sheet_view_url
+        sheet_view_url = ''
     
     with connection.cursor() as cursor:
-        cursor.execute("""
-            INSERT INTO site_settings (`key`, `value`, `group`, `created_at`, `updated_at`) 
-            VALUES ('invoice_google_sheet_url', %s, 'invoices', NOW(), NOW())
-            ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), `updated_at` = NOW()
-        """, [sheet_url])
+        if sheet_url:
+            cursor.execute("""
+                INSERT INTO site_settings (`key`, `value`, `group`, `created_at`, `updated_at`) 
+                VALUES ('invoice_google_sheet_url', %s, 'invoices', NOW(), NOW())
+                ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), `updated_at` = NOW()
+            """, [sheet_url])
         
-    messages.success(request, 'Google Sheet URL saved successfully!')
+        if sheet_view_url:
+            cursor.execute("""
+                INSERT INTO site_settings (`key`, `value`, `group`, `created_at`, `updated_at`) 
+                VALUES ('invoice_google_sheet_view_url', %s, 'invoices', NOW(), NOW())
+                ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), `updated_at` = NOW()
+            """, [sheet_view_url])
+        
+    messages.success(request, 'Google Sheet settings saved successfully!')
     return redirect('admin_invoices')
 
 
@@ -284,13 +307,37 @@ def sync_sheet(request):
         cursor.execute("SELECT COUNT(*) FROM invoices WHERE synced_to_sheet = 0")
         pending = cursor.fetchone()[0]
 
-    if pending == 0:
-        messages.success(request, 'All invoices are already synced to Google Sheet!')
-        return redirect('admin_invoices')
-
-    count = sync_all_pending()
-    messages.success(request, f"Synced {count} invoice(s) to Google Sheet successfully.")
+    count = sync_all_pending(limit=50)
+    if pending > count:
+        messages.success(request, f"Synced {count} invoice(s) to Google Sheet ({pending - count} remaining).")
+    else:
+        messages.success(request, f"Synced {count} invoice(s) to Google Sheet successfully.")
     return redirect('admin_invoices')
+
+
+@require_http_methods(["POST"])
+def sync_single_invoice(request, invoice_id):
+    admin = _get_admin_from_session(request)
+    if not admin:
+        return redirect("admin_login_page")
+
+    from apps.admin_panel.services.google_sheet_sync import sync_invoice_to_sheet
+    from apps.agents.models import Invoice
+
+    inv = Invoice.objects.filter(id=invoice_id).first()
+    inv_label = inv.invoice_number if inv else f"#{invoice_id}"
+
+    success = sync_invoice_to_sheet(invoice_id)
+    if success:
+        messages.success(request, f"Invoice {inv_label} synced to Google Sheet successfully!")
+    else:
+        messages.error(request, f"Failed to sync invoice {inv_label} to Google Sheet. Check the Web App URL.")
+
+    referrer = request.META.get('HTTP_REFERER')
+    if referrer and '/admin/invoices' in referrer:
+        return redirect(referrer)
+    return redirect('admin_invoices')
+
 
 
 @require_http_methods(["GET"])
@@ -300,14 +347,22 @@ def open_sheet(request):
         return redirect("admin_login_page")
         
     with connection.cursor() as cursor:
-        cursor.execute("SELECT value FROM site_settings WHERE `key` = 'invoice_google_sheet_url'")
-        row = cursor.fetchone()
-        sheet_url = row[0] if row else None
+        # Prioritize direct spreadsheet URL if saved
+        cursor.execute("SELECT value FROM site_settings WHERE `key` = 'invoice_google_sheet_view_url'")
+        row_view = cursor.fetchone()
+        view_url = row_view[0] if row_view and row_view[0] else None
+
+        if not view_url:
+            cursor.execute("SELECT value FROM site_settings WHERE `key` = 'invoice_google_sheet_url'")
+            row_script = cursor.fetchone()
+            view_url = row_script[0] if row_script and row_script[0] else None
         
-    if not sheet_url:
+    if not view_url:
+        messages.warning(request, 'No Google Sheet link has been saved yet.')
         return redirect('admin_invoices')
         
-    return redirect(sheet_url)
+    return redirect(view_url)
+
 
 @require_http_methods(["GET", "POST"])
 def create_manual_invoice(request):
