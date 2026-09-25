@@ -381,7 +381,15 @@ function handleInspectSubmit(e) {
                 return JSON.parse(text);
             } catch (e) {
                 console.error("Non-JSON Server Response:", text);
-                throw new Error("Server returned non-JSON response (HTTP " + res.status + "). Please check server logs.");
+                var detail = "";
+                try {
+                    var doc = new DOMParser().parseFromString(text, 'text/html');
+                    var exc = doc.querySelector('.exception_value');
+                    var title = doc.querySelector('title');
+                    detail = (exc ? exc.innerText : '') || (title ? title.innerText : '');
+                } catch(pe) {}
+                var errDetail = detail ? (" (" + detail.trim() + ")") : "";
+                throw new Error("Server returned non-JSON response (HTTP " + res.status + ")" + errDetail + ". Please check server logs.");
             }
         });
     })
@@ -550,7 +558,15 @@ function executeReconciliation(paymentId, orderId, email) {
                 return JSON.parse(text);
             } catch (e) {
                 console.error("Non-JSON Server Response:", text);
-                throw new Error("Server error (HTTP " + res.status + "). Please check server logs.");
+                var detail = "";
+                try {
+                    var doc = new DOMParser().parseFromString(text, 'text/html');
+                    var exc = doc.querySelector('.exception_value');
+                    var title = doc.querySelector('title');
+                    detail = (exc ? exc.innerText : '') || (title ? title.innerText : '');
+                } catch(pe) {}
+                var errDetail = detail ? (" (" + detail.trim() + ")") : "";
+                throw new Error("Server error (HTTP " + res.status + ")" + errDetail + ". Please check server logs.");
             }
         });
     })
