@@ -148,3 +148,59 @@ class TestPaymentReconcileViews(unittest.TestCase):
                                 self.assertTrue(data['success'])
                                 self.assertEqual(data['invoice_number'], 'PA/26-27/00077')
                                 self.assertEqual(data['agent_name'], 'Existing Agent')
+
+    def test_inspect_order_id_with_messy_input(self):
+        req = self.rf.post(
+            '/admin/payments/reconcile/inspect/',
+            data=json.dumps({'query': 'Order_id:-order_TgAtfYxCS12pG6'}),
+            content_type='application/json'
+        )
+        fake_order = {
+            'id': 'order_TgAtfYxCS12pG6',
+            'amount': 235900,
+            'status': 'paid',
+            'receipt': 'agent_draft_99_1790318572',
+        }
+        fake_payment = {
+            'id': 'pay_TgAtr0PKkdyKnz',
+            'order_id': 'order_TgAtfYxCS12pG6',
+            'amount': 235900,
+            'status': 'captured',
+            'email': 'yashwantsinghmoral@gmail.com',
+            'contact': '+918521514171',
+            'method': 'upi',
+            'notes': [],
+        }
+
+        mock_client = MagicMock()
+        mock_client.order.fetch.return_value = fake_order
+        mock_client.order.payments.return_value = {'items': [fake_payment]}
+
+        mock_draft = MagicMock()
+        mock_draft.id = 99
+        mock_draft.fullname = 'Yashwant Singh Moral'
+        mock_draft.email = 'yashwantsinghmoral@gmail.com'
+        mock_draft.mobile = '+918521514171'
+        mock_draft.registration_step = 2
+
+        with patch('apps.admin_panel.views.payment_reconcile._get_admin_from_session', return_value={'id': 1}):
+            with patch('apps.admin_panel.views.payment_reconcile.razorpay_client', return_value=mock_client):
+                with patch('apps.agents.models.Agent.objects.filter') as mock_agent_filter:
+                    mock_agent_filter.return_value.first.return_value = None
+                    with patch('apps.agents.models.AgentSubscription.objects.filter') as mock_sub_filter:
+                        mock_sub_filter.return_value.first.return_value = None
+                        with patch('apps.agents.models.AgentDraft.objects.filter') as mock_draft_filter:
+                            mock_draft_filter.return_value.first.return_value = mock_draft
+                            with patch('apps.agents.models.Invoice.objects.filter') as mock_inv_filter:
+                                mock_inv_filter.return_value.first.return_value = None
+
+                                resp = reconcile_inspect_payment(req)
+                                self.assertEqual(resp.status_code, 200)
+                                data = json.loads(resp.content)
+                                self.assertTrue(data['success'])
+                                self.assertTrue(data['has_razorpay'])
+                                self.assertEqual(data['razorpay']['order_id'], 'order_TgAtfYxCS12pG6')
+                                self.assertEqual(data['razorpay']['payment_id'], 'pay_TgAtr0PKkdyKnz')
+                                self.assertEqual(data['razorpay']['email'], 'yashwantsinghmoral@gmail.com')
+                                self.assertEqual(data['razorpay']['amount_rupees'], 2359.00)
+                                self.assertEqual(data['db_match']['draft']['id'], 99)

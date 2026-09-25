@@ -369,17 +369,32 @@ function handleInspectSubmit(e) {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "X-CSRFToken": getCsrfToken()
+            "X-CSRFToken": getCsrfToken(),
+            "Accept": "application/json",
+            "X-Requested-With": "XMLHttpRequest"
         },
         body: JSON.stringify({ query: query })
     })
-    .then(function(res) { return res.json(); })
+    .then(function(res) {
+        return res.text().then(function(text) {
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                console.error("Non-JSON Server Response:", text);
+                throw new Error("Server returned non-JSON response (HTTP " + res.status + "). Please check server logs.");
+            }
+        });
+    })
     .then(function(data) {
         btn.innerHTML = originalText;
         btn.disabled = false;
 
         if (!data.success) {
-            alert("Inspection Failed: " + (data.message || "Unknown error"));
+            Swal.fire({
+                title: 'Inspection Notice',
+                text: data.message || "No record found.",
+                icon: 'warning'
+            });
             return;
         }
 
@@ -388,7 +403,12 @@ function handleInspectSubmit(e) {
     .catch(function(err) {
         btn.innerHTML = originalText;
         btn.disabled = false;
-        alert("Server error querying Razorpay. Please check network connection.");
+        console.error("Inspect error:", err);
+        Swal.fire({
+            title: 'Inspection Failed',
+            text: err.message || String(err),
+            icon: 'error'
+        });
     });
 }
 
@@ -405,7 +425,7 @@ function renderInspectResult(data) {
     if (data.has_razorpay && rz) {
         var statusBadge = rz.is_captured 
             ? '<span class="badge-pill-success"><i class="fa-solid fa-check me-1"></i>CAPTURED (PAID)</span>'
-            : '<span class="badge-pill-danger"><i class="fa-solid fa-xmark me-1"></i>' + rz.status.toUpperCase() + '</span>';
+            : '<span class="badge-pill-danger"><i class="fa-solid fa-xmark me-1"></i>' + (rz.status || 'UNKNOWN').toUpperCase() + '</span>';
 
         html += '<div class="row g-4">';
         
@@ -418,15 +438,19 @@ function renderInspectResult(data) {
         html += '</div>';
 
         html += '<table class="table table-sm table-borderless mb-0" style="font-size:12px;">';
-        html += '<tr><td class="text-muted" style="width:130px;">Payment ID:</td><td><code>' + rz.payment_id + '</code></td></tr>';
+        html += '<tr><td class="text-muted" style="width:130px;">Payment ID:</td><td><code>' + (rz.payment_id || 'N/A') + '</code></td></tr>';
         if (rz.order_id) {
             html += '<tr><td class="text-muted">Order ID:</td><td><code>' + rz.order_id + '</code></td></tr>';
         }
-        html += '<tr><td class="text-muted">Amount Paid:</td><td><strong class="text-success fs-6">₹' + rz.amount_rupees.toLocaleString('en-IN') + '</strong></td></tr>';
+        if (rz.receipt) {
+            html += '<tr><td class="text-muted">Order Receipt:</td><td><code>' + rz.receipt + '</code></td></tr>';
+        }
+        var amt = typeof rz.amount_rupees === 'number' ? rz.amount_rupees.toLocaleString('en-IN') : (rz.amount_rupees || '0');
+        html += '<tr><td class="text-muted">Amount Paid:</td><td><strong class="text-success fs-6">₹' + amt + '</strong></td></tr>';
         html += '<tr><td class="text-muted">Customer Email:</td><td><strong>' + (rz.email || 'N/A') + '</strong></td></tr>';
         html += '<tr><td class="text-muted">Customer Mobile:</td><td>' + (rz.contact || 'N/A') + '</td></tr>';
-        html += '<tr><td class="text-muted">Payment Method:</td><td>' + rz.method.toUpperCase() + '</td></tr>';
-        html += '<tr><td class="text-muted">Inferred Plan:</td><td><span class="badge bg-primary">' + rz.inferred_plan_name + '</span></td></tr>';
+        html += '<tr><td class="text-muted">Payment Method:</td><td>' + (rz.method || 'N/A').toUpperCase() + '</td></tr>';
+        html += '<tr><td class="text-muted">Inferred Plan:</td><td><span class="badge bg-primary">' + (rz.inferred_plan_name || "Starter's Plan") + '</span></td></tr>';
         html += '</table>';
         html += '</div></div>';
 
@@ -444,12 +468,12 @@ function renderInspectResult(data) {
         } else if (db && db.draft) {
             html += '<div class="alert alert-warning py-2 px-3 mb-3" style="font-size:12px;">';
             html += '<strong>Agent Draft Found:</strong> ' + db.draft.name + ' (Draft ID: #' + db.draft.id + ')<br>';
-            html += 'Draft reached step ' + db.draft.step + '. Needs conversion to full Agent.';
+            html += 'Draft reached step ' + (db.draft.step || 1) + '. Will be upgraded to full Agent.';
             html += '</div>';
         } else {
             html += '<div class="alert alert-info py-2 px-3 mb-3" style="font-size:12px;">';
-            html += '<strong>No Existing Agent / Draft:</strong><br>';
-            html += 'This payment is orphaned. The system will create an Agent from the Razorpay customer info.';
+            html += '<strong>Orphan Payment (No local Agent/Draft):</strong><br>';
+            html += 'The system will automatically create the Agent record and link this payment.';
             html += '</div>';
         }
 
@@ -473,8 +497,11 @@ function renderInspectResult(data) {
         html += '</div>';
 
         // Execute Button
+        var safePayId = rz.payment_id || '';
+        var safeOrderId = rz.order_id || '';
+        var safeEmail = rz.email || '';
         html += '<button type="button" id="btnExecuteReconcile" class="btn btn-success w-100 fw-bold py-2" ';
-        html += 'onclick="executeReconciliation(\'' + rz.payment_id + '\', \'' + rz.order_id + '\', \'' + (rz.email || '') + '\')">';
+        html += 'onclick="executeReconciliation(\'' + safePayId + '\', \'' + safeOrderId + '\', \'' + safeEmail + '\')">';
         html += '<i class="fa-solid fa-bolt me-1"></i> Fulfill Registration, Invoice & Sheets Sync';
         html += '</button>';
 
@@ -482,9 +509,8 @@ function renderInspectResult(data) {
         html += '</div>';
 
     } else {
-        // Only DB data found without Razorpay live
         html += '<div class="alert alert-warning mb-0" style="font-size:13px;">';
-        html += '<h5>No direct Razorpay payment found for query</h5>';
+        html += '<h5><i class="fa-solid fa-circle-exclamation me-1"></i> No direct Razorpay payment found</h5>';
         html += '<p class="mb-0">' + (data.message || '') + '</p>';
         html += '</div>';
     }
@@ -506,7 +532,9 @@ function executeReconciliation(paymentId, orderId, email) {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "X-CSRFToken": getCsrfToken()
+            "X-CSRFToken": getCsrfToken(),
+            "Accept": "application/json",
+            "X-Requested-With": "XMLHttpRequest"
         },
         body: JSON.stringify({
             payment_id: paymentId,
@@ -516,7 +544,16 @@ function executeReconciliation(paymentId, orderId, email) {
             plan_name: planName
         })
     })
-    .then(function(res) { return res.json(); })
+    .then(function(res) {
+        return res.text().then(function(text) {
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                console.error("Non-JSON Server Response:", text);
+                throw new Error("Server error (HTTP " + res.status + "). Please check server logs.");
+            }
+        });
+    })
     .then(function(data) {
         btn.innerHTML = orig;
         btn.disabled = false;
@@ -533,14 +570,29 @@ function executeReconciliation(paymentId, orderId, email) {
                 '<button type="button" class="btn btn-light btn-sm" onclick="window.location.reload()">Refresh Page</button>' +
                 '</div>' +
                 '</div>';
+            Swal.fire({
+                title: 'Success!',
+                text: data.message,
+                icon: 'success',
+                timer: 4000
+            });
         } else {
-            alert("Reconciliation Failed: " + (data.message || "Unknown error"));
+            Swal.fire({
+                title: 'Reconciliation Failed',
+                text: data.message || "Unknown error",
+                icon: 'error'
+            });
         }
     })
     .catch(function(err) {
         btn.innerHTML = orig;
         btn.disabled = false;
-        alert("Server error during reconciliation: " + err);
+        console.error("Reconciliation error:", err);
+        Swal.fire({
+            title: 'Server Error',
+            text: err.message || String(err),
+            icon: 'error'
+        });
     });
 }
 </script>
