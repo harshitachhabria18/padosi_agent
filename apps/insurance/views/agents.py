@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.conf import settings
 from apps.agents.models import Agent, AgentProfile, AgentSubscription
+from apps.agents.services.feature_unlock import PLAN_LABELS
 from django.contrib.auth.models import User
 from apps.admin_panel.models.insurance_approval import AgentApprovalRequest
 from padosi_agent.razorpay_env import USER_PAYMENT_UNAVAILABLE
@@ -143,7 +144,7 @@ def agents_store(request):
                 )
 
                 amount = 8258 if plan_type == 'professional' else 2359
-                plan_name = "Professional's Plan" if plan_type == 'professional' else "Starter's Plan"
+                plan_name = PLAN_LABELS['professional'] if plan_type == 'professional' else PLAN_LABELS['starter']
 
                 AgentSubscription.objects.create(
                     agent=agent,
@@ -359,7 +360,7 @@ def checkout_cart(request):
                 )
 
                 amount = item.get('amount')
-                plan_name = "Professional's Plan" if plan_type == 'professional' else "Starter's Plan"
+                plan_name = PLAN_LABELS['professional'] if plan_type == 'professional' else PLAN_LABELS['starter']
                 
                 sub_payment_status = 'completed' if payment_type == 'offline' else 'pending'
 
@@ -542,7 +543,7 @@ def checkout_online_success(request):
                 )
 
                 amount = item.get('amount')
-                plan_name = "Professional's Plan" if plan_type == 'professional' else "Starter's Plan"
+                plan_name = PLAN_LABELS['professional'] if plan_type == 'professional' else PLAN_LABELS['starter']
 
                 AgentSubscription.objects.create(
                     agent=agent,

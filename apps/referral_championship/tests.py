@@ -77,7 +77,7 @@ class ReferralChampionshipTestCase(TestCase):
 
         sub = AgentSubscription.objects.create(
             agent=self.agent2,
-            selected_plan='Digital Visibility',
+            selected_plan="Starter's Plan",
             payment_status='completed',
             status='active',
             registration_amount=999.00
@@ -96,7 +96,7 @@ class ReferralChampionshipTestCase(TestCase):
 
         sub = AgentSubscription.objects.create(
             agent=self.agent2,
-            selected_plan='Digital Visibility',
+            selected_plan="Starter's Plan",
             payment_status='completed',
             status='active',
             registration_amount=999.00

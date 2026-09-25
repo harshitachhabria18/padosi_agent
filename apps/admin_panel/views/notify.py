@@ -252,8 +252,8 @@ def notify_broadcast(request):
 
     targets_label = {
         'all':          'All Active Agents',
-        'professional': 'Professional Plan',
-        'starter':      'Starter Plan',
+        'professional': "Professional's Plan",
+        'starter':      "Starter's Plan",
         'expiring':     'Expiring Soon',
     }
     messages.success(

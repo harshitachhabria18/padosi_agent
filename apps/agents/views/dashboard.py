@@ -21,6 +21,7 @@ from apps.admin_panel.models.referral_usage import ReferralUsage
 from apps.agents.utils.file_validation import validate_magic_bytes
 from apps.agents.services.feature_unlock import (
     FEATURE_ATTR_MAP,
+    PLAN_LABELS,
     build_unlock_hints,
     evaluate_unlock_rules,
     filter_overlay_extras,
@@ -413,8 +414,8 @@ def agent_dashboard(request):
         discount_pct = max(int(admin_default), int(agent_specific), int(referral_discount))
 
     pricing_config = SiteSetting.get_value('pricing_config', {
-        'starter': {'name': "Starter's Plan", 'full_price': 2359},
-        'professional': {'name': "Professional's Plan", 'full_price': 8258},
+        'starter': {'name': PLAN_LABELS['starter'], 'full_price': 2359},
+        'professional': {'name': PLAN_LABELS['professional'], 'full_price': 8258},
     })
 
     starter_full = float(pricing_config.get('starter', {}).get('full_price', 2359))
@@ -487,7 +488,7 @@ def agent_dashboard(request):
     review_unlock_summary = build_review_unlock_summary(agent, agent_plan, professional_plan)
     from apps.agents.views.registration import _PROFESSIONAL_PLAN_UI_FEATURES
     prof_cfg = pricing_config.get('professional', {})
-    prof_name = prof_cfg.get('name', "Professional's Plan")
+    prof_name = PLAN_LABELS['professional']
     prof_desc = prof_cfg.get('description', 'Maximum visibility and premium tools for top agents.')
     slug = (profile.slug if profile and profile.slug else '') or getattr(agent, 'agent_slug', '') or str(agent.id)
     state_code = agent.state_code() if callable(getattr(agent, 'state_code', None)) else getattr(agent, 'state_code', 'gj')
@@ -1188,10 +1189,10 @@ def render_edit_profile(request, agent, is_admin_view=False):
         show_starter_upgrade_progress = should_show_upgrade_progress(agent)
         review_upgrade_price = get_review_upgrade_pricing(agent)
         pricing_config = SiteSetting.get_value('pricing_config', {
-            'professional': {'name': "Professional's Plan", 'full_price': 8258},
+            'professional': {'name': PLAN_LABELS['professional'], 'full_price': 8258},
         })
         prof_cfg = pricing_config.get('professional', {})
-        prof_name = prof_cfg.get('name', "Professional's Plan")
+        prof_name = PLAN_LABELS['professional']
         prof_desc = prof_cfg.get('description', 'Maximum visibility and premium tools for top agents.')
         prof_full = float(prof_cfg.get('full_price', 8258))
         prof_base = int(round(prof_full / 1.18, 0))
@@ -2066,8 +2067,8 @@ def agent_upgrade_plan(request):
         discount_pct = max(int(admin_default), int(agent_specific), int(referral_discount))
 
         pricing_config = SiteSetting.get_value('pricing_config', {
-            'starter': {'name': "Starter's Plan", 'full_price': 2359},
-            'professional': {'name': "Professional's Plan", 'full_price': 8258},
+            'starter': {'name': PLAN_LABELS['starter'], 'full_price': 2359},
+            'professional': {'name': PLAN_LABELS['professional'], 'full_price': 8258},
         })
 
         starter_full = float(pricing_config.get('starter', {}).get('full_price', 2359))
@@ -2107,11 +2108,11 @@ def agent_upgrade_plan(request):
         if plan_type == 'starter':
             total_amount = starter_disc
             plan_amount = starter_base
-            plan_name = pricing_config.get('starter', {}).get('name', "Starter's Plan")
+            plan_name = PLAN_LABELS['starter']
         else:
             total_amount = prof_disc
             plan_amount = prof_base
-            plan_name = pricing_config.get('professional', {}).get('name', "Professional's Plan")
+            plan_name = PLAN_LABELS['professional']
 
         # Check duplicate paid subscription
         already_paid = AgentSubscription.objects.filter(

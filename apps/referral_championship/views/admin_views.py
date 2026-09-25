@@ -139,8 +139,8 @@ def admin_update_campaign_settings(request):
         prof_ren = int(request.POST.get('prof_renewal_price', 9999))
 
         campaign.pricing_config = {
-            "digital": {"regular_price": dig_reg, "campaign_price": dig_camp, "renewal_price": dig_ren, "name": "Digital Visibility"},
-            "professional": {"regular_price": prof_reg, "campaign_price": prof_camp, "renewal_price": prof_ren, "name": "Professional Visibility"},
+            "digital": {"regular_price": dig_reg, "campaign_price": dig_camp, "renewal_price": dig_ren, "name": "Starter's Plan"},
+            "professional": {"regular_price": prof_reg, "campaign_price": prof_camp, "renewal_price": prof_ren, "name": "Professional's Plan"},
             "discount_percent": 50
         }
     except Exception as e:

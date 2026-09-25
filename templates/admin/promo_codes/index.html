@@ -48,7 +48,7 @@
                         </td>
                         <td>
                             <span class="badge bg-secondary">
-                                {% if promo.applicable_plan and promo.applicable_plan != 'all' %}{% if promo.applicable_plan == 'basic' %}Basic (Starter's Plan){% elif promo.applicable_plan == 'professional' %}Professional Plan{% else %}{{ promo.applicable_plan|title }}{% endif %}{% else %}All Plans{% endif %}
+                                {% if promo.applicable_plan and promo.applicable_plan != 'all' %}{% if promo.applicable_plan == 'basic' %}Starter's Plan{% elif promo.applicable_plan == 'professional' %}Professional's Plan{% else %}{{ promo.applicable_plan|title }}{% endif %}{% else %}All Plans{% endif %}
                             </span>
                         </td>
                         <td>
@@ -141,8 +141,8 @@
                                 <label class="form-label text-muted small fw-bold">APPLICABLE PLAN <span class="opacity-50 fw-normal">(Optional)</span></label>
                                 <select name="applicable_plan" id="applicablePlan" class="form-select">
                                     <option value="">All Plans</option>
-                                    <option value="basic">Basic (Starter's Plan)</option>
-                                    <option value="professional">Professional Plan</option>
+                                    <option value="basic">Starter's Plan</option>
+                                    <option value="professional">Professional's Plan</option>
                                 </select>
                             </div>
                         </div>

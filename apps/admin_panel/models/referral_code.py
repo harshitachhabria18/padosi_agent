@@ -31,7 +31,7 @@ class ReferralCode(models.Model):
         return [
             {'min': 5,  'max': 9,  'reward': 'discount_25', 'label': '25% Discount',               'discount': 25},
             {'min': 10, 'max': 14, 'reward': 'discount_50', 'label': '50% Discount',               'discount': 50},
-            {'min': 15, 'max': 999999, 'reward': 'pro_plan_1rs', 'label': 'Professional Plan @ ₹1', 'discount': 100},
+            {'min': 15, 'max': 999999, 'reward': 'pro_plan_1rs', 'label': "Professional's Plan @ ₹1", 'discount': 100},
         ]
 
     def currentTier(self):

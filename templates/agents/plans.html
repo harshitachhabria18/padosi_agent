@@ -1979,7 +1979,7 @@
                 <div class="plan-features">
                     <div class="plan-includes-banner">
                         <i class="fa-solid fa-circle-check"></i>
-                        Everything in {{ starter_name|default:"Starter Plan" }}, plus:
+                        Everything in {{ starter_name|default:"Starter's Plan" }}, plus:
                     </div>
                     <div class="plan-feature-section-title">Premium Add-ons</div>
                     <div class="plan-feature-grid">
@@ -2026,7 +2026,7 @@
                         <tr>
                             <th>Features</th>
                             <th class="plan-col-header starter-col">
-                                <div class="plan-col-name">{{ starter_name|default:"Digital Presence" }}</div>
+                                <div class="plan-col-name">{{ starter_name|default:"Starter's Plan" }}</div>
                                 {% if compare_starter_show_strike %}
                                 <span class="plan-col-price-strike">₹{{ starter_full|floatformat:"0" }}/-</span>
                                 {% endif %}
@@ -2035,7 +2035,7 @@
                             </th>
                             <th class="plan-col-header prof-col">
                                 <span class="plan-col-popular">Most Popular</span>
-                                <div class="plan-col-name">{{ prof_name|default:"Professional Presence" }}</div>
+                                <div class="plan-col-name">{{ prof_name|default:"Professional's Plan" }}</div>
                                 {% if compare_prof_show_strike %}
                                 <span class="plan-col-price-strike">₹{{ prof_full|floatformat:"0" }}/-</span>
                                 {% endif %}
@@ -2073,13 +2073,13 @@
                 <div class="plan-compare-actions">
                     <div class="compare-action-col">
                         <button type="button" onclick="selectPlanForPayment('starter')" class="btn-compare-plan btn-compare-starter">
-                            Choose {{ starter_name|default:"Digital Presence" }}
+                            Choose {{ starter_name|default:"Starter's Plan" }}
                             <i class="fa-solid fa-arrow-right"></i>
                         </button>
                     </div>
                     <div class="compare-action-col">
                         <button type="button" onclick="selectPlanForPayment('professional')" class="btn-compare-plan btn-compare-prof">
-                            Choose {{ prof_name|default:"Professional Presence" }}
+                            Choose {{ prof_name|default:"Professional's Plan" }}
                             <i class="fa-solid fa-arrow-right"></i>
                         </button>
                     </div>

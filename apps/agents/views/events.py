@@ -11,7 +11,7 @@ Flow:
   POST /events/payment/success/ → verify signature + amount, complete registration
   POST /events/payment/failure/ → mark failed
   GET  /events/success/         → success page (auto-login after payment)
-  POST /events/verify-promo/    → AJAX promo verification for Professional plan
+  POST /events/verify-promo/    → AJAX promo verification for Professional's Plan
 """
 
 import logging
@@ -34,6 +34,7 @@ from apps.agents.models import (
     PromoCode, Event, EventRegistration,
 )
 from apps.agents.views.registration import create_or_link_django_user
+from apps.agents.services.feature_unlock import PLAN_LABELS
 from padosi_agent.razorpay_env import USER_PAYMENT_UNAVAILABLE
 
 logger = logging.getLogger(__name__)
@@ -43,10 +44,7 @@ PROFESSIONAL_BASE = 9999.00
 BASIC_BASE = 1999.00
 GST_RATE = 0.18
 
-PLAN_NAMES = {
-    'professional': "Professional's Plan",
-    'basic': "Starter's Plan",
-}
+PLAN_NAMES = {'professional': PLAN_LABELS['professional'], 'basic': PLAN_LABELS['starter']}
 
 
 def get_pricing(promo_code_str=None):

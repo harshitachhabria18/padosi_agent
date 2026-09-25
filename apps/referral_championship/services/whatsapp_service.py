@@ -8,7 +8,7 @@ WHATSAPP_TEMPLATES = {
             {
                 'id': 'en_1',
                 'title': 'Professional Growth Invitation',
-                'text': "Hi, I'm {{agent_name}}, an Insurance Agent.\n\nJoin PadosiAgent and build your digital presence with better online visibility.\n\nCurrent campaign offer:\n• Digital Visibility: ₹{{digital_price}}/year\n• Professional Visibility: ₹{{professional_price}}/year\n\nJoin through my referral:\n{{referral_link}}\n\nYou can also view my profile:\n{{profile_link}}"
+                'text': "Hi, I'm {{agent_name}}, an Insurance Agent.\n\nJoin PadosiAgent and build your digital presence with better online visibility.\n\nCurrent campaign offer:\n• Starter's Plan: ₹{{digital_price}}/year\n• Professional's Plan: ₹{{professional_price}}/year\n\nJoin through my referral:\n{{referral_link}}\n\nYou can also view my profile:\n{{profile_link}}"
             },
             {
                 'id': 'en_2',

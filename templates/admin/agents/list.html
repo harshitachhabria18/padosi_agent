@@ -43,8 +43,8 @@
             <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
                 <select name="plan" class="form-select">
                     <option value="All Plans" {% if plan_filter == "All Plans" %}selected{% endif %}>All Plans</option>
-                    <option value="Starter's Plan" {% if plan_filter == "Starter's Plan" %}selected{% endif %}>Starter's Plan</option>
-                    <option value="Professional's Plan" {% if plan_filter == "Professional's Plan" %}selected{% endif %}>Professional's Plan</option>
+                    <option value="Starter's Plan" {% if plan_filter == "Starter's Plan" or plan_filter == "Starter's Plan" %}selected{% endif %}>Starter's Plan</option>
+                    <option value="Professional's Plan" {% if plan_filter == "Professional's Plan" or plan_filter == "Professional's Plan" %}selected{% endif %}>Professional's Plan</option>
                 </select>
             </div>
 

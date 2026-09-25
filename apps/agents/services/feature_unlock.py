@@ -26,8 +26,8 @@ def get_plan_slugs():
 
 PLAN_LABELS = {
     'free_trial': 'Free Trial / Expired',
-    'starter': 'Starter Plan',
-    'professional': 'Professional Plan',
+    'starter': "Starter's Plan",
+    'professional': "Professional's Plan",
     'exclusive': 'Exclusive Plan',
 }
 
@@ -81,7 +81,7 @@ FEATURE_PARENTS = {
     'qr_poster_download': ('qr_codes',),
 }
 
-# Starter plan: always unlocked (no review required). Includes the edit-profile
+# Starter's Plan: always unlocked (no review required). Includes the edit-profile
 # form sections that used to work before granular lock flags existed.
 STARTER_BASE_FEATURE_SLUGS = (
     'dashboard_stats',
@@ -350,9 +350,23 @@ def plan_slug_from_name(plan_name):
         return 'exclusive'
     if 'professional' in name or name in ('pro', 'pro_plan', 'pro plan'):
         return 'professional'
-    if 'starter' in name or 'basic' in name:
+    if any(token in name for token in ('starter', 'basic', 'standard', 'digital')):
         return 'starter'
-    return normalize_plan_slug(name) if normalize_plan_slug(name) in PLAN_SLUGS else ''
+    slug = normalize_plan_slug(name)
+    return slug if slug in PLAN_SLUGS else ''
+
+
+def paid_plan_label(slug_or_display_name):
+    """Map slug or legacy display text to Starter's Plan / Professional's Plan."""
+    raw = str(slug_or_display_name or '').strip()
+    slug = normalize_plan_slug(raw)
+    if slug not in ('starter', 'basic', 'professional'):
+        slug = plan_slug_from_name(raw)
+    if slug in ('starter', 'basic'):
+        return PLAN_LABELS['starter']
+    if slug == 'professional':
+        return PLAN_LABELS['professional']
+    return raw
 
 
 def resolve_checkout_plan_slug(plan_type, plan_name=None):

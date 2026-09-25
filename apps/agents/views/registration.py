@@ -30,6 +30,8 @@ from apps.home.models import SiteSetting
 from apps.home.models.pincode import Pincode
 from apps.agents.services.brevo import send_otp_email
 from apps.agents.services.feature_unlock import (
+    PLAN_LABELS,
+    paid_plan_label,
     resolve_checkout_plan_slug,
     plan_slug_from_name,
 )
@@ -79,7 +81,7 @@ _DEFAULT_PRICING = {
     'social_discount_active': True,
     'social_discount_amount': 200,
     'starter': {
-        'name': "Starter's Plan",
+        'name': PLAN_LABELS['starter'],
         'full_price': 1999,
         'promo_price': 1499,
         'scratch_price': 1299,
@@ -89,7 +91,7 @@ _DEFAULT_PRICING = {
         'scratch_enabled': True,
     },
     'professional': {
-        'name': "Professional's Plan",
+        'name': PLAN_LABELS['professional'],
         'full_price': 9999,
         'promo_price': 7999,
         'scratch_price': 7799,
@@ -797,16 +799,13 @@ def _display_plan_name(agent, pricing_config):
         except (json.JSONDecodeError, TypeError, ValueError):
             pass
         if raw_plan:
+            slug_from_sub = plan_slug_from_name(raw_plan)
+            label = paid_plan_label(raw_plan)
+            if label in (PLAN_LABELS['starter'], PLAN_LABELS['professional']):
+                return label
             return raw_plan
 
     slug = normalize_plan_slug(getattr(agent, 'plan_type', '') or '')
-    starter_name = (pricing_config.get('starter') or {}).get('name') or "Starter's Plan"
-    prof_name = (pricing_config.get('professional') or {}).get('name') or "Professional's Plan"
-
-    if slug == 'professional':
-        return prof_name
-    if slug in ('starter', 'basic'):
-        return starter_name
     if slug == 'free_trial':
         return 'Free Trial'
     if slug == 'exclusive':
@@ -814,7 +813,7 @@ def _display_plan_name(agent, pricing_config):
         ex_cfg = SiteSetting.get_value('exclusive_plan_config') or {}
         return ex_cfg.get('name') or 'Exclusive Plan'
 
-    return starter_name
+    return paid_plan_label(slug or 'starter')
 
 
 def _razorpay_callback_payload(request):
@@ -2033,10 +2032,10 @@ def chooseplan(request):
         comparison_price_mode == 'discounted' and compare_prof_price < int(round(prof_full))
     )
 
-    starter_name = starter_cfg.get('name', "Starter's Plan")
+    starter_name = PLAN_LABELS['starter']
     starter_desc = starter_cfg.get('description', 'Perfect for New Agents')
     starter_scratch_text = (starter_cfg.get('scratch_text') or 'SCRATCH').strip() or 'SCRATCH'
-    prof_name = prof_cfg.get('name', "Professional's Plan")
+    prof_name = PLAN_LABELS['professional']
     prof_desc = prof_cfg.get('description', 'For Established Professionals')
     prof_scratch_text = (prof_cfg.get('scratch_text') or 'SCRATCH').strip() or 'SCRATCH'
 
@@ -2643,11 +2642,9 @@ def verify_and_activate_pending_payment(agent):
 
 
 # Names that plan_slug_from_name() maps back to the same slug.
-_CANONICAL_PLAN_NAMES = {
-    'starter': "Starter's Plan",
-    'professional': "Professional's Plan",
-    'exclusive': 'Exclusive Plan',
-    'free_trial': 'Trial Plan',
+_PAID_PLAN_NAMES = {
+    'starter': PLAN_LABELS['starter'],
+    'professional': PLAN_LABELS['professional'],
 }
 
 
@@ -2767,7 +2764,7 @@ def _agent_register_complete_impl(request):
                 total_amount = float(champ_pricing.get('digital', {}).get('campaign_price', 999))
             except Exception:
                 pass
-        plan_name = plan_name or starter_cfg.get('name') or "Starter's Plan"
+        plan_name = PLAN_LABELS['starter']
         logger.info(
             'Starter checkout: full=%s displayed=%s follow=%s total=%s',
             starter_full, data.get('displayed_total'), follow_count, total_amount,
@@ -2788,20 +2785,14 @@ def _agent_register_complete_impl(request):
                 total_amount = float(champ_pricing.get('professional', {}).get('campaign_price', 4999))
             except Exception:
                 pass
-        plan_name = plan_name or prof_cfg.get('name') or "Professional's Plan"
+        plan_name = PLAN_LABELS['professional']
         logger.info(
             'Professional checkout: full=%s displayed=%s follow=%s total=%s',
             prof_full, data.get('displayed_total'), follow_count, total_amount,
         )
 
-    if client_plan_name and plan_slug_from_name(client_plan_name) == plan_type:
-        plan_name = client_plan_name
-    parsed_plan = plan_slug_from_name(plan_name or '')
-    if parsed_plan and parsed_plan != plan_type:
-        # A name that resolves to a DIFFERENT plan would activate that plan later.
-        # Names that don't resolve at all (custom admin names) are kept as-is:
-        # _order_plan_slug() then falls back to agent.plan_type, set below.
-        plan_name = _CANONICAL_PLAN_NAMES.get(plan_type, plan_name)
+    if plan_type in _PAID_PLAN_NAMES:
+        plan_name = _PAID_PLAN_NAMES[plan_type]
 
     total_amount = _to_money(total_amount)
     amount_paise = _to_paise(total_amount)

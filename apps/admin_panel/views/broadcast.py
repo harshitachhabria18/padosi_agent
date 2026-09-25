@@ -59,8 +59,8 @@ def broadcast_index(request):
         recent_broadcasts = list(AdminBroadcast.objects.order_by('-created_at')[:5])
         targets_map = {
             'all': 'All Active Agents',
-            'professional': 'Professional Plan',
-            'starter': 'Starter Plan',
+            'professional': "Professional's Plan",
+            'starter': "Starter's Plan",
             'expiring': 'Expiring Soon',
         }
         for b in recent_broadcasts:

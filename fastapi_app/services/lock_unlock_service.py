@@ -528,9 +528,9 @@ class LockUnlockService:
                 hint = locked_hints.get(feat)
                 if not hint:
                     if plan_slug == 'free_trial':
-                        hint = "Upgrade to Starter or Professional Plan to unlock"
+                        hint = "Upgrade to Starter or Professional's Plan to unlock"
                     else:
-                        hint = "Upgrade to Professional Plan to unlock"
+                        hint = "Upgrade to Professional's Plan to unlock"
 
             source = "plan" if is_base else ("activity_rule" if is_act else None)
 

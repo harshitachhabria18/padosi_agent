@@ -10,6 +10,7 @@ from django.views.decorators.http import require_POST
 import json
 
 from .dashboard import _get_admin_from_session
+from apps.agents.services.feature_unlock import PLAN_LABELS, paid_plan_label, plan_slug_from_name
 
 logger = logging.getLogger(__name__)
 
@@ -574,6 +575,10 @@ def update_plan(request):
 
     agent_id = request.POST.get('id')
     new_plan = request.POST.get('selected_plan')
+    if new_plan:
+        label = paid_plan_label(new_plan)
+        if label in (PLAN_LABELS['starter'], PLAN_LABELS['professional']):
+            new_plan = label
 
     if not agent_id or new_plan is None:
         messages.error(request, "Agent ID is required.")
@@ -636,11 +641,12 @@ def update_plan(request):
                 cursor.execute(insert_sql, values)
 
             # Map selected plan name to plan_type for agents table
-            if new_plan == "Starter's Plan":
+            plan_slug = plan_slug_from_name(new_plan or '')
+            if plan_slug == 'starter':
                 plan_type = 'basic'
-            elif new_plan == "Professional's Plan":
+            elif plan_slug == 'professional':
                 plan_type = 'professional'
-            elif 'trial' in new_plan.lower():
+            elif 'trial' in (new_plan or '').lower():
                 plan_type = 'free_trial'
             else:
                 plan_type = 'standard'

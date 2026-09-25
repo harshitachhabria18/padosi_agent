@@ -58,10 +58,10 @@
                         <select name="plan_name" id="planSelect" class="form-select" onchange="updateBaseAmount()" required>
                             <option value="">-- Select Plan --</option>
                             {% if starter.full_price %}
-                            <option value="{{ starter.name|default:'Starter Plan' }}" data-price="{{ starter.full_price }}" {% if old.plan_name == starter.name|default:'Starter Plan' %}selected{% endif %}>{{ starter.name|default:'Starter Plan' }} (₹{{ starter.full_price }})</option>
+                            <option value="{{ starter.name|default:'Starter's Plan' }}" data-price="{{ starter.full_price }}" {% if old.plan_name == starter.name|default:'Starter's Plan' %}selected{% endif %}>{{ starter.name|default:'Starter's Plan' }} (₹{{ starter.full_price }})</option>
                             {% endif %}
                             {% if prof.full_price %}
-                            <option value="{{ prof.name|default:'Professional Plan' }}" data-price="{{ prof.full_price }}" {% if old.plan_name == prof.name|default:'Professional Plan' %}selected{% endif %}>{{ prof.name|default:'Professional Plan' }} (₹{{ prof.full_price }})</option>
+                            <option value="{{ prof.name|default:'Professional's Plan' }}" data-price="{{ prof.full_price }}" {% if old.plan_name == prof.name|default:'Professional's Plan' %}selected{% endif %}>{{ prof.name|default:'Professional's Plan' }} (₹{{ prof.full_price }})</option>
                             {% endif %}
                             <option value="Custom" data-price="0" {% if old.plan_name == 'Custom' %}selected{% endif %}>Custom Plan</option>
                         </select>

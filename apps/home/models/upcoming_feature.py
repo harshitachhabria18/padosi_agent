@@ -4,8 +4,8 @@ from django.db import models
 class UpcomingFeature(models.Model):
     PLAN_CHOICES = [
         ('all', 'All Plans (Starter & Professional)'),
-        ('starter', 'Starter Plan Only'),
-        ('professional', 'Professional Plan Only'),
+        ('starter', "Starter's Plan Only"),
+        ('professional', "Professional's Plan Only"),
     ]
 
     STATUS_BADGE_CHOICES = [

@@ -151,7 +151,7 @@
     <!-- Plans & Pricing Editor -->
     <div class="row g-4 mb-4 mt-1" id="section-plan-prices">
 
-        <!-- Starter Plan Editor -->
+        <!-- Starter's Plan Editor -->
         <div class="col-lg-6">
             <div class="plan-editor-card h-100">
                 <div class="plan-editor-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg,#fef9c3,#fff);">
@@ -159,7 +159,7 @@
                         <i class="fa-solid fa-seedling text-warning me-1"></i>
                         <span class="fw-bold">Starter's Plan</span>
                     </div>
-                    <span class="badge bg-warning text-dark px-2 py-1" style="font-size:11px;">Basic Plan</span>
+                    <span class="badge bg-warning text-dark px-2 py-1" style="font-size:11px;">Starter</span>
                 </div>
                 <div class="p-4">
                     <div class="d-flex justify-content-between align-items-center mb-3 p-2 px-3 rounded bg-light border">
@@ -175,12 +175,6 @@
                     </div>
 
                     <div class="row g-3">
-                        <div class="col-12">
-                            <label class="form-label fw-semibold" style="font-size:13px;">Plan Name</label>
-                            <input type="text" name="starter_name" class="form-control"
-                                   value="{{ pricing.starter.name|default:"Starter's Plan" }}"
-                                   placeholder="Starter's Plan">
-                        </div>
                         <div class="col-4">
                             <label class="form-label fw-semibold" style="font-size:13px;">Full Price <small class="text-muted">(Excl. GST)</small></label>
                             <div class="input-group">
@@ -236,7 +230,7 @@
             </div>
         </div>
 
-        <!-- Professional Plan Editor -->
+        <!-- Professional's Plan Editor -->
         <div class="col-lg-6">
             <div class="plan-editor-card h-100">
                 <div class="plan-editor-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg,#dcfce7,#fff);">
@@ -260,12 +254,6 @@
                     </div>
 
                     <div class="row g-3">
-                        <div class="col-12">
-                            <label class="form-label fw-semibold" style="font-size:13px;">Plan Name</label>
-                            <input type="text" name="professional_name" class="form-control"
-                                   value="{{ pricing.professional.name|default:"Professional's Plan" }}"
-                                   placeholder="Professional's Plan">
-                        </div>
                         <div class="col-4">
                             <label class="form-label fw-semibold" style="font-size:13px;">Full Price <small class="text-muted">(Excl. GST)</small></label>
                             <div class="input-group">
@@ -750,7 +738,7 @@
                             <label class="form-label fw-bold mb-1" style="font-size:12px;">Eligible plan</label>
                             <div class="form-check mb-2">
                                 <input class="form-check-input growth-field" type="checkbox" name="growth_eligible_plans[]" value="starter" id="eligStarter" {% if 'starter' in review_growth.eligible_plans %}checked{% endif %}>
-                                <label class="form-check-label" for="eligStarter">Starter plan</label>
+                                <label class="form-check-label" for="eligStarter">Starter's Plan</label>
                             </div>
                             <label class="form-label fw-bold mb-1" style="font-size:12px;">Minimum reviews needed</label>
                             <input type="number" min="1" max="50" class="form-control growth-field" name="growth_min_reviews" value="{{ review_growth.min_reviews }}">
@@ -967,13 +955,13 @@
                                 </div>
                             </th>
                             <th class="text-center px-2 py-3">
-                                Starter Plan
+                                Starter's Plan
                                 <div class="mt-2">
                                     <a href="{% url 'admin_content_plans_manage_agent' plan_slug='starter' %}" class="btn btn-sm btn-outline-primary" style="font-size:11px; font-weight:600; color:#0284c7; border-color:#0284c7;">Manage</a>
                                 </div>
                             </th>
                             <th class="text-center px-2 py-3">
-                                Professional Plan
+                                Professional's Plan
                                 <div class="mt-2">
                                     <a href="{% url 'admin_content_plans_manage_agent' plan_slug='professional' %}" class="btn btn-sm btn-outline-primary" style="font-size:11px; font-weight:600; color:#0284c7; border-color:#0284c7;">Manage</a>
                                 </div>
@@ -1105,8 +1093,8 @@
                 <p class="text-muted mb-3" style="font-size: 13px;">Choose a plan to preview the agent dashboard and lock or unlock features for that plan only.</p>
                 <div class="d-grid gap-2">
                     <a href="{% url 'admin_content_plans_manage_agent' plan_slug='free_trial' %}" class="btn btn-outline-primary text-start" style="border-color: #0284c7; color: #0284c7; font-weight: 600;">Free Trial / Expired</a>
-                    <a href="{% url 'admin_content_plans_manage_agent' plan_slug='starter' %}" class="btn btn-outline-primary text-start" style="border-color: #0284c7; color: #0284c7; font-weight: 600;">Starter Plan</a>
-                    <a href="{% url 'admin_content_plans_manage_agent' plan_slug='professional' %}" class="btn btn-outline-primary text-start" style="border-color: #0284c7; color: #0284c7; font-weight: 600;">Professional Plan</a>
+                    <a href="{% url 'admin_content_plans_manage_agent' plan_slug='starter' %}" class="btn btn-outline-primary text-start" style="border-color: #0284c7; color: #0284c7; font-weight: 600;">Starter's Plan</a>
+                    <a href="{% url 'admin_content_plans_manage_agent' plan_slug='professional' %}" class="btn btn-outline-primary text-start" style="border-color: #0284c7; color: #0284c7; font-weight: 600;">Professional's Plan</a>
                     <a href="{% url 'admin_content_plans_manage_agent' plan_slug='exclusive' %}" class="btn btn-outline-primary text-start" style="border-color: #0284c7; color: #0284c7; font-weight: 600;">Exclusive Plan</a>
                 </div>
             </div>

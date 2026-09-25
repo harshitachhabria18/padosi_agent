@@ -41,7 +41,7 @@ WHATSAPP_TEMPLATES = {
             {
                 'id': 'en_1',
                 'title': 'Professional Growth Invitation',
-                'text': "Hi, I'm {{agent_name}}, an Insurance Agent.\n\nJoin PadosiAgent and build your digital presence with better online visibility.\n\nCurrent campaign offer:\n• Digital Visibility: ₹{{digital_price}}/year\n• Professional Visibility: ₹{{professional_price}}/year\n\nJoin through my referral:\n{{referral_link}}\n\nYou can also view my profile:\n{{profile_link}}"
+                'text': "Hi, I'm {{agent_name}}, an Insurance Agent.\n\nJoin PadosiAgent and build your digital presence with better online visibility.\n\nCurrent campaign offer:\n• Starter's Plan: ₹{{digital_price}}/year\n• Professional's Plan: ₹{{professional_price}}/year\n\nJoin through my referral:\n{{referral_link}}\n\nYou can also view my profile:\n{{profile_link}}"
             },
             {
                 'id': 'en_2',
@@ -324,8 +324,8 @@ def get_current_campaign(db: Session) -> ChampionshipCampaign:
             status="live",
             is_active=True,
             pricing_config={
-                "digital": {"regular_price": 1999, "campaign_price": 999, "renewal_price": 1999, "name": "Digital Visibility"},
-                "professional": {"regular_price": 9999, "campaign_price": 4999, "renewal_price": 9999, "name": "Professional Visibility"},
+                "digital": {"regular_price": 1999, "campaign_price": 999, "renewal_price": 1999, "name": "Starter's Plan"},
+                "professional": {"regular_price": 9999, "campaign_price": 4999, "renewal_price": 9999, "name": "Professional's Plan"},
                 "discount_percent": 50
             },
             unlock_config={
@@ -352,7 +352,7 @@ def seed_default_slabs(db: Session, campaign: ChampionshipCampaign):
     """Seed standard reward slabs: 5, 10, 25, 50, 100, 200, Top 3."""
     defaults = [
         (5, "Membership Fee Back", "100% Membership Fee Back via Amazon or Flipkart Voucher", 'membership_fee_back', 'fa-gift', 999.00, 1),
-        (10, "Professional Plan Free", "Professional Plan complimentary for 12 months", 'plan_upgrade', 'fa-crown', 9999.00, 2),
+        (10, "Professional's Plan Free", "Professional's Plan complimentary for 12 months", 'plan_upgrade', 'fa-crown', 9999.00, 2),
         (25, "25g Silver Coin", "Exclusive 25 Gram Minted Silver Coin dispatched to your address", 'silver', 'fa-coins', 2500.00, 3),
         (50, "1g Gold Coin + Lucky Draw Tier 1", "1 Gram 24K Gold Coin + Entry in Grand Lucky Draw Tier 1", 'gold', 'fa-medal', 7500.00, 4),
         (100, "Solo Domestic Trip + Lucky Draw Tier 2", "Solo Domestic Luxury Trip (flight + stay) + Tier 2 Draw", 'domestic_trip', 'fa-plane', 35000.00, 5),

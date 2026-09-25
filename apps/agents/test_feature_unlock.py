@@ -623,3 +623,12 @@ class FilterOverlayExtrasTests(SimpleTestCase):
         filtered = filter_overlay_extras('starter', extras, {})
         self.assertEqual(filtered, extras)
 
+
+class PlanDisplayNameTests(SimpleTestCase):
+    def test_paid_plan_labels(self):
+        from apps.agents.services.feature_unlock import PLAN_LABELS, paid_plan_label, plan_slug_from_name
+
+        self.assertEqual(plan_slug_from_name('Digital Presence'), 'starter')
+        self.assertEqual(paid_plan_label('Digital Presence'), PLAN_LABELS['starter'])
+        self.assertEqual(paid_plan_label('professional'), PLAN_LABELS['professional'])
+

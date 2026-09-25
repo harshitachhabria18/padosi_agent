@@ -479,7 +479,7 @@ _DEFAULT_PRICING = {
     'social_discount_active': True,
     'social_discount_amount': 200,
     'starter': {
-        'name': "Starter's Plan",
+        'name': PLAN_LABELS['starter'],
         'full_price': 1999,
         'promo_price': 1499,
         'scratch_price': 1299,
@@ -489,7 +489,7 @@ _DEFAULT_PRICING = {
         'scratch_enabled': True,
     },
     'professional': {
-        'name': "Professional's Plan",
+        'name': PLAN_LABELS['professional'],
         'full_price': 9999,
         'promo_price': 7999,
         'scratch_price': 7799,
@@ -752,7 +752,7 @@ def update_plans(request):
             'social_discount_active': 'social_discount_active' in request.POST or request.POST.get('social_discount_active') == 'on',
             'social_discount_amount': float(request.POST.get('social_discount_amount', 200) or 200),
             'starter': {
-                'name':            request.POST.get('starter_name', "Starter's Plan"),
+                'name':            PLAN_LABELS['starter'],
                 'full_price':      int(request.POST.get('starter_full_price', 1999) or 1999),
                 'promo_price':     int(request.POST.get('starter_promo_price', 1499) or 1499),
                 'scratch_price':   int(request.POST.get('starter_scratch_price', 1299) or 1299),
@@ -762,7 +762,7 @@ def update_plans(request):
                 'scratch_enabled': starter_scratch,
             },
             'professional': {
-                'name':            request.POST.get('professional_name', "Professional's Plan"),
+                'name':            PLAN_LABELS['professional'],
                 'full_price':      int(request.POST.get('professional_full_price', 9999) or 9999),
                 'promo_price':     int(request.POST.get('professional_promo_price', 7999) or 7999),
                 'scratch_price':   int(request.POST.get('prof_scratch_price', 7799) or 7799),

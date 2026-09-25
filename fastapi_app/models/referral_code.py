@@ -23,7 +23,7 @@ class ReferralCode(Base):
         # Tier 3: 5 referrals -> Pro plan for 1 Rupee
         ref_count = self.total_referrals
         if ref_count >= 5:
-            return {"tier": 3, "discount": 100, "label": "Tier 3: Professional plan for 1 Rupee"}
+            return {"tier": 3, "discount": 100, "label": "Tier 3: Professional's Plan for 1 Rupee"}
         elif ref_count >= 3:
             return {"tier": 2, "discount": 20, "label": "Tier 2: 20% Discount"}
         elif ref_count >= 1:

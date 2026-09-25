@@ -146,7 +146,7 @@ def test_plans_endpoint():
     )
     db.add(trial_agent)
 
-    # Seed an Agent on Professional Plan
+    # Seed an Agent on Professional's Plan
     user_pro = User(
         fullname="Pro Advisor",
         email="pro@example.com",
@@ -179,7 +179,7 @@ def test_plans_endpoint():
     assert body["agent_current_plan"] is None
     assert body["upgrade_discount"] is None
 
-    # Check GST calculations for Starter plan
+    # Check GST calculations for Starter's Plan
     starter_plan = next(p for p in body["plans"] if p["slug"] == "starter")
     p_info = starter_plan["pricing"]
     print(f"Starter Pricing: Actual={p_info['actual_price']}, Disc={p_info['discounted_price']}, BaseExclGST={p_info['base_price_exclusive_gst']}, GST={p_info['gst_amount']}, Final={p_info['final_price_inclusive_gst']}")
@@ -218,7 +218,7 @@ def test_plans_endpoint():
     # Verify that plan prices reflect the 30% upgrade discount
     # Professional was 1499.0 discounted price. With 30% off: round(1499 * 0.70) = 1049.0
     pro_plan = next(p for p in body["plans"] if p["slug"] == "professional")
-    print(f"Professional Plan for Trial Agent: Final Incl GST = Rs. {pro_plan['pricing']['final_price_inclusive_gst']}, Agent Disc Pct = {pro_plan['pricing']['agent_discount_pct']}%")
+    print(f"Professional's Plan for Trial Agent: Final Incl GST = Rs. {pro_plan['pricing']['final_price_inclusive_gst']}, Agent Disc Pct = {pro_plan['pricing']['agent_discount_pct']}%")
     assert pro_plan["pricing"]["agent_discount_pct"] == 30
     assert pro_plan["pricing"]["final_price_inclusive_gst"] == 1049.0
     assert round(pro_plan["pricing"]["base_price_exclusive_gst"] + pro_plan["pricing"]["gst_amount"], 2) == 1049.0

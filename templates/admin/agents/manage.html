@@ -212,8 +212,8 @@
           <input type="hidden" name="selected_plan" id="selectedPlanInput" value="">
           <p style="font-size:13px;font-weight:600;margin:0 0 10px;">Change Plan:</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button type="button" data-plan="Starter's Plan" class="plan-btn btn-change-plan {% if agent.selected_plan == "Starter's Plan" %}selected{% endif %}">Starter's</button>
-            <button type="button" data-plan="Professional's Plan" class="plan-btn btn-change-plan {% if agent.selected_plan == "Professional's Plan" %}selected{% endif %}">Professional's</button>
+            <button type="button" data-plan="Starter's Plan" class="plan-btn btn-change-plan {% if 'starter' in agent.selected_plan|lower or 'digital' in agent.selected_plan|lower or 'basic' in agent.selected_plan|lower %}selected{% endif %}">Starter</button>
+            <button type="button" data-plan="Professional's Plan" class="plan-btn btn-change-plan {% if 'professional' in agent.selected_plan|lower %}selected{% endif %}">Professional</button>
             <button type="button" data-plan="" class="plan-btn btn-change-plan {% if not agent.selected_plan %}selected{% endif %}">No Plan</button>
           </div>
         </form>

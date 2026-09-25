@@ -225,7 +225,7 @@ class PlanService:
         is_pro_1rs = getattr(agent, "referral_reward_type", None) == "pro_plan_1rs"
         offer_msg = None
         if is_pro_1rs:
-            offer_msg = "Special Reward: Professional Plan unlocked for ₹1 only!"
+            offer_msg = "Special Reward: Professional's Plan unlocked for ₹1 only!"
         elif applicable_discount > 0:
             offer_msg = f"Special {applicable_discount}% discount applied on plan upgrades!"
 

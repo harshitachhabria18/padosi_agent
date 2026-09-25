@@ -487,9 +487,15 @@ def _fetch_plan_breakdown():
 
     total_subs = sum(plan_breakdown.values())
 
-    # Exact Laravel logic for counting Professional / Starter plans
-    prof_count = plan_breakdown.get("Professional's Plan") or plan_breakdown.get("Professional Plan") or 0
-    starter_count = plan_breakdown.get("Starter's Plan") or plan_breakdown.get("Starter Plan") or 0
+    from apps.agents.services.feature_unlock import plan_slug_from_name
+
+    prof_count = starter_count = 0
+    for label, count in plan_breakdown.items():
+        slug = plan_slug_from_name(label)
+        if slug == 'professional':
+            prof_count += count
+        elif slug == 'starter':
+            starter_count += count
     upgrade_rate = round((prof_count / total_subs) * 100) if total_subs > 0 else 0
 
     return {
