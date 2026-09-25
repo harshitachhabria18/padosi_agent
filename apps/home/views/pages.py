@@ -388,6 +388,66 @@ def _find_closest_pincode(lat, lng, max_km=50.0):
     ).order_by('distance').first()
 
 
+
+def get_all_claim_companies():
+    """
+    Return a sorted, deduplicated list of all insurance company names
+    that active agents have added to their profile (Agent.insurance_companies JSON field).
+    Cached for 30 minutes to avoid repeated DB hits.
+    """
+    cache_key = 'all_claim_companies_v1'
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    company_set = {}
+    try:
+        from django.db import connection
+        with connection.cursor() as cursor:
+            # MySQL JSON_TABLE to extract each element from the JSON array
+            cursor.execute(
+                """
+                SELECT DISTINCT jt.company_name
+                FROM agents,
+                JSON_TABLE(
+                    agents.insurance_companies,
+                    '$[*]' COLUMNS (company_name VARCHAR(255) PATH '$')
+                ) AS jt
+                WHERE agents.status = 'active'
+                AND jt.company_name IS NOT NULL
+                AND jt.company_name != ''
+                ORDER BY jt.company_name
+                """
+            )
+            rows = cursor.fetchall()
+            companies = [r[0].strip() for r in rows if r[0] and r[0].strip()]
+    except Exception:
+        # Fallback: Python-side extraction (slower but safe)
+        try:
+            companies_raw = (
+                Agent.objects
+                .filter(status='active')
+                .exclude(insurance_companies__isnull=True)
+                .values_list('insurance_companies', flat=True)
+            )
+            seen = {}
+            for raw in companies_raw:
+                if not raw:
+                    continue
+                items = raw if isinstance(raw, list) else []
+                for item in items:
+                    if item and isinstance(item, str) and item.strip():
+                        key = item.strip().lower()
+                        if key not in seen:
+                            seen[key] = item.strip()
+            companies = sorted(seen.values(), key=str.casefold)
+        except Exception:
+            companies = []
+
+    cache.set(cache_key, companies, timeout=1800)
+    return companies
+
+
 def fetch_filtered_agents_list(request):
     pincode = (request.GET.get('pincode') or request.session.get('last_pincode', '')).strip()
     location = (request.GET.get('location') or request.session.get('last_location', '')).strip()
@@ -429,11 +489,9 @@ def fetch_filtered_agents_list(request):
     query = apply_insurance_product_filter(query, insurance_company_input, db_types)
 
     claim_company_input = request.GET.get('ClaimInsuranceCompany', '').strip()
-    if claim_company_input:
-        query = query.filter(
-            Q(portfolios__primary_companies__icontains=claim_company_input) |
-            Q(portfolios__secondary_companies__icontains=claim_company_input)
-        ).distinct()
+    # NOTE: We do NOT hard-filter by claim company — we want ALL agents to appear,
+    # but company-matched agents appear at the top with higher match %.
+    # Matching logic is applied in-memory after fetching.
 
     search_val = request.GET.get('search', '').strip()
     if search_val:
@@ -531,6 +589,20 @@ def fetch_filtered_agents_list(request):
         filter_match_sql = "(SELECT COUNT(*) FROM agent_insurance_segments WHERE agent_insurance_segments.agent_id = agents.id AND 1=0)"
         filter_match_params = ()
 
+    # Add claim company boost to smart_rank if a claim company was selected.
+    # Agents whose insurance_companies JSON contains the searched company get +60 pts.
+    if claim_company_input:
+        escaped = claim_company_input.replace('"', '\\"')
+        claim_boost_sql = f'(CASE WHEN JSON_CONTAINS(IFNULL(agents.insurance_companies, \'[]\'::JSON), JSON_QUOTE(%s)) THEN 60 ELSE 0 END)'
+        # Use standard MySQL-compatible syntax (no ::JSON cast)
+        claim_boost_sql = '(CASE WHEN JSON_CONTAINS(IFNULL(agents.insurance_companies, \'[]\'), JSON_QUOTE(%s)) THEN 60 ELSE 0 END)'
+        claim_boost_params = (claim_company_input,)
+    else:
+        claim_boost_sql = '0'
+        claim_boost_params = ()
+
+    all_rank_params = filter_match_params + claim_boost_params
+
     smart_rank_expr = f"""
         (CASE 
             WHEN CAST(COALESCE(NULLIF(agents.experience_range, ''), NULLIF((SELECT experience_years FROM agent_profiles WHERE agent_profiles.agent_id = agents.id), 0), 0) AS UNSIGNED) >= 15 THEN 20 
@@ -566,16 +638,29 @@ def fetch_filtered_agents_list(request):
             (CASE WHEN (SELECT license_number FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) IS NOT NULL AND (SELECT license_number FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) != '' THEN 1 ELSE 0 END) +
             (CASE WHEN (SELECT languages FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) IS NOT NULL AND (SELECT languages FROM agent_profiles WHERE agent_profiles.agent_id = agents.id) != '' THEN 1 ELSE 0 END)
         ) * 5) +
-        ({filter_match_sql} * 30)
+        ({filter_match_sql} * 30) +
+        {claim_boost_sql}
     """
 
-    query = query.annotate(padosi_smart_rank=RawSQL(smart_rank_expr, filter_match_params))
+    query = query.annotate(padosi_smart_rank=RawSQL(smart_rank_expr, all_rank_params))
     # Fetch all listed agents — plan type does not gate public directory visibility.
     # All active agents with visible cards appear in the directory.
     all_agents = list(query)
 
+    # Tag each agent with whether they match the claim company (for match % adjustment)
+    claim_company_lower = claim_company_input.lower() if claim_company_input else ''
     for agent in all_agents:
         agent.distance = None
+        if claim_company_lower:
+            companies = agent.insurance_companies or []
+            if isinstance(companies, list):
+                agent.has_claim_company_match = any(
+                    claim_company_lower in str(c).lower() for c in companies
+                )
+            else:
+                agent.has_claim_company_match = False
+        else:
+            agent.has_claim_company_match = None  # No filter active
 
     # Nearby/pin matches first; farther agents stay available for Load More.
     all_agents = rank_directory_agents(all_agents, user_lat, user_lng, search_pincode=pincode)
@@ -584,32 +669,55 @@ def fetch_filtered_agents_list(request):
         # Keep local matches on page 1; Load More pages get farther agents.
         return 0 if getattr(agent, 'is_nearby', False) else 1
 
+    # When claim company is selected: company-matched agents come first (tier 0),
+    # non-matched come after (tier 1) within same sort.
+    def _claim_tier(agent):
+        if claim_company_lower and getattr(agent, 'has_claim_company_match', False):
+            return 0  # Matched — top section
+        elif claim_company_lower:
+            return 1  # Not matched — shown below
+        return 0  # No filter — all equal
+
     # In-memory sorting matching Laravel's logic
     if user_lat is not None and user_lng is not None and sort_by == 'distance':
         all_agents.sort(key=lambda x: (
+            _claim_tier(x),
             x.distance if x.distance is not None else 999999,
             -(x.padosi_smart_rank or 0),
         ))
     elif sort_by == 'rating':
-        all_agents.sort(key=lambda x: (_nearby_rank(x), -x.average_rating, -(x.padosi_smart_rank or 0)))
+        all_agents.sort(key=lambda x: (_claim_tier(x), _nearby_rank(x), -x.average_rating, -(x.padosi_smart_rank or 0)))
     elif sort_by == 'experience':
-        all_agents.sort(key=lambda x: (_nearby_rank(x), -x.experience_years, -(x.padosi_smart_rank or 0)))
+        all_agents.sort(key=lambda x: (_claim_tier(x), _nearby_rank(x), -x.experience_years, -(x.padosi_smart_rank or 0)))
     else:
         # Default: best match % (smart_rank desc), tiebreaker: distance asc
         all_agents.sort(key=lambda x: (
+            _claim_tier(x),
             _nearby_rank(x),
             -(x.padosi_smart_rank or 0),
             x.distance if x.distance is not None else 999999,
         ))
 
-    # Calculate match percentage and attach reviews/stats properties
+    # Calculate match percentage with claim company awareness:
+    # - Company-matched agents: 88-99% range (higher band)
+    # - Non-matched agents:     72-85% range (lower band)
+    # - No filter active:       80-99% range (normal)
     max_smart_rank = max([a.padosi_smart_rank or 0 for a in all_agents]) if all_agents else 165
     if max_smart_rank <= 0:
         max_smart_rank = 165
 
     for a in all_agents:
         rank = a.padosi_smart_rank or 0
-        a.match_percent = int(min(99.0, max(80.0, 80.0 + (rank / max_smart_rank) * 19.0)))
+        match_flag = getattr(a, 'has_claim_company_match', None)
+        if match_flag is True:
+            # Company match: show 88–99%
+            a.match_percent = int(min(99.0, max(88.0, 88.0 + (rank / max_smart_rank) * 11.0)))
+        elif match_flag is False:
+            # Company not matched: show 72–85% (clearly lower, still visible)
+            a.match_percent = int(min(85.0, max(72.0, 72.0 + (rank / max_smart_rank) * 13.0)))
+        else:
+            # No claim filter active — normal 80-99% band
+            a.match_percent = int(min(99.0, max(80.0, 80.0 + (rank / max_smart_rank) * 19.0)))
         # Attach helper attributes for templates
         a.review_count_val = a.review_count
 
@@ -730,6 +838,9 @@ def find_agents(request):
     )
 
     portfolio_companies_by_type = get_portfolio_companies_by_type()
+    # Load all insurance company names for the Claim Company dropdown (cached)
+    all_claim_companies = get_all_claim_companies()
+    selected_claim_company = request.GET.get('ClaimInsuranceCompany', '').strip()
 
     if should_require_filter_selection:
         paginator = Paginator([], FIND_AGENTS_PAGE_SIZE)
@@ -833,6 +944,8 @@ def find_agents(request):
         'selected_service_type': request.GET.getlist('ServiceType'),
         'selected_insurance_types': request.GET.getlist('InsuranceType'),
         'selected_insurance_companies': request.GET.getlist('InsuranceCompany'),
+        'selected_claim_company': selected_claim_company,
+        'all_claim_companies': all_claim_companies,
         'hide_header': True,
     }
 
