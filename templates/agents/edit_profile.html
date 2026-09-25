@@ -1127,6 +1127,7 @@ Overview
                             </div>
                         </div>
 
+                        {% if active_investment_types %}
                         <!-- Investment Types Selector -->
                         <div class="mb-4 p-3 border rounded"
                             style="border-radius: 12px !important; background-color: #f8fafc; border-color: #e2e8f0;">
@@ -1147,13 +1148,10 @@ Overview
                                         </label>
                                     </div>
                                 </div>
-                                {% empty %}
-                                <div class="col-12 text-center text-muted">
-                                    <small>No investment types configured yet.</small>
-                                </div>
                                 {% endfor %}
                             </div>
                         </div>
+                        {% endif %}
 
                         <!-- Empty State -->
                         <div class="portfolio-empty-state text-center" id="portfolio-empty-state"

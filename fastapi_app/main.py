@@ -16,7 +16,7 @@ from fastapi_app.config import settings
 from fastapi_app.routers import (
     auth, dashboard, profile, public_profile,
     pincode, leads, notifications, analytics,
-    qr, visibility, referral, find_agents, championship,
+    qr, referral, find_agents, championship,
     plans
 )
 import fastapi_app.models
@@ -60,7 +60,6 @@ app.include_router(leads.router)
 app.include_router(notifications.router)
 app.include_router(analytics.router)
 app.include_router(qr.router)
-app.include_router(visibility.router)
 app.include_router(referral.router)
 app.include_router(find_agents.router)
 app.include_router(championship.router)

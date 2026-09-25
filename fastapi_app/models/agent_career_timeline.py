@@ -12,6 +12,7 @@ class AgentCareerTimeline(Base):
     event_text = Column(Text, nullable=False)
     month = Column(String(50), default="")
     year = Column(String(4), nullable=False)
+    suggestion_key = Column(String(50), nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 

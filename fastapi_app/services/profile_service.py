@@ -1129,7 +1129,8 @@ class ProfileService:
             year=str(data.get("year", "")),
             month=data.get("month", ""),
             event_type=data.get("type", "Career Event"),
-            event_text=data.get("title") or data.get("event_text", "")
+            event_text=data.get("title") or data.get("event_text", ""),
+            suggestion_key=(data.get("suggestion_key") or data.get("key") or None),
         )
         db.add(timeline)
         db.commit()

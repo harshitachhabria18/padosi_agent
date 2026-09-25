@@ -6,6 +6,16 @@ MONTHS = [
     'July', 'August', 'September', 'October', 'November', 'December'
 ]
 
+CLIENT_MILESTONES = (
+    (100, 'clients_100', '100+ Families Served'),
+    (500, 'clients_500', '500+ Families Served'),
+    (1000, 'clients_1000', '1000+ Families Served'),
+)
+CLAIM_MILESTONES = (
+    (100, 'claims_100', '100+ Claims Settled'),
+    (500, 'claims_500', '500+ Claims Settled'),
+)
+
 
 def get_career_timeline_suggestions(agent):
     """
@@ -27,7 +37,7 @@ def get_career_timeline_suggestions(agent):
 
     Suggestions are ordered by conceptual chronology:
       career_start → licensed_agent → arn_distributor →
-      clients_100 → clients_500 → families_current →
+      clients_100 → clients_500 → clients_1000 → families_current →
       claims_100 → claims_500
     """
     suggestions = []
@@ -112,6 +122,17 @@ def get_career_timeline_suggestions(agent):
                     'source_field': 'client_base',
                 })
 
+            if clients >= 1000:
+                suggestions.append({
+                    'key': 'clients_1000',
+                    'title': '1000+ Families Served',
+                    'subtitle': 'Past milestone — pick the month & year it was reached',
+                    'event_type': 'Milestone',
+                    'month': '',
+                    'year': '',
+                    'source_field': 'client_base',
+                })
+
             # ── 5. Families Currently Advised (snapshot "as of today") ─────────
             #   This represents the agent's *current* standing, so pre-fill today.
             if clients > 0:
@@ -159,3 +180,48 @@ def get_career_timeline_suggestions(agent):
         pass
 
     return suggestions
+
+
+def get_career_timeline_next_milestones(agent):
+    """
+    Upcoming client/claims targets the agent has not reached yet (mobile nudges).
+    Returns at most one next target per metric.
+    """
+    hints = []
+
+    try:
+        clients = int(agent.client_base or 0)
+        for threshold, key, title in CLIENT_MILESTONES:
+            if clients < threshold:
+                hints.append({
+                    'key': key,
+                    'title': title,
+                    'subtitle': f'You have {clients} — reach {threshold} to unlock this milestone',
+                    'event_type': 'Milestone',
+                    'target_value': threshold,
+                    'current_value': clients,
+                    'source_field': 'client_base',
+                })
+                break
+    except (ValueError, TypeError):
+        pass
+
+    try:
+        perf = getattr(agent, 'performanceStats', None)
+        claims = int(perf.claims_settled) if perf and perf.claims_settled else 0
+        for threshold, key, title in CLAIM_MILESTONES:
+            if claims < threshold:
+                hints.append({
+                    'key': key,
+                    'title': title,
+                    'subtitle': f'You have {claims} settled — reach {threshold} to unlock this milestone',
+                    'event_type': 'Milestone',
+                    'target_value': threshold,
+                    'current_value': claims,
+                    'source_field': 'claims_settled',
+                })
+                break
+    except (ValueError, TypeError):
+        pass
+
+    return hints

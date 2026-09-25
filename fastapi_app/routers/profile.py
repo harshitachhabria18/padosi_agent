@@ -699,6 +699,52 @@ def delete_achievement_photo_endpoint(
     return {"success": True, "message": "Achievement photo deleted successfully."}
 
 
+@router.get("/profile/career-timeline/suggestions")
+def career_timeline_suggestions_endpoint(
+    current_agent: Agent = Depends(get_current_agent),
+    db: Session = Depends(get_db),
+):
+    """
+    Auto-detected career timeline milestones (read-only).
+    Mirrors Django GET /agent/career-timeline/suggestions/ using shared business logic.
+    """
+    from apps.agents.models import Agent as DjangoAgent, AgentCareerTimeline
+    from apps.agents.services.career_timeline_suggestions import (
+        get_career_timeline_next_milestones,
+        get_career_timeline_suggestions,
+    )
+
+    django_agent = (
+        DjangoAgent.objects.filter(id=current_agent.id)
+        .select_related('profile', 'performanceStats')
+        .first()
+    )
+    if not django_agent:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agent not found")
+
+    all_suggestions = get_career_timeline_suggestions(django_agent)
+    try:
+        used_keys = set(
+            AgentCareerTimeline.objects.filter(agent=django_agent)
+            .exclude(suggestion_key__isnull=True)
+            .exclude(suggestion_key='')
+            .values_list('suggestion_key', flat=True)
+        )
+    except Exception:
+        used_keys = set()
+
+    suggestions = [s for s in all_suggestions if s.get('key') not in used_keys]
+    next_milestones = get_career_timeline_next_milestones(django_agent)
+    next_milestones = [m for m in next_milestones if m.get('key') not in used_keys]
+
+    return {
+        "success": True,
+        "status": "success",
+        "suggestions": suggestions,
+        "next_milestones": next_milestones,
+    }
+
+
 @router.get("/profile/career-timeline")
 def get_career_timelines_endpoint(
     current_agent: Agent = Depends(get_current_agent),
