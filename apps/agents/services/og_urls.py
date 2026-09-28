@@ -5,26 +5,32 @@ from django.conf import settings
 from django.urls import reverse
 
 
+CANONICAL_PADOSI_ORIGIN = 'https://padosiagent.com'
+
+
+def _normalize_padosi_origin(url: str) -> str:
+    url = (url or '').strip().rstrip('/')
+    if url.startswith('http://'):
+        url = 'https://' + url[len('http://') :]
+    url = url.replace('https://www.padosiagent.com', 'https://padosiagent.com')
+    url = url.replace('http://www.padosiagent.com', 'https://padosiagent.com')
+    return url.rstrip('/')
+
+
 def get_public_site_base(request) -> str:
     """
-    Canonical site origin for social crawlers (always https on production domain).
+    Canonical site origin for social crawlers (always https, non-www on padosiagent.com).
     """
-    base = (os.environ.get('APP_URL') or getattr(settings, 'APP_URL', '') or '').strip().rstrip('/')
-    if not base:
-        base = request.build_absolute_uri('/').rstrip('/')
+    env_base = (os.environ.get('APP_URL') or getattr(settings, 'APP_URL', '') or '').strip().rstrip('/')
+    host = (request.get_host() or '').lower().split(':')[0]
 
-    host = (request.get_host() or '').lower()
-    if host.endswith('padosiagent.com') or 'padosiagent.com' in base:
-        if base.startswith('http://'):
-            base = 'https://' + base[len('http://') :]
-        elif base.startswith('https://'):
-            pass
-        else:
-            base = 'https://padosiagent.com'
-    elif not settings.DEBUG and base.startswith('http://'):
-        # Production behind TLS terminator — prefer https for og:image
+    if host.endswith('padosiagent.com') or (env_base and 'padosiagent.com' in env_base.lower()):
+        base = env_base if env_base and 'padosiagent.com' in env_base.lower() else CANONICAL_PADOSI_ORIGIN
+        return _normalize_padosi_origin(base)
+
+    base = env_base or request.build_absolute_uri('/').rstrip('/')
+    if not settings.DEBUG and base.startswith('http://'):
         base = 'https://' + base[len('http://') :]
-
     return base.rstrip('/')
 
 

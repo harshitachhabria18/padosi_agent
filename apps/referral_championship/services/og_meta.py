@@ -1,6 +1,7 @@
 from apps.agents.services.og_urls import build_og_absolute_url
 
-CHAMPIONSHIP_OG_STATIC_PATH = '/static/img/championship_og.jpg'
+# Prefer dynamic route so crawlers always get image/jpeg with CORS/cache headers.
+CHAMPIONSHIP_OG_STATIC_PATH = '/agent/championship/og-image/'
 CHAMPIONSHIP_OG_WIDTH = 1024
 CHAMPIONSHIP_OG_HEIGHT = 384
 CHAMPIONSHIP_OG_SHARE_TITLE = 'Agent Championship | PadosiAgent'

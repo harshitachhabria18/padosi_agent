@@ -3,13 +3,13 @@
 
 {% block title %}{{ agentDisplayName }} | Insurance & Financial Advisor | PadosiAgent{% endblock %}
 {% block og_title %}{{ og_share_title|default:"PadosiAgent" }}{% endblock %}
-{% block og_description %}{{ og_share_title|default:"PadosiAgent" }}{% endblock %}
+{% block og_description %}{{ og_share_description|default:"Find trusted insurance advisors on PadosiAgent." }}{% endblock %}
 {% block og_url %}{{ og_page_absolute_url }}{% endblock %}
 {% block og_image %}{{ og_image_absolute_url }}{% endblock %}
 {% block og_type %}profile{% endblock %}
 {% block twitter_card %}summary_large_image{% endblock %}
 {% block twitter_title %}{{ og_share_title|default:"PadosiAgent" }}{% endblock %}
-{% block twitter_description %}{{ og_share_title|default:"PadosiAgent" }}{% endblock %}
+{% block twitter_description %}{{ og_share_description|default:"Find trusted insurance advisors on PadosiAgent." }}{% endblock %}
 {% block twitter_image %}{{ og_image_absolute_url }}{% endblock %}
 {% block meta_description %}Connect with {{ agentDisplayName }}, a Licensed Insurance &amp; Financial Advisor on PadosiAgent. View profile, services, ratings &amp; direct contact options.{% endblock %}
 {% block canonical_url %}{{ request.scheme }}://{{ request.get_host }}{{ request.path }}{% endblock %}

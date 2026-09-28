@@ -109,18 +109,17 @@ def public_agent_card(request, slug):
 
     agent_plan = _resolve_agent_plan(agent.plan_type, agent=agent)
     display_name = (profile.display_name if profile else '') or agent.fullname or 'Agent'
-    from apps.agents.services.og_urls import agent_og_image_absolute_url, build_og_absolute_url
+    from apps.agents.services.og_meta import profile_og_context
 
-    return render(request, 'agents/public_agent_card.html', {
+    ctx = {
         'agent': agent,
         'profile': profile,
         'agent_plan': agent_plan,
         'agentDisplayName': display_name,
         'qr_type_label': QR_TYPE_LABELS['card'],
-        'og_share_title': 'PadosiAgent',
-        'og_image_absolute_url': agent_og_image_absolute_url(request, agent.id),
-        'og_page_absolute_url': build_og_absolute_url(request, request.get_full_path()),
-    })
+    }
+    ctx.update(profile_og_context(request, agent, display_name=display_name))
+    return render(request, 'agents/public_agent_card.html', ctx)
 
 
 def _brand_logo_url():

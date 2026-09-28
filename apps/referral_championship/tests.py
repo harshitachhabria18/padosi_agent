@@ -130,7 +130,7 @@ class ReferralChampionshipTestCase(TestCase):
         request = self.factory.get('/agent/championship/join/PA-TEST01/')
         ctx = championship_og_context(request, referring_agent_name='Parth Patel')
         self.assertTrue(ctx['use_championship_og'])
-        self.assertIn('championship_og.jpg', ctx['championship_og_image_url'])
+        self.assertIn('/agent/championship/og-image/', ctx['championship_og_image_url'])
         self.assertEqual(ctx['championship_og_width'], 1024)
         self.assertEqual(ctx['championship_og_height'], 384)
 
@@ -142,7 +142,7 @@ class ReferralChampionshipTestCase(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(resp.context.get('use_championship_og'))
         body = resp.content.decode()
-        self.assertIn('championship_og.jpg', body)
+        self.assertIn('/agent/championship/og-image/', body)
         self.assertIn('og:image:secure_url', body)
 
     def test_championship_landing_includes_og_image_meta(self):
@@ -152,5 +152,5 @@ class ReferralChampionshipTestCase(TestCase):
         resp = client.get(url)
         self.assertEqual(resp.status_code, 200)
         body = resp.content.decode()
-        self.assertIn('championship_og.jpg', body)
+        self.assertIn('/agent/championship/og-image/', body)
         self.assertIn('og:image:secure_url', body)

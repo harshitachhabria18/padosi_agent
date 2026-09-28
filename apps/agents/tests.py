@@ -119,6 +119,16 @@ class AgentPublicProfileTests(TestCase):
         # author_display falls back to the user's username when no name is set
         self.assertContains(response, "client_one")
 
+    def test_profile_og_meta_has_real_description_and_image(self):
+        response = self.client.get(reverse('agents:agent_public_profile', args=['ravi-kumar']))
+        body = response.content.decode()
+        self.assertIn('og-image/', body)
+        self.assertIn('og:image:secure_url', body)
+        self.assertNotIn('&#8203;', body)
+        self.assertNotIn('Digital Visiting Card', body.split('og:title')[0])  # not in head title meta
+        self.assertIn('property="og:description"', body)
+        self.assertIn('Connect with Ravi Kumar', body)
+
     def test_missing_agent_returns_404(self):
         response = self.client.get(reverse('agents:agent_public_profile', args=['999999']))
         self.assertEqual(response.status_code, 404)
