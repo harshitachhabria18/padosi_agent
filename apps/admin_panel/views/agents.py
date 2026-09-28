@@ -871,7 +871,8 @@ def _build_queue_query(status_filter, search, plan_filter, city_filter, event_fi
 
     query = f'''
         SELECT
-            a.id, a.fullname, a.email, a.mobile, a.status,
+            a.id, a.fullname, a.email, a.mobile, a.status, a.event_id,
+            (SELECT e.name FROM events e WHERE e.id = a.event_id LIMIT 1) AS event_name,
             a.created_at, a.updated_at, a.badge, a.registration_step, a.is_blacklisted,
             ap.address, ap.display_name, ap.profile_photo_path, ap.pan_number,
             (SELECT COUNT(*) FROM blacklisted_agents WHERE pan = ap.pan_number AND ap.pan_number IS NOT NULL AND ap.pan_number != '') as is_blacklisted_by_pan,
@@ -910,9 +911,9 @@ def _build_queue_query(status_filter, search, plan_filter, city_filter, event_fi
         query += " AND ap.address LIKE %s"
         params.append(f"%{city_filter}%")
 
-    if event_filter and event_filter != 'All Events':
-        query += " AND a.event_id = %s"
-        params.append(event_filter)
+    event_sql, event_params = _event_filter_sql(event_filter)
+    query += event_sql
+    params.extend(event_params)
 
     if sort_by == 'oldest':
         query += " ORDER BY a.created_at ASC"
@@ -923,14 +924,48 @@ def _build_queue_query(status_filter, search, plan_filter, city_filter, event_fi
 
     return query, params
 
+def _event_filter_sql(event_filter):
+    """SQL fragment + params for admin event_id filters (includes Paldi challengers)."""
+    if not event_filter or event_filter == 'All Events':
+        return '', []
+    try:
+        event_id_int = int(event_filter)
+    except (TypeError, ValueError):
+        return ' AND a.event_id = %s', [event_filter]
+
+    paldi_id = None
+    try:
+        from apps.event_referral.services.paldi_event import get_or_create_paldi_event
+
+        paldi_id = get_or_create_paldi_event().id
+    except Exception:
+        pass
+
+    if paldi_id is not None and event_id_int == paldi_id:
+        return (
+            ' AND (a.event_id = %s OR a.id IN (SELECT agent_id FROM event_referral_participants))',
+            [event_id_int],
+        )
+    return ' AND a.event_id = %s', [event_id_int]
+
+
 def _get_events_list():
     events = []
     try:
         from django.db import connection
         with connection.cursor() as cursor:
-            cursor.execute("SELECT id, name FROM events ORDER BY event_date DESC")
+            cursor.execute("SELECT id, name FROM events ORDER BY name ASC")
             columns = [col[0] for col in cursor.description]
             events = [dict(zip(columns, row)) for row in cursor.fetchall()]
+    except Exception:
+        pass
+    try:
+        from apps.event_referral.services.paldi_event import get_or_create_paldi_event
+
+        paldi = get_or_create_paldi_event()
+        if not any(e.get('id') == paldi.id for e in events):
+            events.append({'id': paldi.id, 'name': paldi.name})
+            events.sort(key=lambda e: (e.get('name') or '').lower())
     except Exception:
         pass
     return events
@@ -1024,7 +1059,14 @@ def agent_pending_registrations(request):
     city_filter = request.GET.get('city', '')
     event_filter = request.GET.get('event_id', 'All Events')
 
-    query, params = _build_queue_query(['incomplete', 'pending_payment'], search, plan_filter, city_filter, event_filter, sort_by)
+    query, params = _build_queue_query(
+        ['incomplete', 'pending_payment', 'event_challenge'],
+        search,
+        plan_filter,
+        city_filter,
+        event_filter,
+        sort_by,
+    )
 
     agents = []
     total_pending = 0
@@ -1135,6 +1177,9 @@ def agent_pending_registrations(request):
         'CLAIM_BUTTON':            'Choosing Plan',
         'PAYMENT_BUTTON':          'Payment Done',
     }
+    _STATUS_LABELS = {
+        'event_challenge': 'Paldi — Referral challenge',
+    }
     draft_event_map = {}
     agent_event_map = {}
     _draft_ids = [str(e['id']) for e in all_entries if e.get('is_draft')]
@@ -1172,6 +1217,10 @@ def agent_pending_registrations(request):
         last_ev = draft_event_map.get(_eid, '') if entry.get('is_draft') else agent_event_map.get(_eid, '')
         entry['last_event'] = last_ev
         entry['event_label'] = _EVENT_LABELS.get(last_ev, '')
+        if entry.get('status') == 'event_challenge':
+            entry['event_label'] = entry.get('event_name') or _STATUS_LABELS['event_challenge']
+        elif entry.get('event_name'):
+            entry['event_label'] = entry['event_name']
         if last_ev == 'CLAIM_BUTTON' and entry.get('is_draft'):
             entry['draft_badge'] = 'CLAIM'
             entry['is_claimed'] = True

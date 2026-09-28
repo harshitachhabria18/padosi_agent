@@ -237,12 +237,21 @@ class BrevoEmailService:
 
         return True
 
-    def send_welcome(self, to_email: str, to_name: str, temp_password: str, plan_name: str = "", attachment_path: str = None) -> bool:
+    def send_welcome(
+        self,
+        to_email: str,
+        to_name: str,
+        temp_password: str,
+        plan_name: str = "",
+        attachment_path: str = None,
+        subject: str = "",
+    ) -> bool:
         """
         Send a welcome / account credentials email after successful payment.
         """
         html = _build_welcome_html(to_name, to_email, temp_password, plan_name)
-        subject = "Welcome to PadosiAgent — Your Account is Ready!"
+        if not subject:
+            subject = "Welcome to PadosiAgent — Your Account is Ready!"
         return self.send_generic(to_email, to_name, subject, html, attachment_path)
 
     def send_password_reset(self, to_email: str, to_name: str, reset_url: str, expiry_minutes: str = "60", role_name: str = "Agent") -> bool:

@@ -114,6 +114,7 @@ INSTALLED_APPS = [
     'apps.distributors',
     'apps.chatbot',
     'apps.referral_championship',
+    'apps.event_referral',
     'rest_framework',
     'django.contrib.humanize',
 ]

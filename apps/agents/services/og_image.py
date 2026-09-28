@@ -377,10 +377,10 @@ def _render_agent_og_jpeg_pillow(agent, profile=None, perf=None):
     loc_text = f"📍  {city}, India" if city and 'india' not in city.lower() else (f"📍  {city}" if city else "📍  Ahmedabad, India")
     draw.text((rx + 180, 170), loc_text, font=fonts['meta'], fill=(100, 116, 139))
 
-    # 4 Stat Boxes (Width 165, Height 76, Gap 14)
-    stat_y = 225
+    # 4 Stat Boxes (Width 165, Height 88, Gap 14)
+    stat_y = 218
     box_w = 165
-    box_h = 76
+    box_h = 88
     gap = 14
 
     exp_val = int(_safe_num(getattr(profile, 'experience_years', None) if profile else getattr(agent, 'experience_years', None), 12))
@@ -414,20 +414,20 @@ def _render_agent_og_jpeg_pillow(agent, profile=None, perf=None):
         bg_fill = (240, 253, 244) if is_green else (248, 250, 252)
         border_col = (187, 247, 208) if is_green else (226, 232, 240)
         num_col = (21, 128, 61) if is_green else (15, 23, 42)
-        lbl_col = (22, 101, 52) if is_green else (148, 163, 184)
+        lbl_col = (22, 101, 52) if is_green else (71, 85, 105)
 
-        _rounded_rect(draw, [(bx0, by0), (bx1, by1)], radius=14, fill=bg_fill, outline=border_col, width=1)
+        _rounded_rect(draw, [(bx0, by0), (bx1, by1)], radius=14, fill=bg_fill, outline=border_col, width=2)
         
         # Center number
         vw, vh = _text_size(draw, val, fonts['stat_num'])
         vx = bx0 + (box_w - vw) // 2
-        vy = by0 + 12
+        vy = by0 + 10
         draw.text((vx, vy), val, font=fonts['stat_num'], fill=num_col)
 
         # Center label
         lw, lh = _text_size(draw, lbl, fonts['stat_lbl'])
         lx = bx0 + (box_w - lw) // 2
-        ly = by0 + 46
+        ly = by0 + 50
         draw.text((lx, ly), lbl, font=fonts['stat_lbl'], fill=lbl_col)
 
     # Segment Pills (Health, Motor, SME Insurance)
@@ -449,8 +449,8 @@ def _render_agent_og_jpeg_pillow(agent, profile=None, perf=None):
     draw.line([(rx, 490), (1110, 490)], fill=(241, 245, 249), width=1)
 
     # Footer Strip
-    draw.text((rx, 515), "Connect directly · Zero Middlemen · Instant WhatsApp & Calls", font=fonts['footer'], fill=(148, 163, 184))
-    draw.text((950, 515), "🛡️ PadosiAgent Verified", font=fonts['footer_bold'], fill=(30, 58, 138))
+    draw.text((rx, 512), "Direct WhatsApp & Calls · Zero middlemen", font=fonts['footer'], fill=(51, 65, 85))
+    draw.text((920, 510), "PadosiAgent Verified", font=fonts['footer_bold'], fill=(30, 58, 138))
 
     buf = io.BytesIO()
     canvas.save(buf, format='JPEG', quality=95)
@@ -499,11 +499,11 @@ def _load_fonts():
         'sub': pick(semi_paths, 18),
         'meta': pick(reg_paths, 16),
         'meta_bold': pick(bold_paths, 16),
-        'stat_num': pick(bold_paths, 24),
-        'stat_lbl': pick(bold_paths, 11),
-        'pill': pick(bold_paths, 14),
-        'footer': pick(reg_paths, 13),
-        'footer_bold': pick(bold_paths, 14),
+        'stat_num': pick(bold_paths, 30),
+        'stat_lbl': pick(bold_paths, 13),
+        'pill': pick(bold_paths, 15),
+        'footer': pick(bold_paths, 16),
+        'footer_bold': pick(bold_paths, 17),
     }
 
 

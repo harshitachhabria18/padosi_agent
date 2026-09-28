@@ -61,6 +61,7 @@ def agent_can_access_dashboard(agent):
     """
     Dashboard access requires a verified captured payment.
     Pending, failed, or mock checkout records never grant access.
+    Event referral challengers (active/won) may access without Razorpay.
     """
     if not agent:
         return False
@@ -68,6 +69,12 @@ def agent_can_access_dashboard(agent):
         return False
     if agent_has_completed_payment(agent):
         return True
+    try:
+        from apps.event_referral.services.participant_service import event_referral_grants_dashboard
+        if event_referral_grants_dashboard(agent):
+            return True
+    except Exception:
+        pass
     if agent.status in INCOMPLETE_STATUSES:
         return False
     return False

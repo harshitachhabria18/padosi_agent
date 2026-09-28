@@ -2,13 +2,13 @@
 {% load static %}
 
 {% block title %}{{ agentDisplayName }} | Insurance & Financial Advisor | PadosiAgent{% endblock %}
-{% block og_title %}{{ agentDisplayName }} — Digital Visiting Card{% endblock %}
+{% block og_title %}&#8203;{% endblock %}
 {% block og_description %}&#8203;{% endblock %}
 {% block og_url %}{{ request.scheme }}://{{ request.get_host }}{{ request.path }}{% endblock %}
 {% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% url 'agents:agent_og_image' agent.id %}{% endblock %}
 {% block og_type %}profile{% endblock %}
 {% block twitter_card %}summary_large_image{% endblock %}
-{% block twitter_title %}{{ agentDisplayName }} — Digital Visiting Card{% endblock %}
+{% block twitter_title %}&#8203;{% endblock %}
 {% block twitter_description %}&#8203;{% endblock %}
 {% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% url 'agents:agent_og_image' agent.id %}{% endblock %}
 {% block meta_description %}Connect with {{ agentDisplayName }}, a Licensed Insurance &amp; Financial Advisor on PadosiAgent. View profile, services, ratings &amp; direct contact options.{% endblock %}

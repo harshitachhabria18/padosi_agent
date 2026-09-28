@@ -1,6 +1,7 @@
 import os
 import logging
 import math
+from urllib.parse import quote
 from json import dumps as json_dumps, loads as json_loads, JSONDecodeError as JSONDecodeError
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
@@ -256,6 +257,62 @@ def agent_dashboard(request):
         messages.error(request, "Please complete your registration.")
         return redirect('agents:agent_registration')
 
+    event_referral_participant = None
+    event_referral_referrals = []
+    force_lock_all_features = False
+    event_referral_share_url = ''
+    if agent:
+        try:
+            from django.contrib.auth import logout
+            from apps.agents.views.auth import PORTAL_AGENT, portal_error
+            from apps.event_referral.models import EventReferral, EventReferralParticipant
+            from apps.event_referral.services.participant_service import (
+                BLOCK_MESSAGE,
+                evaluate_agent,
+                force_lock_all_dashboard_features,
+                get_participant_for_agent,
+            )
+            event_referral_participant = get_participant_for_agent(agent)
+            if event_referral_participant:
+                if event_referral_participant.status == EventReferralParticipant.STATUS_ACTIVE:
+                    evaluate_agent(agent, block_on_expire=True)
+                    agent.refresh_from_db()
+                    event_referral_participant.refresh_from_db()
+                if event_referral_participant.status == EventReferralParticipant.STATUS_BLOCKED:
+                    logout(request)
+                    portal_error(request, BLOCK_MESSAGE, PORTAL_AGENT)
+                    return redirect('agents:agent_login')
+                event_referral_referrals = list(
+                    EventReferral.objects.filter(participant=event_referral_participant).order_by('-registered_at')[:50]
+                )
+                force_lock_all_features = force_lock_all_dashboard_features(event_referral_participant)
+                event_referral_share_url = request.build_absolute_uri(
+                    reverse('agents:agent_registration_referral', kwargs={'ref_code': event_referral_participant.referral_code})
+                )
+        except Exception as ev_err:
+            logger.warning('Event referral dashboard context failed: %s', ev_err)
+
+    event_referral_whatsapp_url = ''
+    if event_referral_participant and event_referral_share_url and agent:
+        req_n = event_referral_participant.required_paid_referrals
+        agent_label = (agent.fullname or 'Your friend').strip()
+        wa_lines = [
+            f'Hello!',
+            '',
+            f'I am {agent_label}, a PadosiAgent insurance advisor.',
+            '',
+            'Register as an agent on PadosiAgent using my referral link and complete your plan payment:',
+            event_referral_share_url,
+            '',
+            f'Your paid registration counts toward my referral goal ({req_n} agents). Thank you!',
+        ]
+        event_referral_whatsapp_url = (
+            'https://api.whatsapp.com/send?text=' + quote('\n'.join(wa_lines))
+        )
+
+    event_referral_welcome = bool(request.session.pop('event_referral_welcome_dashboard', False))
+    suppress_review_share = bool(request.session.pop('suppress_review_share_popup', False))
+
     # Only re-check Razorpay if payment has not been completed yet (netbanking / lost callback recovery).
     if agent:
         from apps.agents.services.account_auth import agent_has_completed_payment
@@ -466,7 +523,6 @@ def agent_dashboard(request):
     except Exception:
         feature_unlock_hints_json = '[]'
 
-    from urllib.parse import quote
     from apps.agents.services.qr_branded import build_qr_target_url
     from apps.agents.services.review_growth import (
         QR_TYPE_LABELS,
@@ -594,7 +650,14 @@ def agent_dashboard(request):
         'qr_service_enabled': qr_access_for_plan(agent_plan),
         'qr_allow_download': qr_access_for_plan(agent_plan, download=True),
         'qr_items': qr_items,
-        'show_review_share_popup': should_show_popup(agent),
+        'show_review_share_popup': (
+            should_show_popup(agent)
+            and not suppress_review_share
+            and not (
+                event_referral_participant
+                and event_referral_participant.status == 'active'
+            )
+        ),
         'show_starter_upgrade_cta': should_show_upgrade_cta(agent),
         'show_starter_upgrade_progress': should_show_upgrade_progress(agent),
         'review_growth_status': growth_status,
@@ -629,6 +692,13 @@ def agent_dashboard(request):
         'coming_soon_html': coming_soon_html,
         'upcoming_features': upcoming_features,
         'has_upcoming_features': bool(upcoming_features),
+        'event_referral_participant': event_referral_participant,
+        'event_referral_referrals': event_referral_referrals,
+        'force_lock_all_features': force_lock_all_features,
+        'event_referral_share_url': event_referral_share_url,
+        'event_referral_whatsapp_url': event_referral_whatsapp_url,
+        'event_referral_welcome': event_referral_welcome,
+        'paldi_event_name': 'Paldi',
     }
 
     return render(request, 'agents/dashboard.html', context)

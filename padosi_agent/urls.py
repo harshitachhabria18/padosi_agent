@@ -40,6 +40,8 @@ urlpatterns = [
     path('django-admin/', admin.site.urls),
     path('agent/championship/', include('apps.referral_championship.urls')),
     path('admin/championship/', include('apps.referral_championship.urls_admin')),
+    path('event-registration/', include('apps.event_referral.urls')),
+    path('admin/event-referral/', include('apps.event_referral.urls_admin')),
     path('', include('apps.admin_panel.urls')),
     path('', include('apps.agents.urls')),
     path('events/', include('apps.agents.urls_events')),

@@ -139,13 +139,13 @@
             <div class="d-flex align-items-center gap-2 flex-wrap">
                 {# Sort buttons #}
                 <div class="d-flex gap-1">
-                    <a href="?sort=newest{% if search %}&search={{ search }}{% endif %}" class="sort-btn {% if sort_by == 'newest' %}active{% endif %}">
+                    <a href="?sort=newest{% if event_filter and event_filter != 'All Events' %}&event_id={{ event_filter|urlencode }}{% endif %}{% if search %}&search={{ search }}{% endif %}" class="sort-btn {% if sort_by == 'newest' %}active{% endif %}">
                         <i class="fa-solid fa-arrow-down me-1"></i>Newest
                     </a>
-                    <a href="?sort=oldest{% if search %}&search={{ search }}{% endif %}" class="sort-btn {% if sort_by == 'oldest' %}active{% endif %}">
+                    <a href="?sort=oldest{% if event_filter and event_filter != 'All Events' %}&event_id={{ event_filter|urlencode }}{% endif %}{% if search %}&search={{ search }}{% endif %}" class="sort-btn {% if sort_by == 'oldest' %}active{% endif %}">
                         <i class="fa-solid fa-arrow-up me-1"></i>Oldest
                     </a>
-                    <a href="?sort=waiting{% if search %}&search={{ search }}{% endif %}" class="sort-btn {% if sort_by == 'waiting' %}active{% endif %}">
+                    <a href="?sort=waiting{% if event_filter and event_filter != 'All Events' %}&event_id={{ event_filter|urlencode }}{% endif %}{% if search %}&search={{ search }}{% endif %}" class="sort-btn {% if sort_by == 'waiting' %}active{% endif %}">
                         <i class="fa-solid fa-hourglass me-1"></i>Longest Wait
                     </a>
                 </div>
@@ -349,6 +349,14 @@
                                     <i class="fa-solid fa-xmark" style="font-size:9px;"></i>
                                     Failed
                                 </span>
+                            {% elif agent.status == 'event_challenge' %}
+                                <span class="payment-badge payment-none" style="background:#ecfdf5;color:#047857;border-color:#6ee7b7;">
+                                    <i class="fa-solid fa-bolt" style="font-size:9px;"></i>
+                                    Paldi challenge
+                                </span>
+                                {% if agent.event_label %}
+                                <div style="font-size:10px; color:#166534; font-weight:600; margin-top:3px;">{{ agent.event_label }}</div>
+                                {% endif %}
                             {% else %}
                                 <span class="payment-badge payment-none">
                                     <i class="fa-solid fa-minus" style="font-size:9px;"></i>

@@ -1,0 +1,113 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Event Referral — Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <h2 class="mb-0">Paldi / Event Registration</h2>
+        <span class="badge {% if campaign.is_enabled %}bg-success{% else %}bg-secondary{% endif %} fs-6 px-3 py-2">
+            {% if campaign.is_enabled %}Page LIVE{% else %}Page OFF{% endif %}
+        </span>
+    </div>
+
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-4">
+            <div>
+                <h5 class="mb-1">Public registration page</h5>
+                <p class="text-muted small mb-2">Turn the event form on or off instantly. When off, <code>/event-registration/</code> shows a closed message and new signups are blocked.</p>
+                <a href="{{ event_registration_public_url }}" target="_blank" rel="noopener" class="small fw-semibold">{{ event_registration_public_url }}</a>
+            </div>
+            <form method="post" action="{% url 'admin_event_referral_toggle' %}" class="d-flex align-items-center gap-3">
+                {% csrf_token %}
+                <div class="form-check form-switch form-switch-lg mb-0">
+                    <input class="form-check-input" type="checkbox" role="switch" id="liveToggleVisual" {% if campaign.is_enabled %}checked{% endif %} disabled style="width:3rem;height:1.5rem;cursor:not-allowed;opacity:1;">
+                    <label class="form-check-label fw-bold ms-1" for="liveToggleVisual">
+                        {% if campaign.is_enabled %}Active{% else %}Inactive{% endif %}
+                    </label>
+                </div>
+                <button type="submit" class="btn {% if campaign.is_enabled %}btn-outline-danger{% else %}btn-success{% endif %} px-4">
+                    {% if campaign.is_enabled %}Turn OFF{% else %}Turn ON{% endif %}
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3"><div class="card p-3"><strong>Total</strong><div class="h4 mb-0">{{ stats.total }}</div></div></div>
+        <div class="col-md-3"><div class="card p-3"><strong>Active</strong><div class="h4 mb-0 text-primary">{{ stats.active }}</div></div></div>
+        <div class="col-md-3"><div class="card p-3"><strong>Won</strong><div class="h4 mb-0 text-success">{{ stats.won }}</div></div></div>
+        <div class="col-md-3"><div class="card p-3"><strong>Blocked</strong><div class="h4 mb-0 text-danger">{{ stats.blocked }}</div></div></div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">Campaign settings</div>
+        <div class="card-body">
+            <form method="post" action="{% url 'admin_event_referral_settings' %}">
+                {% csrf_token %}
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" name="is_enabled" id="is_enabled" role="switch" {% if campaign.is_enabled %}checked{% endif %}>
+                    <label class="form-check-label" for="is_enabled">Registration open (same as toggle above)</label>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Window (hours)</label>
+                        <input type="number" name="window_hours" class="form-control" value="{{ campaign.window_hours }}" min="1">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Required paid referrals</label>
+                        <input type="number" name="required_paid_referrals" class="form-control" value="{{ campaign.required_paid_referrals }}" min="1">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Reward plan slug</label>
+                        <input type="text" name="reward_plan_slug" class="form-control" value="{{ campaign.reward_plan_slug }}">
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <label class="form-label">Page title</label>
+                    <input type="text" name="page_title" class="form-control" value="{{ campaign.page_title }}">
+                </div>
+                <div class="mt-3">
+                    <label class="form-label">Instructions (stored for admin; optional on public page)</label>
+                    <textarea name="page_instructions" class="form-control" rows="3">{{ campaign.page_instructions }}</textarea>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Save settings</button>
+            </form>
+            <p class="text-muted small mt-2 mb-0">Timer and referral count changes apply to new registrations only. Existing participants keep their snapshotted deadline and target.</p>
+            <p class="text-muted small mt-2 mb-0">WhatsApp link previews use <code>/static/img/paldi_48hr_championship_og.jpg</code> (48 HR Championship top artwork).</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Participants</div>
+        <div class="table-responsive">
+            <table class="table table-sm mb-0">
+                <thead><tr><th>Agent</th><th>Code</th><th>Deadline</th><th>Progress</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody>
+                {% for p in participants %}
+                <tr>
+                    <td>{{ p.agent.fullname }}<br><small class="text-muted">{{ p.agent.email }}</small></td>
+                    <td><code>{{ p.referral_code }}</code></td>
+                    <td>{{ p.deadline_at }}</td>
+                    <td>{{ p.paid_count }} / {{ p.required_paid_referrals }}</td>
+                    <td>{{ p.status }}</td>
+                    <td class="text-nowrap">
+                        <form method="post" action="{% url 'admin_event_referral_extend' p.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="extend_hours" value="24">
+                            <button class="btn btn-sm btn-outline-secondary" type="submit">+24h</button>
+                        </form>
+                        <form method="post" action="{% url 'admin_event_referral_grant' p.id %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-success" type="submit">Grant plan</button></form>
+                        <form method="post" action="{% url 'admin_event_referral_restore' p.id %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-primary" type="submit">Restore</button></form>
+                        <form method="post" action="{% url 'admin_event_referral_block' p.id %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-danger" type="submit">Block</button></form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-muted text-center">No participants yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

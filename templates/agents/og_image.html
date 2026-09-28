@@ -88,11 +88,11 @@
             flex-wrap: wrap;
         }
         .og-name {
-            font-size: 36px;
+            font-size: 34px;
             font-weight: 800;
             color: #0f172a;
-            line-height: 1.15;
-            letter-spacing: -0.6px;
+            line-height: 1.12;
+            letter-spacing: -0.5px;
             margin: 0;
         }
         .agent-badge {
@@ -144,21 +144,22 @@
             font-size: 18px;
         }
         .rating-score {
-            font-size: 17px;
+            font-size: 19px;
             font-weight: 800;
             color: #0f172a;
         }
         .rating-count {
-            font-size: 15px;
-            color: #64748b;
+            font-size: 16px;
+            color: #475569;
+            font-weight: 600;
         }
         .og-location {
             display: flex;
             align-items: center;
             gap: 6px;
-            color: #64748b;
-            font-size: 15px;
-            font-weight: 500;
+            color: #475569;
+            font-size: 16px;
+            font-weight: 600;
         }
         .location-icon {
             color: #94a3b8;
@@ -174,14 +175,15 @@
         }
         .og-stat-box {
             background: #f8fafc;
-            border: 1px solid #e2e8f0;
+            border: 2px solid #cbd5e1;
             border-radius: 14px;
-            padding: 12px 8px;
+            padding: 14px 6px 12px;
             text-align: center;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            min-height: 88px;
         }
         .og-stat-box.stat-box--amount {
             background: #f0fdf4;
@@ -194,18 +196,19 @@
             color: #166534;
         }
         .og-stat-num {
-            font-size: 22px;
+            font-size: 30px;
             font-weight: 800;
             color: #0f172a;
-            line-height: 1.1;
+            line-height: 1.05;
+            letter-spacing: -0.4px;
         }
         .og-stat-lbl {
-            font-size: 10px;
-            font-weight: 700;
-            color: #94a3b8;
+            font-size: 13px;
+            font-weight: 800;
+            color: #475569;
             text-transform: uppercase;
-            letter-spacing: 0.6px;
-            margin-top: 4px;
+            letter-spacing: 0.45px;
+            margin-top: 6px;
         }
 
         /* Tags Row */
@@ -220,11 +223,11 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 6px 16px;
+            padding: 8px 18px;
             border-radius: 9999px;
-            font-size: 13.5px;
-            font-weight: 700;
-            border: 1.5px solid;
+            font-size: 15px;
+            font-weight: 800;
+            border: 2px solid;
             white-space: nowrap;
         }
         .segment-pill--health {
@@ -258,18 +261,26 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding-top: 14px;
-            border-top: 1px solid #f1f5f9;
-            font-size: 13px;
-            color: #94a3b8;
-            font-weight: 500;
+            gap: 16px;
+            padding-top: 12px;
+            border-top: 2px solid #e2e8f0;
+            font-size: 16px;
+            color: #334155;
+            font-weight: 700;
+            line-height: 1.25;
+        }
+        .og-footer-tagline {
+            flex: 1;
+            min-width: 0;
         }
         .og-footer-brand {
             font-weight: 800;
+            font-size: 17px;
             color: #1e3a8a;
             display: flex;
             align-items: center;
             gap: 6px;
+            white-space: nowrap;
         }
     </style>
 </head>
@@ -355,7 +366,7 @@
 
             <!-- Footer Strip -->
             <div class="og-footer-strip">
-                <span>Connect directly · Zero Middlemen · Instant WhatsApp & Calls</span>
+                <span class="og-footer-tagline">Direct WhatsApp &amp; Calls · Zero middlemen</span>
                 <span class="og-footer-brand">
                     <i class="fas fa-shield-alt"></i> PadosiAgent Verified
                 </span>

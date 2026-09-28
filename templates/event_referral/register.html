@@ -1,0 +1,81 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ campaign.page_title|default:"Event Registration" }} — PadosiAgent</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f1f5f9; min-height: 100vh; padding: 40px 16px; }
+        .card-wrap { max-width: 640px; margin: 0 auto; background: #fff; border-radius: 16px; box-shadow: 0 12px 40px rgba(15,23,42,0.08); padding: 32px; }
+        .brand { color: #0f766e; font-weight: 800; font-size: 1.5rem; text-align: center; margin-bottom: 8px; }
+        .seg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .seg-item input { position: absolute; opacity: 0; }
+        .seg-box { border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 12px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 600; }
+        .seg-item input:checked + .seg-box { border-color: #0f766e; background: #ecfdf5; color: #0f766e; }
+    </style>
+</head>
+<body>
+<div class="card-wrap">
+    <div class="brand"><i class="fas fa-calendar-check me-2"></i>{{ campaign.page_title|default:"Event Registration" }}</div>
+    {% if registration_closed %}
+    <div class="alert alert-warning text-center">Registration is closed. Please check back later.</div>
+    {% else %}
+    <p class="text-muted text-center mb-4">{{ campaign.page_instructions }}</p>
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    <form method="post" action="">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label class="form-label">Full name</label>
+            <input type="text" name="fullname" class="form-control" required value="{{ form.fullname|default:'' }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control" required value="{{ form.email|default:'' }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Mobile (10 digits — your login password)</label>
+            <input type="tel" name="mobile" class="form-control" required maxlength="10" pattern="[0-9]{10}" value="{{ form.mobile|default:'' }}">
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Pincode</label>
+                <input type="text" name="agent_pincode" class="form-control" required value="{{ form.agent_pincode|default:'' }}">
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">State</label>
+                <input type="text" name="state" class="form-control" required value="{{ form.state|default:'' }}">
+            </div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Experience</label>
+            <select name="experience_range" class="form-select">
+                <option value="">Select</option>
+                <option value="0-2">0–2 years</option>
+                <option value="3-5">3–5 years</option>
+                <option value="6-10">6–10 years</option>
+                <option value="10+">10+ years</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label d-block">Insurance segments</label>
+            <div class="seg-grid">
+                {% for slug, label in segments %}
+                <label class="seg-item position-relative">
+                    <input type="checkbox" name="segments[]" value="{{ slug }}">
+                    <div class="seg-box">{{ label }}</div>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        <button type="submit" class="btn btn-success w-100 py-2 fw-bold">Register &amp; open dashboard</button>
+    </form>
+    {% endif %}
+</div>
+</body>
+</html>

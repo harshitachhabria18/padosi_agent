@@ -2,16 +2,16 @@
 {% load static %}
 
 {% block title %}{{ agentDisplayName }} | Agent Card | PadosiAgent{% endblock %}
-{% block og_title %}{{ agentDisplayName }} | Digital Visiting Card | PadosiAgent{% endblock %}
-{% block og_description %}Connect with {{ agentDisplayName }}, Licensed Insurance Advisor on PadosiAgent. View services, ratings, and instant contact options.{% endblock %}
+{% block og_title %}&#8203;{% endblock %}
+{% block og_description %}&#8203;{% endblock %}
 {% block og_url %}{{ request.build_absolute_uri }}{% endblock %}
 {% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% url 'agents:agent_og_image' agent.id %}{% endblock %}
 {% block og_type %}website{% endblock %}
 {% block og_image_width %}1200{% endblock %}
 {% block og_image_height %}630{% endblock %}
 {% block twitter_card %}summary_large_image{% endblock %}
-{% block twitter_title %}{{ agentDisplayName }} | Digital Visiting Card | PadosiAgent{% endblock %}
-{% block twitter_description %}Connect with {{ agentDisplayName }}, Licensed Insurance Advisor on PadosiAgent.{% endblock %}
+{% block twitter_title %}&#8203;{% endblock %}
+{% block twitter_description %}&#8203;{% endblock %}
 {% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% url 'agents:agent_og_image' agent.id %}{% endblock %}
 
 {% block extra_head %}

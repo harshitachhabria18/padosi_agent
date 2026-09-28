@@ -128,6 +128,88 @@
     background: #0369a1;
     transform: translateY(-2px);
 }
+
+.event-referral-panel {
+    background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
+    color: #fff;
+}
+.event-referral-panel-text {
+    color: #ecfdf5;
+    font-size: 15px;
+    line-height: 1.55;
+    margin: 0;
+    max-width: 560px;
+}
+.event-referral-timer-box {
+    background: rgba(255, 255, 255, 0.18);
+    min-width: 140px;
+}
+.event-referral-timer-label {
+    color: rgba(255, 255, 255, 0.85);
+    letter-spacing: 0.06em;
+}
+.event-referral-progress-pill {
+    background: rgba(255, 255, 255, 0.95);
+    color: #115e59;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-size: 14px;
+    display: inline-block;
+}
+.event-referral-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: stretch;
+    width: 100%;
+}
+.event-referral-actions .btn,
+.event-referral-actions .event-referral-link-input {
+    flex: 1 1 auto;
+    min-width: 140px;
+}
+.event-referral-link-input {
+    font-size: 12px;
+    border-radius: 8px;
+    border: none;
+    padding: 8px 12px;
+}
+.event-referral-ref-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+}
+.event-referral-ref-card:last-child { margin-bottom: 0; }
+@media (max-width: 767.98px) {
+    .event-referral-panel { padding: 16px !important; }
+    .event-referral-panel-head {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+    .event-referral-timer-box {
+        width: 100%;
+        min-width: 0;
+        padding: 12px !important;
+    }
+    .event-referral-actions {
+        flex-direction: column;
+    }
+    .event-referral-actions .btn,
+    .event-referral-actions .event-referral-link-input {
+        width: 100%;
+        min-width: 0;
+        max-width: none !important;
+    }
+    .event-referral-progress-pill {
+        width: 100%;
+        text-align: center;
+    }
+    #event-referral-mobile-refs { display: block !important; }
+}
+#event-referral-mobile-refs { display: none; }
 </style>
 {% endblock %}
 
@@ -137,6 +219,80 @@
 {% with display_initial=display_name|slice:":1"|upper %}
 <div class="agent-dashboard-wrapper">
     <div class="container py-4">
+        {% if event_referral_welcome and event_referral_participant and not admin_lock_preview %}
+        <div class="alert alert-success border-0 shadow-sm mb-3" style="border-radius:12px;">
+            <strong>Welcome to your dashboard!</strong> Share your referral link below. When
+            <strong>{{ event_referral_participant.required_paid_referrals }}</strong> agents complete payment before the timer ends, your Basic plan unlocks.
+        </div>
+        {% endif %}
+        {% if event_referral_participant and not admin_lock_preview %}
+        <div class="card border-0 shadow-sm mb-4" id="event-referral-challenge-panel" style="border-radius:16px; overflow:hidden;">
+            <div class="card-body p-4 event-referral-panel">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 event-referral-panel-head">
+                    <div class="flex-grow-1" style="min-width: 0;">
+                        <div class="d-flex align-items-center flex-wrap gap-2 mb-2">
+                            <h4 class="mb-0 font-weight-bold text-white">{{ paldi_event_name|default:"Paldi" }} Challenge</h4>
+                            <span class="event-referral-progress-pill">{{ event_referral_participant.paid_count }} / {{ event_referral_participant.required_paid_referrals }} paid</span>
+                        </div>
+                        {% if event_referral_participant.status == 'won' %}
+                        <p class="mb-0 event-referral-panel-text">Congratulations! Your Basic plan is unlocked.</p>
+                        {% else %}
+                        <p class="mb-0 event-referral-panel-text">
+                            Refer <strong class="text-white">{{ event_referral_participant.required_paid_referrals }}</strong> insurance agents who
+                            <strong class="text-white">complete payment</strong> before the timer ends to unlock your Basic plan.
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% if event_referral_participant.status == 'active' %}
+                    <div class="text-center px-3 py-2 rounded event-referral-timer-box">
+                        <div class="small text-uppercase event-referral-timer-label">Time left</div>
+                        <div id="event-referral-countdown" class="h4 mb-0 font-weight-bold text-white" data-deadline="{{ event_referral_participant.deadline_at|date:'c' }}">--:--:--</div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if event_referral_share_url %}
+                <div class="mt-3 event-referral-actions">
+                    {% if event_referral_whatsapp_url %}
+                    <a class="btn btn-success btn-sm font-weight-bold" target="_blank" rel="noopener" href="{{ event_referral_whatsapp_url }}"><i class="fab fa-whatsapp mr-1"></i>Share on WhatsApp</a>
+                    {% endif %}
+                    <button type="button" class="btn btn-light btn-sm font-weight-bold" id="event-referral-copy"><i class="fas fa-copy mr-1"></i>Copy referral link</button>
+                    <input type="text" class="form-control form-control-sm event-referral-link-input" id="event-referral-link" readonly value="{{ event_referral_share_url }}">
+                </div>
+                {% endif %}
+            </div>
+            {% if event_referral_referrals %}
+            <div class="table-responsive d-none d-md-block">
+                <table class="table table-sm mb-0">
+                    <thead class="thead-light"><tr><th>Name</th><th>Contact</th><th>Plan</th><th>Payment</th><th>Counted</th></tr></thead>
+                    <tbody>
+                    {% for ref in event_referral_referrals %}
+                    <tr>
+                        <td>{{ ref.snapshot_name|default:"—" }}</td>
+                        <td>{{ ref.snapshot_mobile|default:ref.snapshot_email }}</td>
+                        <td>{{ ref.snapshot_plan|default:"—" }}</td>
+                        <td>{{ ref.snapshot_payment_status|default:ref.state }}</td>
+                        <td>{% if ref.counts %}<span class="text-success">Yes</span>{% else %}<span class="text-muted">No</span>{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="p-3 bg-white" id="event-referral-mobile-refs">
+                <div class="small font-weight-bold text-muted mb-2 text-uppercase">Your referrals</div>
+                {% for ref in event_referral_referrals %}
+                <div class="event-referral-ref-card">
+                    <div class="font-weight-bold text-dark">{{ ref.snapshot_name|default:"Agent" }}</div>
+                    <div class="text-muted small">{{ ref.snapshot_mobile|default:ref.snapshot_email }}</div>
+                    <div class="d-flex justify-content-between align-items-center mt-2 small">
+                        <span>{{ ref.snapshot_payment_status|default:ref.state }}</span>
+                        {% if ref.counts %}<span class="text-success font-weight-bold">Counted</span>{% else %}<span class="text-muted">Pending</span>{% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
         <!-- Dashboard Header -->
         <div class="dashboard-header-con d-flex justify-content-between align-items-center mb-5 flex-wrap px-2">
             <div class="d-flex align-items-center">
@@ -1221,7 +1377,9 @@
         </div>
     </div>
 </div>
+{% if show_review_share_popup %}
 {% include 'agents/partials/review_share_popup.html' %}
+{% endif %}
 {% include 'agents/partials/dashboard_upgrade_plan_modal.html' %}
 {% endblock %}
 
@@ -1814,6 +1972,8 @@
 
     // Handle SubscriptionPlan Feature Locks Dynamically for Dashboard
     {% if not admin_lock_preview %}
+    const forceEventReferralLock = {% if force_lock_all_features %}true{% else %}false{% endif %};
+    const eventReferralTarget = {% if event_referral_participant %}{{ event_referral_participant.required_paid_referrals }}{% else %}5{% endif %};
     const featureUnlockHints = {{ feature_unlock_hints_json|default:"{}"|safe }};
     const planPermissions = {
       recentLeads: {% if not agent_plan or agent_plan.show_recent_leads %}true{% else %}false{% endif %},
@@ -1840,6 +2000,10 @@
       profileAnalytics: {% if not agent_plan or agent_plan.show_profile_analytics %}true{% else %}false{% endif %}
     };
 
+    if (forceEventReferralLock) {
+      Object.keys(planPermissions).forEach(function(k) { planPermissions[k] = false; });
+    }
+
     const canOfferUpgrade = {% if show_starter_upgrade_cta %}true{% else %}false{% endif %};
     const showReviewProgress = {% if show_starter_upgrade_progress %}true{% else %}false{% endif %};
     const reviewGrowthStatus = {{ review_growth_status_json|default:"{}"|safe }};
@@ -1857,6 +2021,16 @@
     }
 
     function showLockedFeaturePopup(name, hintKey) {
+      if (forceEventReferralLock) {
+        Swal.fire({
+          iconHtml: '<i class="fas fa-users" style="font-size:2rem;color:#0d9488;"></i>',
+          title: 'Complete your referral challenge',
+          html: '<p style="color:#334155;font-size:15px;line-height:1.55;margin:0;">Refer <strong>' + eventReferralTarget + '</strong> agents who complete payment before the timer ends to unlock your Basic plan and dashboard features.</p>',
+          confirmButtonColor: '#0d9488',
+          confirmButtonText: 'Got it'
+        });
+        return;
+      }
       let html = '';
       let title = (name || 'This section') + ' is locked';
       let confirmText = 'OK';
@@ -2087,6 +2261,42 @@
             }
         }
     }
+
+    if (forceEventReferralLock) {
+      lockSection($('#overview-content'), 'Dashboard', '');
+      lockSection($('#profile-content'), 'Profile', '');
+    }
+
+    (function initEventReferralPanel() {
+      var cd = document.getElementById('event-referral-countdown');
+      if (!cd) return;
+      var deadline = cd.getAttribute('data-deadline');
+      if (!deadline) return;
+      var end = new Date(deadline).getTime();
+      function tick() {
+        var diff = end - Date.now();
+        if (diff <= 0) {
+          cd.textContent = '00:00:00';
+          return;
+        }
+        var h = Math.floor(diff / 3600000);
+        var m = Math.floor((diff % 3600000) / 60000);
+        var s = Math.floor((diff % 60000) / 1000);
+        cd.textContent = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+      }
+      tick();
+      setInterval(tick, 1000);
+      var copyBtn = document.getElementById('event-referral-copy');
+      var linkInput = document.getElementById('event-referral-link');
+      if (copyBtn && linkInput) {
+        copyBtn.addEventListener('click', function() {
+          linkInput.select();
+          linkInput.setSelectionRange(0, 99999);
+          try { document.execCommand('copy'); } catch (e) {}
+          if (navigator.clipboard) navigator.clipboard.writeText(linkInput.value);
+        });
+      }
+    })();
     {% endif %}
     });
 </script>

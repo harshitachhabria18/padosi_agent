@@ -2,21 +2,28 @@
 {% load static %}
 {% block pwa_manifest %}{% endblock %}
 
-{% block title %}{% if referring_agent %}{% if referring_agent.is_championship %}Agent Championship — Invited by {{ referring_agent.name }} | PadosiAgent{% else %}You're Invited by {{ referring_agent.name }} | PadosiAgent{% endif %}{% else %}Agent Registration | PadosiAgent{% endif %}{% endblock %}
+{% block title %}{% if event_referral_mode %}{{ event_referral_campaign.page_title|default:"Event Registration" }} | PadosiAgent{% elif referring_agent %}{% if referring_agent.is_championship %}Agent Championship — Invited by {{ referring_agent.name }} | PadosiAgent{% else %}You're Invited by {{ referring_agent.name }} | PadosiAgent{% endif %}{% else %}Agent Registration | PadosiAgent{% endif %}{% endblock %}
 
-{% block og_title %}{% if referring_agent %}{% if referring_agent.is_championship %}Agent Championship — Invited by {{ referring_agent.name }} | PadosiAgent{% else %}You're Invited by {{ referring_agent.name }} - Join PadosiAgent{% endif %}{% else %}Agent Registration | PadosiAgent{% endif %}{% endblock %}
-{% block og_description %}{% if referring_agent %}{% if referring_agent.is_championship %}Participate in the Agent Championship! Refer, Invite, Grow & Win - Gold Coin, Silver Coin, Domestic & International Trips!{% else %}Register today on PadosiAgent with {{ referring_agent.name }}'s invitation. Grow your insurance & investment business.{% endif %}{% else %}Register as a PadosiAgent Insurance & Investment Advisor and grow your financial business.{% endif %}{% endblock %}
+{% block og_title %}{% if use_paldi_og %}{{ paldi_og_title }}{% elif referring_agent %}{% if referring_agent.is_championship %}Agent Championship — Invited by {{ referring_agent.name }} | PadosiAgent{% else %}You're Invited by {{ referring_agent.name }} - Join PadosiAgent{% endif %}{% else %}Agent Registration | PadosiAgent{% endif %}{% endblock %}
+{% block og_description %}{% if use_paldi_og %}{{ paldi_og_description }}{% elif referring_agent %}{% if referring_agent.is_championship %}Participate in the Agent Championship! Refer, Invite, Grow & Win - Gold Coin, Silver Coin, Domestic & International Trips!{% else %}Register today on PadosiAgent with {{ referring_agent.name }}'s invitation. Grow your insurance & investment business.{% endif %}{% else %}Register as a PadosiAgent Insurance & Investment Advisor and grow your financial business.{% endif %}{% endblock %}
 {% block og_url %}{{ request.build_absolute_uri }}{% endblock %}
-{% block og_image %}{% if referring_agent and referring_agent.is_championship %}{{ request.scheme }}://{{ request.get_host }}/static/img/championship_og.jpg{% elif referring_agent.og_image_url %}{{ request.scheme }}://{{ request.get_host }}{{ referring_agent.og_image_url }}{% elif referring_agent.id %}{{ request.scheme }}://{{ request.get_host }}{% url 'agents:agent_og_image' referring_agent.id %}{% else %}{{ request.scheme }}://{{ request.get_host }}/static/images/image.png{% endif %}{% endblock %}
+{% block og_image %}{% if use_paldi_og %}{{ paldi_og_image_url }}{% elif referring_agent and referring_agent.is_championship %}{{ request.scheme }}://{{ request.get_host }}/static/img/championship_og.jpg{% elif referring_agent.og_image_url %}{{ request.scheme }}://{{ request.get_host }}{{ referring_agent.og_image_url }}{% elif referring_agent.id %}{{ request.scheme }}://{{ request.get_host }}{% url 'agents:agent_og_image' referring_agent.id %}{% else %}{{ request.scheme }}://{{ request.get_host }}/static/images/image.png{% endif %}{% endblock %}
+{% block og_image_width %}{% if use_paldi_og %}{{ paldi_og_width }}{% else %}1200{% endif %}{% endblock %}
+{% block og_image_height %}{% if use_paldi_og %}{{ paldi_og_height }}{% else %}630{% endif %}{% endblock %}
 
-{% block twitter_title %}{% if referring_agent %}{% if referring_agent.is_championship %}Agent Championship — Invited by {{ referring_agent.name }} | PadosiAgent{% else %}You're Invited by {{ referring_agent.name }} - Join PadosiAgent{% endif %}{% else %}Agent Registration | PadosiAgent{% endif %}{% endblock %}
-{% block twitter_description %}{% if referring_agent %}{% if referring_agent.is_championship %}Participate in the Agent Championship! Refer, Invite, Grow & Win - Gold Coin, Silver Coin, Domestic & International Trips!{% else %}Register today on PadosiAgent with {{ referring_agent.name }}'s invitation.{% endif %}{% else %}Register as a PadosiAgent Insurance & Investment Advisor.{% endif %}{% endblock %}
-{% block twitter_image %}{% if referring_agent and referring_agent.is_championship %}{{ request.scheme }}://{{ request.get_host }}/static/img/championship_og.jpg{% elif referring_agent.og_image_url %}{{ request.scheme }}://{{ request.get_host }}{{ referring_agent.og_image_url }}{% elif referring_agent.id %}{{ request.scheme }}://{{ request.get_host }}{% url 'agents:agent_og_image' referring_agent.id %}{% else %}{{ request.scheme }}://{{ request.get_host }}/static/images/image.png{% endif %}{% endblock %}
+{% block twitter_title %}{% if use_paldi_og %}{{ paldi_og_title }}{% elif referring_agent %}{% if referring_agent.is_championship %}Agent Championship — Invited by {{ referring_agent.name }} | PadosiAgent{% else %}You're Invited by {{ referring_agent.name }} - Join PadosiAgent{% endif %}{% else %}Agent Registration | PadosiAgent{% endif %}{% endblock %}
+{% block twitter_description %}{% if use_paldi_og %}{{ paldi_og_description }}{% elif referring_agent %}{% if referring_agent.is_championship %}Participate in the Agent Championship! Refer, Invite, Grow & Win - Gold Coin, Silver Coin, Domestic & International Trips!{% else %}Register today on PadosiAgent with {{ referring_agent.name }}'s invitation.{% endif %}{% else %}Register as a PadosiAgent Insurance & Investment Advisor.{% endif %}{% endblock %}
+{% block twitter_image %}{% if use_paldi_og %}{{ paldi_og_image_url }}{% elif referring_agent and referring_agent.is_championship %}{{ request.scheme }}://{{ request.get_host }}/static/img/championship_og.jpg{% elif referring_agent.og_image_url %}{{ request.scheme }}://{{ request.get_host }}{{ referring_agent.og_image_url }}{% elif referring_agent.id %}{{ request.scheme }}://{{ request.get_host }}{% url 'agents:agent_og_image' referring_agent.id %}{% else %}{{ request.scheme }}://{{ request.get_host }}/static/images/image.png{% endif %}{% endblock %}
 
 {% block chatbot_widget %}{% endblock %}
 
 {% block extra_head %}
-    {% if referring_agent and referring_agent.is_championship %}
+    {% if use_paldi_og %}
+    <meta property="og:image:secure_url" content="{{ paldi_og_image_url }}">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="{{ paldi_og_width }}">
+    <meta property="og:image:height" content="{{ paldi_og_height }}">
+    {% elif referring_agent and referring_agent.is_championship %}
     <meta property="og:image:secure_url" content="{{ request.scheme }}://{{ request.get_host }}/static/img/championship_og.jpg">
     <meta property="og:image:type" content="image/jpeg">
     <meta property="og:image:width" content="1024">
@@ -36,6 +43,30 @@
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
+    {% endif %}
+    {% if event_referral_mode %}
+    <style>
+        html.event-paldi-page,
+        html.event-paldi-page body {
+            overflow: hidden !important;
+            height: 100%;
+            max-height: 100dvh;
+            overscroll-behavior: none;
+        }
+        html.event-paldi-page #app-content {
+            overflow: hidden;
+            height: 100dvh;
+            max-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+        }
+        html.event-paldi-page .event-paldi-reg.glass-bg {
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+        }
+    </style>
+    <script>document.documentElement.classList.add('event-paldi-page');</script>
     {% endif %}
 {% endblock %}
 
@@ -309,6 +340,155 @@
                         -ms-overflow-style: none;
                         scrollbar-width: none;
                     }
+                    /* Paldi /event-registration/ — compact viewport layout */
+                    .event-paldi-reg.glass-bg {
+                        min-height: 100dvh;
+                        height: 100dvh;
+                        max-height: 100dvh;
+                        overflow: hidden;
+                        padding: 0.5rem 0.65rem;
+                        padding-top: max(0.5rem, env(safe-area-inset-top));
+                        padding-bottom: max(0.35rem, env(safe-area-inset-bottom));
+                        background: linear-gradient(165deg, #ecfdf5 0%, #f8fafc 42%, #eff6ff 100%);
+                    }
+                    .event-paldi-reg .event-paldi-shell {
+                        flex: 1;
+                        min-height: 0;
+                        max-height: 100%;
+                        overflow: hidden;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 0.5rem;
+                        width: 100%;
+                        max-width: 42rem;
+                    }
+                    .event-paldi-hero {
+                        flex-shrink: 0;
+                        text-align: center;
+                        padding: 0.35rem 0.5rem 0.15rem;
+                    }
+                    .event-paldi-hero__title {
+                        font-family: 'Outfit', sans-serif;
+                        font-size: 1.35rem;
+                        font-weight: 800;
+                        letter-spacing: -0.02em;
+                        color: #064e3b;
+                        margin: 0;
+                        line-height: 1.2;
+                    }
+                    @media (min-width: 640px) {
+                        .event-paldi-hero__title { font-size: 1.55rem; }
+                    }
+                    .event-paldi-hero__pills {
+                        display: flex;
+                        flex-wrap: wrap;
+                        justify-content: center;
+                        gap: 0.35rem;
+                        margin-top: 0.45rem;
+                    }
+                    .event-paldi-pill {
+                        font-size: 0.68rem;
+                        font-weight: 700;
+                        letter-spacing: 0.04em;
+                        text-transform: uppercase;
+                        padding: 0.28rem 0.55rem;
+                        border-radius: 999px;
+                        background: rgba(255, 255, 255, 0.85);
+                        color: #047857;
+                        border: 1px solid rgba(16, 185, 129, 0.35);
+                        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.12);
+                    }
+                    .event-paldi-form-wrap {
+                        flex: 1;
+                        min-height: 0;
+                        overflow-y: auto;
+                        overflow-x: hidden;
+                        -webkit-overflow-scrolling: touch;
+                        overscroll-behavior: contain;
+                        padding-bottom: 0.25rem;
+                        scrollbar-width: none;
+                        -ms-overflow-style: none;
+                    }
+                    .event-paldi-form-wrap::-webkit-scrollbar {
+                        display: none;
+                        width: 0;
+                        height: 0;
+                    }
+                    .event-paldi-reg .event-paldi-form-card {
+                        border-radius: 1rem;
+                        border: 1px solid rgba(16, 185, 129, 0.22);
+                        background: rgba(255, 255, 255, 0.92);
+                        box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+                    }
+                    .event-paldi-reg .event-paldi-live-card .p-3 {
+                        padding: 0.65rem !important;
+                    }
+                    @media (min-width: 640px) {
+                        .event-paldi-reg .event-paldi-live-card .p-3 { padding: 0.85rem !important; }
+                    }
+                    .event-paldi-reg .event-paldi-live-card .event-paldi-photo-btn {
+                        height: 4rem !important;
+                        width: 4rem !important;
+                    }
+                    @media (min-width: 640px) {
+                        .event-paldi-reg .event-paldi-live-card .event-paldi-photo-btn {
+                            height: 4.75rem !important;
+                            width: 4.75rem !important;
+                        }
+                    }
+                    .event-paldi-reg .event-paldi-login-hint {
+                        font-size: 0.75rem;
+                        margin-top: 0.5rem;
+                        text-align: center;
+                        color: hsl(var(--muted-foreground));
+                    }
+                    .reg-preview-overlay--paldi {
+                        height: 100dvh;
+                        max-height: 100dvh;
+                        overflow: hidden;
+                    }
+                    .reg-preview-overlay--paldi .reg-preview-scroll-zone {
+                        flex: 1;
+                        min-height: 0;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        overflow: hidden;
+                        padding: 0.75rem 0.75rem 5.75rem;
+                    }
+                    .reg-preview-overlay--paldi .reg-preview-stage {
+                        max-height: calc(100dvh - 6.5rem);
+                        align-content: center;
+                    }
+                    .reg-preview-overlay--paldi .reg-preview-slide--card {
+                        min-height: 0;
+                    }
+                    .reg-preview-overlay--paldi .reg-preview-slide--portfolio .reg-preview-portfolio-layout {
+                        max-height: calc(100dvh - 7rem);
+                        overflow: hidden;
+                    }
+                    .reg-preview-overlay--paldi .reg-preview-slide--portfolio .profile-view-wrapper {
+                        max-height: calc(100dvh - 10.5rem);
+                        overflow: hidden;
+                        transform: scale(0.68);
+                        transform-origin: top center;
+                        width: 100%;
+                    }
+                    @media (min-width: 640px) {
+                        .reg-preview-overlay--paldi .reg-preview-slide--portfolio .profile-view-wrapper {
+                            transform: scale(0.78);
+                            max-height: calc(100dvh - 9.5rem);
+                        }
+                    }
+                    @media (min-width: 1024px) {
+                        .reg-preview-overlay--paldi .reg-preview-slide--portfolio .profile-view-wrapper {
+                            transform: scale(0.88);
+                        }
+                    }
+                    .reg-preview-overlay--paldi .reg-preview-bottom-bar {
+                        bottom: max(0.85rem, env(safe-area-inset-bottom));
+                    }
                 </style>
     <!-- Registration spark celebration -->
     <link rel="stylesheet" href="{% static 'css/registration-celebration.css' %}">
@@ -328,8 +508,8 @@
 
 {% block content %}
     <div hx-history="false" hx-boost="false"
-        class="glass-bg min-h-screen flex flex-col pt-4 sm:pt-6 pb-12 px-2 sm:px-6 lg:px-8" x-data="agentRegistration()">
-        <div class="max-w-3xl w-full mx-auto flex flex-col items-center justify-center gap-4 lg:gap-7 pt-2 sm:pt-4">
+        class="glass-bg flex flex-col px-2 sm:px-6 lg:px-8{% if event_referral_mode %} event-paldi-reg{% else %} min-h-screen pt-4 sm:pt-6 pb-12{% endif %}" x-data="agentRegistration()">
+        <div class="max-w-3xl w-full mx-auto flex flex-col items-center justify-center{% if event_referral_mode %} event-paldi-shell{% else %} gap-4 lg:gap-7 pt-2 sm:pt-4{% endif %}">
 
             {% if referring_agent %}
             <!-- Invited By Agent Card -->
@@ -392,8 +572,22 @@
             {% endif %}
 
             <!-- Registration Card -->
-            <div class="w-full min-w-0">
-                {% if registration_swipe_enabled and registration_swipe_slides %}
+            <div class="w-full min-w-0{% if event_referral_mode %} event-paldi-form-wrap no-scrollbar{% endif %}">
+                {% if event_referral_mode and registration_closed %}
+                <div class="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 text-sm font-medium">
+                    Event registration is currently closed. Please check back later or contact support.
+                </div>
+                {% elif event_referral_mode %}
+                <header class="event-paldi-hero">
+                    <h1 class="event-paldi-hero__title">{{ event_referral_campaign.page_title|default:"Paldi Registration" }}</h1>
+                    <div class="event-paldi-hero__pills">
+                        <span class="event-paldi-pill">{{ event_referral_campaign.window_hours }}h challenge</span>
+                        <span class="event-paldi-pill">{{ event_referral_campaign.required_paid_referrals }} paid referrals</span>
+                        <span class="event-paldi-pill">Basic plan reward</span>
+                    </div>
+                </header>
+                {% endif %}
+                {% if registration_swipe_enabled and registration_swipe_slides and not event_referral_mode %}
                 <!-- Features Card Slider -->
                 <div x-data="featureSlider({{ registration_swipe_slides|length }})"
                 class="w-full overflow-hidden rounded-xl shadow-lg relative mb-6">
@@ -423,8 +617,8 @@
                 </div>
                 {% endif %}
 
-                <div class="border-0 sm:border border-border/60 shadow-none sm:shadow-xl bg-transparent sm:bg-card/95 backdrop-blur-none sm:backdrop-blur-sm rounded-none sm:rounded-xl overflow-visible sm:overflow-hidden">
-                    <div class="p-0 sm:px-6 sm:pb-6 sm:pt-6">
+                <div class="border-0 sm:border border-border/60 shadow-none sm:shadow-xl bg-transparent sm:bg-card/95 backdrop-blur-none sm:backdrop-blur-sm rounded-none sm:rounded-xl overflow-visible sm:overflow-hidden{% if event_referral_mode %} event-paldi-form-card{% endif %}">
+                    <div class="p-0 sm:px-6 sm:pb-6 sm:pt-6{% if event_referral_mode %} !px-3 !pb-3 !pt-2 sm:!px-4 sm:!pb-4 sm:!pt-3{% endif %}">
 
                         <!-- AGENT FORM -->
                         <div>
@@ -434,12 +628,12 @@
 
 
                                 <!-- Live Agent Card -->
-                                <div class="overflow-hidden rounded-xl border border-border bg-card shadow-lg transition-all">
+                                <div class="overflow-hidden rounded-xl border border-border bg-card shadow-lg transition-all{% if event_referral_mode %} event-paldi-live-card{% endif %}">
                                     <div class="p-3 sm:p-6">
                                         <!-- Identity Row -->
                                         <div class="flex items-start gap-2.5 sm:gap-4">
                                             <button type="button" @click="$refs.fileInput.click()"
-                                                class="relative h-[80px] w-[80px] sm:h-[110px] sm:w-[110px] shrink-0 overflow-hidden rounded-lg border-2 border-dashed border-primary/40 bg-primary/[0.06] transition-colors hover:border-primary">
+                                                class="relative h-[80px] w-[80px] sm:h-[110px] sm:w-[110px] shrink-0 overflow-hidden rounded-lg border-2 border-dashed border-primary/40 bg-primary/[0.06] transition-colors hover:border-primary{% if event_referral_mode %} event-paldi-photo-btn{% endif %}">
                                                 <template x-if="photoPreview">
                                                     <div>
                                                         <img :src="photoPreview" class="h-full w-full object-cover" />
@@ -900,7 +1094,7 @@
                                     </label>
                                 </div>
 
-                                <form id="step1Form" action="{% url 'agents:agent_register_step1' %}" method="POST"
+                                <form id="step1Form" action="{{ register_step1_url }}" method="POST"
                                     onsubmit="event.preventDefault(); return false;" @submit.prevent="validateAndOpenPreview()">
                                     {% csrf_token %}
                                     <input type="hidden" name="user_types[]" value="insurance_agent">
@@ -924,7 +1118,7 @@
 
                                     <button type="submit" :disabled="isSubmitting"
                                         class="mt-4 inline-flex w-full items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 h-12 text-base transition-all group">
-                                        <span x-text="isSubmitting ? 'Processing...' : 'Continue to Choose Plan'"></span>
+                                        <span x-text="isSubmitting ? 'Processing...' : (eventReferralMode ? 'Preview my Agent Card & Website' : 'Continue to Choose Plan')"></span>
                                         <i data-lucide="arrow-right"
                                             class="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1"
                                             x-show="!isSubmitting"></i>
@@ -933,7 +1127,7 @@
                             </div>
 
                             <!-- Step 2: Plan (Mirrors React App plan step) -->
-                            <div x-show="agentStep === 'plan'" class="space-y-4 sm:space-y-6" style="display: none;">
+                            <div x-show="agentStep === 'plan' && !eventReferralMode" class="space-y-4 sm:space-y-6" style="display: none;">
                                 <div class="text-center mb-6">
                                     <h3 class="text-lg font-bold text-foreground">Select your Plan</h3>
                                     <p class="text-sm text-muted-foreground mt-1">Unlock your live card and start getting
@@ -973,10 +1167,14 @@
                     </div>
                 </div>
 
+                {% if event_referral_mode %}
+                <p class="event-paldi-login-hint">Already registered? <a href="/agent-login" class="font-semibold text-primary hover:underline">Log in</a></p>
+                {% else %}
                 <div class="text-center mt-6">
                     <p class="text-sm text-muted-foreground">Already have an account? <a href="/agent-login"
                             class="font-semibold text-primary hover:underline">Login here</a></p>
                 </div>
+                {% endif %}
             </div>
         </div>
 
@@ -984,13 +1182,15 @@
         <template x-teleport="body">
         <div x-show="showPreviewModal" style="display: none;"
             class="reg-preview-overlay fixed inset-0 z-50 flex flex-col"
+            :class="eventReferralMode ? 'reg-preview-overlay--paldi' : ''"
             @keydown.escape.window="showPreviewModal = false"
             @touchstart.passive="onPreviewTouchStart($event)"
             @touchend="onPreviewTouchEnd($event)">
 
             <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-md" @click="showPreviewModal = false"></div>
 
-            <div class="relative z-10 flex-1 overflow-y-auto px-3 sm:px-6 pt-6 pb-28">
+            <div class="relative z-10 flex-1 px-3 sm:px-6 pt-4 sm:pt-5 pb-28 overflow-y-auto"
+                 :class="eventReferralMode ? 'reg-preview-scroll-zone !overflow-hidden !pb-0' : ''">
                 <div class="w-full mx-auto max-w-5xl reg-preview-stage">
 
                     <!-- Slide 0: Directory card only -->
@@ -1611,19 +1811,20 @@
                 </div>
             </div>
 
-            <div class="absolute bottom-5 sm:bottom-7 inset-x-0 z-20 flex flex-col items-center justify-center pointer-events-none gap-3">
+            <div class="absolute bottom-5 sm:bottom-7 inset-x-0 z-20 flex flex-col items-center justify-center pointer-events-none gap-2.5 reg-preview-bottom-bar"
+                 :class="eventReferralMode ? 'reg-preview-bottom-bar' : ''">
                 <div class="pointer-events-none flex items-center gap-2">
                     <span class="h-2 w-2 rounded-full transition-all duration-300"
                         :class="previewSlide === 0 ? 'bg-emerald-400 scale-110' : 'bg-white/40'"></span>
                     <span class="h-2 w-2 rounded-full transition-all duration-300"
                         :class="previewSlide === 1 ? 'bg-emerald-400 scale-110' : 'bg-white/40'"></span>
                 </div>
-                <div class="pointer-events-auto flex items-center justify-center gap-5 sm:gap-8 px-4">
+                <div class="pointer-events-auto flex items-center justify-center gap-4 sm:gap-8 px-4">
                     <button type="button" @click="cyclePreview(-1)" class="reg-preview-nav-btn" title="Previous" aria-label="Previous">
                         <i data-lucide="chevron-left" class="h-5 w-5"></i>
                     </button>
                     <button type="button" @click="submitStep1()" :disabled="isSubmitting" class="reg-preview-claim-btn">
-                        <span x-text="isSubmitting ? 'Processing...' : 'Claim now'"></span>
+                        <span x-text="isSubmitting ? 'Processing...' : (eventReferralMode ? 'Open my Dashboard' : 'Claim now')"></span>
                     </button>
                     <button type="button" @click="cyclePreview(1)" class="reg-preview-nav-btn" title="Next" aria-label="Next">
                         <i data-lucide="chevron-right" class="h-5 w-5"></i>
@@ -1708,7 +1909,7 @@
         // 2. Intercept HTMX history restore - force full reload for this page
         document.addEventListener('htmx:historyRestore', function (event) {
             // If HTMX is restoring this page from history cache, force a full reload
-            if (window.location.pathname.includes('agent-registration')) {
+            if (window.location.pathname.includes('agent-registration') || window.location.pathname.includes('event-registration')) {
                 event.preventDefault();
                 window.location.reload();
             }
@@ -1718,7 +1919,7 @@
         (function () {
             var origOnPopState = window.onpopstate;
             window.addEventListener('popstate', function (e) {
-                if (window.location.pathname.includes('agent-registration')) {
+                if (window.location.pathname.includes('agent-registration') || window.location.pathname.includes('event-registration')) {
                     e.stopImmediatePropagation();
                     window.location.reload();
                 }
@@ -1740,9 +1941,12 @@
                 agentStep: 'details',
                 errors: {},
                 selectedPlan: 'professional',
+                eventReferralMode: {% if event_referral_mode %}true{% else %}false{% endif %},
+                registrationClosed: {% if registration_closed %}true{% else %}false{% endif %},
+                postSubmitRedirect: '{% if event_referral_mode %}{% url "agents:agent_dashboard" %}{% else %}/chooseplan/{% endif %}',
                 config: {
-                    title: 'Become a PadosiAgent',
-                    description: 'Register to start getting leads and grow your business'
+                    title: {% if event_referral_mode %}'{{ event_referral_campaign.page_title|default:"Event Registration"|escapejs }}'{% else %}'Become a PadosiAgent'{% endif %},
+                    description: {% if event_referral_mode %}'{{ event_referral_campaign.page_instructions|default:"Register to join the referral challenge and unlock your dashboard."|escapejs }}'{% else %}'Register to start getting leads and grow your business'{% endif %}
                 },
 
                 // Form fields
@@ -1841,6 +2045,9 @@
                 },
 
                 async validateAndOpenPreview() {
+                    if (this.registrationClosed) {
+                        return Swal.fire('Closed', 'Event registration is currently closed.', 'info');
+                    }
                     const nameStr = this.name || '';
                     const emailStr = this.email || '';
                     const phoneStr = this.phone || '';
@@ -1882,7 +2089,7 @@
                     try {
                         const _draftForm = new FormData(document.getElementById('step1Form'));
                         if (this.photoFile) { _draftForm.append('photo', this.photoFile); }
-                        await fetch("{% url 'agents:agent_register_step1' %}", {
+                        await fetch("{{ register_step1_url }}", {
                             method: 'POST',
                             body: _draftForm,
                             headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
@@ -1894,8 +2101,10 @@
                         this.celebrationShowing = true;
                         window.showRegCelebration(this.name || '', {
                             duration: 2500,
-                            nextText: 'Opening your card preview…',
-                            message: 'You\'re all set! Preview your digital card and profile website next.',
+                            nextText: this.eventReferralMode ? 'Opening preview…' : 'Opening your card preview…',
+                            message: this.eventReferralMode
+                                ? 'Great! Preview your card and profile website.'
+                                : 'You\'re all set! Preview your digital card and profile website next.',
                             onComplete: function () {
                                 self.celebrationShowing = false;
                                 self.openPreviewModal();
@@ -1926,7 +2135,7 @@
 
                 schedulePreviewAutoAdvance() {
                     this.clearPreviewAutoTimer();
-                    if (this.previewAutoDone) return;
+                    if (this.previewAutoDone || this.eventReferralMode) return;
                     const delay = Number(this.previewAutoAdvanceMs);
                     this.previewAutoTimer = setTimeout(() => {
                         if (this.showPreviewModal && this.previewSlide === 0 && !this.previewAutoDone) {
@@ -2499,6 +2708,9 @@
                 },
 
                 async submitStep1() {
+                    if (this.registrationClosed) {
+                        return Swal.fire('Closed', 'Event registration is currently closed.', 'info');
+                    }
                     try {
                         const nameStr = this.name || '';
                         const emailStr = this.email || '';
@@ -2531,7 +2743,7 @@
                             formData.append('photo', this.photoFile);
                         }
 
-                        fetch("{% url 'agents:agent_register_step1' %}", {
+                        fetch("{{ register_step1_url }}", {
                             method: 'POST',
                             body: formData,
                             headers: {
@@ -2550,7 +2762,21 @@
                                 if (data && data.success) {
                                     this.showPreviewModal = false;
                                     this.isSubmitting = false;
-                                    window.location.href = data.redirect || '/chooseplan';
+                                    const target = data.redirect || this.postSubmitRedirect;
+                                    if (this.eventReferralMode && typeof Swal !== 'undefined') {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Welcome to Paldi',
+                                            text: data.message || 'Opening your dashboard…',
+                                            timer: 1800,
+                                            showConfirmButton: false
+                                        }).then(function() {
+                                            window.location.href = target;
+                                        });
+                                        setTimeout(function() { window.location.href = target; }, 1900);
+                                    } else {
+                                        window.location.href = target;
+                                    }
                                 } else {
                                     this.isSubmitting = false;
                                     Swal.fire({ icon: 'error', title: 'Oops...', text: (data && data.message) ? data.message : 'Something went wrong!' });

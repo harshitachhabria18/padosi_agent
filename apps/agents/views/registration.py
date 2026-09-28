@@ -946,6 +946,8 @@ def _get_registration_context(request):
         'hide_site_nav': True,
         'hide_footer': True,
         'hide_chatbot': True,
+        'event_referral_mode': False,
+        'register_step1_url': reverse('agents:agent_register_step1'),
     }
 
 
@@ -1024,6 +1026,7 @@ def _build_referring_agent_data(referring_agent, is_championship=False):
 def agent_registration(request):
     """Render the registration page. Shows OTP, Step 1, or Step 2 based on session."""
     try:
+        request.session.pop('event_referral_registration', None)
         if request.user.is_authenticated:
             from apps.agents.services.account_auth import resolve_agent_for_user, agent_can_access_dashboard
             if request.user.is_staff or request.user.is_superuser:
@@ -1122,8 +1125,20 @@ def agent_registration_referral(request, ref_code):
         referring_agent = None
         is_champ = False
 
-        # 1. Try Championship participant code (PA-XXXXXX)
-        if code_val.startswith('PA-'):
+        # 1. Event referral challenge (EV-XXXXXX)
+        if code_val.startswith('EV-'):
+            try:
+                from apps.event_referral.models import EventReferralParticipant
+                ev_part = EventReferralParticipant.objects.filter(
+                    referral_code=code_val,
+                ).select_related('agent').first()
+                if ev_part and ev_part.agent:
+                    referring_agent = ev_part.agent
+            except Exception:
+                pass
+
+        # 2. Try Championship participant code (PA-XXXXXX)
+        if not referring_agent and code_val.startswith('PA-'):
             try:
                 from apps.referral_championship.services.attribution_service import bind_referral_session
                 bind_referral_session(request, code_val)
@@ -1135,7 +1150,7 @@ def agent_registration_referral(request, ref_code):
             except Exception:
                 pass
 
-        # 2. Try SubDistributor code
+        # 3. Try SubDistributor code
         if not referring_agent:
             try:
                 from apps.distributors.models import SubDistributor
@@ -1150,7 +1165,7 @@ def agent_registration_referral(request, ref_code):
             except Exception:
                 pass
 
-        # 3. Try legacy ReferralCode
+        # 4. Try legacy ReferralCode
         if not referring_agent and not request.session.get('sub_distributor_id'):
             try:
                 from apps.admin_panel.models.referral_code import ReferralCode
@@ -1173,6 +1188,12 @@ def agent_registration_referral(request, ref_code):
         # ── Build normal registration context + referring agent ──
         context = _get_registration_context(request)
         context['referring_agent'] = referring_agent_data
+        if code_val.startswith('EV-'):
+            from apps.event_referral.services.og_meta import paldi_og_context
+
+            ref_name = (referring_agent_data or {}).get('name') if referring_agent_data else None
+            context.update(paldi_og_context(request, referring_agent_name=ref_name))
+            context['event_referral_share_landing'] = True
         return render(request, 'agents/registration.html', context)
     except Exception as e:
         logger.exception(f"Error in agent_registration_referral view for ref_code {ref_code}: {e}")
@@ -1332,7 +1353,7 @@ def _assign_step1_draft_fields(draft, request, extra=None):
                 draft.sub_distributor_id = sub_dist.id
                 draft.distributor_id = sub_dist.distributor_id
                 draft.referred_by_code = sub_dist.code
-            elif str(ref_code).startswith('PA-'):
+            elif str(ref_code).startswith('PA-') or str(ref_code).startswith('EV-'):
                 draft.referred_by_code = ref_code
             else:
                 from apps.admin_panel.models.referral_code import ReferralCode
@@ -1581,6 +1602,10 @@ def register_step1(request):
             )
 
 
+        if request.session.get('event_referral_registration'):
+            from apps.event_referral.services.registration_service import finalize_event_referral_registration
+            return finalize_event_referral_registration(request, draft)
+
         return JsonResponse({
             'success': True,
             'message': 'Basic information updated!',
@@ -1643,6 +1668,10 @@ def register_step1(request):
                 'via_ref_code': True if getattr(draft, 'referred_by_code', None) and not getattr(draft, 'distributor_id', None) else False,
             },
         )
+
+    if request.session.get('event_referral_registration'):
+        from apps.event_referral.services.registration_service import finalize_event_referral_registration
+        return finalize_event_referral_registration(request, draft)
 
     return JsonResponse({
         'success': True,
@@ -2420,6 +2449,11 @@ def create_agent_from_draft(draft, plan_type, plan_name, status='pending_payment
     # Clear registration_draft after committing to profile (matching PHP)
     agent.registration_draft = None
     agent.save(update_fields=['registration_draft', 'updated_at'])
+
+    try:
+        _event_referral_register_hook(agent)
+    except Exception as hook_err:
+        logger.warning('Event referral register hook failed for agent #%s: %s', agent.id, hook_err)
     
     return agent
 
@@ -2497,6 +2531,16 @@ def _ensure_referral_code(agent):
 def _championship_qualification(agent, subscription):
     from apps.referral_championship.services.qualification_service import process_championship_qualification
     process_championship_qualification(agent, subscription)
+
+
+def _event_referral_qualification(agent, subscription):
+    from apps.event_referral.services.qualification_service import qualify_event_referral
+    qualify_event_referral(agent, subscription)
+
+
+def _event_referral_register_hook(agent):
+    from apps.event_referral.services.qualification_service import register_referred_agent
+    register_referred_agent(agent)
 
 
 def _order_plan_slug(subscription, agent):
@@ -2624,6 +2668,8 @@ def verify_and_activate_pending_payment(agent):
                       lambda: _credit_referral_conversion(agent))
             _isolated('[verify_and_activate_pending_payment] Championship qualification hook',
                       lambda: _championship_qualification(agent, subscription))
+            _isolated('[verify_and_activate_pending_payment] Event referral qualification hook',
+                      lambda: _event_referral_qualification(agent, subscription))
             _isolated('[verify_and_activate_pending_payment] Referral code generation',
                       lambda: _ensure_referral_code(agent))
 
@@ -2858,7 +2904,7 @@ def _agent_register_complete_impl(request):
             else:
                 ref_code = request.session.get('ref_code') or request.session.get('championship_ref_id')
                 if ref_code:
-                    if str(ref_code).startswith('PA-'):
+                    if str(ref_code).startswith('PA-') or str(ref_code).startswith('EV-'):
                         agent.referred_by_code = ref_code
                         agent.save()
                     else:
@@ -3243,6 +3289,7 @@ def _finalize_razorpay_payment(request, data):
             _isolated('Promo usage increment', lambda: _increment_promo_usage(subscription.promo_code))
             _isolated('Referral credit during payment success', lambda: _credit_referral_conversion(agent))
             _isolated('Championship qualification hook', lambda: _championship_qualification(agent, subscription))
+            _isolated('Event referral qualification hook', lambda: _event_referral_qualification(agent, subscription))
             _isolated('Referral code generation', lambda: _ensure_referral_code(agent))
 
             # ── Event: PAYMENT_BUTTON ──────────────────────────────────────
@@ -3443,6 +3490,13 @@ def referral_join(request, ref_code):
     code_val = str(ref_code).strip().upper()
 
     # If code is for Referral Championship (PA-XXXXXX)
+    if code_val.startswith('EV-'):
+        from apps.event_referral.models import EventReferralParticipant
+        if EventReferralParticipant.objects.filter(referral_code=code_val).exists():
+            request.session['ref_code'] = code_val
+            url = reverse('agents:agent_registration_referral', kwargs={'ref_code': code_val})
+            return redirect(url)
+
     if code_val.startswith('PA-'):
         from apps.referral_championship.models import ChampionshipParticipant
         if ChampionshipParticipant.objects.filter(referral_id=code_val).exists():
@@ -4023,6 +4077,11 @@ def _handle_refund_webhook(data):
             revert_championship_qualification(agent, reason='refund')
         except Exception as champ_err:
             logger.warning('[Webhook] Championship refund revert failed for agent %s: %s', agent.pk, champ_err)
+        try:
+            from apps.event_referral.services.qualification_service import revert_event_referral
+            revert_event_referral(agent, reason='refund')
+        except Exception as ev_err:
+            logger.warning('[Webhook] Event referral refund revert failed for agent %s: %s', agent.pk, ev_err)
 
     logger.info('[Webhook] Full refund processed for payment %s (%d agent(s) updated)', payment_id, len(agents))
     return HttpResponse('Refund processed', status=200)

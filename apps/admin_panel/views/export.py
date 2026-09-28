@@ -297,7 +297,7 @@ def export_pending(request):
             LEFT JOIN agent_profiles ap ON a.id = ap.agent_id
             LEFT JOIN agent_subscriptions s ON a.id = s.agent_id
                 AND s.id = (SELECT MAX(id) FROM agent_subscriptions WHERE agent_id = a.id)
-            WHERE a.status IN ('incomplete', 'pending_payment')
+            WHERE a.status IN ('incomplete', 'pending_payment', 'event_challenge')
         """
         params = []
         
@@ -306,9 +306,11 @@ def export_pending(request):
             search_param = f"%{search}%"
             params.extend([search_param, search_param, search_param])
             
-        if event_filter and event_filter != 'All Events':
-            base_sql += " AND a.event_id = %s"
-            params.append(event_filter)
+        from apps.admin_panel.views.agents import _event_filter_sql
+
+        event_sql, event_params = _event_filter_sql(event_filter)
+        base_sql += event_sql
+        params.extend(event_params)
 
         base_sql += " ORDER BY TIMESTAMPDIFF(HOUR, a.created_at, UTC_TIMESTAMP()) DESC"
 
