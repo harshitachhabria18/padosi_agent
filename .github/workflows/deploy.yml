@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 # Queue deploys instead of running two against the server at the same time.
 concurrency:
@@ -75,11 +76,18 @@ jobs:
           # 2. Setup SSH directory and private key
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          echo "$GODADDY_KEY" | tr -d '\r' > ~/.ssh/id_rsa
-          if [ -n "$(tail -c 1 ~/.ssh/id_rsa)" ]; then
-            echo "" >> ~/.ssh/id_rsa
+          echo "$GODADDY_KEY" | tr -d '\r' > ~/.ssh/deploy_key
+          if [ -n "$(tail -c 1 ~/.ssh/deploy_key)" ]; then
+            echo "" >> ~/.ssh/deploy_key
           fi
-          chmod 600 ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/deploy_key
+          if grep -q "BEGIN OPENSSH PRIVATE KEY" ~/.ssh/deploy_key; then
+            SSH_KEY_FILE=~/.ssh/deploy_key
+          else
+            cp ~/.ssh/deploy_key ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+            SSH_KEY_FILE=~/.ssh/id_rsa
+          fi
 
           # 3. Execute deployment with retry logic (up to 3 attempts)
           MAX_ATTEMPTS=3
@@ -91,15 +99,16 @@ jobs:
             echo " [Attempt $ATTEMPT of $MAX_ATTEMPTS] Connecting to $GODADDY_USER@$GODADDY_HOST:$GODADDY_PORT"
             echo "===================================================="
 
-            if ssh -i ~/.ssh/id_rsa \
+            if ssh -i "$SSH_KEY_FILE" \
                 -p "$GODADDY_PORT" \
                 -o StrictHostKeyChecking=no \
                 -o UserKnownHostsFile=/dev/null \
-                -o HostkeyAlgorithms=+ssh-rsa \
-                -o PubkeyAcceptedKeyTypes=+ssh-rsa \
+                -o IdentitiesOnly=yes \
+                -o HostkeyAlgorithms=+ssh-rsa,ssh-ed25519 \
+                -o PubkeyAcceptedAlgorithms=+ssh-rsa,ssh-ed25519 \
                 -o ServerAliveInterval=30 \
                 -o ServerAliveCountMax=10 \
-                -o ConnectTimeout=30 \
+                -o ConnectTimeout=45 \
                 -o BatchMode=yes \
                 "$GODADDY_USER@$GODADDY_HOST" "bash -se -- \"$PROJECT_PATH\" \"$GODADDY_USER\"" < scripts/deploy_godaddy.sh
             then
@@ -121,3 +130,11 @@ jobs:
             echo "==> ERROR: Deployment to GoDaddy failed after $MAX_ATTEMPTS attempts."
             exit 1
           fi
+
+      - name: Verify production OG meta (post-deploy)
+        if: success()
+        run: |
+          HTML="$(curl -fsSL -A 'facebookexternalhit/1.1' 'https://padosiagent.com/gj/rashmi-pravinbhai-wagheshwari-1/')"
+          echo "$HTML" | grep -q 'Connect with' || { echo 'ERROR: og:description fix not live yet'; exit 1; }
+          echo "$HTML" | grep -q '&#8203;' && { echo 'ERROR: zero-width og:description still present'; exit 1; } || true
+          echo "==> Production OG meta verification passed."
