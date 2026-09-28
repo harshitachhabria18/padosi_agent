@@ -27,6 +27,14 @@ class EventReferralRegistrationTests(TestCase):
         self.assertTemplateUsed(resp, 'agents/registration.html')
         self.assertTrue(resp.context['event_referral_mode'])
 
+    def test_event_page_og_image_meta(self):
+        client = Client()
+        resp = client.get(reverse('event_referral:register'))
+        self.assertTrue(resp.context.get('use_paldi_og'))
+        og_url = resp.context.get('paldi_og_image_url', '')
+        self.assertIn('paldi_48hr_championship_og.jpg', og_url)
+        self.assertIn(og_url, resp.content.decode())
+
     @patch('apps.agents.services.brevo.email_service')
     def test_step1_finalize_creates_challenge_agent(self, mock_email):
         mock_email.send_welcome.return_value = True

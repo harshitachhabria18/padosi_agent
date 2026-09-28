@@ -2,22 +2,23 @@
 {% load static %}
 
 {% block title %}{{ agentDisplayName|default:agent.fullname }} | Insurance & Financial Advisor | PadosiAgent{% endblock %}
-{% block og_title %}&#8203;{% endblock %}
-{% block og_description %}&#8203;{% endblock %}
-{% block og_url %}{{ request.scheme }}://{{ request.get_host }}/{{ agent.state_code|default:"gj" }}/{{ profile.slug }}/{% endblock %}
-{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% url 'agents:agent_og_image' agent.id %}{% endblock %}
+{% block og_title %}{{ og_share_title|default:"PadosiAgent" }}{% endblock %}
+{% block og_description %}{{ og_share_title|default:"PadosiAgent" }}{% endblock %}
+{% block og_url %}{{ og_page_absolute_url }}{% endblock %}
+{% block og_image %}{{ og_image_absolute_url }}{% endblock %}
 {% block og_type %}website{% endblock %}
 {% block og_image_width %}1200{% endblock %}
 {% block og_image_height %}630{% endblock %}
 {% block twitter_card %}summary_large_image{% endblock %}
-{% block twitter_title %}&#8203;{% endblock %}
-{% block twitter_description %}&#8203;{% endblock %}
-{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% url 'agents:agent_og_image' agent.id %}{% endblock %}
+{% block twitter_title %}{{ og_share_title|default:"PadosiAgent" }}{% endblock %}
+{% block twitter_description %}{{ og_share_title|default:"PadosiAgent" }}{% endblock %}
+{% block twitter_image %}{{ og_image_absolute_url }}{% endblock %}
 {% block meta_description %}Connect with {{ agentDisplayName|default:agent.fullname }}, a Licensed Insurance &amp; Financial Advisor on PadosiAgent. View profile, services, ratings &amp; direct contact options.{% endblock %}
 {% block canonical_url %}{{ request.scheme }}://{{ request.get_host }}/{{ agent.state_code|default:"gj" }}/{{ profile.slug }}/{% endblock %}
 
 {% block extra_head %}
-    <meta property="og:image:secure_url" content="{{ request.scheme }}://{{ request.get_host }}{% url 'agents:agent_og_image' agent.id %}">
+    <meta property="og:image:secure_url" content="{{ og_image_absolute_url }}">
+    <meta property="og:image:type" content="image/jpeg">
     <meta property="og:image:alt" content="PadosiAgent insurance advisor profile card">
 {% endblock %}
 

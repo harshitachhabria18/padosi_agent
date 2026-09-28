@@ -109,12 +109,17 @@ def public_agent_card(request, slug):
 
     agent_plan = _resolve_agent_plan(agent.plan_type, agent=agent)
     display_name = (profile.display_name if profile else '') or agent.fullname or 'Agent'
+    from apps.agents.services.og_urls import agent_og_image_absolute_url, build_og_absolute_url
+
     return render(request, 'agents/public_agent_card.html', {
         'agent': agent,
         'profile': profile,
         'agent_plan': agent_plan,
         'agentDisplayName': display_name,
         'qr_type_label': QR_TYPE_LABELS['card'],
+        'og_share_title': 'PadosiAgent',
+        'og_image_absolute_url': agent_og_image_absolute_url(request, agent.id),
+        'og_page_absolute_url': build_og_absolute_url(request, request.get_full_path()),
     })
 
 

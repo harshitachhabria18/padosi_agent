@@ -1089,6 +1089,25 @@ def agent_registration(request):
         context = _get_registration_context(request)
         if referring_agent_data:
             context['referring_agent'] = referring_agent_data
+
+        if ref_param:
+            from apps.agents.services.og_urls import build_og_absolute_url
+
+            ref_val = str(ref_param).strip().upper()
+            if ref_val.startswith('EV-'):
+                from apps.event_referral.services.og_meta import paldi_og_context
+
+                ref_name = (referring_agent_data or {}).get('name') if referring_agent_data else None
+                context.update(paldi_og_context(request, referring_agent_name=ref_name))
+                context['og_page_absolute_url'] = build_og_absolute_url(request, request.get_full_path())
+                context['og_image_absolute_url'] = context.get('paldi_og_image_url')
+            elif ref_val.startswith('PA-'):
+                from apps.referral_championship.services.og_meta import championship_og_context
+
+                ref_name = (referring_agent_data or {}).get('name') if referring_agent_data else None
+                context.update(championship_og_context(request, referring_agent_name=ref_name))
+                context['og_page_absolute_url'] = build_og_absolute_url(request, request.get_full_path())
+
         return render(request, 'agents/registration.html', context)
     except Exception as e:
         logger.exception(f"Error in agent_registration view: {e}")
@@ -1188,12 +1207,27 @@ def agent_registration_referral(request, ref_code):
         # ── Build normal registration context + referring agent ──
         context = _get_registration_context(request)
         context['referring_agent'] = referring_agent_data
+        context['og_share_title'] = 'PadosiAgent'
+        from apps.agents.services.og_urls import agent_og_image_absolute_url, build_og_absolute_url
+
         if code_val.startswith('EV-'):
             from apps.event_referral.services.og_meta import paldi_og_context
 
             ref_name = (referring_agent_data or {}).get('name') if referring_agent_data else None
             context.update(paldi_og_context(request, referring_agent_name=ref_name))
             context['event_referral_share_landing'] = True
+            context['og_page_absolute_url'] = build_og_absolute_url(request, request.get_full_path())
+        elif code_val.startswith('PA-'):
+            from apps.referral_championship.services.og_meta import championship_og_context
+
+            ref_name = (referring_agent_data or {}).get('name') if referring_agent_data else None
+            context.update(championship_og_context(request, referring_agent_name=ref_name))
+            context['og_page_absolute_url'] = build_og_absolute_url(request, request.get_full_path())
+        elif referring_agent_data and referring_agent_data.get('id'):
+            context['og_image_absolute_url'] = agent_og_image_absolute_url(
+                request, referring_agent_data['id'],
+            )
+            context['og_page_absolute_url'] = build_og_absolute_url(request, request.get_full_path())
         return render(request, 'agents/registration.html', context)
     except Exception as e:
         logger.exception(f"Error in agent_registration_referral view for ref_code {ref_code}: {e}")

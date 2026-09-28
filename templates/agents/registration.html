@@ -4,16 +4,16 @@
 
 {% block title %}{% if event_referral_mode %}{{ event_referral_campaign.page_title|default:"Event Registration" }} | PadosiAgent{% elif referring_agent %}{% if referring_agent.is_championship %}Agent Championship — Invited by {{ referring_agent.name }} | PadosiAgent{% else %}You're Invited by {{ referring_agent.name }} | PadosiAgent{% endif %}{% else %}Agent Registration | PadosiAgent{% endif %}{% endblock %}
 
-{% block og_title %}{% if use_paldi_og %}{{ paldi_og_title }}{% elif referring_agent %}{% if referring_agent.is_championship %}Agent Championship — Invited by {{ referring_agent.name }} | PadosiAgent{% else %}You're Invited by {{ referring_agent.name }} - Join PadosiAgent{% endif %}{% else %}Agent Registration | PadosiAgent{% endif %}{% endblock %}
-{% block og_description %}{% if use_paldi_og %}{{ paldi_og_description }}{% elif referring_agent %}{% if referring_agent.is_championship %}Participate in the Agent Championship! Refer, Invite, Grow & Win - Gold Coin, Silver Coin, Domestic & International Trips!{% else %}Register today on PadosiAgent with {{ referring_agent.name }}'s invitation. Grow your insurance & investment business.{% endif %}{% else %}Register as a PadosiAgent Insurance & Investment Advisor and grow your financial business.{% endif %}{% endblock %}
-{% block og_url %}{{ request.build_absolute_uri }}{% endblock %}
-{% block og_image %}{% if use_paldi_og %}{{ paldi_og_image_url }}{% elif referring_agent and referring_agent.is_championship %}{{ request.scheme }}://{{ request.get_host }}/static/img/championship_og.jpg{% elif referring_agent.og_image_url %}{{ request.scheme }}://{{ request.get_host }}{{ referring_agent.og_image_url }}{% elif referring_agent.id %}{{ request.scheme }}://{{ request.get_host }}{% url 'agents:agent_og_image' referring_agent.id %}{% else %}{{ request.scheme }}://{{ request.get_host }}/static/images/image.png{% endif %}{% endblock %}
-{% block og_image_width %}{% if use_paldi_og %}{{ paldi_og_width }}{% else %}1200{% endif %}{% endblock %}
-{% block og_image_height %}{% if use_paldi_og %}{{ paldi_og_height }}{% else %}630{% endif %}{% endblock %}
+{% block og_title %}{% if use_paldi_og %}{{ paldi_og_share_title|default:"PadosiAgent" }}{% elif use_championship_og %}{{ championship_og_share_title|default:"Agent Championship | PadosiAgent" }}{% elif og_share_title %}{{ og_share_title }}{% elif referring_agent %}{% if referring_agent.is_championship %}Agent Championship | PadosiAgent{% else %}PadosiAgent{% endif %}{% else %}Agent Registration | PadosiAgent{% endif %}{% endblock %}
+{% block og_description %}{% if use_paldi_og %}{{ paldi_og_share_title|default:"PadosiAgent" }}{% elif use_championship_og %}{{ championship_og_description|default:"Join the PadosiAgent Championship." }}{% elif og_share_title %}{{ og_share_title }}{% elif referring_agent %}{% if referring_agent.is_championship %}Agent Championship on PadosiAgent{% else %}Join PadosiAgent{% endif %}{% else %}Register as a PadosiAgent Insurance & Investment Advisor.{% endif %}{% endblock %}
+{% block og_url %}{{ og_page_absolute_url|default:request.build_absolute_uri }}{% endblock %}
+{% block og_image %}{% if og_image_absolute_url %}{{ og_image_absolute_url }}{% elif use_paldi_og %}{{ paldi_og_image_url }}{% elif use_championship_og %}{{ championship_og_image_url }}{% elif referring_agent.id %}{{ request.scheme }}://{{ request.get_host }}{% url 'agents:agent_og_image' referring_agent.id %}{% else %}{{ request.scheme }}://{{ request.get_host }}/static/images/image.png{% endif %}{% endblock %}
+{% block og_image_width %}{% if use_paldi_og %}{{ paldi_og_width }}{% elif use_championship_og %}{{ championship_og_width|default:1024 }}{% else %}1200{% endif %}{% endblock %}
+{% block og_image_height %}{% if use_paldi_og %}{{ paldi_og_height }}{% elif use_championship_og %}{{ championship_og_height|default:384 }}{% else %}630{% endif %}{% endblock %}
 
-{% block twitter_title %}{% if use_paldi_og %}{{ paldi_og_title }}{% elif referring_agent %}{% if referring_agent.is_championship %}Agent Championship — Invited by {{ referring_agent.name }} | PadosiAgent{% else %}You're Invited by {{ referring_agent.name }} - Join PadosiAgent{% endif %}{% else %}Agent Registration | PadosiAgent{% endif %}{% endblock %}
-{% block twitter_description %}{% if use_paldi_og %}{{ paldi_og_description }}{% elif referring_agent %}{% if referring_agent.is_championship %}Participate in the Agent Championship! Refer, Invite, Grow & Win - Gold Coin, Silver Coin, Domestic & International Trips!{% else %}Register today on PadosiAgent with {{ referring_agent.name }}'s invitation.{% endif %}{% else %}Register as a PadosiAgent Insurance & Investment Advisor.{% endif %}{% endblock %}
-{% block twitter_image %}{% if use_paldi_og %}{{ paldi_og_image_url }}{% elif referring_agent and referring_agent.is_championship %}{{ request.scheme }}://{{ request.get_host }}/static/img/championship_og.jpg{% elif referring_agent.og_image_url %}{{ request.scheme }}://{{ request.get_host }}{{ referring_agent.og_image_url }}{% elif referring_agent.id %}{{ request.scheme }}://{{ request.get_host }}{% url 'agents:agent_og_image' referring_agent.id %}{% else %}{{ request.scheme }}://{{ request.get_host }}/static/images/image.png{% endif %}{% endblock %}
+{% block twitter_title %}{% if use_paldi_og %}{{ paldi_og_share_title|default:"PadosiAgent" }}{% elif use_championship_og %}{{ championship_og_share_title|default:"Agent Championship | PadosiAgent" }}{% elif og_share_title %}{{ og_share_title }}{% else %}PadosiAgent{% endif %}{% endblock %}
+{% block twitter_description %}{% if use_paldi_og %}{{ paldi_og_share_title|default:"PadosiAgent" }}{% elif use_championship_og %}{{ championship_og_description|default:"Join the PadosiAgent Championship." }}{% elif og_share_title %}{{ og_share_title }}{% else %}PadosiAgent{% endif %}{% endblock %}
+{% block twitter_image %}{% if og_image_absolute_url %}{{ og_image_absolute_url }}{% elif use_paldi_og %}{{ paldi_og_image_url }}{% elif use_championship_og %}{{ championship_og_image_url }}{% elif referring_agent.id %}{{ request.scheme }}://{{ request.get_host }}{% url 'agents:agent_og_image' referring_agent.id %}{% else %}{{ request.scheme }}://{{ request.get_host }}/static/images/image.png{% endif %}{% endblock %}
 
 {% block chatbot_widget %}{% endblock %}
 
@@ -23,11 +23,16 @@
     <meta property="og:image:type" content="image/jpeg">
     <meta property="og:image:width" content="{{ paldi_og_width }}">
     <meta property="og:image:height" content="{{ paldi_og_height }}">
-    {% elif referring_agent and referring_agent.is_championship %}
-    <meta property="og:image:secure_url" content="{{ request.scheme }}://{{ request.get_host }}/static/img/championship_og.jpg">
+    {% elif use_championship_og %}
+    <meta property="og:image:secure_url" content="{{ championship_og_image_url }}">
     <meta property="og:image:type" content="image/jpeg">
-    <meta property="og:image:width" content="1024">
-    <meta property="og:image:height" content="384">
+    <meta property="og:image:width" content="{{ championship_og_width|default:1024 }}">
+    <meta property="og:image:height" content="{{ championship_og_height|default:384 }}">
+    {% elif og_image_absolute_url %}
+    <meta property="og:image:secure_url" content="{{ og_image_absolute_url }}">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
     {% elif referring_agent.og_image_url %}
     <meta property="og:image:secure_url" content="{{ request.scheme }}://{{ request.get_host }}{{ referring_agent.og_image_url }}">
     <meta property="og:image:type" content="image/jpeg">

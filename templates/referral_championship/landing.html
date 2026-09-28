@@ -9,19 +9,20 @@
     <link rel="canonical" href="{{ request.build_absolute_uri }}">
 
     <!-- Open Graph & Social Sharing Meta Tags -->
-    <meta property="og:title" content="Agent Championship — Invited by {{ referring_agent.fullname|default:'Insurance Advisor' }} | PadosiAgent">
-    <meta property="og:description" content="Participate in the Agent Championship! Refer, Invite, Grow & Win - Gold Coin, Silver Coin, Domestic & International Trips!">
-    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:site_name" content="PadosiAgent">
+    <meta property="og:title" content="{{ championship_og_title|default:'Agent Championship | PadosiAgent' }}">
+    <meta property="og:description" content="{{ championship_og_description|default:'Join the PadosiAgent Championship.' }}">
+    <meta property="og:url" content="{{ og_page_absolute_url }}">
     <meta property="og:type" content="website">
-    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}/static/img/championship_og.jpg">
-    <meta property="og:image:secure_url" content="{{ request.scheme }}://{{ request.get_host }}/static/img/championship_og.jpg">
+    <meta property="og:image" content="{{ championship_og_image_url }}">
+    <meta property="og:image:secure_url" content="{{ championship_og_image_url }}">
     <meta property="og:image:type" content="image/jpeg">
-    <meta property="og:image:width" content="1024">
-    <meta property="og:image:height" content="384">
+    <meta property="og:image:width" content="{{ championship_og_width|default:1024 }}">
+    <meta property="og:image:height" content="{{ championship_og_height|default:384 }}">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Agent Championship — Invited by {{ referring_agent.fullname|default:'Insurance Advisor' }} | PadosiAgent">
-    <meta name="twitter:description" content="Participate in the Agent Championship! Refer, Invite, Grow & Win - Gold Coin, Silver Coin, Domestic & International Trips!">
-    <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}/static/img/championship_og.jpg">
+    <meta name="twitter:title" content="{{ championship_og_share_title|default:'Agent Championship | PadosiAgent' }}">
+    <meta name="twitter:description" content="{{ championship_og_description|default:'Join the PadosiAgent Championship.' }}">
+    <meta name="twitter:image" content="{{ championship_og_image_url }}">
 
     <!-- Google Fonts: Jost & Urbanist (Exact font pairing from lovebal) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

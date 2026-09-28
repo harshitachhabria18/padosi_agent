@@ -1,4 +1,5 @@
-from django.test import TestCase, RequestFactory
+from django.test import Client, TestCase, RequestFactory
+from django.urls import reverse
 from django.contrib.auth.models import User
 from django.utils import timezone
 from apps.agents.models import Agent, AgentSubscription
@@ -26,6 +27,7 @@ from apps.referral_championship.services.leaderboard_service import (
     refresh_leaderboard_cache,
     get_leaderboard_data,
 )
+from apps.referral_championship.services.og_meta import championship_og_context
 
 
 class ReferralChampionshipTestCase(TestCase):
@@ -123,3 +125,32 @@ class ReferralChampionshipTestCase(TestCase):
         first_slab = roadmap['roadmap'][0]
         self.assertEqual(first_slab['threshold'], 5)
         self.assertTrue(first_slab['is_reached'])
+
+    def test_championship_og_context_static_image(self):
+        request = self.factory.get('/agent/championship/join/PA-TEST01/')
+        ctx = championship_og_context(request, referring_agent_name='Parth Patel')
+        self.assertTrue(ctx['use_championship_og'])
+        self.assertIn('championship_og.jpg', ctx['championship_og_image_url'])
+        self.assertEqual(ctx['championship_og_width'], 1024)
+        self.assertEqual(ctx['championship_og_height'], 384)
+
+    def test_pa_join_registration_includes_og_image_meta(self):
+        participant = get_or_create_participant(self.agent1, self.campaign)
+        client = Client()
+        url = reverse('agents:agent_registration_referral', kwargs={'ref_code': participant.referral_id})
+        resp = client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.context.get('use_championship_og'))
+        body = resp.content.decode()
+        self.assertIn('championship_og.jpg', body)
+        self.assertIn('og:image:secure_url', body)
+
+    def test_championship_landing_includes_og_image_meta(self):
+        participant = get_or_create_participant(self.agent1, self.campaign)
+        client = Client()
+        url = reverse('championship:public_landing', kwargs={'ref_id': participant.referral_id})
+        resp = client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        body = resp.content.decode()
+        self.assertIn('championship_og.jpg', body)
+        self.assertIn('og:image:secure_url', body)

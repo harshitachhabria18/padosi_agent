@@ -88,6 +88,10 @@ def _single_browser_slot():
 
 def render_agent_og_jpeg(agent):
     """Return JPEG bytes for a 1200x630 agent digital visiting card OG image using Playwright or Pillow."""
+    # Social crawlers need a fast, reliable JPEG — Playwright/Chromium is often unavailable on shared hosting.
+    if not getattr(settings, 'DEBUG', False):
+        return _render_agent_og_jpeg_pillow(agent)
+
     profile = None
     perf = None
     try:

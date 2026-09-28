@@ -47,11 +47,14 @@ def seo_context(request):
     """
     Provides default SEO context variables across all pages.
     """
+    from apps.agents.services.og_urls import build_og_absolute_url, get_public_site_base
+
     return {
-        'default_canonical_url': request.build_absolute_uri(request.path),
+        'default_canonical_url': build_og_absolute_url(request, request.path),
         'default_meta_title': 'PadosiAgent — Expert & Trusted Insurance Agent',
         'default_meta_description': 'Find trusted & verified insurance experts in your neighbourhood. Connect with your local PadosiAgent.',
-        'default_og_image': request.build_absolute_uri('/static/img/logo.png'),
+        'default_og_image': build_og_absolute_url(request, '/static/img/logo.png'),
+        'public_site_base': get_public_site_base(request),
     }
 
 

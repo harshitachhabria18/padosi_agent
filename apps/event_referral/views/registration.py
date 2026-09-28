@@ -28,6 +28,7 @@ def event_registration(request):
     request.session.modified = True
 
     from apps.agents.views.registration import _get_registration_context
+    from apps.agents.services.og_urls import build_og_absolute_url
     from apps.event_referral.services.og_meta import paldi_og_context
 
     context = _get_registration_context(request)
@@ -41,6 +42,9 @@ def event_registration(request):
         },
     )
     context.update(paldi_og_context(request))
+    context['og_share_title'] = context.get('paldi_og_share_title', 'PadosiAgent')
+    context['og_page_absolute_url'] = build_og_absolute_url(request, request.get_full_path())
+    context['og_image_absolute_url'] = context.get('paldi_og_image_url')
     if not campaign.is_enabled:
         messages.warning(request, 'Event registration is currently closed.')
 

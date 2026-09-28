@@ -990,6 +990,8 @@ def agent_public_profile(request, slug, state_code=None):
     # Resolve agent_plan for public profile
     agent_plan = _resolve_agent_plan(agent.plan_type, agent=agent)
 
+    from apps.agents.services.og_urls import agent_og_image_absolute_url, build_og_absolute_url
+
     context = {
         'agent': agent,
         'profile': profile,
@@ -1004,6 +1006,9 @@ def agent_public_profile(request, slug, state_code=None):
         'performanceStats': getattr(agent, 'performanceStats', None),
         'leadPreferences': getattr(agent, 'leadPreferences', None),
         'review_scroll_delay_ms': 3000,
+        'og_share_title': 'PadosiAgent',
+        'og_image_absolute_url': agent_og_image_absolute_url(request, agent.id),
+        'og_page_absolute_url': build_og_absolute_url(request, request.get_full_path()),
     }
     try:
         from apps.agents.services.review_growth import get_review_growth_config

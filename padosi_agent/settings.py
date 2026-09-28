@@ -47,6 +47,9 @@ CSRF_COOKIE_NAME = "padosi_csrf_token"
 # DEBUG defaults False for production safety. Local dev .env sets DEBUG=True.
 DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 'yes')
 
+# Public canonical origin for emails, OG tags, and share links (e.g. https://padosiagent.com)
+APP_URL = os.environ.get('APP_URL', '').strip().rstrip('/')
+
 # Production must set SECRET_KEY in the environment. The insecure fallback is
 # local-only so a missing production secret fails closed instead of shipping
 # a committed key.

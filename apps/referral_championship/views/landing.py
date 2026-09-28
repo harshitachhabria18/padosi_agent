@@ -15,7 +15,10 @@ from apps.referral_championship.models import (
     ChampionshipReferral,
     ChampionshipRewardSlab,
 )
+from apps.agents.models import Agent
+from apps.agents.services.og_urls import build_og_absolute_url
 from apps.referral_championship.services.attribution_service import bind_referral_session
+from apps.referral_championship.services.og_meta import championship_og_context
 from apps.agents.services.review_growth import agent_review_count
 
 logger = logging.getLogger(__name__)
@@ -138,6 +141,9 @@ def referral_landing_page(request, ref_id):
         'google_review_url': campaign.google_review_url or "https://g.page/r/padosiagent/review",
         'reg_url': f"{reverse('agents:agent_registration')}?ref={ref_id}&campaign={campaign.slug}",
     }
+    ref_name = getattr(referring_agent, 'fullname', None) or getattr(referring_agent, 'full_name', None)
+    context.update(championship_og_context(request, referring_agent_name=ref_name))
+    context['og_page_absolute_url'] = build_og_absolute_url(request, request.get_full_path())
     return render(request, 'referral_championship/landing.html', context)
 
 
@@ -215,6 +221,7 @@ def championship_og_image(request, ref_id=None):
         with open(champ_img_path, 'rb') as f:
             content = f.read()
         response = HttpResponse(content, content_type="image/jpeg")
-        response["Cache-Control"] = "public, max-age=86400"
+        response["Cache-Control"] = "public, max-age=604800"
+        response["Access-Control-Allow-Origin"] = "*"
         return response
     raise Http404("Championship OG image not found")
