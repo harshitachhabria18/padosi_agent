@@ -53,6 +53,7 @@ urlpatterns = [
     path('agent/update-profile/', dashboard.update_profile,     name='agent_update_profile'),
     path('agent/push-token/',   dashboard.agent_push_token,      name='agent_push_token'),
     path('agent/upgrade-plan/', dashboard.agent_upgrade_plan,    name='agent_upgrade_plan'),
+    path('agent/app-upgrade/',  auth.app_upgrade_handoff,        name='app_upgrade_handoff'),
     path('agent/referral-info/', dashboard.referral_info,        name='agent_referral_info'),
     path('join/ad/', registration.fb_ad_signup, name='fb_ad_signup'),
     path('join/<str:ref_code>/', registration.referral_join,     name='referral_join'),

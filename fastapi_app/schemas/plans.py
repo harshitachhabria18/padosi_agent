@@ -53,6 +53,17 @@ class UpgradeDiscountInfo(BaseModel):
     offer_message: Optional[str] = None
 
 
+class PlanUpgradeHandoffRequest(BaseModel):
+    plan_slug: str
+
+
+class PlanUpgradeHandoffResponse(BaseModel):
+    success: bool = True
+    url: str
+    expires_in: int
+    plan_slug: str
+
+
 class PlansListResponse(BaseModel):
     success: bool = True
     agent_current_plan: Optional[AgentCurrentPlanInfo] = None

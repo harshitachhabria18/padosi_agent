@@ -1713,3 +1713,24 @@ class RegistrationActivityLog(models.Model):
             logging.getLogger(__name__).exception(
                 'RegistrationActivityLog.log failed for event=%s', event_name
             )
+
+
+class PlanUpgradeHandoff(models.Model):
+    """Single-use token that signs an app user into the website upgrade checkout."""
+
+    token_hash = models.CharField(max_length=64, unique=True)
+    agent = models.ForeignKey(
+        Agent,
+        on_delete=models.CASCADE,
+        related_name='plan_upgrade_handoffs',
+    )
+    plan_slug = models.CharField(max_length=32)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'plan_upgrade_handoffs'
+
+    def __str__(self):
+        return f"PlanUpgradeHandoff(agent={self.agent_id}, plan={self.plan_slug})"

@@ -617,6 +617,9 @@ def agent_dashboard(request):
     from apps.agents.services.invite_studio import get_studio_context
     studio_context = get_studio_context(request, agent, profile=profile, champ_participant=champ_participant)
 
+    from apps.agents.services.plan_upgrade_handoff import dashboard_upgrade_slug
+    app_upgrade_plan = dashboard_upgrade_slug(agent, request.GET.get('upgrade'))
+
     context = {
         **studio_context,
         'auto_show_invite_studio': auto_show_studio,
@@ -699,6 +702,7 @@ def agent_dashboard(request):
         'event_referral_whatsapp_url': event_referral_whatsapp_url,
         'event_referral_welcome': event_referral_welcome,
         'paldi_event_name': 'Paldi',
+        'app_upgrade_plan': app_upgrade_plan,
     }
 
     return render(request, 'agents/dashboard.html', context)

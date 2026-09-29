@@ -46,3 +46,4 @@ from fastapi_app.models.championship import (
     ChampionshipLeaderboardCache,
 )
 from fastapi_app.models.subscription_plan import SubscriptionPlan
+from fastapi_app.models.plan_upgrade_handoff import PlanUpgradeHandoff

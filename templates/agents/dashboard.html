@@ -2536,5 +2536,32 @@
     }
 })();
 </script>
+<div id="app-upgrade-plan" data-plan="{{ app_upgrade_plan|default:'' }}" hidden></div>
+<script>
+    (function () {
+        var plan = document.getElementById('app-upgrade-plan');
+        var slug = plan ? (plan.getAttribute('data-plan') || '') : '';
+        if (slug !== 'starter' && slug !== 'professional') return;
+
+        function openAppUpgrade() {
+            if (slug === 'professional' && typeof openProfessionalUpgradeModal === 'function') {
+                openProfessionalUpgradeModal();
+            } else if (slug === 'starter' && typeof openUpgradeModal === 'function') {
+                openUpgradeModal('basic', {{ starterDisc|default:0 }});
+            }
+            if (window.history && window.history.replaceState) {
+                var url = new URL(window.location.href);
+                url.searchParams.delete('upgrade');
+                window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function () { setTimeout(openAppUpgrade, 300); });
+        } else {
+            setTimeout(openAppUpgrade, 300);
+        }
+    })();
+</script>
 
 {% endblock %}
