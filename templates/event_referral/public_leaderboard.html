@@ -1,0 +1,1527 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>{{ page_title }}</title>
+    <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+    {% if paldi_og_image_url %}<meta property="og:image" content="{{ paldi_og_image_url }}">{% endif %}
+
+    <!-- Google Fonts: Montserrat + Urbanist + Caveat for handwritten script -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,700&family=Urbanist:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --bg-body: #060d1f;
+            --bg-card: rgba(10, 24, 53, 0.72);
+            --border-card: rgba(255, 255, 255, 0.08);
+            --border-card-hover: rgba(59, 130, 246, 0.4);
+
+            --brand-blue: #1d4ed8;
+            --brand-cyan: #38bdf8;
+            --brand-gold: #f59e0b;
+
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+
+            --font-main: 'Montserrat', system-ui, -apple-system, sans-serif;
+            --font-display: 'Urbanist', system-ui, -apple-system, sans-serif;
+            --font-script: 'Caveat', cursive;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100%;
+            height: 100dvh;
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Ambient dynamic background lighting */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background:
+                radial-gradient(ellipse 70% 35% at 50% 0%, rgba(29, 78, 216, 0.28), transparent 70%),
+                radial-gradient(ellipse 50% 30% at 85% 15%, rgba(14, 165, 233, 0.15), transparent 60%),
+                radial-gradient(circle 500px at 15% 45%, rgba(124, 58, 237, 0.12), transparent 70%),
+                radial-gradient(ellipse 80% 40% at 50% 100%, rgba(15, 23, 42, 0.8), #060d1f 75%);
+            pointer-events: none;
+        }
+
+        /* Shell: Compact Full Viewport Height without page scroll */
+        .dashboard-shell {
+            position: relative;
+            z-index: 1;
+            max-width: 1360px;
+            margin: 0 auto;
+            height: 100vh;
+            height: 100dvh;
+            max-height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: clamp(4px, 0.7vh, 7px);
+            padding: clamp(5px, 0.9vh, 9px) clamp(10px, 1.5vw, 16px);
+            padding-bottom: max(5px, env(safe-area-inset-bottom));
+        }
+
+        /* ── Hero Banner: Logo + Top Performers + 48 Hours Event ───────── */
+        .hero-banner-card {
+            flex: 0 0 auto;
+            position: relative;
+            border-radius: 14px;
+            background: radial-gradient(circle at 82% 45%, rgba(29, 78, 216, 0.38), transparent 60%),
+                        linear-gradient(135deg, #07173e 0%, #0d276b 50%, #081d4a 100%);
+            border: 1px solid rgba(59, 130, 246, 0.32);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            padding: clamp(5px, 0.8vh, 8px) clamp(10px, 1.3vw, 16px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            overflow: hidden;
+            gap: 10px;
+        }
+
+        .hero-banner-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+            background-size: 20px 20px;
+            opacity: 0.25;
+            pointer-events: none;
+        }
+
+        .hero-left-lockup {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            gap: clamp(8px, 1.1vw, 14px);
+            min-width: 0;
+        }
+
+        /* Original Logo in Banner */
+        .hero-logo-frame {
+            height: clamp(30px, 4vh, 38px);
+            background: #ffffff;
+            border-radius: 9px;
+            padding: 3px 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+            flex-shrink: 0;
+            transition: transform 0.2s ease;
+            text-decoration: none;
+        }
+
+        .hero-logo-frame:hover {
+            transform: scale(1.02);
+        }
+
+        .hero-logo-img {
+            height: 100%;
+            width: auto;
+            max-width: 130px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .hero-divider {
+            width: 1px;
+            height: clamp(24px, 3.5vh, 32px);
+            background: rgba(255, 255, 255, 0.15);
+            flex-shrink: 0;
+        }
+
+        .hero-trophy-box {
+            width: clamp(30px, 4vh, 38px);
+            height: clamp(30px, 4vh, 38px);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.5));
+        }
+
+        .hero-trophy-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .hero-headings {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .hero-eyebrow {
+            font-family: var(--font-display);
+            font-size: clamp(0.50rem, 0.85vw, 0.58rem);
+            font-weight: 800;
+            color: var(--brand-cyan);
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            line-height: 1;
+            margin-bottom: 2px;
+        }
+
+        .hero-main-title {
+            font-family: var(--font-display);
+            font-size: clamp(0.95rem, 1.6vw, 1.25rem);
+            font-weight: 900;
+            line-height: 1.1;
+            letter-spacing: -0.01em;
+            white-space: nowrap;
+        }
+
+        .hero-main-title .white-text {
+            color: #ffffff;
+            display: inline;
+        }
+
+        .hero-main-title .gold-text {
+            color: #fbbf24;
+            display: inline;
+            margin-left: 4px;
+            text-shadow: 0 0 16px rgba(251, 191, 36, 0.45);
+        }
+
+        .hero-subtext {
+            font-size: clamp(0.54rem, 0.85vw, 0.64rem);
+            font-weight: 500;
+            color: #93c5fd;
+            margin-top: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ── Center: Attractive 48 Hours Event Badge ─────────────────── */
+        .hero-center-badge {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+
+        .event-glow-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: clamp(4px, 0.6vh, 6px) clamp(11px, 1.3vw, 16px);
+            border-radius: 999px;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(251, 191, 36, 0.12));
+            border: 1.5px solid #f59e0b;
+            box-shadow: 0 0 16px rgba(245, 158, 11, 0.35), inset 0 0 10px rgba(245, 158, 11, 0.15);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+            animation: pulse-border 2.5s infinite ease-in-out;
+        }
+
+        .event-glow-pill::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+            transform: skewX(-25deg);
+            animation: shimmer-light 3.5s infinite ease-in-out;
+        }
+
+        @keyframes shimmer-light {
+            0% { left: -100%; }
+            35%, 100% { left: 160%; }
+        }
+
+        @keyframes pulse-border {
+            0%, 100% {
+                box-shadow: 0 0 16px rgba(245, 158, 11, 0.35), inset 0 0 8px rgba(245, 158, 11, 0.12);
+                border-color: #f59e0b;
+            }
+            50% {
+                box-shadow: 0 0 26px rgba(251, 191, 36, 0.55), inset 0 0 14px rgba(251, 191, 36, 0.25);
+                border-color: #fde047;
+            }
+        }
+
+        .lightning-bolt {
+            width: clamp(13px, 1.6vh, 16px);
+            height: clamp(13px, 1.6vh, 16px);
+            color: #facc15;
+            fill: #facc15;
+            filter: drop-shadow(0 0 5px #facc15);
+            animation: pulse-bolt 1.5s infinite alternate ease-in-out;
+        }
+
+        @keyframes pulse-bolt {
+            0% { transform: scale(0.95); opacity: 0.85; }
+            100% { transform: scale(1.15); opacity: 1; }
+        }
+
+        .event-glow-text {
+            font-family: var(--font-display);
+            font-size: clamp(0.76rem, 1.1vw, 0.90rem);
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(251, 191, 36, 0.6);
+            white-space: nowrap;
+        }
+
+        .event-sub-tag {
+            font-family: var(--font-display);
+            font-size: 0.52rem;
+            font-weight: 800;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #38bdf8;
+            text-shadow: 0 0 6px rgba(56, 189, 248, 0.5);
+            line-height: 1;
+        }
+
+        /* Right Graphic: 3D Trophy & Chart */
+        .hero-right-graphic {
+            position: relative;
+            z-index: 2;
+            width: clamp(95px, 10vw, 130px);
+            height: clamp(32px, 4.2vh, 42px);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            filter: drop-shadow(0 0 12px rgba(37, 99, 235, 0.35));
+            flex-shrink: 0;
+        }
+
+        /* ── Top 3 Podium Section (Centered & Compact) ──────────────── */
+        .podium-section-card {
+            flex: 0 0 auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 14px;
+            backdrop-filter: blur(16px);
+            padding: clamp(5px, 0.8vh, 8px) clamp(10px, 1.5vw, 18px) 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .podium-columns-row {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr 1fr;
+            grid-template-areas: "second first third";
+            gap: clamp(8px, 1.3vw, 14px);
+            align-items: flex-end;
+            position: relative;
+            z-index: 2;
+            max-width: 860px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .podium-col-second {
+            grid-area: second;
+        }
+
+        .podium-col-first {
+            grid-area: first;
+            margin-bottom: 3px;
+        }
+
+        .podium-col-third {
+            grid-area: third;
+        }
+
+        /* Individual Podium Pillar Cards */
+        .pillar-card {
+            border-radius: 12px 12px 0 0;
+            padding: clamp(5px, 0.8vh, 8px) 8px clamp(6px, 0.9vh, 10px);
+            text-align: center;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            transition: transform 0.2s ease;
+        }
+
+        /* Rank 2 (Silver) */
+        .pillar-silver {
+            background: linear-gradient(180deg, #1e3a8a 0%, #172554 100%);
+            border: 1.5px solid #60a5fa;
+            border-bottom: none;
+            box-shadow: 0 3px 12px rgba(30, 58, 138, 0.4);
+        }
+
+        /* Rank 1 (Gold) - Elevated */
+        .pillar-gold {
+            background: linear-gradient(180deg, #b45309 0%, #92400e 40%, #78350f 100%);
+            border: 2px solid #f59e0b;
+            border-bottom: none;
+            box-shadow: 0 0 24px rgba(245, 158, 11, 0.32), 0 4px 16px rgba(0, 0, 0, 0.4);
+            padding-top: clamp(7px, 1vh, 10px);
+        }
+
+        /* Rank 3 (Bronze) */
+        .pillar-bronze {
+            background: linear-gradient(180deg, #9a3412 0%, #6c230a 100%);
+            border: 1.5px solid #f97316;
+            border-bottom: none;
+            box-shadow: 0 3px 12px rgba(154, 52, 18, 0.35);
+        }
+
+        .pillar-card.empty-slot {
+            opacity: 0.5;
+            border-style: dashed;
+        }
+
+        /* Floating Crown over Rank 1 */
+        .floating-crown-wrap {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            filter: drop-shadow(0 2px 5px rgba(245, 158, 11, 0.6));
+        }
+
+        .gold-crown-icon {
+            width: clamp(18px, 2.3vh, 22px);
+            height: clamp(18px, 2.3vh, 22px);
+            color: #fbbf24;
+            fill: #fbbf24;
+        }
+
+        /* Rank Badges (2, 1, 3) */
+        .pillar-rank-ribbon {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            width: clamp(18px, 2.3vh, 21px);
+            height: clamp(20px, 2.5vh, 23px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-size: 0.74rem;
+            font-weight: 900;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .ribbon-silver {
+            background: linear-gradient(135deg, #e2e8f0, #94a3b8);
+            color: #0f172a;
+            border: 1px solid #ffffff;
+        }
+
+        .ribbon-gold {
+            background: linear-gradient(135deg, #fef08a, #f59e0b);
+            color: #451a03;
+            border: 1px solid #ffffff;
+            width: clamp(20px, 2.5vh, 23px);
+            height: clamp(22px, 2.7vh, 25px);
+            top: 6px;
+            left: 6px;
+        }
+
+        .ribbon-bronze {
+            background: linear-gradient(135deg, #fed7aa, #ea580c);
+            color: #ffffff;
+            border: 1px solid #ffffff;
+        }
+
+        /* Avatar styling & laurel wreath */
+        .avatar-frame {
+            position: relative;
+            margin: 2px 0 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .avatar-img-circle {
+            width: clamp(36px, 5vh, 46px);
+            height: clamp(36px, 5vh, 46px);
+            border-radius: 50%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .avatar-fallback {
+            width: clamp(36px, 5vh, 46px);
+            height: clamp(36px, 5vh, 46px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: 0.90rem;
+            background: rgba(15, 23, 42, 0.7);
+            color: #ffffff;
+        }
+
+        .silver-avatar-border {
+            border: 2px solid #cbd5e1;
+            box-shadow: 0 0 10px rgba(203, 213, 225, 0.4);
+        }
+
+        .gold-avatar-border {
+            width: clamp(42px, 6vh, 54px);
+            height: clamp(42px, 6vh, 54px);
+            border: 2.5px solid #facc15;
+            box-shadow: 0 0 14px rgba(250, 204, 21, 0.5);
+        }
+
+        .bronze-avatar-border {
+            border: 2px solid #fdba74;
+            box-shadow: 0 0 10px rgba(253, 186, 116, 0.4);
+        }
+
+        .laurel-wreath-left, .laurel-wreath-right {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 40px;
+            color: #fbbf24;
+            pointer-events: none;
+            filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.6));
+        }
+
+        .laurel-wreath-left { left: -14px; }
+        .laurel-wreath-right { right: -14px; transform: translateY(-50%) scaleX(-1); }
+
+        /* Pillar Text */
+        .pillar-name {
+            font-family: var(--font-display);
+            font-size: clamp(0.76rem, 1.05vw, 0.88rem);
+            font-weight: 800;
+            color: #ffffff;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            line-height: 1.15;
+        }
+
+        .pillar-gold .pillar-name {
+            font-size: clamp(0.82rem, 1.15vw, 0.96rem);
+            font-weight: 900;
+        }
+
+        /* Segments pills in Pillar */
+        .pillar-segments {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            flex-wrap: wrap;
+            margin: 2px 0 4px;
+        }
+
+        .pillar-segments .segment-badge {
+            font-size: 0.54rem;
+            padding: 1px 5px;
+        }
+
+        /* Recessed Metric Box */
+        .pillar-metric-box {
+            width: 100%;
+            background: rgba(10, 20, 44, 0.85);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: clamp(3px, 0.45vh, 4.5px) 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: clamp(3px, 0.5vh, 5px);
+        }
+
+        .pillar-gold .pillar-metric-box {
+            border-color: #f59e0b;
+            background: rgba(22, 13, 5, 0.88);
+            padding: clamp(3.5px, 0.55vh, 5.5px) 8px;
+        }
+
+        .metric-leads-num {
+            font-family: var(--font-display);
+            font-size: clamp(1rem, 1.8vh, 1.24rem);
+            font-weight: 900;
+            color: #ffffff;
+            line-height: 1;
+        }
+
+        .pillar-gold .metric-leads-num {
+            color: #fbbf24;
+            font-size: clamp(1.15rem, 2.2vh, 1.45rem);
+            text-shadow: 0 0 6px rgba(251, 191, 36, 0.35);
+        }
+
+        .metric-leads-label {
+            font-size: 0.48rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-top: 1px;
+            line-height: 1;
+        }
+
+        .pillar-gold .metric-leads-label {
+            color: #fef08a;
+            opacity: 0.85;
+        }
+
+        /* Profile Button in Pillar */
+        .pillar-profile-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            width: 100%;
+            padding: clamp(2.5px, 0.45vh, 4px) 8px;
+            border-radius: 6px;
+            font-family: var(--font-display);
+            font-size: clamp(0.62rem, 0.95vh, 0.70rem);
+            font-weight: 800;
+            text-decoration: none;
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.10);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            transition: all 0.2s ease;
+            line-height: 1.1;
+        }
+
+        .pillar-profile-btn:hover {
+            background: var(--brand-blue);
+            border-color: #3b82f6;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(29, 78, 216, 0.4);
+        }
+
+        /* 3D Stepped Platform Stage */
+        .podium-stage-base {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr 1fr;
+            grid-template-areas: "second first third";
+            gap: clamp(8px, 1.3vw, 14px);
+            max-width: 860px;
+            margin: 0 auto;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stage-step-second {
+            grid-area: second;
+            height: clamp(7px, 1.1vh, 10px);
+            background: linear-gradient(180deg, #1e3a8a, #0f1d44);
+            border-top: 2px solid #60a5fa;
+            border-radius: 0 0 5px 5px;
+        }
+
+        .stage-step-first {
+            grid-area: first;
+            height: clamp(12px, 1.7vh, 17px);
+            background: linear-gradient(180deg, #d97706, #78350f);
+            border-top: 2px solid #fbbf24;
+            border-radius: 0 0 6px 6px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .stage-step-third {
+            grid-area: third;
+            height: clamp(6px, 0.9vh, 9px);
+            background: linear-gradient(180deg, #9a3412, #431407);
+            border-top: 2px solid #f97316;
+            border-radius: 0 0 5px 5px;
+        }
+
+        /* ── All Agents Cards Section (Requirement 6) ────────────────── */
+        .leaders-cards-section {
+            flex: 1 1 auto;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            gap: clamp(3px, 0.5vh, 5px);
+        }
+
+        .cards-header-bar {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2px;
+        }
+
+        .cards-title-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-display);
+            font-size: clamp(0.76rem, 1.1vw, 0.88rem);
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 0.04em;
+        }
+
+        .cards-trophy-gold {
+            width: 16px;
+            height: 16px;
+            color: var(--brand-gold);
+        }
+
+        .cards-count-badge {
+            font-family: var(--font-display);
+            font-size: 0.60rem;
+            font-weight: 800;
+            color: var(--brand-cyan);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 2.5px 8px;
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            border-radius: 99px;
+        }
+
+        /* Card List Grid: 2 columns on wide/medium screens, 1 on small */
+        .agent-cards-grid {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            align-content: start;
+            gap: clamp(5px, 0.75vh, 7px);
+            padding-right: 3px;
+        }
+
+        .agent-cards-grid::-webkit-scrollbar {
+            width: 5px;
+        }
+        .agent-cards-grid::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 99px;
+        }
+        .agent-cards-grid::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.35);
+            border-radius: 99px;
+        }
+        .agent-cards-grid::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.6);
+        }
+
+        /* Individual Clean Profile Card */
+        .agent-card {
+            background: rgba(10, 24, 53, 0.75);
+            border-radius: 11px;
+            border: 1px solid var(--border-card);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.22);
+            padding: clamp(5px, 0.75vh, 7.5px) clamp(8px, 1.2vw, 12px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .agent-card:hover {
+            transform: translateY(-1px);
+            border-color: rgba(59, 130, 246, 0.4);
+            box-shadow: 0 4px 14px rgba(29, 78, 216, 0.22);
+            background: rgba(12, 28, 62, 0.85);
+        }
+
+        .agent-card-left {
+            display: flex;
+            align-items: center;
+            gap: clamp(6px, 0.8vw, 10px);
+            min-width: 0;
+            flex: 1;
+        }
+
+        /* Rank Badge */
+        .agent-card-rank {
+            flex-shrink: 0;
+        }
+
+        .rank-pill {
+            font-family: var(--font-display);
+            font-size: clamp(0.70rem, 1.2vh, 0.78rem);
+            font-weight: 900;
+            color: #94a3b8;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 2px 6px;
+            border-radius: 5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            line-height: 1;
+        }
+
+        .rank-pill.rank-gold {
+            background: rgba(245, 158, 11, 0.2);
+            border-color: #f59e0b;
+            color: #fbbf24;
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.25);
+        }
+
+        .rank-pill.rank-silver {
+            background: rgba(203, 213, 225, 0.15);
+            border-color: #cbd5e1;
+            color: #e2e8f0;
+        }
+
+        .rank-pill.rank-bronze {
+            background: rgba(234, 88, 12, 0.2);
+            border-color: #ea580c;
+            color: #fdba74;
+        }
+
+        .crown-icon {
+            width: 11px;
+            height: 11px;
+            fill: #fbbf24;
+            color: #fbbf24;
+        }
+
+        /* Avatar */
+        .agent-card-avatar-wrap {
+            width: clamp(30px, 3.9vh, 36px);
+            height: clamp(30px, 3.9vh, 36px);
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .agent-card-avatar-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1.5px solid rgba(255, 255, 255, 0.2);
+            display: block;
+        }
+
+        .agent-card-avatar-fallback {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1e40af, #2563eb);
+            color: #ffffff;
+            font-family: var(--font-display);
+            font-size: 0.76rem;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1.5px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Info: Name & Segments */
+        .agent-card-info {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .agent-card-name {
+            font-family: var(--font-display);
+            font-size: clamp(0.80rem, 1.2vh, 0.90rem);
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1.15;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Segments Badges */
+        .agent-card-segments {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            flex-wrap: wrap;
+            margin-top: 2px;
+        }
+
+        .segment-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 1.5px 6px;
+            border-radius: 99px;
+            font-size: 0.56rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            line-height: 1.1;
+            border: 1px solid transparent;
+        }
+
+        .segment-badge.seg-health {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border-color: rgba(16, 185, 129, 0.35);
+        }
+
+        .segment-badge.seg-life {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border-color: rgba(59, 130, 246, 0.35);
+        }
+
+        .segment-badge.seg-motor {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            border-color: rgba(245, 158, 11, 0.35);
+        }
+
+        .segment-badge.seg-sme {
+            background: rgba(168, 85, 247, 0.15);
+            color: #c084fc;
+            border-color: rgba(168, 85, 247, 0.35);
+        }
+
+        .segment-badge.seg-default {
+            background: rgba(148, 163, 184, 0.15);
+            color: #cbd5e1;
+            border-color: rgba(148, 163, 184, 0.3);
+        }
+
+        /* Card Right: Status + Total Referrals + View Profile */
+        .agent-card-right {
+            display: flex;
+            align-items: center;
+            gap: clamp(6px, 0.9vw, 11px);
+            flex-shrink: 0;
+        }
+
+        /* Status Badge */
+        .status-pill-active {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2.5px 7px;
+            border-radius: 99px;
+            background: rgba(16, 185, 129, 0.14);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            font-size: 0.60rem;
+            font-weight: 800;
+            letter-spacing: 0.03em;
+            line-height: 1.1;
+        }
+
+        .status-dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 4px #10b981;
+        }
+
+        /* Total Referrals Badge (Capped at 10+) */
+        .agent-card-referrals {
+            text-align: right;
+            min-width: 44px;
+        }
+
+        .referrals-val {
+            display: block;
+            font-family: var(--font-display);
+            font-size: clamp(0.98rem, 1.7vh, 1.14rem);
+            font-weight: 900;
+            color: #ffffff;
+            line-height: 1;
+        }
+
+        .referrals-lbl {
+            display: block;
+            font-size: 0.48rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-top: 1px;
+            line-height: 1;
+        }
+
+        /* View Profile Button */
+        .view-profile-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: clamp(3px, 0.55vh, 4.5px) clamp(7px, 0.9vw, 10px);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #ffffff;
+            font-family: var(--font-display);
+            font-size: clamp(0.64rem, 1vh, 0.70rem);
+            font-weight: 800;
+            text-decoration: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+            line-height: 1.1;
+        }
+
+        .view-profile-btn:hover {
+            background: var(--brand-blue);
+            border-color: #3b82f6;
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(29, 78, 216, 0.4);
+        }
+
+        .empty-state-card {
+            grid-column: 1 / -1;
+            background: rgba(10, 24, 53, 0.5);
+            border: 1px dashed var(--border-card);
+            border-radius: 12px;
+            padding: 20px 16px;
+            text-align: center;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.80rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ── Bottom Footer ───────────────────────────────────────────── */
+        .dashboard-footer {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: clamp(2.5px, 0.4vh, 5px) 4px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            margin-top: 1px;
+        }
+
+        .footer-left-brand {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .footer-logo-frame {
+            height: clamp(20px, 2.5vh, 26px);
+            background: #ffffff;
+            border-radius: 6px;
+            padding: 2px 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .footer-logo-img {
+            height: 100%;
+            width: auto;
+            max-width: 95px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .footer-center-copy {
+            font-size: 0.62rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .footer-right-tagline {
+            font-family: var(--font-script);
+            font-size: 1rem;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            opacity: 0.9;
+        }
+
+        .footer-heart {
+            color: #f43f5e;
+            display: inline-block;
+        }
+
+        /* ── Responsive Mobile & Tablet Adjustments ───────────────────── */
+        @media (max-width: 820px) {
+            .hero-right-graphic {
+                display: none;
+            }
+        }
+
+        @media (max-width: 680px) {
+            .agent-cards-grid {
+                grid-template-columns: 1fr;
+            }
+            .hero-banner-card {
+                flex-direction: column;
+                text-align: center;
+                gap: 8px;
+                padding: 8px;
+            }
+            .hero-left-lockup {
+                flex-direction: column;
+                text-align: center;
+            }
+            .hero-divider {
+                display: none;
+            }
+            .agent-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+            }
+            .agent-card-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .dashboard-footer {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-shell">
+
+        <!-- ── Hero Banner: Logo + ST-ALL LEADERBOARD + 48 HOURS EVENT ──── -->
+        <section class="hero-banner-card">
+            <!-- Left: Original PadosiAgent Logo + Divider + Trophy + Title -->
+            <div class="hero-left-lockup">
+                <a href="/" class="hero-logo-frame brand-logo" title="PadosiAgent">
+                    <img src="{% static 'img/logo.webp' %}" alt="PadosiAgent" class="hero-logo-img brand-logo" onerror="this.onerror=null;this.src='{% static 'img/logo.png' %}';">
+                </a>
+                <div class="hero-divider"></div>
+                <div class="hero-trophy-box">
+                    <svg class="hero-trophy-svg" viewBox="0 0 100 100" fill="none">
+                        <!-- Golden Aura Glow -->
+                        <circle cx="50" cy="50" r="42" fill="url(#hero-trophy-glow)" opacity="0.6"/>
+                        <!-- Trophy Cup -->
+                        <path d="M30 26 H70 V46 C70 57 61 66 50 66 C39 66 30 57 30 46 V26 Z" fill="url(#hero-gold-gradient)" stroke="#fef08a" stroke-width="1.5"/>
+                        <!-- Left Handle -->
+                        <path d="M30 32 C20 32 18 45 28 50 C29 50.5 30 51 31 51" stroke="#f59e0b" stroke-width="4" stroke-linecap="round" fill="none"/>
+                        <!-- Right Handle -->
+                        <path d="M70 32 C80 32 82 45 72 50 C71 50.5 70 51 69 51" stroke="#f59e0b" stroke-width="4" stroke-linecap="round" fill="none"/>
+                        <!-- Stem -->
+                        <path d="M46 66 H54 V76 H46 Z" fill="url(#hero-gold-dark)"/>
+                        <!-- Base -->
+                        <rect x="34" y="76" width="32" height="10" rx="3" fill="url(#hero-gold-gradient)" stroke="#fde047" stroke-width="1"/>
+                        <rect x="30" y="86" width="40" height="5" rx="2" fill="url(#hero-gold-dark)"/>
+                        <!-- Star in Cup -->
+                        <polygon points="50,33 52.5,41 61,41 54,46 56.5,54 50,49 43.5,54 46,46 39,41 47.5,41" fill="#ffffff" filter="drop-shadow(0 0 4px #ffffff)"/>
+                        <!-- Defs -->
+                        <defs>
+                            <radialGradient id="hero-trophy-glow" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.8"/>
+                                <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+                            </radialGradient>
+                            <linearGradient id="hero-gold-gradient" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stop-color="#fef08a"/>
+                                <stop offset="40%" stop-color="#f59e0b"/>
+                                <stop offset="100%" stop-color="#b45309"/>
+                            </linearGradient>
+                            <linearGradient id="hero-gold-dark" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="#d97706"/>
+                                <stop offset="100%" stop-color="#78350f"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="hero-headings">
+                    <span class="hero-eyebrow">ST-ALL LEADERBOARD</span>
+                    <h1 class="hero-main-title">
+                        <span class="white-text">Top Performers</span>
+                        <span class="gold-text">of the Event</span>
+                    </h1>
+                    <p class="hero-subtext">Your hard work builds a stronger tomorrow!</p>
+                </div>
+            </div>
+
+            <!-- Center: Attractive 48 Hours Event Badge -->
+            <div class="hero-center-badge">
+                <div class="event-glow-pill">
+                    <svg class="lightning-bolt" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                    </svg>
+                    <span class="event-glow-text">48 HOURS EVENT</span>
+                </div>
+                <span class="event-sub-tag">SPECIAL LIVE CHALLENGE</span>
+            </div>
+
+            <!-- Right: 3D Gold Trophy on Podiums with Rising Chart Arrow -->
+            <div class="hero-right-graphic">
+                <svg viewBox="0 0 200 90" fill="none" style="width: 100%; height: 100%;">
+                    <!-- 3D Rising Blue Bar Stairs -->
+                    <rect x="120" y="60" width="15" height="26" rx="3" fill="#1e40af" stroke="#3b82f6" stroke-width="1"/>
+                    <rect x="140" y="44" width="15" height="42" rx="3" fill="#2563eb" stroke="#60a5fa" stroke-width="1"/>
+                    <rect x="160" y="26" width="15" height="60" rx="3" fill="#3b82f6" stroke="#93c5fd" stroke-width="1"/>
+                    <rect x="180" y="10" width="15" height="76" rx="3" fill="#60a5fa" stroke="#dbeafe" stroke-width="1"/>
+
+                    <!-- Glowing Upward Trend Arrow -->
+                    <path d="M110 68 L 140 38 L 165 30 L 192 6" stroke="#38bdf8" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" filter="drop-shadow(0 0 8px #38bdf8)"/>
+                    <polygon points="192,6 178,6 192,20" fill="#38bdf8" filter="drop-shadow(0 0 8px #38bdf8)"/>
+
+                    <!-- Star Sparkles -->
+                    <polygon points="80,18 82,23 87,23 83,26 84,31 80,28 76,31 77,26 73,23 78,23" fill="#facc15" filter="drop-shadow(0 0 4px #facc15)"/>
+
+                    <!-- Golden Trophy Platform Blocks -->
+                    <rect x="54" y="66" width="52" height="20" rx="3" fill="url(#hero-gold-gradient)" stroke="#fde047" stroke-width="1"/>
+                    <rect x="62" y="54" width="36" height="12" rx="2" fill="url(#hero-gold-gradient)" stroke="#fde047" stroke-width="1"/>
+
+                    <!-- Golden Trophy on Stacked Blocks -->
+                    <path d="M70 24 H90 V38 C90 45 85 50 80 50 C75 50 70 45 70 38 V24 Z" fill="url(#hero-gold-gradient)" stroke="#fef08a" stroke-width="1"/>
+                    <path d="M70 27 C65 27 64 34 68 38" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" fill="none"/>
+                    <path d="M90 27 C95 27 96 34 92 38" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" fill="none"/>
+                    <polygon points="80,28 81.5,33 86,33 82,36 83.5,41 80,38 76.5,41 78,36 74,33 78.5,33" fill="#ffffff"/>
+                </svg>
+            </div>
+        </section>
+
+        <!-- ── Top 3 Podium Section (Centered & Compact) ──────────────── -->
+        <section class="podium-section-card" aria-label="Top 3 Leaders Podium">
+            <div class="podium-columns-row">
+
+                <!-- Rank 2: Silver Pedestal -->
+                <div class="podium-col-second">
+                    {% if podium_second %}
+                    <div class="pillar-card pillar-silver">
+                        <div class="pillar-rank-ribbon ribbon-silver">2</div>
+                        <div class="avatar-frame">
+                            {% if podium_second.photo_url %}
+                            <img src="{{ podium_second.photo_url }}" alt="{{ podium_second.name }}" class="avatar-img-circle silver-avatar-border" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="avatar-fallback silver-avatar-border" style="display: none;">{{ podium_second.initials }}</div>
+                            {% else %}
+                            <div class="avatar-fallback silver-avatar-border">{{ podium_second.initials }}</div>
+                            {% endif %}
+                        </div>
+                        <h3 class="pillar-name" title="{{ podium_second.name }}">{{ podium_second.name }}</h3>
+
+                        <!-- Segments -->
+                        <div class="pillar-segments">
+                            {% for seg in podium_second.segments %}
+                            <span class="segment-badge {{ seg.cls }}">{{ seg.name }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Referrals Metric (Capped at 10+) -->
+                        <div class="pillar-metric-box">
+                            <span class="metric-leads-num">{{ podium_second.referrals_display }}</span>
+                            <span class="metric-leads-label">Total Referrals</span>
+                        </div>
+
+                        {% if podium_second.profile_url %}
+                        <a href="{{ podium_second.profile_url }}" target="_blank" class="pillar-profile-btn">
+                            View Profile <i data-lucide="external-link" style="width: 10px; height: 10px;"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="pillar-card pillar-silver empty-slot">
+                        <div class="pillar-rank-ribbon ribbon-silver">2</div>
+                        <div class="avatar-frame">
+                            <div class="avatar-fallback silver-avatar-border">—</div>
+                        </div>
+                        <h3 class="pillar-name">Open Slot</h3>
+                        <div class="pillar-metric-box" style="margin-top: 8px;">
+                            <span class="metric-leads-num">0</span>
+                            <span class="metric-leads-label">Total Referrals</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Rank 1: Gold Pedestal (Center & Elevated) -->
+                <div class="podium-col-first">
+                    {% if podium_first %}
+                    <div class="pillar-card pillar-gold">
+                        <!-- Floating Crown on Top -->
+                        <div class="floating-crown-wrap">
+                            <svg class="gold-crown-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M2 19h20v2H2v-2zM2 5l5 7 5-7 5 7 5-7v12H2V5z"/>
+                            </svg>
+                        </div>
+                        <div class="pillar-rank-ribbon ribbon-gold">1</div>
+                        <div class="avatar-frame">
+                            <!-- Golden Laurel Wreath Branches around Avatar -->
+                            <svg class="laurel-wreath-left" viewBox="0 0 24 60" fill="currentColor">
+                                <path d="M18 5 C12 12, 6 22, 8 34 C9 40, 14 48, 20 54 C16 48, 12 40, 11 34 C10 24, 15 14, 18 5 Z"/>
+                                <circle cx="9" cy="18" r="2.5" fill="#fde047"/>
+                                <circle cx="7" cy="28" r="2.8" fill="#fde047"/>
+                                <circle cx="8" cy="38" r="2.8" fill="#fde047"/>
+                                <circle cx="12" cy="48" r="2.5" fill="#fde047"/>
+                            </svg>
+                            {% if podium_first.photo_url %}
+                            <img src="{{ podium_first.photo_url }}" alt="{{ podium_first.name }}" class="avatar-img-circle gold-avatar-border" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="avatar-fallback gold-avatar-border" style="display: none;">{{ podium_first.initials }}</div>
+                            {% else %}
+                            <div class="avatar-fallback gold-avatar-border">{{ podium_first.initials }}</div>
+                            {% endif %}
+                            <svg class="laurel-wreath-right" viewBox="0 0 24 60" fill="currentColor">
+                                <path d="M18 5 C12 12, 6 22, 8 34 C9 40, 14 48, 20 54 C16 48, 12 40, 11 34 C10 24, 15 14, 18 5 Z"/>
+                                <circle cx="9" cy="18" r="2.5" fill="#fde047"/>
+                                <circle cx="7" cy="28" r="2.8" fill="#fde047"/>
+                                <circle cx="8" cy="38" r="2.8" fill="#fde047"/>
+                                <circle cx="12" cy="48" r="2.5" fill="#fde047"/>
+                            </svg>
+                        </div>
+                        <h3 class="pillar-name" title="{{ podium_first.name }}">{{ podium_first.name }}</h3>
+
+                        <!-- Segments -->
+                        <div class="pillar-segments">
+                            {% for seg in podium_first.segments %}
+                            <span class="segment-badge {{ seg.cls }}">{{ seg.name }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Referrals Metric (Capped at 10+) -->
+                        <div class="pillar-metric-box">
+                            <span class="metric-leads-num">{{ podium_first.referrals_display }}</span>
+                            <span class="metric-leads-label">Total Referrals</span>
+                        </div>
+
+                        {% if podium_first.profile_url %}
+                        <a href="{{ podium_first.profile_url }}" target="_blank" class="pillar-profile-btn" style="background: rgba(245, 158, 11, 0.25); border-color: #f59e0b; color: #fef08a;">
+                            View Profile <i data-lucide="external-link" style="width: 10px; height: 10px;"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="pillar-card pillar-gold empty-slot">
+                        <div class="floating-crown-wrap">
+                            <svg class="gold-crown-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M2 19h20v2H2v-2zM2 5l5 7 5-7 5 7 5-7v12H2V5z"/>
+                            </svg>
+                        </div>
+                        <div class="pillar-rank-ribbon ribbon-gold">1</div>
+                        <div class="avatar-frame">
+                            <div class="avatar-fallback gold-avatar-border">—</div>
+                        </div>
+                        <h3 class="pillar-name">Open Slot</h3>
+                        <div class="pillar-metric-box" style="margin-top: 8px;">
+                            <span class="metric-leads-num">0</span>
+                            <span class="metric-leads-label">Total Referrals</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Rank 3: Bronze Pedestal -->
+                <div class="podium-col-third">
+                    {% if podium_third %}
+                    <div class="pillar-card pillar-bronze">
+                        <div class="pillar-rank-ribbon ribbon-bronze">3</div>
+                        <div class="avatar-frame">
+                            {% if podium_third.photo_url %}
+                            <img src="{{ podium_third.photo_url }}" alt="{{ podium_third.name }}" class="avatar-img-circle bronze-avatar-border" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="avatar-fallback bronze-avatar-border" style="display: none;">{{ podium_third.initials }}</div>
+                            {% else %}
+                            <div class="avatar-fallback bronze-avatar-border">{{ podium_third.initials }}</div>
+                            {% endif %}
+                        </div>
+                        <h3 class="pillar-name" title="{{ podium_third.name }}">{{ podium_third.name }}</h3>
+
+                        <!-- Segments -->
+                        <div class="pillar-segments">
+                            {% for seg in podium_third.segments %}
+                            <span class="segment-badge {{ seg.cls }}">{{ seg.name }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Referrals Metric (Capped at 10+) -->
+                        <div class="pillar-metric-box">
+                            <span class="metric-leads-num">{{ podium_third.referrals_display }}</span>
+                            <span class="metric-leads-label">Total Referrals</span>
+                        </div>
+
+                        {% if podium_third.profile_url %}
+                        <a href="{{ podium_third.profile_url }}" target="_blank" class="pillar-profile-btn">
+                            View Profile <i data-lucide="external-link" style="width: 10px; height: 10px;"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="pillar-card pillar-bronze empty-slot">
+                        <div class="pillar-rank-ribbon ribbon-bronze">3</div>
+                        <div class="avatar-frame">
+                            <div class="avatar-fallback bronze-avatar-border">—</div>
+                        </div>
+                        <h3 class="pillar-name">Open Slot</h3>
+                        <div class="pillar-metric-box" style="margin-top: 8px;">
+                            <span class="metric-leads-num">0</span>
+                            <span class="metric-leads-label">Total Referrals</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+            </div>
+
+            <!-- 3D Stepped Platform Stage Underneath -->
+            <div class="podium-stage-base">
+                <div class="stage-step-second"></div>
+                <div class="stage-step-first"></div>
+                <div class="stage-step-third"></div>
+            </div>
+        </section>
+
+        <!-- ── All Agents Cards View (Compact & Responsive) ─────────────── -->
+        <section class="leaders-cards-section" aria-label="All Agent Rankings">
+            <div class="cards-header-bar">
+                <div class="cards-title-left">
+                    <i data-lucide="award" class="cards-trophy-gold"></i>
+                    <span>All Leaders</span>
+                </div>
+                <div class="cards-count-badge">
+                    {{ leaders|length }} AGENTS
+                </div>
+            </div>
+
+            <!-- Card View: Name, Rank, Photo, Segments, Total Referrals (up to 10+), Status, View Profile -->
+            <div class="agent-cards-grid">
+                {% for row in leaders %}
+                <article class="agent-card rank-{{ row.rank }}">
+                    <div class="agent-card-left">
+                        <!-- Rank Badge -->
+                        <div class="agent-card-rank">
+                            <span class="rank-pill {% if row.rank == 1 %}rank-gold{% elif row.rank == 2 %}rank-silver{% elif row.rank == 3 %}rank-bronze{% endif %}">
+                                {% if row.rank == 1 %}
+                                <i data-lucide="crown" class="crown-icon"></i>
+                                {% endif %}
+                                #{{ row.rank_display }}
+                            </span>
+                        </div>
+
+                        <!-- Photo Avatar -->
+                        <div class="agent-card-avatar-wrap">
+                            {% if row.photo_url %}
+                            <img src="{{ row.photo_url }}" alt="{{ row.name }}" class="agent-card-avatar-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="agent-card-avatar-fallback" style="display: none;">{{ row.initials }}</div>
+                            {% else %}
+                            <div class="agent-card-avatar-fallback">{{ row.initials }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Info: Name & Segments -->
+                        <div class="agent-card-info">
+                            <h3 class="agent-card-name" title="{{ row.name }}">{{ row.name }}</h3>
+                            <div class="agent-card-segments">
+                                {% for seg in row.segments %}
+                                <span class="segment-badge {{ seg.cls }}">{{ seg.name }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Side: Status + Total Referrals (up to 10+) + View Profile -->
+                    <div class="agent-card-right">
+                        <!-- Status Badge -->
+                        <div class="agent-card-status">
+                            <span class="status-pill-active">
+                                <span class="status-dot"></span> Active
+                            </span>
+                        </div>
+
+                        <!-- Total Referrals (Capped at 10+) -->
+                        <div class="agent-card-referrals">
+                            <span class="referrals-val">{{ row.referrals_display }}</span>
+                            <span class="referrals-lbl">referrals</span>
+                        </div>
+
+                        <!-- View Profile Button -->
+                        <div class="agent-card-action">
+                            {% if row.profile_url %}
+                            <a href="{{ row.profile_url }}" target="_blank" class="view-profile-btn">
+                                View Profile <i data-lucide="external-link" style="width: 10px; height: 10px;"></i>
+                            </a>
+                            {% else %}
+                            <span class="view-profile-btn" style="opacity: 0.5; cursor: not-allowed;">Profile</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </article>
+                {% empty %}
+                <div class="empty-state-card">
+                    <i data-lucide="award" style="width: 30px; height: 30px; color: var(--text-muted); margin-bottom: 6px;"></i>
+                    <p>No rankings yet. Agents appear here as referrals come in.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- ── Bottom Footer ───────────────────────────────────────────── -->
+        <footer class="dashboard-footer">
+            <div class="footer-left-brand">
+                <a href="/" class="footer-logo-frame" title="PadosiAgent">
+                    <img src="{% static 'img/logo.webp' %}" alt="PadosiAgent" class="footer-logo-img" onerror="this.onerror=null;this.src='{% static 'img/logo.png' %}';">
+                </a>
+            </div>
+
+            <div class="footer-center-copy">
+                &copy; {{ current_year }} PadosiAgent. All rights reserved.
+            </div>
+
+            <div class="footer-right-tagline">
+                <span>Together We Grow</span>
+                <span class="footer-heart">♡</span>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- ── Interactive Client-side Script ────────────────────────────── -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize Lucide Icons
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+
+            // Auto-refresh every 60 seconds
+            setInterval(function () {
+                window.location.reload();
+            }, 60000);
+        });
+    </script>
+</body>
+</html>
